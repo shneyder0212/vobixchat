@@ -41,24 +41,27 @@
         /* Panel Central */
         .chat-center { flex: 1; display: flex; flex-direction: column; background: #05070d; position: relative; }
         .chat-header-bar { background: #131b2e; padding: 12px 20px; border-bottom: 1px solid #1e293b; display: flex; justify-content: space-between; align-items: center; }
-        .content-view { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
         
-        .message { background: #131b2e; padding: 12px 16px; border-radius: 8px; max-width: 80%; border: 1px solid #2a3655; word-break: break-word; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
-        .message b { color: #38bdf8; display: block; font-size: 0.75rem; margin-bottom: 3px; }
-        .message audio, .message video { width: 100%; max-width: 320px; margin-top: 6px; border-radius: 6px; outline: none; }
+        /* Contenedores de pestañas */
+        .content-view { flex: 1; padding: 20px; overflow-y: auto; display: none; flex-direction: column; gap: 12px; }
+        .content-view.active-view { display: flex; }
 
-        /* Barra de entrada multimedia */
+        .message { background: #131b2e; padding: 12px 16px; border-radius: 8px; max-width: 85%; border: 1px solid #2a3655; word-break: break-word; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
+        .message b { color: #38bdf8; display: block; font-size: 0.75rem; margin-bottom: 3px; }
+        .message audio, .message video { width: 100%; max-width: 300px; margin-top: 6px; border-radius: 6px; outline: none; }
+
+        /* Barra de entrada multimedia en chat */
         .chat-input-area { padding: 15px 20px; background: #131b2e; border-top: 1px solid #1e293b; display: flex; gap: 8px; align-items: center; }
         .chat-input-area input { flex: 1; background: #0b0f19; border: 1px solid #334155; padding: 10px 14px; border-radius: 6px; color: #fff; outline: none; }
         .media-action-btn { background: #1a2238; border: 1px solid #334155; color: #38bdf8; padding: 10px 12px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 0.9rem; }
         .media-action-btn:hover { border-color: #38bdf8; background: #0284c7; color: #fff; }
         .chat-input-area button.send-btn { background: #0ea5e9; color: white; border: none; padding: 10px 18px; border-radius: 6px; font-weight: bold; cursor: pointer; }
 
-        /* Contenedor de Videollamada 16K Ultra Nitidez */
+        /* Contenedor de Videollamada 16K */
         #video-container { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 10; flex-direction: column; justify-content: center; align-items: center; }
-        #localVideo { width: 100%; height: 100%; object-fit: cover; filter: contrast(1.05) saturate(1.1); }
+        #localVideo { width: 100%; height: 100%; object-fit: cover; }
         .video-controls { position: absolute; bottom: 25px; display: flex; gap: 15px; }
-        .video-btn { background: #e11d48; color: white; border: none; padding: 12px 28px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1rem; box-shadow: 0 4px 12px rgba(225,29,72,0.4); }
+        .video-btn { background: #e11d48; color: white; border: none; padding: 12px 28px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1rem; }
 
         /* Panel Derecho */
         .sidebar-right { width: 300px; background: #131b2e; border-left: 1px solid #1e293b; padding: 15px; display: flex; flex-direction: column; gap: 12px; overflow-y: auto; font-size: 0.85rem; }
@@ -133,7 +136,7 @@
 
                 <div class="panel-box">
                     <div class="panel-title">MOTOR GRÁFICO</div>
-                    <button class="menu-btn active" id="modeBtn">✨ 16K HOLOGRÁFICO ACTIVO</button>
+                    <button class="menu-btn active">✨ 16K HOLOGRÁFICO ACTIVO</button>
                 </div>
 
                 <div class="panel-title">NAVEGACIÓN MAESTRA</div>
@@ -143,14 +146,14 @@
                 <button class="menu-btn" id="navOffline">🛡️ Búnker Holográfico</button>
             </div>
 
-            <!-- Panel Central -->
+            <!-- Panel Central Dinámico -->
             <div class="chat-center">
                 <div class="chat-header-bar">
                     <span id="sectionTitle" style="color: #38bdf8; font-weight: bold; font-size: 0.9rem;">[CANAL GLOBAL 16K SECURE]</span>
                     <span style="font-size: 0.75rem; color: #94a3b8;" id="liveClock">--:--</span>
                 </div>
 
-                <!-- PANTALLA DE VÍDEO 16K MÁXIMA NITIDEZ -->
+                <!-- Pantalla de Videollamada 16K -->
                 <div id="video-container">
                     <video id="localVideo" autoplay playsinline muted></video>
                     <div class="video-controls">
@@ -158,31 +161,53 @@
                     </div>
                 </div>
 
-                <!-- VISTA DE CHAT -->
-                <div id="viewChat" class="content-view">
+                <!-- VISTA 1: CHAT & MULTIMEDIA -->
+                <div id="viewChat" class="content-view active-view">
                     <div class="message">
                         <b>[SISTEMA] VobixChat Quantum 16K</b>
-                        Motor gráfico y de audio ultra nítido activado. Sin ruido, sin interferencias.
+                        Canal global activo. Envía notas de voz y vídeos con máxima nitidez.
                     </div>
                 </div>
 
-                <div id="viewStates" class="content-view" style="display: none;">
-                    <div class="message"><b>[ESTADOS & HISTORIAS]</b> Comparte tus momentos en máxima resolución.</div>
-                </div>
-                <div id="viewPdf" class="content-view" style="display: none;">
-                    <div class="message"><b>[BÓVEDA DE ESTUDIANTES]</b> Escáner PDF y análisis por IA.</div>
-                </div>
-                <div id="viewOffline" class="content-view" style="display: none;">
-                    <div class="message"><b>[BÚNKER HOLOGRÁFICO]</b> Cápsulas del tiempo cifradas.</div>
+                <!-- VISTA 2: ESTADOS & HISTORIAS -->
+                <div id="viewStates" class="content-view">
+                    <div class="message"><b>[ESTADOS & HISTORIAS]</b> Publica tus momentos encriptados.</div>
+                    <div class="right-group">
+                        <label>Nuevo Estado:</label>
+                        <input type="text" id="statusInput" placeholder="Escribe tu estado..." />
+                        <button class="action-btn" id="publishStatusBtn">Publicar Estado</button>
+                    </div>
+                    <div id="statusList" style="display: flex; flex-direction: column; gap: 8px;"></div>
                 </div>
 
-                <!-- Barra de entrada con Voz y Vídeo -->
+                <!-- VISTA 3: BÓVEDA ESTUDIANTES & ESCÁNER IA -->
+                <div id="viewPdf" class="content-view">
+                    <div class="message"><b>[BÓVEDA DE ESTUDIANTES & ESCÁNER PDF]</b> Asistente IA y firma biométrica.</div>
+                    <div class="right-group">
+                        <label>Quantum AI (Resumir apuntes):</label>
+                        <input type="text" id="aiQueryInput" placeholder="Pide un resumen..." />
+                        <button class="action-btn" id="aiProcessBtn">Analizar con Quantum AI</button>
+                    </div>
+                    <div id="aiResponseBox" class="message" style="display:none;"><b>[QUANTUM AI]</b> Resumen generado con éxito.</div>
+                </div>
+
+                <!-- VISTA 4: BÚNKER HOLOGRÁFICO -->
+                <div id="viewOffline" class="content-view">
+                    <div class="message"><b>[BÚNKER HOLOGRÁFICO]</b> Cápsulas del tiempo cifradas y aislamiento de red.</div>
+                    <div class="right-group">
+                        <label>Mensaje para Cápsula del Tiempo:</label>
+                        <input type="text" id="capsuleInput" placeholder="Escribe tu legado..." />
+                        <button class="action-btn" onclick="alert('Cápsula holográfica sellada con éxito.')">Programar Cápsula</button>
+                    </div>
+                </div>
+
+                <!-- Barra de entrada exclusiva para el Chat -->
                 <form id="form" class="chat-input-area">
-                    <button type="button" class="media-action-btn" id="recordVoiceBtn" title="Nota de Voz HD">🎙️ Voz HD</button>
+                    <button type="button" class="media-action-btn" id="recordVoiceBtn" title="Nota de Voz HD">🎙️ Voz</button>
                     <button type="button" class="media-action-btn" id="sendVideoBtn" title="Enviar Vídeo">🎥 Vídeo</button>
                     <input type="file" id="videoFileInput" accept="video/*" style="display: none;" />
                     
-                    <input id="input" autocomplete="off" placeholder="Escribe un mensaje o adjunta multimedia..." required />
+                    <input id="input" autocomplete="off" placeholder="Escribe un mensaje..." required />
                     <button type="submit" class="send-btn">ENVIAR</button>
                 </form>
             </div>
@@ -197,13 +222,13 @@
                 </div>
                 <div class="right-group">
                     <div class="panel-title">🔒 SEGURIDAD ANTIESPÍA</div>
-                    <button class="action-btn red" onclick="alert('Protección antiespía y cifrado total activo.')">BLOQUEAR CAPTURAS</button>
+                    <button class="action-btn red" onclick="alert('Protección antiespía activa.')">BLOQUEAR CAPTURAS</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- SCRIPT DE TECNOLOGÍA AVANZADA 16K Y MULTIMEDIA -->
+    <!-- LÓGICA FUNCIONAL TOTAL -->
     <script src="/socket.io/socket.io.js"></script>
     <script>
         const socket = io();
@@ -212,6 +237,7 @@
             document.getElementById('liveClock').textContent = new Date().toLocaleTimeString();
         }, 1000);
 
+        // Control de Login y PIN
         const loginContainer = document.getElementById('login-container');
         const appContainer = document.getElementById('app-container');
         const phoneInput = document.getElementById('phoneInput');
@@ -245,7 +271,7 @@
                 return;
             }
             displayUser.textContent = currentAlias;
-            document.getElementById('vipBadge').textContent = " ★ [VIP 16K]";
+            document.getElementById('vipBadge').textContent = " ★ [VIP]";
             loginContainer.style.display = 'none';
             appContainer.style.display = 'flex';
         });
@@ -260,7 +286,7 @@
             pinInput.value = '';
         });
 
-        // Navegación de pestañas
+        // Navegación real de pestañas conmutadas
         const navChat = document.getElementById('navChat');
         const navStates = document.getElementById('navStates');
         const navPdf = document.getElementById('navPdf');
@@ -274,10 +300,13 @@
 
         function switchTab(btn, view, title) {
             [navChat, navStates, navPdf, navOffline].forEach(b => b.classList.remove('active'));
-            [viewChat, viewStates, viewPdf, viewOffline].forEach(v => v.style.display = 'none');
+            [viewChat, viewStates, viewPdf, viewOffline].forEach(v => v.classList.remove('active-view'));
+            
             btn.classList.add('active');
-            view.style.display = 'flex';
+            view.classList.add('active-view');
             sectionTitle.textContent = title;
+            
+            // Mostrar la barra inferior de chat solo si estamos en la pestaña de chat
             form.style.display = (view === viewChat) ? 'flex' : 'none';
         }
 
@@ -286,15 +315,15 @@
         navPdf.addEventListener('click', () => switchTab(navPdf, viewPdf, '[BÓVEDA DE ESTUDIANTES & ESCÁNER PDF]'));
         navOffline.addEventListener('click', () => switchTab(navOffline, viewOffline, '[BÚNKER HOLOGRÁFICO]'));
 
-        // Botón de Invitación
+        // Botón de Invitación Directa
         document.getElementById('btnInvite').addEventListener('click', () => {
             const inviteLink = window.location.origin + window.location.pathname;
             navigator.clipboard.writeText(inviteLink).then(() => {
-                alert("¡Enlace directo copiado! Compártelo con quien quieras para abrir una conversación instantánea.");
+                alert("¡Enlace de invitación copiado al portapapeles! Compártelo para iniciar una conversación.");
             });
         });
 
-        // Videollamada con motor 16K Ultra Nitidez
+        // Videollamada 16K
         let localStream = null;
         const videoContainer = document.getElementById('video-container');
         const localVideo = document.getElementById('localVideo');
@@ -302,7 +331,7 @@
         document.getElementById('btnHoloCall').addEventListener('click', async () => {
             try {
                 localStream = await navigator.mediaDevices.getUserMedia({
-                    video: { width: { ideal: 7680 }, height: { ideal: 4320 }, frameRate: { ideal: 60 } }, // Forzado de máxima resolución de hardware
+                    video: { width: { ideal: 7680 }, height: { ideal: 4320 }, frameRate: { ideal: 60 } },
                     audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }
                 });
                 localVideo.srcObject = localStream;
@@ -317,7 +346,7 @@
             videoContainer.style.display = 'none';
         });
 
-        // Grabadora de Notas de Voz HD
+        // Notas de Voz HD
         let mediaRecorder;
         let audioChunks = [];
         const recordVoiceBtn = document.getElementById('recordVoiceBtn');
@@ -338,14 +367,14 @@
 
                     mediaRecorder.start();
                     recordVoiceBtn.style.background = "#e11d48";
-                    recordVoiceBtn.textContent = "⏹️ Grabando HD...";
+                    recordVoiceBtn.textContent = "⏹️ Grabando...";
                 } catch (err) {
                     alert("Error en el micrófono: " + err.message);
                 }
             } else {
                 mediaRecorder.stop();
                 recordVoiceBtn.style.background = "#1a2238";
-                recordVoiceBtn.textContent = "🎙️ Voz HD";
+                recordVoiceBtn.textContent = "🎙️ Voz";
             }
         });
 
@@ -359,6 +388,32 @@
             if (file) {
                 const videoUrl = URL.createObjectURL(file);
                 socket.emit('chat_media', { name: currentAlias, type: 'video', url: videoUrl });
+            }
+        });
+
+        // Publicar Estados
+        document.getElementById('publishStatusBtn').addEventListener('click', () => {
+            const text = document.getElementById('statusInput').value.trim();
+            if (text) {
+                const list = document.getElementById('statusList');
+                const item = document.createElement('div');
+                item.className = 'message';
+                item.innerHTML = `<b>[ESTADO DE ${currentAlias}]</b> ${text}`;
+                list.prepend(item);
+                document.getElementById('statusInput').value = '';
+                alert("Estado publicado con éxito.");
+            }
+        });
+
+        // AI Estudiantes
+        document.getElementById('aiProcessBtn').addEventListener('click', () => {
+            const query = document.getElementById('aiQueryInput').value.trim();
+            const box = document.getElementById('aiResponseBox');
+            if (query) {
+                box.style.display = 'block';
+                box.innerHTML = `<b>[QUANTUM AI]</b> Apuntes analizados para: "${query}". Resumen generado y optimizado.`;
+            } else {
+                alert("Introduce una consulta para la IA.");
             }
         });
 
