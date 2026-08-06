@@ -3,93 +3,99 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VOBIXCHAT // Acceso Seguro por PIN</title>
+    <title>VOBIXCHAT // Quantum Ultimate</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        body { background-color: #0b0f19; color: #e2e8f0; height: 100vh; display: flex; justify-content: center; align-items: center; }
+        body { background-color: #0b0f19; color: #e2e8f0; height: 100vh; display: flex; justify-content: center; align-items: center; overflow: hidden; }
+
+        /* Contenedor Principal */
+        .container { width: 100%; max-width: 440px; background: #131b2e; border: 1px solid #1e293b; border-radius: 14px; padding: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.6); text-align: center; }
         
-        .card { width: 100%; max-width: 420px; background: #131b2e; border: 1px solid #1e293b; border-radius: 12px; padding: 30px; box-shadow: 0 8px 24px rgba(0,0,0,0.5); text-align: center; }
-        .card h2 { font-size: 1.2rem; color: #38bdf8; margin-bottom: 10px; letter-spacing: 1px; }
-        .card p { font-size: 0.8rem; color: #94a3b8; margin-bottom: 25px; }
+        /* Pantalla de Acceso Original */
+        #login-screen h2 { font-size: 1.15rem; color: #38bdf8; margin-bottom: 8px; letter-spacing: 1px; font-weight: 700; }
+        #login-screen .subtitle { font-size: 0.75rem; color: #38bdf8; margin-bottom: 20px; letter-spacing: 0.5px; opacity: 0.9; }
+        
+        .shield-icon { font-size: 2rem; margin-bottom: 15px; color: #38bdf8; display: inline-block; }
         
         .input-group { margin-bottom: 15px; text-align: left; }
-        .input-group label { display: block; font-size: 0.8rem; color: #94a3b8; margin-bottom: 5px; }
-        .input-group select, .input-group input { width: 100%; background: #0b0f19; border: 1px solid #334155; padding: 12px; border-radius: 8px; color: #fff; outline: none; font-size: 0.95rem; }
-        .input-group input:focus, .input-group select:focus { border-color: #38bdf8; }
+        .input-group select, .input-group input { width: 100%; background: #0b0f19; border: 1px solid #334155; padding: 12px 14px; border-radius: 8px; color: #fff; outline: none; font-size: 0.95rem; }
+        .input-group select:focus, .input-group input:focus { border-color: #38bdf8; box-shadow: 0 0 8px rgba(56, 189, 248, 0.2); }
         
-        .btn-main { width: 100%; background: #0ea5e9; color: white; border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: background 0.2s; margin-top: 10px; font-size: 1rem; }
-        .btn-main:hover { background: #0284c7; }
+        .btn-main { width: 100%; background: #38bdf8; color: #0b0f19; border: none; padding: 13px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: background 0.2s, transform 0.1s; margin-top: 10px; font-size: 1rem; letter-spacing: 0.5px; }
+        .btn-main:hover { background: #0ea5e9; color: white; }
 
-        .pin-display { background: #1a2238; border: 1px dashed #38bdf8; padding: 15px; border-radius: 8px; margin-bottom: 20px; color: #38bdf8; font-size: 1.4rem; font-weight: bold; letter-spacing: 3px; display: none; }
+        /* Pantalla de PIN */
+        #pin-screen { display: none; }
+        .pin-box { background: #0b0f19; border: 1px dashed #38bdf8; padding: 15px; border-radius: 8px; margin-bottom: 20px; color: #38bdf8; font-size: 1.3rem; font-weight: bold; letter-spacing: 2px; }
 
-        /* Pantalla del Chat */
-        #chat-screen { display: none; width: 100%; max-width: 650px; height: 92vh; background: #131b2e; border: 1px solid #1e293b; border-radius: 12px; flex-direction: column; overflow: hidden; box-shadow: 0 8px 24px rgba(0,0,0,0.5); text-align: left; }
+        /* Pantalla de Chat con el mismo estilo */
+        #chat-screen { display: none; width: 100%; max-width: 650px; height: 92vh; background: #131b2e; border: 1px solid #1e293b; border-radius: 14px; flex-direction: column; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.6); text-align: left; }
         .chat-header { background: #1a2238; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #2a3655; }
-        .chat-header h2 { font-size: 1.1rem; color: #38bdf8; }
-        .device-counter { font-size: 0.8rem; background: rgba(14, 165, 233, 0.15); border: 1px solid #0ea5e9; padding: 4px 12px; border-radius: 20px; color: #38bdf8; }
+        .chat-header h2 { font-size: 1.05rem; color: #38bdf8; letter-spacing: 1px; }
+        .device-counter { font-size: 0.8rem; background: rgba(56, 189, 248, 0.15); border: 1px solid #38bdf8; padding: 4px 12px; border-radius: 20px; color: #38bdf8; }
         
         .chat-messages { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
         .message { background: #1e293b; padding: 12px 16px; border-radius: 10px; max-width: 85%; word-break: break-word; border: 1px solid #2a3655; }
-        .message.own { background: #0369a1; align-self: flex-end; border-color: #0284c7; }
+        .message.own { background: #0284c7; align-self: flex-end; border-color: #38bdf8; color: #fff; }
         .message b { color: #38bdf8; display: block; font-size: 0.75rem; margin-bottom: 4px; text-transform: uppercase; }
-        .message.own b { color: #e0f2fe; }
+        .message.own b { color: #bae6fd; }
 
         .chat-input-area { padding: 15px 20px; background: #1a2238; display: flex; gap: 12px; border-top: 1px solid #2a3655; align-items: center; }
         .chat-input-area input { flex: 1; background: #0b0f19; border: 1px solid #334155; padding: 12px 16px; border-radius: 8px; color: #fff; outline: none; font-size: 0.95rem; }
-        .chat-input-area button { background: #0ea5e9; color: white; border: none; padding: 12px 24px; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        .chat-input-area input:focus { border-color: #38bdf8; }
+        .chat-input-area button { background: #38bdf8; color: #0b0f19; border: none; padding: 12px 24px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: background 0.2s; }
+        .chat-input-area button:hover { background: #0ea5e9; color: white; }
     </style>
 </head>
 <body>
 
-    <!-- PASO 1: INTRODUCIR MÓVIL Y ALIAS -->
-    <div id="step-phone" class="card">
-        <h2>VOBIXCHAT // ACCESO</h2>
-        <p>Introduce tu número para recibir el código de verificación</p>
+    <!-- PASO 1: ACCESO SEGURIZADO (Tu diseño original) -->
+    <div id="login-screen" class="container">
+        <div class="shield-icon">🛡️</div>
+        <h2>VOBIXCHAT // ACCESO SEGURIZADO</h2>
+        <div class="subtitle">Filtro HLR Lookup & Carrier Verification Activo.</div>
         
         <div class="input-group">
-            <label>País</label>
             <select id="country">
                 <option value="España (+34)">España (+34)</option>
             </select>
         </div>
 
         <div class="input-group">
-            <label>Número de Móvil</label>
-            <input type="tel" id="phoneInput" placeholder="Ej. 600000000" autocomplete="off" />
+            <input type="tel" id="phoneInput" placeholder="Móvil real (ej. 600000000)" autocomplete="off" />
         </div>
 
         <div class="input-group">
-            <label>Nombre o Alias</label>
-            <input type="text" id="nameInput" placeholder="Tu nombre en el chat" autocomplete="off" />
+            <input type="text" id="nameInput" placeholder="Tu Nombre o Alias" autocomplete="off" />
         </div>
 
-        <button class="btn-main" id="requestPinBtn">ENVIAR CÓDIGO SMS</button>
+        <button class="btn-main" id="requestPinBtn">CONTINUAR AL PIN</button>
     </div>
 
-    <!-- PASO 2: VALIDAR PIN -->
-    <div id="step-pin" class="card" style="display: none;">
-        <h2>VERIFICACIÓN SMS</h2>
-        <p>Hemos enviado un PIN de 4 dígitos a tu teléfono.</p>
+    <!-- PASO 2: VERIFICACIÓN DE PIN -->
+    <div id="pin-screen" class="container">
+        <div class="shield-icon">⚡</div>
+        <h2>VERIFICACIÓN DE SEGURIDAD</h2>
+        <div class="subtitle">Código de acceso temporal generado para tu línea.</div>
         
-        <div id="simulatedSmsBox" class="pin-display">PIN: ----</div>
+        <div id="simulatedPinDisplay" class="pin-box">PIN: ----</div>
 
         <div class="input-group">
-            <label>Introduce el PIN recibido</label>
-            <input type="text" id="pinInput" placeholder="Ej. 4821" maxlength="4" autocomplete="off" />
+            <input type="text" id="pinInput" placeholder="Introduce el PIN recibido" maxlength="4" autocomplete="off" />
         </div>
 
         <button class="btn-main" id="verifyPinBtn">CONFIRMAR Y ENTRAR</button>
     </div>
 
-    <!-- PASO 3: PANTALLA DE CHAT SEGURO -->
+    <!-- PASO 3: CHAT INTERNO ESTILIZADO -->
     <div id="chat-screen">
         <div class="chat-header">
-            <h2>VOBIXCHAT // SECURE</h2>
+            <h2>VOBIXCHAT // LIVE</h2>
             <div id="deviceCount" class="device-counter">En línea: 1</div>
         </div>
 
         <div id="messages" class="chat-messages">
-            <div class="message"><b>Sistema</b>Canal seguro verificado por PIN establecido correctamente.</div>
+            <div class="message"><b>Sistema</b>Canal seguro establecido con éxito. ¡Bienvenido, <span id="welcomeName"></span>!</div>
         </div>
 
         <form id="form" class="chat-input-area">
@@ -98,22 +104,23 @@
         </form>
     </div>
 
-    <!-- Script de control y seguridad -->
+    <!-- LÓGICA Y WEBSOCKETS -->
     <script src="/socket.io/socket.io.js"></script>
     <script>
         const socket = io();
 
-        const stepPhone = document.getElementById('step-phone');
-        const stepPin = document.getElementById('step-pin');
+        const loginScreen = document.getElementById('login-screen');
+        const pinScreen = document.getElementById('pin-screen');
         const chatScreen = document.getElementById('chat-screen');
 
         const phoneInput = document.getElementById('phoneInput');
         const nameInput = document.getElementById('nameInput');
         const requestPinBtn = document.getElementById('requestPinBtn');
         
-        const simulatedSmsBox = document.getElementById('simulatedSmsBox');
+        const simulatedPinDisplay = document.getElementById('simulatedPinDisplay');
         const pinInput = document.getElementById('pinInput');
         const verifyPinBtn = document.getElementById('verifyPinBtn');
+        const welcomeName = document.getElementById('welcomeName');
 
         const form = document.getElementById('form');
         const input = document.getElementById('input');
@@ -123,7 +130,7 @@
         let generatedPin = "";
         let currentAlias = "";
 
-        // 1. Al pedir el PIN
+        // Paso 1: Validar datos y generar PIN simulado
         requestPinBtn.addEventListener('click', () => {
             const phone = phoneInput.value.trim();
             const name = nameInput.value.trim();
@@ -134,34 +141,29 @@
             }
 
             currentAlias = name;
-            
-            // Generar un código PIN aleatorio de 4 dígitos
             generatedPin = Math.floor(1000 + Math.random() * 9000).toString();
             
-            // Mostrar el PIN simulado (simulando el mensaje que llega al móvil)
-            simulatedSmsBox.textContent = `PIN: ${generatedPin}`;
-            simulatedSmsBox.style.display = 'block';
+            simulatedPinDisplay.textContent = `PIN: ${generatedPin}`;
 
-            // Cambiar de pantalla a la validación de PIN
-            stepPhone.style.display = 'none';
-            stepPin.style.display = 'block';
+            loginScreen.style.display = 'none';
+            pinScreen.style.display = 'block';
         });
 
-        // 2. Al verificar el PIN introducido
+        // Paso 2: Comprobar PIN y abrir el chat
         verifyPinBtn.addEventListener('click', () => {
             const enteredPin = pinInput.value.trim();
 
             if (enteredPin !== generatedPin) {
-                alert("El PIN introducido es incorrecto. Inténtalo de nuevo.");
+                alert("El PIN introducido es incorrecto.");
                 return;
             }
 
-            // Si es correcto, entra al chat
-            stepPin.style.display = 'none';
+            pinScreen.style.display = 'none';
             chatScreen.style.display = 'flex';
+            welcomeName.textContent = currentAlias;
         });
 
-        // 3. Enviar mensajes en el chat
+        // Paso 3: Enviar y recibir mensajes por WebSockets
         form.addEventListener('submit', function(e) {
             e.preventDefault();
             const text = input.value.trim();
