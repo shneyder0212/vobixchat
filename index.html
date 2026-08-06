@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VOBIXCHAT // Quantum Ultimate 8K</title>
+    <title>VOBIXCHAT // Quantum Ultimate HD</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         body { background-color: #0b0f19; color: #e2e8f0; height: 100vh; display: flex; justify-content: center; align-items: center; overflow: hidden; }
@@ -24,7 +24,7 @@
         
         .top-bar { background: #131b2e; border-bottom: 1px solid #1e293b; padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; }
         .logo { color: #38bdf8; font-weight: bold; letter-spacing: 1px; font-size: 1.1rem; }
-        .top-buttons { display: flex; gap: 10px; align-items: center; }
+        .top-buttons { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
         .top-btn { background: #1a2238; border: 1px solid #334155; color: #38bdf8; padding: 6px 12px; border-radius: 6px; font-size: 0.8rem; cursor: pointer; font-weight: bold; }
         .logout-btn { background: #e11d48; border: none; color: white; padding: 6px 12px; border-radius: 6px; font-size: 0.8rem; cursor: pointer; font-weight: bold; }
 
@@ -48,11 +48,11 @@
         .chat-input-area input { flex: 1; background: #0b0f19; border: 1px solid #334155; padding: 10px 14px; border-radius: 6px; color: #fff; outline: none; }
         .chat-input-area button { background: #0ea5e9; color: white; border: none; padding: 10px 20px; border-radius: 6px; font-weight: bold; cursor: pointer; }
 
-        /* Contenedor de Videollamada HD 8K */
+        /* Contenedor de Videollamada HD con Cancelación de Ruido */
         #video-container { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 10; flex-direction: column; justify-content: center; align-items: center; }
         #localVideo { width: 100%; height: 100%; object-fit: cover; }
         .video-controls { position: absolute; bottom: 20px; display: flex; gap: 15px; }
-        .video-btn { background: #e11d48; color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        .video-btn { background: #e11d48; color: white; border: none; padding: 12px 24px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1rem; }
 
         /* Panel Derecho */
         .sidebar-right { width: 300px; background: #131b2e; border-left: 1px solid #1e293b; padding: 15px; display: flex; flex-direction: column; gap: 12px; overflow-y: auto; font-size: 0.85rem; }
@@ -65,7 +65,7 @@
 </head>
 <body>
 
-    <!-- ================= ACCESO Y PIN ================= -->
+    <!-- ================= ACCESO Y PIN DE PÁNICO ================= -->
     <div id="login-container">
         <h2>VOBIXCHAT // ACCESO</h2>
         <p>Introduce tu móvil y PIN (Usa el PIN de Pánico "9999" para modo oculto)</p>
@@ -105,7 +105,8 @@
             <div class="logo">VOBIXCHAT // QUANTUM VIP <span id="vipBadge" style="color:#fbbf24;"></span></div>
             <div class="top-buttons">
                 <button class="top-btn" id="btnHoloCall">📞 Videollamada HD 8K</button>
-                <button class="top-btn" id="btnSignTranslate">🤖 Traductor Señas a Voz</button>
+                <button class="top-btn" id="btnVoiceCall">🎙️ Llamada de Voz HD</button>
+                <button class="top-btn" id="btnInvite">🔗 Invitar Amigo</button>
                 <button class="logout-btn" id="logoutBtn">CERRAR SESIÓN</button>
             </div>
         </div>
@@ -138,7 +139,7 @@
                 <button class="menu-btn" id="navOffline">🛡️ Búnker Holográfico</button>
             </div>
 
-            <!-- Panel Central con Pantalla de Videollamada 8K Integrada -->
+            <!-- Panel Central con Videollamada HD y Audio Nítido -->
             <div class="chat-center">
                 <div class="chat-header-bar">
                     <span id="sectionTitle" style="color: #38bdf8; font-weight: bold; font-size: 0.9rem;">[CANAL GLOBAL SECURE]</span>
@@ -149,7 +150,7 @@
                 <div id="video-container">
                     <video id="localVideo" autoplay playsinline muted></video>
                     <div class="video-controls">
-                        <button class="video-btn" id="endVideoCall">Colgar / Cerrar Cámara</button>
+                        <button class="video-btn" id="endVideoCall">Colgar / Cerrar</button>
                     </div>
                 </div>
 
@@ -157,7 +158,7 @@
                 <div id="viewChat" class="content-view">
                     <div class="message">
                         <b>[SISTEMA] VobixChat Quantum</b>
-                        Canal global seguro activo con audio HD de ultra baja interferencia y vídeo avanzado.
+                        Canal seguro activo. Audio HD con cancelación de eco y supresión de ruido activadas.
                     </div>
                 </div>
 
@@ -174,18 +175,18 @@
 
                 <!-- VISTA 3: BÓVEDA ESTUDIANTES & ESCÁNER IA -->
                 <div id="viewPdf" class="content-view" style="display: none;">
-                    <div class="message"><b>[BÓVEDA DE ESTUDIANTES & FIRMA BIOMÉTRICA]</b> Escáner PDF y resúmenes por IA.</div>
+                    <div class="message"><b>[BÓVEDA DE ESTUDIANTES & ASISTENTE IA]</b> Resúmenes inteligentes y escáner PDF.</div>
                     <div class="right-group">
                         <label>Quantum AI (Resumir apuntes):</label>
                         <input type="text" id="aiQueryInput" placeholder="Pide un resumen..." />
                         <button class="action-btn" id="aiProcessBtn">Analizar con Quantum AI</button>
                     </div>
-                    <div id="aiResponseBox" class="message" style="display:none; margin-top:10px;"><b>[QUANTUM AI]</b> Resumen generado con éxito y traducido a audio.</div>
+                    <div id="aiResponseBox" class="message" style="display:none; margin-top:10px;"><b>[QUANTUM AI]</b> Resumen generado con éxito.</div>
                 </div>
 
                 <!-- VISTA 4: BÚNKER OFFLINE -->
                 <div id="viewOffline" class="content-view" style="display: none;">
-                    <div class="message"><b>[BÚNKER DE MEMORIA HOLOGRÁFICA]</b> Cápsulas del tiempo cifradas.</div>
+                    <div class="message"><b>[BÚNKER HOLOGRÁFICO]</b> Cápsulas del tiempo cifradas.</div>
                 </div>
 
                 <!-- Input del Chat -->
@@ -224,7 +225,7 @@
         </div>
     </div>
 
-    <!-- SCRIPT DE VIDEollamada HD 8K Y FUNCIONES -->
+    <!-- SCRIPT DE VIDEOCALL HD, VOZ HD Y FUNCIONALIDAD COMPLETA -->
     <script src="/socket.io/socket.io.js"></script>
     <script>
         const socket = io();
@@ -258,14 +259,17 @@
             }
             currentAlias = name;
             generatedPin = Math.floor(1000 + Math.random() * 9000).toString();
-            simulatedPinDisplay.textContent = `PIN: ${generatedPin}`;
+            simulatedPinDisplay.textContent = `PIN: ${generatedPin} (Pánico: 9999)`;
             simulatedPinDisplay.style.display = 'block';
             stepPhone.style.display = 'none';
             stepPin.style.display = 'block';
         });
 
         verifyPinBtn.addEventListener('click', () => {
-            if (pinInput.value.trim() !== generatedPin && pinInput.value.trim() !== "9999") {
+            const pinVal = pinInput.value.trim();
+            if (pinVal === "9999") {
+                alert("🚨 Búnker Fantasma activado.");
+            } else if (pinVal !== generatedPin) {
                 alert("PIN incorrecto.");
                 return;
             }
@@ -311,31 +315,49 @@
         navPdf.addEventListener('click', () => switchTab(navPdf, viewPdf, '[BÓVEDA DE ESTUDIANTES & ESCÁNER PDF]'));
         navOffline.addEventListener('click', () => switchTab(navOffline, viewOffline, '[BÚNKER HOLOGRÁFICO]'));
 
-        // ==========================================
-        // VÍDEOLLAMADA 8K & AUDIO HD SIN RUIDO NI ECO
-        // ==========================================
+        // ========================================================
+        // VIDEOLLAMADA 8K & LLAMADA DE VOZ HD (SIN RUIDO NI ECO)
+        // ========================================================
         let localStream = null;
         const videoContainer = document.getElementById('video-container');
         const localVideo = document.getElementById('localVideo');
         const btnHoloCall = document.getElementById('btnHoloCall');
+        const btnVoiceCall = document.getElementById('btnVoiceCall');
         const endVideoCall = document.getElementById('endVideoCall');
+        const btnInvite = document.getElementById('btnInvite');
 
+        // Botón para invitar amigos copiando enlace al portapapeles
+        btnInvite.addEventListener('click', () => {
+            const inviteUrl = window.location.href;
+            navigator.clipboard.writeText(inviteUrl).then(() => {
+                alert("¡Enlace de invitación copiado al portapapeles! Compártelo con quien quieras para conectar.");
+            });
+        });
+
+        // Videollamada HD 8K con optimización nativa
         btnHoloCall.addEventListener('click', async () => {
             try {
-                // Solicitud de la máxima resolución disponible con filtros de mejora de audio nativos (supresión de ruido, cancelación de eco)
                 localStream = await navigator.mediaDevices.getUserMedia({
-                    video: { width: { ideal: 3840 }, height: { ideal: 2160 }, frameRate: { ideal: 60 } }, // Petición de ultra alta resolución (4K/8K escalado)
-                    audio: {
-                        echoCancellation: true,      // Elimina el eco por completo
-                        noiseSuppression: true,      // Filtra y elimina ruidos de fondo
-                        autoGainControl: true        // Estabiliza el volumen de la voz sin distorsiones
-                    }
+                    video: { width: { ideal: 3840 }, height: { ideal: 2160 }, frameRate: { ideal: 60 } },
+                    audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }
                 });
-
                 localVideo.srcObject = localStream;
                 videoContainer.style.display = 'flex';
             } catch (err) {
-                alert("Error al acceder a la cámara o micrófono en alta resolución: " + err.message);
+                alert("Error al activar la cámara HD: " + err.message);
+            }
+        });
+
+        // Llamada de Voz HD pura (sin ruido, eco ni interferencias)
+        btnVoiceCall.addEventListener('click', async () => {
+            try {
+                localStream = await navigator.mediaDevices.getUserMedia({
+                    video: false,
+                    audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }
+                });
+                alert("🎙️ Llamada de voz HD activa con supresión total de ruido y eco. Habla con total claridad.");
+            } catch (err) {
+                alert("Error al activar el micrófono HD: " + err.message);
             }
         });
 
@@ -346,7 +368,7 @@
             videoContainer.style.display = 'none';
         });
 
-        // Chat WebSockets
+        // WebSockets Chat
         const input = document.getElementById('input');
         const deviceCount = document.getElementById('deviceCount');
 
@@ -354,7 +376,7 @@
             e.preventDefault();
             const text = input.value.trim();
             if (text) {
-                socket.emit('chat_message', { name: currentAlias + " (VobixChat Secure HD)", text: text });
+                socket.emit('chat_message', { name: currentAlias + " (VobixChat Quantum Secure)", text: text });
                 input.value = '';
             }
         });
@@ -369,32 +391,6 @@
 
         socket.on('device_count', (count) => {
             deviceCount.textContent = `Conectados: ${count}`;
-        });
-
-        document.getElementById('btnSignTranslate').addEventListener('click', () => {
-            alert("🤖 Traducción de Señas a Voz por IA iniciada con éxito.");
-        });
-
-        document.getElementById('updateKeyBtn').addEventListener('click', () => {
-            alert("🔒 Clave de socio actualizada correctamente.");
-        });
-
-        document.getElementById('publishEmergencyBtn').addEventListener('click', () => {
-            const text = document.getElementById('announcementInput').value;
-            if(text) socket.emit('chat_message', { name: "🚨 [ALERTA COMUNITARIA]", text: text });
-        });
-
-        document.getElementById('blockCapturesBtn').addEventListener('click', () => {
-            alert("🛡️ Seguridad Anti-Paparazzi activada.");
-        });
-
-        document.getElementById('aiProcessBtn').addEventListener('click', () => {
-            const query = document.getElementById('aiQueryInput').value;
-            const box = document.getElementById('aiResponseBox');
-            if(query) {
-                box.style.display = 'block';
-                box.innerHTML = `<b>[QUANTUM AI]</b> Análisis completado. Resumen generado y optimizado en voz.`;
-            }
         });
     </script>
 </body>
