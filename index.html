@@ -6,56 +6,121 @@
     <title>VOBIXCHAT // Quantum Ultimate</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        body { background-color: #0b0f19; color: #e2e8f0; height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; }
-        .chat-container { width: 100%; max-width: 600px; height: 90vh; background: #131b2e; border: 1px solid #1e293b; border-radius: 12px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 8px 24px rgba(0,0,0,0.5); }
-        .chat-header { background: #1a2238; padding: 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #2a3655; }
-        .chat-header h2 { font-size: 1.1rem; color: #38bdf8; letter-spacing: 1px; }
-        .device-counter { font-size: 0.85rem; background: #0284c7; padding: 4px 10px; border-radius: 20px; color: #fff; }
-        .chat-messages { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
-        .message { background: #1e293b; padding: 10px 14px; border-radius: 8px; max-width: 80%; word-break: break-word; }
-        .message b { color: #38bdf8; display: block; font-size: 0.8rem; margin-bottom: 3px; }
-        .chat-input-area { padding: 15px; background: #1a2238; display: flex; gap: 10px; border-top: 1px solid #2a3655; }
-        .chat-input-area input { flex: 1; background: #0b0f19; border: 1px solid #334155; padding: 12px; border-radius: 8px; color: #fff; outline: none; font-size: 1rem; }
+        body { background-color: #0b0f19; color: #e2e8f0; height: 100vh; display: flex; justify-content: center; align-items: center; }
+        
+        /* Pantalla de Identificación Inicial */
+        #login-screen { width: 100%; max-width: 420px; background: #131b2e; border: 1px solid #1e293b; border-radius: 12px; padding: 30px; box-shadow: 0 8px 24px rgba(0,0,0,0.5); text-align: center; }
+        #login-screen h2 { font-size: 1.2rem; color: #38bdf8; margin-bottom: 10px; letter-spacing: 1px; }
+        #login-screen p { font-size: 0.8rem; color: #94a3b8; margin-bottom: 25px; }
+        .input-group { margin-bottom: 15px; text-align: left; }
+        .input-group label { display: block; font-size: 0.8rem; color: #94a3b8; margin-bottom: 5px; }
+        .input-group select, .input-group input { width: 100%; background: #0b0f19; border: 1px solid #334155; padding: 12px; border-radius: 8px; color: #fff; outline: none; font-size: 0.95rem; }
+        .input-group select:focus, .input-group input:focus { border-color: #38bdf8; }
+        .btn-main { width: 100%; background: #0ea5e9; color: white; border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: background 0.2s; margin-top: 10px; font-size: 1rem; }
+        .btn-main:hover { background: #0284c7; }
+
+        /* Pantalla Principal del Chat (Oculta hasta acceder) */
+        #chat-screen { display: none; width: 100%; max-width: 650px; height: 92vh; background: #131b2e; border: 1px solid #1e293b; border-radius: 12px; flex-direction: column; overflow: hidden; box-shadow: 0 8px 24px rgba(0,0,0,0.5); }
+        .chat-header { background: #1a2238; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #2a3655; }
+        .chat-header h2 { font-size: 1.1rem; color: #38bdf8; letter-spacing: 0.5px; }
+        .device-counter { font-size: 0.8rem; background: rgba(14, 165, 233, 0.15); border: 1px solid #0ea5e9; padding: 4px 12px; border-radius: 20px; color: #38bdf8; }
+        
+        /* Contenedor de mensajes optimizado para ver todo el contenido */
+        .chat-messages { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
+        .message { background: #1e293b; padding: 12px 16px; border-radius: 10px; max-width: 85%; word-break: break-word; border: 1px solid #2a3655; }
+        .message.own { background: #0369a1; align-self: flex-end; border-color: #0284c7; }
+        .message b { color: #38bdf8; display: block; font-size: 0.75rem; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .message.own b { color: #e0f2fe; }
+
+        /* Zona inferior de escritura limpia */
+        .chat-input-area { padding: 15px 20px; background: #1a2238; display: flex; gap: 12px; border-top: 1px solid #2a3655; align-items: center; }
+        .chat-input-area input { flex: 1; background: #0b0f19; border: 1px solid #334155; padding: 12px 16px; border-radius: 8px; color: #fff; outline: none; font-size: 0.95rem; }
         .chat-input-area input:focus { border-color: #38bdf8; }
-        .chat-input-area button { background: #0ea5e9; color: white; border: none; padding: 0 20px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: background 0.2s; }
+        .chat-input-area button { background: #0ea5e9; color: white; border: none; padding: 12px 24px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: background 0.2s; }
         .chat-input-area button:hover { background: #0284c7; }
     </style>
 </head>
 <body>
 
-    <div class="chat-container">
+    <div id="login-screen">
+        <h2>VOBIXCHAT // ACCESO</h2>
+        <p>Introduce tus datos para ingresar al sistema</p>
+        
+        <div class="input-group">
+            <label>País</label>
+            <select id="country">
+                <option value="España (+34)">España (+34)</option>
+                <option value="Colombia (+57)">Colombia (+57)</option>
+                <option value="México (+52)">México (+52)</option>
+                <option value="Argentina (+54)">Argentina (+54)</option>
+            </select>
+        </div>
+
+        <div class="input-group">
+            <label>Número de Móvil</label>
+            <input type="tel" id="phoneInput" placeholder="Ej. 600000000" autocomplete="off" />
+        </div>
+
+        <div class="input-group">
+            <label>Nombre o Alias</label>
+            <input type="text" id="nameInput" placeholder="Tu nombre en el chat" autocomplete="off" />
+        </div>
+
+        <button class="btn-main" id="loginBtn">ACCEDER</button>
+    </div>
+
+    <div id="chat-screen">
         <div class="chat-header">
-            <h2>VOBIXCHAT // LIVE</h2>
-            <div id="deviceCount" class="device-counter">Conectados: 1</div>
+            <h2>VOBIXCHAT // SECURE</h2>
+            <div id="deviceCount" class="device-counter">En línea: 1</div>
         </div>
 
         <div id="messages" class="chat-messages">
-            <div class="message"><b>Sistema</b>¡Bienvenido al chat en vivo, Shneyder!</div>
+            <div class="message"><b>Sistema</b>Canal seguro establecido correctamente.</div>
         </div>
 
         <form id="form" class="chat-input-area">
-            <input id="input" autocomplete="off" placeholder="Escribe tu mensaje aquí..." required />
+            <input id="input" autocomplete="off" placeholder="Escribe un mensaje aquí..." required />
             <button type="submit">Enviar</button>
         </form>
     </div>
 
-    <!-- Script de Socket.io -->
     <script src="/socket.io/socket.io.js"></script>
     <script>
         const socket = io();
+
+        const loginScreen = document.getElementById('login-screen');
+        const chatScreen = document.getElementById('chat-screen');
+        const loginBtn = document.getElementById('loginBtn');
+        const phoneInput = document.getElementById('phoneInput');
+        const nameInput = document.getElementById('nameInput');
 
         const form = document.getElementById('form');
         const input = document.getElementById('input');
         const messages = document.getElementById('messages');
         const deviceCount = document.getElementById('deviceCount');
 
-        // Pedir nombre de usuario al entrar
-        const username = prompt("Introduce tu alias o nombre:") || "Anónimo";
+        let currentAlias = "";
+
+        loginBtn.addEventListener('click', () => {
+            const phone = phoneInput.value.trim();
+            const name = nameInput.value.trim();
+
+            if (!phone || !name) {
+                alert("Por favor, completa los campos requeridos.");
+                return;
+            }
+
+            currentAlias = name;
+            loginScreen.style.display = 'none';
+            chatScreen.style.display = 'flex';
+        });
 
         form.addEventListener('submit', function(e) {
             e.preventDefault();
-            if (input.value) {
-                socket.emit('chat_message', { name: username, text: input.value });
+            const text = input.value.trim();
+            if (text && currentAlias) {
+                socket.emit('chat_message', { name: currentAlias, text: text });
                 input.value = '';
             }
         });
@@ -63,13 +128,16 @@
         socket.on('chat_message', function(msg) {
             const item = document.createElement('div');
             item.className = 'message';
+            if (msg.name === currentAlias) {
+                item.classList.add('own');
+            }
             item.innerHTML = `<b>${msg.name}</b>${msg.text}`;
             messages.appendChild(item);
             messages.scrollTop = messages.scrollHeight;
         });
 
         socket.on('device_count', function(count) {
-            deviceCount.textContent = `Conectados: ${count}`;
+            deviceCount.textContent = `En línea: ${count}`;
         });
     </script>
 </body>
