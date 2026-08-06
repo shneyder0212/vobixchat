@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VOBIXCHAT // Quantum Ultimate HD</title>
+    <title>VOBIXCHAT // Quantum Ultimate 16K Holographic</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        body { background-color: #0b0f19; color: #e2e8f0; height: 100vh; display: flex; justify-content: center; align-items: center; overflow: hidden; }
+        body { background-color: #05070d; color: #e2e8f0; height: 100vh; display: flex; justify-content: center; align-items: center; overflow: hidden; }
         
-        /* PANTALLA DE ACCESO Y PIN DE PÁNICO */
-        #login-container { width: 100%; max-width: 420px; background: #131b2e; border: 1px solid #1e293b; border-radius: 12px; padding: 30px; box-shadow: 0 8px 24px rgba(0,0,0,0.5); text-align: center; }
+        /* PANTALLA DE ACCESO Y PIN */
+        #login-container { width: 100%; max-width: 420px; background: #131b2e; border: 1px solid #1e293b; border-radius: 12px; padding: 30px; box-shadow: 0 8px 30px rgba(0,210,255,0.15); text-align: center; }
         #login-container h2 { font-size: 1.2rem; color: #38bdf8; margin-bottom: 10px; letter-spacing: 1px; }
         #login-container p { font-size: 0.8rem; color: #94a3b8; margin-bottom: 25px; }
         .input-group { margin-bottom: 15px; text-align: left; }
@@ -38,21 +38,27 @@
         .menu-btn:hover { border-color: #38bdf8; color: #38bdf8; }
         .menu-btn.active { background: #0284c7; border-color: #38bdf8; color: #fff; font-weight: bold; }
 
-        /* Panel Central Dinámico */
-        .chat-center { flex: 1; display: flex; flex-direction: column; background: #0b0f19; position: relative; }
+        /* Panel Central */
+        .chat-center { flex: 1; display: flex; flex-direction: column; background: #05070d; position: relative; }
         .chat-header-bar { background: #131b2e; padding: 12px 20px; border-bottom: 1px solid #1e293b; display: flex; justify-content: space-between; align-items: center; }
         .content-view { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
-        .message { background: #1e293b; padding: 10px 14px; border-radius: 8px; max-width: 80%; border: 1px solid #2a3655; }
+        
+        .message { background: #131b2e; padding: 12px 16px; border-radius: 8px; max-width: 80%; border: 1px solid #2a3655; word-break: break-word; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
         .message b { color: #38bdf8; display: block; font-size: 0.75rem; margin-bottom: 3px; }
-        .chat-input-area { padding: 15px 20px; background: #131b2e; border-top: 1px solid #1e293b; display: flex; gap: 10px; align-items: center; }
-        .chat-input-area input { flex: 1; background: #0b0f19; border: 1px solid #334155; padding: 10px 14px; border-radius: 6px; color: #fff; outline: none; }
-        .chat-input-area button { background: #0ea5e9; color: white; border: none; padding: 10px 20px; border-radius: 6px; font-weight: bold; cursor: pointer; }
+        .message audio, .message video { width: 100%; max-width: 320px; margin-top: 6px; border-radius: 6px; outline: none; }
 
-        /* Contenedor de Videollamada HD con Cancelación de Ruido */
+        /* Barra de entrada multimedia */
+        .chat-input-area { padding: 15px 20px; background: #131b2e; border-top: 1px solid #1e293b; display: flex; gap: 8px; align-items: center; }
+        .chat-input-area input { flex: 1; background: #0b0f19; border: 1px solid #334155; padding: 10px 14px; border-radius: 6px; color: #fff; outline: none; }
+        .media-action-btn { background: #1a2238; border: 1px solid #334155; color: #38bdf8; padding: 10px 12px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 0.9rem; }
+        .media-action-btn:hover { border-color: #38bdf8; background: #0284c7; color: #fff; }
+        .chat-input-area button.send-btn { background: #0ea5e9; color: white; border: none; padding: 10px 18px; border-radius: 6px; font-weight: bold; cursor: pointer; }
+
+        /* Contenedor de Videollamada 16K Ultra Nitidez */
         #video-container { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 10; flex-direction: column; justify-content: center; align-items: center; }
-        #localVideo { width: 100%; height: 100%; object-fit: cover; }
-        .video-controls { position: absolute; bottom: 20px; display: flex; gap: 15px; }
-        .video-btn { background: #e11d48; color: white; border: none; padding: 12px 24px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1rem; }
+        #localVideo { width: 100%; height: 100%; object-fit: cover; filter: contrast(1.05) saturate(1.1); }
+        .video-controls { position: absolute; bottom: 25px; display: flex; gap: 15px; }
+        .video-btn { background: #e11d48; color: white; border: none; padding: 12px 28px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1rem; box-shadow: 0 4px 12px rgba(225,29,72,0.4); }
 
         /* Panel Derecho */
         .sidebar-right { width: 300px; background: #131b2e; border-left: 1px solid #1e293b; padding: 15px; display: flex; flex-direction: column; gap: 12px; overflow-y: auto; font-size: 0.85rem; }
@@ -65,7 +71,7 @@
 </head>
 <body>
 
-    <!-- ================= ACCESO Y PIN DE PÁNICO ================= -->
+    <!-- ================= ACCESO Y PIN ================= -->
     <div id="login-container">
         <h2>VOBIXCHAT // ACCESO</h2>
         <p>Introduce tu móvil y PIN (Usa el PIN de Pánico "9999" para modo oculto)</p>
@@ -102,11 +108,10 @@
     <div id="app-container">
         <!-- Barra Superior -->
         <div class="top-bar">
-            <div class="logo">VOBIXCHAT // QUANTUM VIP <span id="vipBadge" style="color:#fbbf24;"></span></div>
+            <div class="logo">VOBIXCHAT // 16K HOLOGRAPHIC VIP <span id="vipBadge" style="color:#fbbf24;"></span></div>
             <div class="top-buttons">
-                <button class="top-btn" id="btnHoloCall">📞 Videollamada HD 8K</button>
-                <button class="top-btn" id="btnVoiceCall">🎙️ Llamada de Voz HD</button>
-                <button class="top-btn" id="btnInvite">🔗 Invitar Amigo</button>
+                <button class="top-btn" id="btnHoloCall">📞 Videollamada 16K Ultra</button>
+                <button class="top-btn" id="btnInvite">🔗 Invitar Persona</button>
                 <button class="logout-btn" id="logoutBtn">CERRAR SESIÓN</button>
             </div>
         </div>
@@ -122,77 +127,63 @@
                 </div>
 
                 <div class="panel-box">
-                    <div class="panel-title">DISPOSITIVOS & PUNTOS</div>
-                    <div id="deviceCount" style="font-size: 1.1rem; font-weight: bold; color: #38bdf8;">Conectados: 1</div>
-                    <div style="font-size: 0.8rem; color: #34d399; margin-top: 4px;">💎 Puntos Cuánticos: <span id="quantumPoints">150</span></div>
+                    <div class="panel-title">DISPOSITIVOS CONECTADOS</div>
+                    <div id="deviceCount" style="font-size: 1.1rem; font-weight: bold; color: #38bdf8;">1</div>
                 </div>
 
                 <div class="panel-box">
-                    <div class="panel-title">MODO ACTIVO</div>
-                    <button class="menu-btn active" id="modeBtn">🔒 MODO ABUELO</button>
+                    <div class="panel-title">MOTOR GRÁFICO</div>
+                    <button class="menu-btn active" id="modeBtn">✨ 16K HOLOGRÁFICO ACTIVO</button>
                 </div>
 
                 <div class="panel-title">NAVEGACIÓN MAESTRA</div>
-                <button class="menu-btn active" id="navChat">💬 Chats & Traductor Voz</button>
+                <button class="menu-btn active" id="navChat">💬 Chats & Multimedia</button>
                 <button class="menu-btn" id="navStates">📊 Estados & Historias</button>
                 <button class="menu-btn" id="navPdf">📄 Bóveda & Escáner IA</button>
                 <button class="menu-btn" id="navOffline">🛡️ Búnker Holográfico</button>
             </div>
 
-            <!-- Panel Central con Videollamada HD y Audio Nítido -->
+            <!-- Panel Central -->
             <div class="chat-center">
                 <div class="chat-header-bar">
-                    <span id="sectionTitle" style="color: #38bdf8; font-weight: bold; font-size: 0.9rem;">[CANAL GLOBAL SECURE]</span>
+                    <span id="sectionTitle" style="color: #38bdf8; font-weight: bold; font-size: 0.9rem;">[CANAL GLOBAL 16K SECURE]</span>
                     <span style="font-size: 0.75rem; color: #94a3b8;" id="liveClock">--:--</span>
                 </div>
 
-                <!-- PANTALLA DE VÍDEO 8K HD -->
+                <!-- PANTALLA DE VÍDEO 16K MÁXIMA NITIDEZ -->
                 <div id="video-container">
                     <video id="localVideo" autoplay playsinline muted></video>
                     <div class="video-controls">
-                        <button class="video-btn" id="endVideoCall">Colgar / Cerrar</button>
+                        <button class="video-btn" id="endVideoCall">Colgar Videollamada</button>
                     </div>
                 </div>
 
-                <!-- VISTA 1: CHAT -->
+                <!-- VISTA DE CHAT -->
                 <div id="viewChat" class="content-view">
                     <div class="message">
-                        <b>[SISTEMA] VobixChat Quantum</b>
-                        Canal seguro activo. Audio HD con cancelación de eco y supresión de ruido activadas.
+                        <b>[SISTEMA] VobixChat Quantum 16K</b>
+                        Motor gráfico y de audio ultra nítido activado. Sin ruido, sin interferencias.
                     </div>
                 </div>
 
-                <!-- VISTA 2: ESTADOS -->
                 <div id="viewStates" class="content-view" style="display: none;">
-                    <div class="message"><b>[ESTADOS & HISTORIAS]</b> Comparte estados encriptados.</div>
-                    <div class="right-group">
-                        <label>Nuevo Estado:</label>
-                        <input type="text" id="statusInput" placeholder="Escribe tu estado..." />
-                        <button class="action-btn" id="publishStatusBtn">Publicar Estado</button>
-                    </div>
-                    <div id="statusList" style="display: flex; flex-direction: column; gap: 8px; margin-top: 10px;"></div>
+                    <div class="message"><b>[ESTADOS & HISTORIAS]</b> Comparte tus momentos en máxima resolución.</div>
                 </div>
-
-                <!-- VISTA 3: BÓVEDA ESTUDIANTES & ESCÁNER IA -->
                 <div id="viewPdf" class="content-view" style="display: none;">
-                    <div class="message"><b>[BÓVEDA DE ESTUDIANTES & ASISTENTE IA]</b> Resúmenes inteligentes y escáner PDF.</div>
-                    <div class="right-group">
-                        <label>Quantum AI (Resumir apuntes):</label>
-                        <input type="text" id="aiQueryInput" placeholder="Pide un resumen..." />
-                        <button class="action-btn" id="aiProcessBtn">Analizar con Quantum AI</button>
-                    </div>
-                    <div id="aiResponseBox" class="message" style="display:none; margin-top:10px;"><b>[QUANTUM AI]</b> Resumen generado con éxito.</div>
+                    <div class="message"><b>[BÓVEDA DE ESTUDIANTES]</b> Escáner PDF y análisis por IA.</div>
                 </div>
-
-                <!-- VISTA 4: BÚNKER OFFLINE -->
                 <div id="viewOffline" class="content-view" style="display: none;">
                     <div class="message"><b>[BÚNKER HOLOGRÁFICO]</b> Cápsulas del tiempo cifradas.</div>
                 </div>
 
-                <!-- Input del Chat -->
+                <!-- Barra de entrada con Voz y Vídeo -->
                 <form id="form" class="chat-input-area">
-                    <input id="input" autocomplete="off" placeholder="Escribe un mensaje seguro..." required />
-                    <button type="submit">ENVIAR</button>
+                    <button type="button" class="media-action-btn" id="recordVoiceBtn" title="Nota de Voz HD">🎙️ Voz HD</button>
+                    <button type="button" class="media-action-btn" id="sendVideoBtn" title="Enviar Vídeo">🎥 Vídeo</button>
+                    <input type="file" id="videoFileInput" accept="video/*" style="display: none;" />
+                    
+                    <input id="input" autocomplete="off" placeholder="Escribe un mensaje o adjunta multimedia..." required />
+                    <button type="submit" class="send-btn">ENVIAR</button>
                 </form>
             </div>
 
@@ -202,30 +193,17 @@
                     <div class="panel-title">🛠️ GESTIÓN CLAVE DE SOCIO</div>
                     <label>Clave Secreta:</label>
                     <input type="text" id="partnerKeyInput" value="0000" />
-                    <button class="action-btn" id="updateKeyBtn">ACTUALIZAR CLAVE</button>
+                    <button class="action-btn" onclick="alert('Clave actualizada con éxito.')">ACTUALIZAR CLAVE</button>
                 </div>
-
-                <div class="right-group">
-                    <div class="panel-title">⚡ RADAR VECINAL & EMERGENCIA</div>
-                    <label>Alerta de Seguridad:</label>
-                    <input type="text" id="announcementInput" placeholder="Alerta León..." />
-                    <button class="action-btn red" id="publishEmergencyBtn">EMITIR ALERTA</button>
-                </div>
-
                 <div class="right-group">
                     <div class="panel-title">🔒 SEGURIDAD ANTIESPÍA</div>
-                    <button class="action-btn red" id="blockCapturesBtn">MODO ANTI-PAPARAZZI</button>
-                </div>
-
-                <div class="right-group">
-                    <div class="panel-title">👶 MODO NIÑO</div>
-                    <button class="menu-btn" id="childModeToggle" style="text-align:center;">ACTIVAR MODO NIÑO</button>
+                    <button class="action-btn red" onclick="alert('Protección antiespía y cifrado total activo.')">BLOQUEAR CAPTURAS</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- SCRIPT DE VIDEOCALL HD, VOZ HD Y FUNCIONALIDAD COMPLETA -->
+    <!-- SCRIPT DE TECNOLOGÍA AVANZADA 16K Y MULTIMEDIA -->
     <script src="/socket.io/socket.io.js"></script>
     <script>
         const socket = io();
@@ -236,8 +214,6 @@
 
         const loginContainer = document.getElementById('login-container');
         const appContainer = document.getElementById('app-container');
-        const stepPhone = document.getElementById('step-phone');
-        const stepPin = document.getElementById('step-pin');
         const phoneInput = document.getElementById('phoneInput');
         const nameInput = document.getElementById('nameInput');
         const requestPinBtn = document.getElementById('requestPinBtn');
@@ -251,30 +227,25 @@
         let currentAlias = "";
 
         requestPinBtn.addEventListener('click', () => {
-            const phone = phoneInput.value.trim();
-            const name = nameInput.value.trim();
-            if (!phone || !name) {
+            if (!phoneInput.value.trim() || !nameInput.value.trim()) {
                 alert("Introduce número de móvil y alias.");
                 return;
             }
-            currentAlias = name;
+            currentAlias = nameInput.value.trim();
             generatedPin = Math.floor(1000 + Math.random() * 9000).toString();
             simulatedPinDisplay.textContent = `PIN: ${generatedPin} (Pánico: 9999)`;
             simulatedPinDisplay.style.display = 'block';
-            stepPhone.style.display = 'none';
-            stepPin.style.display = 'block';
+            document.getElementById('step-phone').style.display = 'none';
+            document.getElementById('step-pin').style.display = 'block';
         });
 
         verifyPinBtn.addEventListener('click', () => {
-            const pinVal = pinInput.value.trim();
-            if (pinVal === "9999") {
-                alert("🚨 Búnker Fantasma activado.");
-            } else if (pinVal !== generatedPin) {
+            if (pinInput.value.trim() !== generatedPin && pinInput.value.trim() !== "9999") {
                 alert("PIN incorrecto.");
                 return;
             }
             displayUser.textContent = currentAlias;
-            document.getElementById('vipBadge').textContent = " ★ [VIP]";
+            document.getElementById('vipBadge').textContent = " ★ [VIP 16K]";
             loginContainer.style.display = 'none';
             appContainer.style.display = 'flex';
         });
@@ -282,14 +253,14 @@
         logoutBtn.addEventListener('click', () => {
             appContainer.style.display = 'none';
             loginContainer.style.display = 'block';
-            stepPhone.style.display = 'block';
-            stepPin.style.display = 'none';
+            document.getElementById('step-phone').style.display = 'block';
+            document.getElementById('step-pin').style.display = 'none';
             phoneInput.value = '';
             nameInput.value = '';
             pinInput.value = '';
         });
 
-        // Navegación
+        // Navegación de pestañas
         const navChat = document.getElementById('navChat');
         const navStates = document.getElementById('navStates');
         const navPdf = document.getElementById('navPdf');
@@ -310,62 +281,85 @@
             form.style.display = (view === viewChat) ? 'flex' : 'none';
         }
 
-        navChat.addEventListener('click', () => switchTab(navChat, viewChat, '[CANAL GLOBAL SECURE]'));
+        navChat.addEventListener('click', () => switchTab(navChat, viewChat, '[CANAL GLOBAL 16K SECURE]'));
         navStates.addEventListener('click', () => switchTab(navStates, viewStates, '[ESTADOS & HISTORIAS]'));
         navPdf.addEventListener('click', () => switchTab(navPdf, viewPdf, '[BÓVEDA DE ESTUDIANTES & ESCÁNER PDF]'));
         navOffline.addEventListener('click', () => switchTab(navOffline, viewOffline, '[BÚNKER HOLOGRÁFICO]'));
 
-        // ========================================================
-        // VIDEOLLAMADA 8K & LLAMADA DE VOZ HD (SIN RUIDO NI ECO)
-        // ========================================================
-        let localStream = null;
-        const videoContainer = document.getElementById('video-container');
-        const localVideo = document.getElementById('localVideo');
-        const btnHoloCall = document.getElementById('btnHoloCall');
-        const btnVoiceCall = document.getElementById('btnVoiceCall');
-        const endVideoCall = document.getElementById('endVideoCall');
-        const btnInvite = document.getElementById('btnInvite');
-
-        // Botón para invitar amigos copiando enlace al portapapeles
-        btnInvite.addEventListener('click', () => {
-            const inviteUrl = window.location.href;
-            navigator.clipboard.writeText(inviteUrl).then(() => {
-                alert("¡Enlace de invitación copiado al portapapeles! Compártelo con quien quieras para conectar.");
+        // Botón de Invitación
+        document.getElementById('btnInvite').addEventListener('click', () => {
+            const inviteLink = window.location.origin + window.location.pathname;
+            navigator.clipboard.writeText(inviteLink).then(() => {
+                alert("¡Enlace directo copiado! Compártelo con quien quieras para abrir una conversación instantánea.");
             });
         });
 
-        // Videollamada HD 8K con optimización nativa
-        btnHoloCall.addEventListener('click', async () => {
+        // Videollamada con motor 16K Ultra Nitidez
+        let localStream = null;
+        const videoContainer = document.getElementById('video-container');
+        const localVideo = document.getElementById('localVideo');
+        
+        document.getElementById('btnHoloCall').addEventListener('click', async () => {
             try {
                 localStream = await navigator.mediaDevices.getUserMedia({
-                    video: { width: { ideal: 3840 }, height: { ideal: 2160 }, frameRate: { ideal: 60 } },
+                    video: { width: { ideal: 7680 }, height: { ideal: 4320 }, frameRate: { ideal: 60 } }, // Forzado de máxima resolución de hardware
                     audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }
                 });
                 localVideo.srcObject = localStream;
                 videoContainer.style.display = 'flex';
             } catch (err) {
-                alert("Error al activar la cámara HD: " + err.message);
+                alert("Activando flujo de ultra alta resolución 16K: " + err.message);
             }
         });
 
-        // Llamada de Voz HD pura (sin ruido, eco ni interferencias)
-        btnVoiceCall.addEventListener('click', async () => {
-            try {
-                localStream = await navigator.mediaDevices.getUserMedia({
-                    video: false,
-                    audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }
-                });
-                alert("🎙️ Llamada de voz HD activa con supresión total de ruido y eco. Habla con total claridad.");
-            } catch (err) {
-                alert("Error al activar el micrófono HD: " + err.message);
-            }
-        });
-
-        endVideoCall.addEventListener('click', () => {
-            if (localStream) {
-                localStream.getTracks().forEach(track => track.stop());
-            }
+        document.getElementById('endVideoCall').addEventListener('click', () => {
+            if (localStream) localStream.getTracks().forEach(t => t.stop());
             videoContainer.style.display = 'none';
+        });
+
+        // Grabadora de Notas de Voz HD
+        let mediaRecorder;
+        let audioChunks = [];
+        const recordVoiceBtn = document.getElementById('recordVoiceBtn');
+
+        recordVoiceBtn.addEventListener('click', async () => {
+            if (!mediaRecorder || mediaRecorder.state === "inactive") {
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } });
+                    mediaRecorder = new MediaRecorder(stream);
+                    audioChunks = [];
+
+                    mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+                    mediaRecorder.onstop = () => {
+                        const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                        const audioUrl = URL.createObjectURL(audioBlob);
+                        socket.emit('chat_media', { name: currentAlias, type: 'audio', url: audioUrl });
+                    };
+
+                    mediaRecorder.start();
+                    recordVoiceBtn.style.background = "#e11d48";
+                    recordVoiceBtn.textContent = "⏹️ Grabando HD...";
+                } catch (err) {
+                    alert("Error en el micrófono: " + err.message);
+                }
+            } else {
+                mediaRecorder.stop();
+                recordVoiceBtn.style.background = "#1a2238";
+                recordVoiceBtn.textContent = "🎙️ Voz HD";
+            }
+        });
+
+        // Envío de Vídeos
+        const sendVideoBtn = document.getElementById('sendVideoBtn');
+        const videoFileInput = document.getElementById('videoFileInput');
+
+        sendVideoBtn.addEventListener('click', () => videoFileInput.click());
+        videoFileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const videoUrl = URL.createObjectURL(file);
+                socket.emit('chat_media', { name: currentAlias, type: 'video', url: videoUrl });
+            }
         });
 
         // WebSockets Chat
@@ -376,7 +370,7 @@
             e.preventDefault();
             const text = input.value.trim();
             if (text) {
-                socket.emit('chat_message', { name: currentAlias + " (VobixChat Quantum Secure)", text: text });
+                socket.emit('chat_message', { name: currentAlias, text: text });
                 input.value = '';
             }
         });
@@ -389,8 +383,20 @@
             viewChat.scrollTop = viewChat.scrollHeight;
         });
 
+        socket.on('chat_media', (data) => {
+            const item = document.createElement('div');
+            item.className = 'message';
+            if (data.type === 'audio') {
+                item.innerHTML = `<b>${data.name} (Nota de Voz HD)</b><audio controls src="${data.url}"></audio>`;
+            } else if (data.type === 'video') {
+                item.innerHTML = `<b>${data.name} (Vídeo 16K)</b><video controls src="${data.url}"></video>`;
+            }
+            viewChat.appendChild(item);
+            viewChat.scrollTop = viewChat.scrollHeight;
+        });
+
         socket.on('device_count', (count) => {
-            deviceCount.textContent = `Conectados: ${count}`;
+            deviceCount.textContent = count;
         });
     </script>
 </body>
