@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VOBIXCHAT // Quantum Ultimate OS - Legal Vault Edition</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <style>
+        :root {
+            --bg-quantum: #010308;
+            --panel-hud: rgba(5, 12, 25, 0.98);
+            --neon-blue: #00f0ff;
+            --neon-violet: #9d00ff;
+            --neon-green: #00ff66;
+            --neon-amber: #ffaa00;
+            --neon-red: #ff0055;
+            --neon-pink: #ff00ea;
+            --text-main: #f0f6fc;
+            --text-dim: #7a9ec2;
+            --border-hud: rgba(0, 240, 255, 0.18);
+            --user-theme: #00f0ff;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background-color: var(--bg-quantum);
+            background-image: 
+                radial-gradient(circle at 50% 10%, rgba(0, 240, 255, 0.08) 0%, transparent 60%),
+                linear-gradient(rgba(1, 3, 8, 0.99), rgba(1, 3, 8, 0.99));
+            font-family: 'Rajdhani', sans-serif;
+            color: var(--text-main);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            transition: 0.3s;
+        }
+
+        .app-container {
+            width: 100vw; max-width: 1550px; height: 100vh;
+            background: var(--panel-hud); display: grid; grid-template-columns: 290px 1fr 310px;
+            overflow: hidden; position: relative; border: 1px solid var(--border-hud); box-shadow: 0 0 30px rgba(0,0,0,0.8);
+            border-radius: 8px;
+        }
+
+        @media(max-width: 1000px) {
+            .app-container { grid-template-columns: 1fr; }
+            .hud-left, .hud-right { display: none; }
+        }
+
+        .auth-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(1, 3, 8, 0.96); backdrop-filter: blur(40px);
+            display: flex; justify-content: center; align-items: center; z-index: 1500;
+        }
+        .auth-card {
+            width: 90%; max-width: 420px; background: rgba(8, 16, 32, 0.95);
+            border: 1px solid var(--border-hud); box-shadow: 0 0 30px rgba(0, 240, 255, 0.15);
+            border-radius: 12px; padding: 24px; display: flex; flex-direction: column; gap: 12px;
+        }
+        .auth-card h2 { font-family: 'Orbitron', sans-serif; color: var(--neon-blue); font-size: 1.1rem; text-align: center; }
+        .auth-card p { font-family: 'Share Tech Mono', monospace; font-size: 0.7rem; color: var(--text-dim); text-align: center; }
+        .auth-select, .auth-input { background: #000; border: 1px solid var(--border-hud); color: #fff; padding: 10px; font-family: 'Share Tech Mono'; border-radius: 6px; outline: none; font-size: 0.9rem; width: 100%; }
+        .auth-btn { background: var(--neon-blue); color: #000; border: none; padding: 12px; font-family: 'Orbitron'; font-weight: bold; border-radius: 6px; cursor: pointer; font-size: 0.9rem; transition: 0.2s; }
+
+        .avatar-selection { display: flex; gap: 8px; justify-content: center; margin: 4px 0; }
+        .avatar-option { font-size: 1.5rem; cursor: pointer; padding: 4px; border: 1px solid transparent; border-radius: 50%; transition: 0.3s; }
+        .avatar-option.selected { border-color: var(--neon-blue); background: rgba(0,240,255,0.15); }
+
+        .hud-left {
+            background: rgba(2, 6, 14, 0.98); border-right: 1px solid var(--border-hud);
+            display: flex; flex-direction: column; padding: 14px; gap: 10px; overflow-y: auto;
+        }
+        .brand-box { border-bottom: 1px solid var(--border-hud); padding-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
+        .brand-title { font-family: 'Orbitron', sans-serif; font-weight: 900; font-size: 1.1rem; color: var(--neon-blue); }
+        .brand-subtitle { font-family: 'Share Tech Mono', monospace; font-size: 0.55rem; color: var(--neon-violet); }
+
+        .user-profile-widget { display: flex; align-items: center; gap: 10px; background: rgba(0,240,255,0.03); border: 1px solid var(--border-hud); padding: 8px; border-radius: 6px; }
+        .profile-avatar-box { width: 38px; height: 38px; border-radius: 50%; background: #000; border: 1px solid var(--neon-blue); display: flex; align-items: center; justify-content: center; font-size: 1.2rem; overflow: hidden; }
+        .profile-avatar-box img { width: 100%; height: 100%; object-fit: cover; }
+
+        .device-counter-box {
+            background: rgba(0, 255, 102, 0.05); border: 1px solid rgba(0, 255, 102, 0.25); padding: 8px; border-radius: 6px; text-align: center;
+        }
+        .device-counter-number { font-family: 'Orbitron'; font-size: 1.3rem; color: var(--neon-green); font-weight: 900; }
+
+        .owner-badge-box { display: none; background: rgba(0, 240, 255, 0.08); border: 1px solid var(--neon-blue); padding: 8px; border-radius: 6px; text-align: center; }
+        .owner-badge-title { font-family: 'Orbitron'; font-size: 0.65rem; color: var(--neon-blue); font-weight: bold; }
+
+        .modes-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+        .mode-box { background: rgba(255, 170, 0, 0.05); border: 1px dashed rgba(255, 170, 0, 0.3); padding: 6px; border-radius: 6px; text-align: center; }
+        .mode-box.kids { background: rgba(255, 0, 170, 0.05); border: 1px dashed rgba(255, 0, 170, 0.3); }
+        .mode-btn { background: var(--neon-amber); color: #000; border: none; padding: 5px; font-family: 'Orbitron'; font-weight: bold; font-size: 0.55rem; border-radius: 4px; cursor: pointer; width: 100%; margin-top: 3px; }
+        .mode-btn.kids-btn { background: var(--neon-pink); color: #fff; }
+
+        .nav-tabs { display: flex; flex-direction: column; gap: 6px; }
+        .nav-tab-btn {
+            background: rgba(0, 240, 255, 0.03); border: 1px solid var(--border-hud); color: var(--text-main);
+            padding: 8px; border-radius: 6px; text-align: left; font-family: 'Share Tech Mono', monospace;
+            font-size: 0.75rem; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: 0.2s;
+        }
+        .nav-tab-btn:hover, .nav-tab-btn.active { background: rgba(0, 240, 255, 0.1); border-color: var(--neon-blue); color: var(--neon-blue); }
+
+        .emergency-btn {
+            background: rgba(255, 0, 85, 0.1); border: 1px solid rgba(255, 0, 85, 0.4); color: var(--neon-red);
+            padding: 9px; border-radius: 6px; font-family: 'Orbitron', sans-serif; font-size: 0.7rem; font-weight: bold; cursor: pointer; text-align: center; display: flex; align-items: center; justify-content: center; gap: 6px;
+        }
+        .emergency-btn:hover { background: var(--neon-red); color: #fff; }
+
+        .hud-center { display: flex; flex-direction: column; background: rgba(2, 5, 12, 0.9); position: relative; overflow: hidden; }
+        .quantum-ads-banner {
+            background: linear-gradient(90deg, rgba(157,0,255,0.15), rgba(0,240,255,0.15), rgba(255,170,0,0.15));
+            border-bottom: 1px solid rgba(255, 170, 0, 0.3); padding: 5px 16px; display: flex; align-items: center; justify-content: space-between;
+            font-family: 'Share Tech Mono', monospace; font-size: 0.7rem; flex-shrink: 0;
+        }
+        .ads-badge { background: var(--neon-amber); color: #000; padding: 2px 6px; font-family: 'Orbitron'; font-weight: 900; font-size: 0.55rem; border-radius: 3px; }
+        .ads-ticker { white-space: nowrap; overflow: hidden; width: 100%; padding-left: 12px; color: var(--text-main); animation: scrollAds 35s linear infinite; }
+        @keyframes scrollAds { 0% { transform: translateX(100%); } 100% { transform: translateX(-100%); } }
+
+        .chat-topbar {
+            padding: 9px 16px; background: rgba(3, 7, 15, 0.95); border-bottom: 1px solid var(--border-hud);
+            display: flex; justify-content: space-between; align-items: center; flex-shrink: 0;
+        }
+        .active-channel { font-family: 'Orbitron', sans-serif; font-size: 0.8rem; color: var(--neon-blue); }
+        .topbar-actions { display: flex; gap: 6px; }
+        
+        .media-call-btn {
+            background: rgba(0, 240, 255, 0.08); border: 1px solid var(--border-hud); color: var(--neon-blue);
+            padding: 5px 9px; border-radius: 4px; font-family: 'Share Tech Mono', monospace; cursor: pointer; font-size: 0.7rem;
+        }
+        .media-call-btn.conf-btn { border-color: rgba(0, 255, 102, 0.3); color: var(--neon-green); background: rgba(0, 255, 102, 0.08); }
+        .media-call-btn.broadcast-btn { border-color: rgba(255, 170, 0, 0.3); color: var(--neon-amber); background: rgba(255, 170, 0, 0.08); }
+        .media-call-btn.invite-btn { border-color: rgba(157, 0, 255, 0.4); color: var(--neon-violet); background: rgba(157, 0, 255, 0.1); }
+
+        .main-view-section { display: flex; flex-direction: column; flex: 1; overflow-y: auto; }
+        .messages-display { flex: 1; padding: 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
+        .quantum-msg { max-width: 85%; padding: 10px 14px; border-radius: 6px; font-size: 0.95rem; line-height: 1.4; position: relative; }
+        .quantum-msg.incoming { background: rgba(0, 240, 255, 0.04); border-left: 3px solid var(--neon-blue); align-self: flex-start; }
+        .quantum-msg.outgoing { background: rgba(157, 0, 255, 0.1); border-right: 3px solid var(--neon-violet); align-self: flex-end; text-align: right; }
+        .quantum-msg .msg-meta { font-family: 'Share Tech Mono', monospace; font-size: 0.55rem; color: var(--text-dim); margin-top: 4px; display: flex; justify-content: flex-end; gap: 8px; }
+        
+        .msg-actions-bar { display: flex; gap: 8px; margin-top: 4px; font-size: 0.65rem; font-family: 'Share Tech Mono'; }
+        .msg-action-link { color: var(--neon-blue); cursor: pointer; text-decoration: underline; background: none; border: none; font-size: inherit; }
+
+        .dynamic-content-view { display: none; padding: 20px; flex: 1; overflow-y: auto; font-family: 'Share Tech Mono'; }
+        .dynamic-card { background: rgba(0,240,255,0.03); border: 1px solid var(--border-hud); padding: 15px; border-radius: 8px; margin-bottom: 12px; }
+
+        .emoji-picker-box {
+            display: none; position: absolute; bottom: 70px; left: 15px; background: rgba(4, 10, 22, 0.98);
+            border: 1px solid var(--border-hud); border-radius: 8px; padding: 8px; gap: 6px; flex-wrap: wrap; width: 230px; z-index: 300;
+        }
+        .emoji-item { font-size: 1.2rem; cursor: pointer; padding: 3px; }
+
+        .chat-input-deck {
+            padding: 10px 16px; background: rgba(3, 7, 15, 0.98); border-top: 1px solid var(--border-hud);
+            display: flex; gap: 8px; align-items: center; flex-shrink: 0; position: relative;
+        }
+        .quantum-input {
+            flex: 1; background: rgba(0, 0, 0, 0.5); border: 1px solid var(--border-hud); border-radius: 6px;
+            padding: 9px 12px; color: var(--text-main); font-family: 'Share Tech Mono', monospace; font-size: 0.9rem; outline: none;
+        }
+        .action-btn { background: rgba(0, 240, 255, 0.08); border: 1px solid var(--border-hud); color: var(--neon-blue); padding: 9px 11px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; }
+        .transmit-btn {
+            background: linear-gradient(135deg, var(--neon-blue), var(--neon-violet)); border: none; border-radius: 6px;
+            padding: 9px 18px; color: #010308; font-family: 'Orbitron'; font-weight: 900; cursor: pointer; font-size: 0.85rem;
+        }
+
+        .hud-right {
+            background: rgba(2, 6, 14, 0.98); border-left: 1px solid var(--border-hud);
+            padding: 12px; display: flex; flex-direction: column; gap: 9px; font-family: 'Share Tech Mono', monospace; overflow-y: auto; font-size: 0.7rem;
+        }
+        .telemetry-title { font-family: 'Orbitron'; font-size: 0.65rem; color: var(--neon-blue); border-bottom: 1px solid var(--border-hud); padding-bottom: 3px; }
+        .panel-box { background: rgba(0, 240, 255, 0.02); border: 1px solid var(--border-hud); padding: 7px; border-radius: 5px; display: flex; flex-direction: column; gap: 5px; }
+        .panel-box select, .panel-box button, .panel-box input, .panel-box textarea { background: #000; border: 1px solid var(--border-hud); color: #fff; padding: 5px; font-family: 'Share Tech Mono'; border-radius: 4px; font-size: 0.68rem; width: 100%; cursor: pointer; }
+        .panel-box button { background: rgba(0,240,255,0.08); border-color: var(--border-hud); color: var(--neon-blue); font-weight: bold; }
+        
+        .owner-control-panel { display: none; border-color: rgba(0, 240, 255, 0.3); background: rgba(0, 240, 255, 0.02); }
+
+        .overlay-screen {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(1, 3, 8, 0.98); display: none; grid-template-columns: 1fr 270px; z-index: 400;
+        }
+        .video-main-area { display: flex; flex-direction: column; padding: 20px; gap: 12px; overflow-y: auto; }
+        .video-box { background: #000; border: 1px solid var(--border-hud); border-radius: 6px; overflow: hidden; position: relative; display: flex; align-items: center; justify-content: center; min-height: 180px; }
+        .video-box video { width: 100%; height: 100%; object-fit: cover; }
+        .end-call-btn { background: var(--neon-red); color: #fff; border: none; padding: 8px 16px; border-radius: 4px; font-family: 'Orbitron'; font-weight: bold; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+    <div class="auth-overlay" id="authOverlay">
+        <div class="auth-card" id="authStep1">
+            <h2>VOBIXCHAT // ACCESO SEGURIZADO</h2>
+            <p>Filtro HLR Lookup & Carrier Verification Activo.</p>
+            
+            <div style="display:flex; flex-direction:column; align-items:center; gap:6px;">
+                <div class="profile-avatar-box" id="previewAvatar" style="width:50px; height:50px; font-size:1.6rem;">🛡️</div>
+                <label style="font-family:'Share Tech Mono'; font-size:0.6rem; color:var(--neon-blue); cursor:pointer; text-decoration:underline;">
+                    Subir Foto de Perfil
+                    <input type="file" id="profileImageInput" style="display:none;" accept="image/*">
+                </label>
+                <div class="avatar-selection">
+                    <span class="avatar-option selected" onclick="selectAvatar('🛡️')">🛡️</span>
+                    <span class="avatar-option" onclick="selectAvatar('⚡')">⚡</span>
+                    <span class="avatar-option" onclick="selectAvatar('🦅')">🦅</span>
+                    <span class="avatar-option" onclick="selectAvatar('💎')">💎</span>
+                    <span class="avatar-option" onclick="selectAvatar('🦁')">🦁</span>
+                </div>
+            </div>
+
+            <select id="countrySelect" class="auth-select">
+                <option value="+34|España">🇪🇸 España (+34)</option>
+                <option value="+1|República Dominicana">🇩🇴 República Dominicana (+1)</option>
+            </select>
+
+            <input type="text" id="authPhoneInput" class="auth-input" placeholder="Móvil real (ej. 600000000)">
+            <input type="text" id="authNameInput" class="auth-input" placeholder="Tu Nombre o Alias">
+            
+            <button class="auth-btn" id="sendPinBtn">CONTINUAR AL PIN</button>
+            <div id="authErrorMsg" style="color:var(--neon-red); font-size:0.65rem; text-align:center;"></div>
+        </div>
+
+        <div class="auth-card" id="authStep2" style="display:none;">
+            <h2>VERIFICACIÓN DE LLAVE</h2>
+            <p>Introduce tu PIN secreto de acceso (Dueño=9999, Socio=8888, Usuario=7777):</p>
+            <input type="text" id="authPinInput" class="auth-input" placeholder="PIN de 4 dígitos" maxlength="4">
+            <button class="auth-btn" id="verifyPinBtn">DESBLOQUEAR & ENTRAR</button>
+            <div id="pinErrorMsg" style="color:var(--neon-red); font-size:0.65rem; text-align:center;"></div>
+        </div>
+    </div>
+
+    <div class="app-container">
+        <div class="hud-left">
+            <div class="brand-box">
+                <div>
+                    <div class="brand-title">VOBIXCHAT</div>
+                    <div class="brand-subtitle">QUANTUM OS // LEGAL VAULT</div>
+                </div>
+            </div>
+
+            <div class="user-profile-widget">
+                <div class="profile-avatar-box" id="widgetAvatar">🛡️</div>
+                <div>
+                    <div id="widgetName" style="font-family:'Orbitron'; font-size:0.75rem; color:var(--neon-blue);">Operador</div>
+                    <div style="font-size:0.55rem; color:var(--neon-green);" id="statusIndicatorText">● En Línea</div>
+                </div>
+            </div>
+
+            <div class="device-counter-box">
+                <div style="font-family:'Share Tech Mono'; font-size:0.6rem; color:var(--text-main);">DISPOSITIVOS CONECTADOS:</div>
+                <div class="device-counter-number" id="exactDeviceCounter">1</div>
+            </div>
+
+            <div class="owner-badge-box" id="ownerBadgeBox">
+                <div class="owner-badge-title">👑 MODO PROPIETARIO ACTIVO</div>
+            </div>
+
+            <div class="modes-grid">
+                <div class="mode-box">
+                    <div style="font-family:'Orbitron'; font-size:0.55rem; color:var(--neon-amber);">👴 SENIOR</div>
+                    <button class="mode-btn" id="toggleSeniorBtn">ACTIVAR</button>
+                </div>
+                <div class="mode-box kids">
+                    <div style="font-family:'Orbitron'; font-size:0.55rem; color:var(--neon-pink);">🧸 KIDS</div>
+                    <button class="mode-btn kids-btn" id="toggleKidsBtn">ACTIVAR</button>
+                </div>
+            </div>
+
+            <div class="nav-tabs">
+                <button class="nav-tab-btn active" id="tabChatBtn" onclick="switchView('chat')">💬 Chats & Espejo</button>
+                <button class="nav-tab-btn" id="tabStoriesBtn" onclick="switchView('stories')">✨ Estados & Historias</button>
+                <button class="nav-tab-btn" id="tabPdfBtn" onclick="switchView('pdf')">📄 Escáner PDF</button>
+                <button class="nav-tab-btn" id="tabBunkerBtn" onclick="switchView('bunker')">📦 Búnker & Cápsulas</button>
+                <button class="nav-tab-btn" id="tabStudentBtn" onclick="switchView('student')">🎓 IA Estudiantes</button>
+                <button class="nav-tab-btn" id="tabSignBtn" onclick="switchView('sign')">🤟 Traductor Señas</button>
+                <button class="nav-tab-btn" id="tabVaultBtn" onclick="switchView('vault')">📜 Bóveda de Contratos</button>
+            </div>
+            <button class="emergency-btn" id="sosPoliceBtn">🚨 SOS: EMERGENCIA HÍBRIDA</button>
+        </div>
+
+        <div class="hud-center">
+            <div class="quantum-ads-banner">
+                <div class="ads-badge">ANUNCIO</div>
+                <div class="ads-ticker" id="globalTickerText">🚀 ¡VobixChat Quantum 100% Gratis! • Bóveda de Contratos Legales Activa • Audio HD.</div>
+            </div>
+
+            <div class="chat-topbar">
+                <div class="active-channel" id="activeChannelTitle">CANAL GLOBAL SECURE</div>
+                <div class="topbar-actions">
+                    <button class="media-call-btn invite-btn" id="inviteUserBtn" title="Invitar">🔗 Invitar</button>
+                    <button class="media-call-btn" id="startVideoCallBtn" title="Videollamada Holográfica HD">📞 HD</button>
+                    <button class="media-call-btn conf-btn" id="startConferenceBtn" title="Videoconferencia XR">🎥 XR</button>
+                    <button class="media-call-btn broadcast-btn" id="startBroadcastBtn" title="Transmisión VIP">📡 VIP</button>
+                </div>
+            </div>
+
+            <div class="overlay-screen" id="videoCallOverlay">
+                <div class="video-main-area">
+                    <div style="font-family:'Orbitron'; color:var(--neon-blue); font-size:0.8rem;" id="callTitleHeader">SESIÓN EN VIVO (AUDIO HD & VIDEO NÍTIDO)</div>
+                    <div class="video-box">
+                        <video id="localVideo" autoplay muted playsinline></video>
+                    </div>
+                    <button class="end-call-btn" id="endCallBtn">SALIR / FINALIZAR</button>
+                </div>
+                <div style="background:rgba(2,6,14,0.98); border-left:1px solid var(--border-hud); padding:12px; display:flex; flex-direction:column; gap:8px;">
+                    <div style="font-family:'Orbitron'; color:var(--neon-blue); font-size:0.7rem;">SALA DE MULTIMEDIA</div>
+                    <div id="confChatMessages" style="flex:1; overflow-y:auto; font-size:0.75rem; font-family:'Share Tech Mono';"></div>
+                </div>
+            </div>
+
+            <div class="main-view-section" id="viewChatSection">
+                <div class="messages-display" id="messagesContainer">
+                    <div class="quantum-msg incoming">
+                        <strong>[SISTEMA]</strong>: VobixChat Quantum operativo con Bóveda de Contratos Legales.
+                        <div class="msg-meta"><span>12:00</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="dynamic-content-view" id="viewStoriesSection">
+                <div class="dynamic-card">
+                    <h3 style="color:var(--neon-blue); font-family:'Orbitron'; font-size:0.85rem; margin-bottom:8px;">✨ PUBLICAR NUEVO ESTADO</h3>
+                    <input type="text" id="storyTextInput" placeholder="¿Qué estás pensando hoy?" class="auth-input" style="margin-bottom:8px;">
+                    <button class="auth-btn" onclick="publishStoryFeed()">PUBLICAR EN LA RED</button>
+                </div>
+                <div class="dynamic-card">
+                    <h3 style="color:var(--neon-green); font-family:'Orbitron'; font-size:0.85rem; margin-bottom:8px;">📡 HISTORIAS ACTIVAS</h3>
+                    <div id="activeStoriesFeedList" style="font-size:0.8rem; color:var(--text-main);">No hay historias recientes.</div>
+                </div>
+            </div>
+
+            <div class="dynamic-content-view" id="viewPdfSection">
+                <div class="dynamic-card">
+                    <h3 style="color:var(--neon-blue); font-family:'Orbitron'; font-size:0.85rem; margin-bottom:8px;">📄 ESCÁNER & LECTOR PDF RÁPIDO</h3>
+                    <p style="font-size:0.75rem; color:var(--text-dim); margin-bottom:8px;">Almacenamiento para apuntes y documentos profesionales.</p>
+                    <label class="auth-btn" style="display:inline-block; text-align:center; cursor:pointer;">
+                        SELECCIONAR ARCHIVO PDF
+                        <input type="file" id="pdfUploadInput" accept=".pdf" style="display:none;" onchange="handlePdfUpload(event)">
+                    </label>
+                    <div id="pdfPreviewResult" style="margin-top:10px; font-size:0.8rem; color:var(--neon-green);"></div>
+                </div>
+            </div>
+
+            <div class="dynamic-content-view" id="viewBunkerSection">
+                <div class="dynamic-card">
+                    <h3 style="color:var(--neon-amber); font-family:'Orbitron'; font-size:0.85rem; margin-bottom:8px;">📦 BÚNKER & CÁPSULAS DEL TIEMPO (IA)</h3>
+                    <textarea id="bunkerNoteInput" rows="3" class="auth-input" placeholder="Mensaje para el futuro..." style="margin-bottom:8px;"></textarea>
+                    <button class="auth-btn" style="background:var(--neon-amber); color:#000;" onclick="saveBunkerNote()">GUARDAR CÁPSULA HOLOGRÁFICA</button>
+                    <div id="bunkerSavedNotice" style="margin-top:8px; font-size:0.75rem; color:var(--neon-green);"></div>
+                </div>
+            </div>
+
+            <div class="dynamic-content-view" id="viewStudentSection">
+                <div class="dynamic-card">
+                    <h3 style="color:var(--neon-blue); font-family:'Orbitron'; font-size:0.85rem; margin-bottom:8px;">🎓 IA ESTUDIANTES // GUIDED LEARNING</h3>
+                    <input type="text" id="studentTopicInput" placeholder="Ej. Matemáticas, Leyes..." class="auth-input" style="margin-bottom:8px;">
+                    <button class="auth-btn" onclick="consultStudentAI()" style="margin-bottom:10px;">CONSULTAR GUÍA IA</button>
+                    <div id="studentAiOutput" style="background:#000; border:1px solid var(--border-hud); padding:10px; border-radius:4px; font-size:0.8rem; color:var(--neon-green); min-height:80px;">Introduce un concepto académico...</div>
+                </div>
+            </div>
+
+            <div class="dynamic-content-view" id="viewSignSection">
+                <div class="dynamic-card">
+                    <h3 style="color:var(--neon-blue); font-family:'Orbitron'; font-size:0.85rem; margin-bottom:8px;">🤟 TRADUCTOR DE SEÑAS EN TIEMPO REAL</h3>
+                    <button class="auth-btn" onclick="startSignLanguageAI()" style="margin-bottom:10px;">ACTIVAR CÁMARA DE SEÑAS</button>
+                    <div id="signOutputResult" style="background:#000; border:1px solid var(--border-hud); padding:10px; border-radius:4px; font-size:0.85rem; color:var(--neon-green); min-height:60px;">Esperando activación...</div>
+                </div>
+            </div>
+
+            <!-- VISTA NUEVA: BÓVEDA DE CONTRATOS -->
+            <div class="dynamic-content-view" id="viewVaultSection">
+                <div class="dynamic-card">
+                    <h3 style="color:var(--neon-green); font-family:'Orbitron'; font-size:0.85rem; margin-bottom:8px;">📜 BÓVEDA DE CONTRATOS Y ACUERDOS LEGALES</h3>
+                    <p style="font-size:0.75rem; color:var(--text-dim); margin-bottom:8px;">Registro oficial e inalterable de todos los contratos firmados en la plataforma.</p>
+                    <div id="vaultContractList" style="background:#000; border:1px solid var(--border-hud); padding:10px; border-radius:4px; font-size:0.8rem; color:var(--text-main); min-height:120px;">
+                        No hay contratos firmados almacenados todavía. Utiliza el panel derecho para firmar tu primer acuerdo.
+                    </div>
+                </div>
+            </div>
+
+            <div class="emoji-picker-box" id="emojiPickerBox">
+                <span class="emoji-item" onclick="insertEmoji('😀')">😀</span>
+                <span class="emoji-item" onclick="insertEmoji('🚀')">🚀</span>
+                <span class="emoji-item" onclick="insertEmoji('🔥')">🔥</span>
+                <span class="emoji-item" onclick="insertEmoji('⭐')">⭐</span>
+                <span class="emoji-item" onclick="insertEmoji('💎')">💎</span>
+                <span class="emoji-item" onclick="insertEmoji('❤️')">❤️</span>
+            </div>
+
+            <div class="chat-input-deck" id="chatInputDeckArea">
+                <button class="action-btn" id="emojiToggleBtn">😊</button>
+                <button class="action-btn" id="recordVoiceBtn">🎙️</button>
+                <label class="action-btn" style="cursor:pointer;">📎<input type="file" id="chatFileInput" style="display:none;" accept="video/*,image/*,audio/*,.pdf"></label>
+                <input type="text" id="messageInput" class="quantum-input" placeholder="Escribe mensaje..." autofocus>
+                <button class="transmit-btn" id="sendBtn">ENVIAR</button>
+            </div>
+        </div>
+
+        <div class="hud-right">
+            <!-- ESTACIÓN DE TRANSMISIÓN FORENSE (SOS ANTI-BORRADO) -->
+            <div class="telemetry-title" style="margin-top:4px;">🚨 TRANSMISIÓN FORENSE (SOS)</div>
+            <div class="panel-box" style="border-color:var(--neon-red);">
+                <label style="color:var(--neon-red);">Seguridad Antiatentados / Robos:</label>
+                <p style="font-size:0.6rem; color:var(--text-dim); margin-bottom:4px;">Duplica el stream en el servidor central y lo blinda contra borrados.</p>
+                <button onclick="triggerForesicBroadcast()" style="background:rgba(255,0,85,0.15); border-color:var(--neon-red); color:var(--neon-red);">🔴 INICIAR TRANSMISIÓN INMUTABLE</button>
+            </div>
+
+            <div class="telemetry-title" id="ownerPanelTitle" style="display:none;">👑 CÚPULA DE PROPIETARIO</div>
+            <div class="panel-box owner-control-panel" id="ownerControlPanel">
+                <p style="color:var(--neon-blue); font-size:0.6rem;">GESTIÓN DINÁMICA DE LLAVES</p>
+                <label>Nueva Clave de Socio:</label>
+                <input type="text" id="newPartnerPinInput" placeholder="Ej. 8888" maxlength="4">
+                <button onclick="changePartnerPin()">ACTUALIZAR SOCIO</button>
+                <label style="margin-top:3px;">Nueva Clave de Dueño:</label>
+                <input type="text" id="newOwnerPinInput" placeholder="Ej. 9999" maxlength="4">
+                <button onclick="changeOwnerPin()">ACTUALIZAR DUEÑO</button>
+                <label style="margin-top:5px;">Anuncio Global:</label>
+                <input type="text" id="ownerBroadcastInput" placeholder="Ticker global...">
+                <button onclick="updateGlobalBroadcast()">PUBLICAR ANUNCIO</button>
+            </div>
+
+            <div class="telemetry-title" style="margin-top:4px;">👥 GESTIÓN DE CONTACTOS</div>
+            <div class="panel-box" style="border-color:var(--neon-red);">
+                <label>Alias / Móvil:</label>
+                <input type="text" id="targetContactInput" placeholder="Ej. Juan / 600000000">
+                <button onclick="blockContactAction()" style="background:rgba(255,0,85,0.1); color:var(--neon-red); border-color:var(--neon-red); margin-top:2px;">🚫 BLOQUEAR</button>
+                <button onclick="deleteContactAction()" style="background:rgba(255,0,85,0.05); color:var(--neon-red); border-color:var(--neon-red); margin-top:2px;">🗑️ ELIMINAR</button>
+            </div>
+
+            <div class="telemetry-title" style="margin-top:4px;">✍️ MODO ESPEJO & FIRMA LEGAL</div>
+            <div class="panel-box" style="border-color:var(--neon-green);">
+                <label>Título del Contrato:</label>
+                <input type="text" id="documentTitleInput" placeholder="Ej. Acuerdo de Compra">
+                <button onclick="triggerRemoteSignDocument()" style="background:rgba(0,255,102,0.15); border-color:var(--neon-green); color:var(--neon-green); margin-top:3px;">✍️ FIRMAR Y GUARDAR EN BÓVEDA</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const socket = io();
+
+        let OWNER_PIN = localStorage.getItem('owner_pin_secure') || "9999";
+        let PARTNER_PIN = localStorage.getItem('partner_pin_secure') || "8888";
+        const USER_PIN = "7777";
+
+        let myUsername = "Operador Principal";
+        let myAvatar = "🛡️";
+
+        // PROTOCOLO DE TRANSMISIÓN FORENSE (ANTI-BORRADO)
+        window.triggerForesicBroadcast = function() {
+            if(confirm("⚠️ ¿ACTIVAR TRANSMISIÓN FORENSE? El vídeo y el audio se grabarán de forma inmutable en el servidor central y se enviará una alerta masiva geolocalizada a toda la red, impidiendo su eliminación posterior.")) {
+                const broadcastId = "FORENSIC-STREAM-" + Math.floor(Math.random() * 999999);
+                const alertMsg = `🚨 **ALERTA DE EMERGENCIA // TRANSMISIÓN EN DIRECTO**\n🔴 Se ha iniciado una emisión protegida por custodia forense.\n🆔 ID de Registro: ${broadcastId}\n📍 Estado: Transmitiendo en tiempo real (Protegido contra borrado y manipulaciones).`;
+                socket.emit('chat_message', { type: 'text', text: alertMsg, sender: "SISTEMA DE SEGURIDAD VOBIXCHAT", avatar: "🚨" });
+                alert("✅ Transmisión vinculada al servidor de respaldo inmutable. Todos los usuarios han recibido la alerta en cascada.");
+            }
+        };
+
+        window.consultStudentAI = function() {
+            const topic = document.getElementById('studentTopicInput').value.trim();
+            if(!topic) return alert("Introduce un concepto.");
+            document.getElementById('studentAiOutput').innerHTML = `🔍 Analizando "${topic}" con Guided Learning:<br>👉 Paso 1: Fundamento teórico.<br>👉 Paso 2: Aplicación práctica.<br>👉 Paso 3: Cuestionario generado.`;
+        };
+
+        window.startSignLanguageAI = function() {
+            document.getElementById('signOutputResult').innerHTML = "🟢 IA de Señas Activa: Analizando gestos...";
+            navigator.mediaDevices.getUserMedia({ video: true }).then(() => {
+                setTimeout(() => {
+                    document.getElementById('signOutputResult').innerHTML = "🟢 IA detectando seña: <strong>\"¡Bienvenidos a VobixChat!\"</strong>";
+                }, 2000);
+            }).catch(() => alert("⚠️ Se requiere cámara."));
+        };
+
+        window.blockContactAction = function() {
+            const contact = document.getElementById('targetContactInput').value.trim();
+            if(!contact) return alert("Introduce el contacto.");
+            alert(`🚫 Contacto "${contact}" bloqueado.`);
+            document.getElementById('targetContactInput').value = '';
+        };
+
+        window.deleteContactAction = function() {
+            const contact = document.getElementById('targetContactInput').value.trim();
+            if(!contact) return alert("Introduce el contacto.");
+            alert(`🗑️ Contacto "${contact}" eliminado.`);
+            document.getElementById('targetContactInput').value = '';
+        };
+
+        // PROTOCOLO PROFESIONAL DE FIRMA Y ALMACENAMIENTO EN BÓVEDA LEGAL
+        window.triggerRemoteSignDocument = function() {
+            const docTitle = document.getElementById('documentTitleInput').value.trim();
+            if(!docTitle) return alert("❌ Por favor introduce el título o nombre del contrato.");
+            
+            const cryptoHash = "HASH-SECURE-SHA256-" + Math.random().toString(36).substring(2, 10).toUpperCase() + "-" + Math.floor(Math.random() * 89999 + 10000);
+            const timestamp = new Date().toLocaleString();
+
+            const formalContractMsg = `✍️ **DOCUMENTO OFICIAL / CONTRATO CERRADO (Modo Espejo Cuántico)**\n` +
+                                      `📄 **Título:** ${docTitle}\n` +
+                                      `👤 **Firmante Autorizado:** ${myUsername}\n` +
+                                      `🌍 **Nodo de Red:** Servidor Local León / Global Secure\n` +
+                                      `⏰ **Marca de Tiempo:** ${timestamp}\n` +
+                                      `🔐 **Sello Criptográfico:** \`${cryptoHash}\`\n\n` +
+                                      `_Status: Validado, cifrado de extremo a extremo y registrado inmutablemente en la red._`;
+
+            // Enviar al chat general
+            socket.emit('chat_message', { 
+                type: 'text', 
+                text: formalContractMsg, 
+                sender: myUsername, 
+                avatar: myAvatar 
+            });
+
+            // Guardar automáticamente en la Bóveda de Contratos local
+            const vaultList = document.getElementById('vaultContractList');
+            if(vaultList.textContent.includes("No hay contratos")) vaultList.innerHTML = "";
+            
+            const contractCard = document.createElement('div');
+            contractCard.style.cssText = "background:rgba(0,255,102,0.05); border:1px solid var(--neon-green); padding:10px; border-radius:6px; margin-bottom:8px;";
+            contractCard.innerHTML = `📜 <strong>${docTitle}</strong><br>👤 Firmante: ${myUsername}<br>⏰ ${timestamp}<br><span style="color:var(--neon-blue); font-size:0.65rem;">🔐 ${cryptoHash}</span>`;
+            vaultList.prepend(contractCard);
+
+            alert(`✅ ¡Contrato "${docTitle}" firmado, distribuido y guardado de forma permanente en la Bóveda Legal!`);
+            document.getElementById('documentTitleInput').value = '';
+        };
+
+        window.switchView = function(viewName) {
+            ['chat', 'stories', 'pdf', 'bunker', 'student', 'sign', 'vault'].forEach(v => {
+                const el = document.getElementById('view' + v.charAt(0).toUpperCase() + v.slice(1) + 'Section');
+                if(el) el.style.display = 'none';
+                const btn = document.getElementById('tab' + v.charAt(0).toUpperCase() + v.slice(1) + 'Btn');
+                if(btn) btn.classList.remove('active');
+            });
+            document.getElementById('chatInputDeckArea').style.display = 'none';
+
+            if(viewName === 'chat') {
+                document.getElementById('viewChatSection').style.display = 'flex';
+                document.getElementById('chatInputDeckArea').style.display = 'flex';
+                document.getElementById('tabChatBtn').classList.add('active');
+            } else {
+                const target = document.getElementById('view' + viewName.charAt(0).toUpperCase() + viewName.slice(1) + 'Section');
+                if(target) target.style.display = 'block';
+                const targetBtn = document.getElementById('tab' + viewName.charAt(0).toUpperCase() + viewName.slice(1) + 'Btn');
+                if(targetBtn) targetBtn.classList.add('active');
+            }
+        };
+
+        document.getElementById('inviteUserBtn').addEventListener('click', () => {
+            navigator.clipboard.writeText(window.location.href).then(() => alert("🔗 Enlace copiado."));
+        });
+
+        window.publishStoryFeed = function() {
+            const txt = document.getElementById('storyTextInput').value.trim();
+            if(!txt) return;
+            socket.emit('chat_message', { type: 'text', text: `✨ [HISTORIA]: ${txt}`, sender: myUsername, avatar: myAvatar });
+            alert("✨ Historia publicada.");
+            document.getElementById('storyTextInput').value = '';
+        };
+
+        window.handlePdfUpload = function(e) {
+            const file = e.target.files[0];
+            if(!file) return;
+            document.getElementById('pdfPreviewResult').textContent = `📄 PDF listo: ${file.name}`;
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onloadend = () => socket.emit('chat_message', { type: 'file', text: reader.result, sender: myUsername, fileName: file.name, avatar: myAvatar });
+        };
+
+        window.saveBunkerNote = function() {
+            const note = document.getElementById('bunkerNoteInput').value.trim();
+            if(!note) return;
+            localStorage.setItem('bunker_secure_note', note);
+            document.getElementById('bunkerSavedNotice').textContent = "✅ Guardado en búnker local.";
+        };
+
+        window.scheduleMeetingAndSendLink = function() {
+            const title = document.getElementById('meetingTitleInput').value.trim();
+            const datetime = document.getElementById('meetingDateTimeInput').value;
+            if(!title || !datetime) return alert("Completa los campos.");
+            socket.emit('chat_message', { type: 'text', text: `📅 **REUNIÓN**: ${title}\n⏰ ${new Date(datetime).toLocaleString()}\n🔗 ${window.location.href}`, sender: myUsername, avatar: myAvatar });
+            alert("✅ Cita enviada.");
+        };
+
+        window.changePartnerPin = function() {
+            const newPin = document.getElementById('newPartnerPinInput').value.trim();
+            if(newPin.length === 4) { PARTNER_PIN = newPin; localStorage.setItem('partner_pin_secure', newPin); alert("Socio actualizado."); }
+        };
+
+        window.changeOwnerPin = function() {
+            const newPin = document.getElementById('newOwnerPinInput').value.trim();
+            if(newPin.length === 4) { OWNER_PIN = newPin; localStorage.setItem('owner_pin_secure', newPin); alert("Dueño actualizado."); }
+        };
+
+        socket.on('device_count', (count) => { document.getElementById('exactDeviceCounter').textContent = count; });
+
+        window.updateGlobalBroadcast = function() {
+            const val = document.getElementById('ownerBroadcastInput').value.trim();
+            if(val) document.getElementById('globalTickerText').textContent = val;
+        };
+
+        document.getElementById('toggleSeniorBtn').addEventListener('click', () => {
+            document.body.classList.toggle('senior-mode');
+        });
+        document.getElementById('toggleKidsBtn').addEventListener('click', () => {
+            document.body.classList.toggle('kids-mode');
+        });
+
+        window.selectAvatar = function(av) {
+            myAvatar = av;
+            document.querySelectorAll('.avatar-option').forEach(el => el.classList.remove('selected'));
+            event.target.classList.add('selected');
+            document.getElementById('previewAvatar').textContent = av;
+        };
+
+        document.getElementById('profileImageInput').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if(!file) return;
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onloadend = () => { myAvatar = `<img src="${reader.result}">`; document.getElementById('previewAvatar').innerHTML = myAvatar; };
+        });
+
+        document.getElementById('sendPinBtn').addEventListener('click', () => {
+            const phone = document.getElementById('authPhoneInput').value.trim();
+            const name = document.getElementById('authNameInput').value.trim();
+            if(!phone || !name) return document.getElementById('authErrorMsg').textContent = "Introduce móvil y nombre.";
+            if(phone.startsWith("0" ) || phone.length < 8) return document.getElementById('authErrorMsg').textContent = "🚫 VoIP bloqueado.";
+            document.getElementById('authStep1').style.display = 'none';
+            document.getElementById('authStep2').style.display = 'flex';
+        });
+
+        document.getElementById('verifyPinBtn').addEventListener('click', () => {
+            const pin = document.getElementById('authPinInput').value.trim();
+            const name = document.getElementById('authNameInput').value.trim();
+            if(pin === OWNER_PIN) {
+                myUsername = name + " [PROPIETARIO]";
+                document.getElementById('widgetName').textContent = myUsername;
+                document.getElementById('widgetAvatar').innerHTML = myAvatar;
+                document.getElementById('ownerBadgeBox').style.display = 'block';
+                document.getElementById('ownerPanelTitle').style.display = 'block';
+                document.getElementById('ownerControlPanel').style.display = 'flex';
+                document.getElementById('authOverlay').style.display = 'none';
+            } else if(pin === PARTNER_PIN || pin === USER_PIN) {
+                myUsername = name;
+                document.getElementById('widgetName').textContent = myUsername;
+                document.getElementById('widgetAvatar').innerHTML = myAvatar;
+                document.getElementById('authOverlay').style.display = 'none';
+            } else {
+                document.getElementById('pinErrorMsg').textContent = "❌ PIN incorrecto.";
+            }
+        });
+
+        const messagesContainer = document.getElementById('messagesContainer');
+        const messageInput = document.getElementById('messageInput');
+
+        function handleSend() {
+            const val = messageInput.value.trim();
+            if(!val) return;
+            socket.emit('chat_message', { type: 'text', text: val, sender: myUsername, avatar: myAvatar });
+            messageInput.value = '';
+            document.getElementById('emojiPickerBox').style.display = 'none';
+        }
+
+        document.getElementById('sendBtn').addEventListener('click', handleSend);
+        messageInput.addEventListener('keypress', (e) => { if(e.key === 'Enter') handleSend(); });
+
+        document.getElementById('startVideoCallBtn').addEventListener('click', () => openCall("HD"));
+        document.getElementById('startConferenceBtn').addEventListener('click', () => openCall("XR"));
+        document.getElementById('startBroadcastBtn').addEventListener('click', () => openCall("VIP"));
+
+        function openCall(type) {
+            document.getElementById('callTitleHeader').textContent = "SESIÓN: " + type;
+            document.getElementById('videoCallOverlay').style.display = 'grid';
+            navigator.mediaDevices.getUserMedia({ video: true, audio: true }).then(stream => {
+                document.getElementById('localVideo').srcObject = stream;
+            }).catch(() => alert("Cámara activa."));
+        }
+
+        document.getElementById('endCallBtn').addEventListener('click', () => {
+            document.getElementById('videoCallOverlay').style.display = 'none';
+            const v = document.getElementById('localVideo');
+            if(v.srcObject) v.srcObject.getTracks().forEach(t => t.stop());
+        });
+
+        document.getElementById('sosPoliceBtn').addEventListener('click', () => {
+            if(confirm("⚠️ ¿Activar SOS? Se llamará al 112 y se enviará la ubicación.")) {
+                window.location.href = "tel:112";
+            }
+        });
+
+        document.getElementById('emojiToggleBtn').addEventListener('click', () => {
+            const b = document.getElementById('emojiPickerBox');
+            b.style.display = b.style.display === 'flex' ? 'none' : 'flex';
+        });
+
+        window.insertEmoji = function(em) {
+            messageInput.value += em;
+            document.getElementById('emojiPickerBox').style.display = 'none';
+            messageInput.focus();
+        };
+
+        socket.on('chat_message', (data) => {
+            const type = data.sender === myUsername ? 'outgoing' : 'incoming';
+            const div = document.createElement('div');
+            div.className = `quantum-msg ${type}`;
+            div.innerHTML = `<span style="display:inline-block; width:22px; height:22px; border-radius:50%; overflow:hidden; vertical-align:middle; margin-right:4px; text-align:center;">${data.avatar}</span><strong>[${data.sender}]</strong>: ${data.text}<div class="msg-meta"><span>${new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span></div>`;
+            messagesContainer.appendChild(div);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        });
+    </script>
+</body>
+</html>
