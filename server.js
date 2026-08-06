@@ -5,7 +5,7 @@ const server = http.createServer(app);
 const { Server } = require("socket.io");
 const io = new Server(server);
 
-// Esto le dice al servidor que muestre tu index.html en la página principal
+// Esto le dice al servidor que muestre tu index.html y archivos estáticos en la página principal
 app.use(express.static(__dirname));
 
 io.on('connection', (socket) => {
