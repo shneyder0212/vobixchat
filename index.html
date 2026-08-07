@@ -45,7 +45,7 @@
             overflow: hidden; position: relative; border: 1px solid var(--border-hud); box-shadow: 0 0 30px rgba(0,0,0,0.8);
         }
 
-        /* ACCESO Y LOGIN */
+        /* ACCESO Y LOGIN PERFECTAMENTE SEPARADO */
         .auth-overlay {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(1, 3, 8, 0.98); backdrop-filter: blur(20px);
@@ -142,26 +142,28 @@
 </head>
 <body>
 
+    <!-- AUTENTICACIÓN CORREGIDA CON CAMPOS SEPARADOS -->
     <div class="auth-overlay" id="authOverlay">
         <div class="auth-card" id="authStep1">
             <h2>VOBIXCHAT // ACCESO MÓVIL</h2>
-            <p>Introduce tus datos para conectarte con tu amigo.</p>
-            <input type="text" id="authPhoneInput" class="auth-input" placeholder="Tu Teléfono (Sin VoIP)">
-            <input type="text" id="authNameInput" class="auth-input" placeholder="Tu Nombre o Alias">
-            <button class="auth-btn" id="requestRandomPinBtn" style="margin-top: 6px;">ENVIAR PIN DE ACCESO</button>
-            <div id="authErrorMsg" style="color:var(--neon-red); font-size:0.65rem; text-align:center;"></div>
+            <p>Introduce tus datos para conectarte.</p>
+            <input type="text" id="authPhoneInput" class="auth-input" placeholder="Tu Teléfono (ej. 655766134)" style="margin-bottom: 8px;">
+            <input type="text" id="authNameInput" class="auth-input" placeholder="Tu Nombre o Alias (ej. Shneyder)" style="margin-bottom: 8px;">
+            <button class="auth-btn" id="requestRandomPinBtn">ENVIAR PIN DE ACCESO</button>
+            <div id="authErrorMsg" style="color:var(--neon-red); font-size:0.65rem; text-align:center; margin-top:4px;"></div>
         </div>
 
         <div class="auth-card" id="authStep2" style="display:none;">
             <h2>VERIFICACIÓN DE SEGURIDAD</h2>
             <p>Introduce tu PIN asignado:</p>
             <div class="big-pin-display" id="displayBigPinValue">----</div>
-            <input type="text" id="authPinInput" class="auth-input" placeholder="PIN de 4 dígitos" maxlength="4" style="text-align:center; font-size: 1.2rem; letter-spacing: 3px;">
-            <button class="auth-btn" id="verifyRandomPinBtn" style="margin-top: 8px;">ENTRAR AL CHAT</button>
-            <div id="pinErrorMsg" style="color:var(--neon-red); font-size:0.65rem; text-align:center;"></div>
+            <input type="text" id="authPinInput" class="auth-input" placeholder="PIN de 4 dígitos" maxlength="4" style="text-align:center; font-size: 1.2rem; letter-spacing: 3px; margin-bottom: 8px;">
+            <button class="auth-btn" id="verifyRandomPinBtn">ENTRAR AL CHAT</button>
+            <div id="pinErrorMsg" style="color:var(--neon-red); font-size:0.65rem; text-align:center; margin-top:4px;"></div>
         </div>
     </div>
 
+    <!-- PANTALLA DE VIDEOLLAMADA -->
     <div class="overlay-screen" id="mediaCallScreen">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
             <div style="font-family:'Orbitron'; color:var(--neon-blue); font-size:0.9rem;">VIDEOLLAMADA 16K EN VIVO</div>
@@ -173,6 +175,7 @@
     </div>
 
     <div class="app-container">
+        <!-- BARRA SUPERIOR -->
         <div class="chat-topbar">
             <div class="active-channel" id="activeChannelTitle">
                 <div class="contact-avatar" id="contactInitialAvatar">VC</div>
@@ -205,14 +208,16 @@
         </div>
 
         <div class="workspace-area">
+            <!-- CHAT -->
             <div class="screen-view" id="viewChatSection" style="display: flex; flex-direction: column; flex: 1; height: 100%;">
                 <div class="messages-display" id="messagesContainer">
                     <div class="quantum-msg incoming">
-                        <strong>[SISTEMA]</strong>: Aplicación completamente visible y optimizada para móviles.
+                        <strong>[SISTEMA]</strong>: Acceso estabilizado. Ya puedes escribir y conectar sin errores.
                         <div class="msg-meta"><span>12:00</span></div>
                     </div>
                 </div>
 
+                <!-- BARRA INFERIOR -->
                 <div class="chat-input-deck" id="chatInputDeckArea">
                     <button class="action-btn" id="voiceRecordBtn" onmousedown="startVoiceRecording()" onmouseup="stopVoiceRecording()" ontouchstart="startVoiceRecording()" ontouchend="stopVoiceRecording()" title="Mantén presionado para nota de voz">🎤</button>
                     <button class="action-btn" id="videoRecordBtn" onclick="toggleInstantVideoRecording()" title="Grabar vídeo al instante">📹</button>
@@ -221,6 +226,7 @@
                 </div>
             </div>
 
+            <!-- TRADUCTOR -->
             <div class="dynamic-content-view" id="viewTranslatorSection">
                 <div class="dynamic-card">
                     <h3 style="color:var(--neon-blue); font-family:'Orbitron'; font-size:0.85rem; margin-bottom:8px;">🌐 TRADUCTOR DE MENSAJES</h3>
@@ -231,6 +237,7 @@
                 <button class="auth-btn" style="background:#334155; color:#fff; margin-top:10px;" onclick="switchView('chat')">⬅️ Volver</button>
             </div>
 
+            <!-- OTRAS VISTAS -->
             <div class="dynamic-content-view" id="viewCloudSection">
                 <div class="dynamic-card"><h3 style="color:var(--neon-blue);">☁️ NUBE</h3><input type="file" class="auth-input"></div>
                 <button class="auth-btn" style="background:#334155; color:#fff; margin-top:10px;" onclick="switchView('chat')">⬅️ Volver</button>
@@ -348,4 +355,94 @@
             });
             document.getElementById('chatInputDeckArea').style.display = 'none';
 
-            if(viewName === 'chat
+            if(viewName === 'chat') {
+                document.getElementById('viewChatSection').style.display = 'flex';
+                document.getElementById('chatInputDeckArea').style.display = 'flex';
+            } else {
+                const target = document.getElementById('view' + viewName.charAt(0).toUpperCase() + viewName.slice(1) + 'Section');
+                if(target) target.style.display = 'block';
+            }
+        };
+
+        document.getElementById('requestRandomPinBtn').addEventListener('click', () => {
+            const phone = document.getElementById('authPhoneInput').value.trim();
+            const name = document.getElementById('authNameInput').value.trim();
+            if(!phone || !name) return document.getElementById('authErrorMsg').textContent = "Introduce teléfono y nombre.";
+            myUsername = name;
+            document.getElementById('roomTitleDisplay').textContent = name;
+            document.getElementById('contactInitialAvatar').textContent = name.charAt(0).toUpperCase();
+
+            if(!invitedRoom) currentRoom = name;
+
+            generatedRandomPin = Math.floor(1000 + Math.random() * 9000).toString();
+            document.getElementById('displayBigPinValue').textContent = generatedRandomPin;
+            document.getElementById('authStep1').style.display = 'none';
+            document.getElementById('authStep2').style.display = 'flex';
+        });
+
+        document.getElementById('verifyRandomPinBtn').addEventListener('click', () => {
+            if(document.getElementById('authPinInput').value.trim() === generatedRandomPin) {
+                document.getElementById('authOverlay').style.display = 'none';
+                socket.emit('join_room', { room: currentRoom, name: myUsername });
+            } else {
+                document.getElementById('pinErrorMsg').textContent = "❌ PIN incorrecto.";
+            }
+        });
+
+        window.logoutSession = () => location.reload();
+
+        window.triggerInvite = () => {
+            const inviteUrl = `${window.location.origin + window.location.pathname}?sala=${encodeURIComponent(currentRoom)}`;
+            navigator.clipboard.writeText(inviteUrl).then(() => alert("🔗 Enlace copiado. Compártelo con tu amigo."));
+        };
+
+        window.startVideoCall = async () => {
+            if(isUserBlocked) return;
+            try {
+                activeMediaStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
+                document.getElementById('liveWebcamVideo').srcObject = activeMediaStream;
+                document.getElementById('mediaCallScreen').style.display = 'flex';
+            } catch(e) { alert("Error de cámara."); }
+        };
+
+        window.startVoiceCall = async () => {
+            if(isUserBlocked) return;
+            try {
+                activeMediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                document.getElementById('mediaCallScreen').style.display = 'flex';
+            } catch(e) { alert("Error de audio."); }
+        };
+
+        window.endMediaCall = () => {
+            if(activeMediaStream) { activeMediaStream.getTracks().forEach(t => t.stop()); activeMediaStream = null; }
+            document.getElementById('mediaCallScreen').style.display = 'none';
+        };
+
+        window.toggleSeniorMode = () => { document.body.classList.toggle('senior-mode'); };
+
+        const messagesContainer = document.getElementById('messagesContainer');
+        const messageInput = document.getElementById('messageInput');
+
+        function handleSend() {
+            if(isUserBlocked) return;
+            const val = messageInput.value.trim();
+            if(!val) return;
+            socket.emit('chat_message', { room: currentRoom, type: 'text', text: val, sender: myUsername });
+            messageInput.value = '';
+        }
+
+        document.getElementById('sendBtn').addEventListener('click', handleSend);
+        messageInput.addEventListener('keypress', (e) => { if(e.key === 'Enter') handleSend(); });
+
+        socket.on('chat_message', (data) => {
+            if(isUserBlocked) return;
+            const type = data.sender === myUsername ? 'outgoing' : 'incoming';
+            const div = document.createElement('div');
+            div.className = `quantum-msg ${type}`;
+            div.innerHTML = `<strong>[${data.sender}]</strong>: ${data.text}<div class="msg-meta"><span>${new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span></div>`;
+            messagesContainer.appendChild(div);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        });
+    </script>
+</body>
+</html>
