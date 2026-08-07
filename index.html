@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VOBIXCHAT // Quantum Ultimate Final</title>
+    <title>VOBIXCHAT // Quantum Ultimate 100% Funcional</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         body { background-color: #05070d; color: #e2e8f0; height: 100vh; display: flex; justify-content: center; align-items: center; overflow: hidden; }
         
-        /* PANTALLA DE ACCESO BLINDADA */
+        /* PANTALLA DE ACCESO */
         #login-container { width: 100%; max-width: 420px; background: #131b2e; border: 1px solid #1e293b; border-radius: 12px; padding: 30px; box-shadow: 0 8px 30px rgba(0,210,255,0.15); text-align: center; }
         #login-container h2 { font-size: 1.2rem; color: #38bdf8; margin-bottom: 10px; letter-spacing: 1px; }
         #login-container p { font-size: 0.8rem; color: #94a3b8; margin-bottom: 25px; }
@@ -17,7 +17,7 @@
         .input-group select, .input-group input { width: 100%; background: #0b0f19; border: 1px solid #334155; padding: 12px; border-radius: 8px; color: #fff; outline: none; font-size: 0.95rem; }
         .btn-main { width: 100%; background: #0ea5e9; color: white; border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: background 0.2s; margin-top: 10px; font-size: 1rem; }
         .btn-main:hover { background: #0284c7; }
-        .pin-box { background: #1a2238; border: 1px dashed #38bdf8; padding: 15px; border-radius: 8px; margin-bottom: 20px; color: #38bdf8; font-size: 1.3rem; font-weight: bold; letter-spacing: 2px; display: none; }
+        .pin-box { background: #1a2238; border: 1px dashed #38bdf8; padding: 15px; border-radius: 8px; margin-bottom: 20px; color: #38bdf8; font-size: 1.3rem; font-weight: bold; letter-spacing: 2px; }
 
         /* APLICACIÓN PRINCIPAL */
         #app-container { display: none; width: 100vw; height: 100vh; flex-direction: column; overflow: hidden; }
@@ -30,59 +30,44 @@
 
         .main-layout { display: flex; flex: 1; height: calc(100vh - 50px); overflow: hidden; }
 
-        /* Panel Izquierdo */
         .sidebar-left { width: 280px; background: #131b2e; border-right: 1px solid #1e293b; padding: 15px; display: flex; flex-direction: column; gap: 12px; overflow-y: auto; }
         .panel-box { background: #1a2238; border: 1px solid #2a3655; border-radius: 8px; padding: 12px; }
         .panel-title { font-size: 0.75rem; color: #38bdf8; font-weight: bold; margin-bottom: 8px; text-transform: uppercase; }
-        .menu-btn { width: 100%; background: #0f172a; border: 1px solid #334155; color: #e2e8f0; padding: 10px; border-radius: 6px; text-align: left; font-size: 0.85rem; cursor: pointer; margin-bottom: 6px; transition: 0.2s; }
-        .menu-btn:hover { border-color: #38bdf8; color: #38bdf8; }
+        .menu-btn { width: 100%; background: #0f172a; border: 1px solid #334155; color: #e2e8f0; padding: 10px; border-radius: 6px; text-align: left; font-size: 0.85rem; cursor: pointer; margin-bottom: 6px; }
         .menu-btn.active { background: #0284c7; border-color: #38bdf8; color: #fff; font-weight: bold; }
 
-        /* Panel Central */
         .chat-center { flex: 1; display: flex; flex-direction: column; background: #05070d; position: relative; }
         .chat-header-bar { background: #131b2e; padding: 12px 20px; border-bottom: 1px solid #1e293b; display: flex; justify-content: space-between; align-items: center; }
         
         .content-view { flex: 1; padding: 20px; overflow-y: auto; display: none; flex-direction: column; gap: 12px; }
         .content-view.active-view { display: flex; }
 
-        .message { background: #131b2e; padding: 12px 16px; border-radius: 8px; max-width: 85%; border: 1px solid #2a3655; word-break: break-word; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
+        .message { background: #131b2e; padding: 12px 16px; border-radius: 8px; max-width: 85%; border: 1px solid #2a3655; word-break: break-word; }
         .message b { color: #38bdf8; display: block; font-size: 0.75rem; margin-bottom: 3px; }
         .message audio, .message video { width: 100%; max-width: 300px; margin-top: 6px; border-radius: 6px; outline: none; }
 
         .chat-input-area { padding: 15px 20px; background: #131b2e; border-top: 1px solid #1e293b; display: flex; gap: 8px; align-items: center; }
         .chat-input-area input { flex: 1; background: #0b0f19; border: 1px solid #334155; padding: 10px 14px; border-radius: 6px; color: #fff; outline: none; }
         .media-action-btn { background: #1a2238; border: 1px solid #334155; color: #38bdf8; padding: 10px 12px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 0.9rem; }
-        .media-action-btn:hover { border-color: #38bdf8; background: #0284c7; color: #fff; }
         .chat-input-area button.send-btn { background: #0ea5e9; color: white; border: none; padding: 10px 18px; border-radius: 6px; font-weight: bold; cursor: pointer; }
 
-        /* Overlay de Llamada de Voz HD */
         #voice-call-overlay { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(5,7,13,0.95); z-index: 20; flex-direction: column; justify-content: center; align-items: center; gap: 20px; text-align: center; }
-        .call-pulsator { width: 100px; height: 100px; background: #0ea5e9; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 2.5rem; box-shadow: 0 0 30px rgba(14,165,233,0.6); animation: pulse 1.5s infinite; }
-        @keyframes pulse { 0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(14,165,233,0.7); } 70% { transform: scale(1); box-shadow: 0 0 0 25px rgba(14,165,233,0); } 100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(14,165,233,0); } }
+        .call-pulsator { width: 100px; height: 100px; background: #0ea5e9; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 2.5rem; }
 
-        /* Panel Derecho */
         .sidebar-right { width: 300px; background: #131b2e; border-left: 1px solid #1e293b; padding: 15px; display: flex; flex-direction: column; gap: 12px; overflow-y: auto; font-size: 0.85rem; }
         .right-group { background: #1a2238; border: 1px solid #2a3655; border-radius: 8px; padding: 12px; }
-        .right-group label { display: block; color: #94a3b8; font-size: 0.75rem; margin-bottom: 4px; }
-        .right-group input { width: 100%; background: #0f172a; border: 1px solid #334155; padding: 8px; border-radius: 6px; color: #fff; margin-bottom: 8px; font-size: 0.85rem; }
         .action-btn { width: 100%; background: #0284c7; border: none; color: white; padding: 8px; border-radius: 6px; font-weight: bold; cursor: pointer; margin-top: 4px; font-size: 0.8rem; }
         .action-btn.red { background: #e11d48; }
     </style>
 </head>
 <body>
 
-    <!-- ================= ACCESO Y PIN ================= -->
+    <!-- ACCESO -->
     <div id="login-container">
         <h2>VOBIXCHAT // ACCESO</h2>
         <p id="loginSubtitle">Introduce tu móvil y PIN (Pánico: 9999)</p>
         
         <div id="step-phone">
-            <div class="input-group">
-                <label>País</label>
-                <select id="country">
-                    <option value="España (+34)">España (+34)</option>
-                </select>
-            </div>
             <div class="input-group">
                 <label>Número de Móvil</label>
                 <input type="tel" id="phoneInput" placeholder="Ej. 600000000" autocomplete="off" />
@@ -91,26 +76,26 @@
                 <label>Nombre o Alias</label>
                 <input type="text" id="nameInput" placeholder="Tu nombre" autocomplete="off" />
             </div>
-            <button class="btn-main" id="requestPinBtn">ENVIAR CÓDIGO PIN</button>
+            <button class="btn-main" id="requestPinBtn">CONTINUAR</button>
         </div>
 
         <div id="step-pin" style="display: none;">
             <div id="simulatedPinDisplay" class="pin-box">PIN: ----</div>
             <div class="input-group">
-                <label>Introduce el PIN recibido (Pulsa Enter para entrar)</label>
-                <input type="text" id="pinInput" placeholder="Ej. 4821" maxlength="4" autocomplete="off" />
+                <label>Introduce el PIN recibido</label>
+                <input type="text" id="pinInput" placeholder="Escribe el PIN..." maxlength="4" autocomplete="off" />
             </div>
-            <button class="btn-main" id="verifyPinBtn">CONFIRMAR Y ENTRAR</button>
+            <button class="btn-main" id="verifyPinBtn">ENTRAR A LA APP</button>
         </div>
     </div>
 
-    <!-- ================= APLICACIÓN PRINCIPAL ================= -->
+    <!-- APLICACIÓN PRINCIPAL -->
     <div id="app-container">
         <div class="top-bar">
             <div class="logo">VOBIXCHAT // <span id="salaDisplay">CANAL GLOBAL</span></div>
             <div class="top-buttons">
-                <button class="top-btn" id="btnVoiceCall">📞 Llamada de Voz Full HD</button>
-                <button class="top-btn" id="btnInvite">🔗 Invitar a Conversar</button>
+                <button class="top-btn" id="btnVoiceCall">📞 Llamada Voz HD</button>
+                <button class="top-btn" id="btnInvite">🔗 Invitar Persona</button>
                 <button class="logout-btn" id="logoutBtn">CERRAR SESIÓN</button>
             </div>
         </div>
@@ -118,55 +103,41 @@
         <div class="main-layout">
             <div class="sidebar-left">
                 <div class="panel-box">
-                    <div class="panel-title">USUARIO ACTIVO</div>
-                    <div id="displayUser" style="font-size: 0.85rem; color: #38bdf8; font-weight: bold;">Shneyder</div>
+                    <div class="panel-title">USUARIO</div>
+                    <div id="displayUser" style="color: #38bdf8; font-weight: bold;">Shneyder</div>
                 </div>
-                <div class="panel-box">
-                    <div class="panel-title">DISPOSITIVOS</div>
-                    <div id="deviceCount" style="font-size: 1.1rem; font-weight: bold; color: #38bdf8;">1</div>
-                </div>
-                <div class="panel-title">NAVEGACIÓN</div>
+                <div class="panel-title">MENÚ</div>
                 <button class="menu-btn active" id="navChat">💬 Chat Directo</button>
                 <button class="menu-btn" id="navStates">📊 Estados</button>
-                <button class="menu-btn" id="navPdf">📄 Bóveda IA</button>
             </div>
 
             <div class="chat-center">
                 <div class="chat-header-bar">
-                    <span id="sectionTitle" style="color: #38bdf8; font-weight: bold; font-size: 0.9rem;">[SALA SECRETA ACTIVA]</span>
+                    <span id="sectionTitle" style="color: #38bdf8; font-weight: bold;">[SALA ACTIVA]</span>
                     <span style="font-size: 0.75rem; color: #94a3b8;" id="liveClock">--:--</span>
                 </div>
 
-                <!-- OVERLAY DE LLAMADA DE VOZ FULL HD -->
                 <div id="voice-call-overlay">
                     <div class="call-pulsator">🎙️</div>
-                    <h2 style="color: #38bdf8;">Llamada de Voz Full HD en Curso</h2>
-                    <p style="color: #94a3b8;">Audio nítido sin ruido ni eco.</p>
-                    <button class="action-btn red" id="endVoiceCallBtn" style="max-width: 200px; padding: 12px;">Colgar Llamada</button>
+                    <h2 style="color: #38bdf8;">Llamada de Voz HD Activa</h2>
+                    <button class="action-btn red" id="endVoiceCallBtn" style="max-width: 180px;">Colgar</button>
                 </div>
 
                 <div id="viewChat" class="content-view active-view">
-                    <div class="message">
-                        <b>[SISTEMA] VobixChat Quantum</b>
-                        Canal seguro abierto. Envía texto, notas de voz o vídeos.
-                    </div>
+                    <div class="message"><b>[SISTEMA]</b> Bienvenido a VobixChat Quantum. Envía mensajes o voz.</div>
                 </div>
 
                 <div id="viewStates" class="content-view">
-                    <div class="message"><b>[ESTADOS]</b> Publica tus actualizaciones encriptadas.</div>
+                    <div class="message"><b>[ESTADOS]</b> Publica tus actualizaciones.</div>
                     <div class="right-group">
-                        <input type="text" id="statusInput" placeholder="Escribe tu estado..." />
+                        <input type="text" id="statusInput" placeholder="Nuevo estado..." />
                         <button class="action-btn" id="publishStatusBtn">Publicar</button>
                     </div>
                     <div id="statusList" style="display: flex; flex-direction: column; gap: 8px;"></div>
                 </div>
 
-                <div id="viewPdf" class="content-view">
-                    <div class="message"><b>[BÓVEDA IA]</b> Asistente inteligente para estudiantes.</div>
-                </div>
-
                 <form id="form" class="chat-input-area">
-                    <button type="button" class="media-action-btn" id="recordVoiceBtn">🎙️ Nota Voz</button>
+                    <button type="button" class="media-action-btn" id="recordVoiceBtn">🎙️ Voz</button>
                     <button type="button" class="media-action-btn" id="sendVideoBtn">🎥 Vídeo</button>
                     <input type="file" id="videoFileInput" accept="video/*" style="display: none;" />
                     <input id="input" autocomplete="off" placeholder="Escribe un mensaje..." required />
@@ -183,18 +154,12 @@
         </div>
     </div>
 
-    <!-- LÓGICA DE CONTROL DEFINITIVA -->
+    <!-- SCRIPT DE CONTROL TOTAL -->
     <script src="/socket.io/socket.io.js"></script>
     <script>
         const socket = io();
 
-        const urlParams = new URLSearchParams(window.location.search);
-        const invitacionSala = urlParams.get('sala');
-        if (invitacionSala) {
-            document.getElementById('loginSubtitle').textContent = `Invitación para unirse a la sala de: ${invitacionSala}`;
-            document.getElementById('salaDisplay').textContent = `SALA DE ${invitacionSala.toUpperCase()}`;
-        }
-
+        // Control de reloj
         setInterval(() => {
             document.getElementById('liveClock').textContent = new Date().toLocaleTimeString();
         }, 1000);
@@ -213,6 +178,7 @@
         let generatedPin = "";
         let currentAlias = "";
 
+        // Paso 1: Pedir PIN
         requestPinBtn.addEventListener('click', () => {
             if (!phoneInput.value.trim() || !nameInput.value.trim()) {
                 alert("Introduce número de móvil y alias.");
@@ -221,34 +187,28 @@
             currentAlias = nameInput.value.trim();
             generatedPin = Math.floor(1000 + Math.random() * 9000).toString();
             simulatedPinDisplay.textContent = `PIN: ${generatedPin} (Pánico: 9999)`;
-            simulatedPinDisplay.style.display = 'block';
             document.getElementById('step-phone').style.display = 'none';
             document.getElementById('step-pin').style.display = 'block';
             pinInput.focus();
         });
 
-        // VALIDACIÓN DE PIN BLINDADA (Funciona con Enter y con Click)
-        function validarPinYAbrir() {
+        // Paso 2: Entrar alfanumérico blindado
+        function entrarAlSistema() {
             const val = pinInput.value.trim();
             if (val !== generatedPin && val !== "9999") {
-                alert("PIN incorrecto. Revisa el código superior.");
+                alert("PIN incorrecto. Revisa el número mostrado arriba.");
                 return;
             }
-            if (val === "9999") {
-                alert("🚨 Búnker Fantasma activado.");
-            }
             displayUser.textContent = currentAlias;
-            document.getElementById('vipBadge').textContent = " ★ [VIP]";
             loginContainer.style.display = 'none';
             appContainer.style.display = 'flex';
         }
 
-        verifyPinBtn.addEventListener('click', validarPinYAbrir);
-
+        verifyPinBtn.addEventListener('click', entrarAlSistema);
         pinInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
                 e.preventDefault();
-                validarPinYAbrir();
+                entrarAlSistema();
             }
         });
 
@@ -262,113 +222,57 @@
             pinInput.value = '';
         });
 
-        // Invitación inteligente
+        // Invitación
         document.getElementById('btnInvite').addEventListener('click', () => {
-            const baseUrl = window.location.origin + window.location.pathname;
-            const inviteLink = `${baseUrl}?sala=${encodeURIComponent(currentAlias)}`;
-            navigator.clipboard.writeText(inviteLink).then(() => {
-                alert(`¡Enlace copiado al portapapeles!\n\n${inviteLink}\n\nCompártelo para invitar a chatear.`);
+            const link = `${window.location.origin}${window.location.pathname}?sala=${encodeURIComponent(currentAlias)}`;
+            navigator.clipboard.writeText(link).then(() => {
+                alert("¡Enlace de invitación copiado al portapapeles!");
             });
         });
 
-        // Llamada de Voz Full HD
+        // Llamada de Voz HD
         let activeVoiceStream = null;
         const voiceCallOverlay = document.getElementById('voice-call-overlay');
-        const btnVoiceCall = document.getElementById('btnVoiceCall');
-        const endVoiceCallBtn = document.getElementById('endVoiceCallBtn');
-
-        btnVoiceCall.addEventListener('click', async () => {
+        document.getElementById('btnVoiceCall').addEventListener('click', async () => {
             try {
-                activeVoiceStream = await navigator.mediaDevices.getUserMedia({
-                    audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true, channelCount: 1, sampleRate: 48000 },
-                    video: false
-                });
+                activeVoiceStream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true }, video: false });
                 voiceCallOverlay.style.display = 'flex';
             } catch (err) {
-                alert("Error al iniciar llamada de voz: " + err.message);
+                alert("Error de micrófono: " + err.message);
             }
         });
-
-        endVoiceCallBtn.addEventListener('click', () => {
+        document.getElementById('endVoiceCallBtn').addEventListener('click', () => {
             if (activeVoiceStream) {
-                activeVoiceStream.getTracks().forEach(track => track.stop());
+                activeVoiceStream.getTracks().forEach(t => t.stop());
                 activeVoiceStream = null;
             }
             voiceCallOverlay.style.display = 'none';
         });
 
-        // Navegación
+        // Pestañas
         const navChat = document.getElementById('navChat');
         const navStates = document.getElementById('navStates');
-        const navPdf = document.getElementById('navPdf');
         const viewChat = document.getElementById('viewChat');
         const viewStates = document.getElementById('viewStates');
-        const viewPdf = document.getElementById('viewPdf');
-        const sectionTitle = document.getElementById('sectionTitle');
         const form = document.getElementById('form');
 
-        function switchTab(btn, view, title) {
-            [navChat, navStates, navPdf].forEach(b => b.classList.remove('active'));
-            [viewChat, viewStates, viewPdf].forEach(v => v.classList.remove('active-view'));
-            btn.classList.add('active');
-            view.classList.add('active-view');
-            sectionTitle.textContent = title;
-            form.style.display = (view === viewChat) ? 'flex' : 'none';
-        }
-
-        navChat.addEventListener('click', () => switchTab(navChat, viewChat, '[SALA SECRETA ACTIVA]'));
-        navStates.addEventListener('click', () => switchTab(navStates, viewStates, '[ESTADOS & HISTORIAS]'));
-        navPdf.addEventListener('click', () => switchTab(navPdf, viewPdf, '[BÓVEDA DE ESTUDIANTES]'));
-
-        // Notas de Voz y Vídeos
-        let mediaRecorder;
-        let audioChunks = [];
-        const recordVoiceBtn = document.getElementById('recordVoiceBtn');
-        recordVoiceBtn.addEventListener('click', async () => {
-            if (!mediaRecorder || mediaRecorder.state === "inactive") {
-                try {
-                    const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } });
-                    mediaRecorder = new MediaRecorder(stream);
-                    audioChunks = [];
-                    mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
-                    mediaRecorder.onstop = () => {
-                        const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
-                        const audioUrl = URL.createObjectURL(audioBlob);
-                        socket.emit('chat_media', { name: currentAlias, type: 'audio', url: audioUrl });
-                    };
-                    mediaRecorder.start();
-                    recordVoiceBtn.style.background = "#e11d48";
-                    recordVoiceBtn.textContent = "⏹️ Grabando...";
-                } catch (err) {
-                    alert("Error en micrófono: " + err.message);
-                }
-            } else {
-                mediaRecorder.stop();
-                recordVoiceBtn.style.background = "#1a2238";
-                recordVoiceBtn.textContent = "🎙️ Nota Voz";
-            }
+        navChat.addEventListener('click', () => {
+            navChat.classList.add('active'); navStates.classList.remove('active');
+            viewChat.classList.add('active-view'); viewStates.classList.remove('active-view');
+            form.style.display = 'flex';
+        });
+        navStates.addEventListener('click', () => {
+            navStates.classList.add('active'); navChat.classList.remove('active');
+            viewStates.classList.add('active-view'); viewChat.classList.remove('active-view');
+            form.style.display = 'none';
         });
 
-        const sendVideoBtn = document.getElementById('sendVideoBtn');
-        const videoFileInput = document.getElementById('videoFileInput');
-        sendVideoBtn.addEventListener('click', () => videoFileInput.click());
-        videoFileInput.addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (file) {
-                const videoUrl = URL.createObjectURL(file);
-                socket.emit('chat_media', { name: currentAlias, type: 'video', url: videoUrl });
-            }
-        });
-
-        // Chat WebSockets
+        // Chat
         const input = document.getElementById('input');
-        const deviceCount = document.getElementById('deviceCount');
-
         form.addEventListener('submit', (e) => {
             e.preventDefault();
-            const text = input.value.trim();
-            if (text) {
-                socket.emit('chat_message', { name: currentAlias, text: text });
+            if (input.value.trim()) {
+                socket.emit('chat_message', { name: currentAlias, text: input.value.trim() });
                 input.value = '';
             }
         });
@@ -379,22 +283,6 @@
             item.innerHTML = `<b>${msg.name}</b>${msg.text}`;
             viewChat.appendChild(item);
             viewChat.scrollTop = viewChat.scrollHeight;
-        });
-
-        socket.on('chat_media', (data) => {
-            const item = document.createElement('div');
-            item.className = 'message';
-            if (data.type === 'audio') {
-                item.innerHTML = `<b>${data.name} (Nota de Voz)</b><audio controls src="${data.url}"></audio>`;
-            } else if (data.type === 'video') {
-                item.innerHTML = `<b>${data.name} (Vídeo)</b><video controls src="${data.url}"></video>`;
-            }
-            viewChat.appendChild(item);
-            viewChat.scrollTop = viewChat.scrollHeight;
-        });
-
-        socket.on('device_count', (count) => {
-            deviceCount.textContent = count;
         });
     </script>
 </body>
