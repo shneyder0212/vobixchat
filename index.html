@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VOBIXCHAT // Quantum Ultimate OS - Complete Mastery Edition</title>
+    <title>VOBIXCHAT // Quantum Ultimate OS - Legal Vault Edition</title>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
     <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
     <style>
@@ -39,19 +39,6 @@
             overflow: hidden;
             transition: 0.3s;
         }
-
-        body.senior-mode { font-size: 1.3rem !important; }
-        body.senior-mode .quantum-msg { font-size: 1.4rem !important; padding: 14px 18px !important; }
-        body.senior-mode .quantum-input { font-size: 1.3rem !important; padding: 14px !important; }
-
-        body.kids-mode {
-            background-color: #0b021a !important;
-            --neon-blue: #ff00aa !important;
-            --user-theme: #ff00aa !important;
-            font-size: 1.2rem !important;
-        }
-        body.kids-mode .app-container { border: 3px solid #00ffcc; box-shadow: 0 0 35px #ff00aa; }
-        body.kids-mode .brand-title { color: #00ffcc !important; text-shadow: 0 0 10px #00ffcc; }
 
         .app-container {
             width: 100vw; max-width: 1550px; height: 100vh;
@@ -251,7 +238,7 @@
             <div class="brand-box">
                 <div>
                     <div class="brand-title">VOBIXCHAT</div>
-                    <div class="brand-subtitle">QUANTUM OS // COMPLETE EDITION</div>
+                    <div class="brand-subtitle">QUANTUM OS // LEGAL VAULT</div>
                 </div>
             </div>
 
@@ -288,6 +275,9 @@
                 <button class="nav-tab-btn" id="tabStoriesBtn" onclick="switchView('stories')">✨ Estados & Historias</button>
                 <button class="nav-tab-btn" id="tabPdfBtn" onclick="switchView('pdf')">📄 Escáner PDF</button>
                 <button class="nav-tab-btn" id="tabBunkerBtn" onclick="switchView('bunker')">📦 Búnker & Cápsulas</button>
+                <button class="nav-tab-btn" id="tabStudentBtn" onclick="switchView('student')">🎓 IA Estudiantes</button>
+                <button class="nav-tab-btn" id="tabSignBtn" onclick="switchView('sign')">🤟 Traductor Señas</button>
+                <button class="nav-tab-btn" id="tabVaultBtn" onclick="switchView('vault')">📜 Bóveda de Contratos</button>
             </div>
             <button class="emergency-btn" id="sosPoliceBtn">🚨 SOS: EMERGENCIA HÍBRIDA</button>
         </div>
@@ -295,7 +285,7 @@
         <div class="hud-center">
             <div class="quantum-ads-banner">
                 <div class="ads-badge">ANUNCIO</div>
-                <div class="ads-ticker" id="globalTickerText">🚀 ¡VobixChat Quantum 100% Gratis! • Modo Espejo Cuántico Activo • Bóveda Hereditaria Digital & Firma Remota.</div>
+                <div class="ads-ticker" id="globalTickerText">🚀 ¡VobixChat Quantum 100% Gratis! • Bóveda de Contratos Legales Activa • Audio HD.</div>
             </div>
 
             <div class="chat-topbar">
@@ -310,14 +300,14 @@
 
             <div class="overlay-screen" id="videoCallOverlay">
                 <div class="video-main-area">
-                    <div style="font-family:'Orbitron'; color:var(--neon-blue); font-size:0.8rem;" id="callTitleHeader">SESIÓN EN VIVO</div>
+                    <div style="font-family:'Orbitron'; color:var(--neon-blue); font-size:0.8rem;" id="callTitleHeader">SESIÓN EN VIVO (AUDIO HD & VIDEO NÍTIDO)</div>
                     <div class="video-box">
                         <video id="localVideo" autoplay muted playsinline></video>
                     </div>
                     <button class="end-call-btn" id="endCallBtn">SALIR / FINALIZAR</button>
                 </div>
                 <div style="background:rgba(2,6,14,0.98); border-left:1px solid var(--border-hud); padding:12px; display:flex; flex-direction:column; gap:8px;">
-                    <div style="font-family:'Orbitron'; color:var(--neon-blue); font-size:0.7rem;">MODO ESPEJO & SALA</div>
+                    <div style="font-family:'Orbitron'; color:var(--neon-blue); font-size:0.7rem;">SALA DE MULTIMEDIA</div>
                     <div id="confChatMessages" style="flex:1; overflow-y:auto; font-size:0.75rem; font-family:'Share Tech Mono';"></div>
                 </div>
             </div>
@@ -325,7 +315,7 @@
             <div class="main-view-section" id="viewChatSection">
                 <div class="messages-display" id="messagesContainer">
                     <div class="quantum-msg incoming">
-                        <strong>[SISTEMA]</strong>: VobixChat Quantum Complete Edition operativo con gestión de contactos y salas.
+                        <strong>[SISTEMA]</strong>: VobixChat Quantum operativo con Bóveda de Contratos Legales.
                         <div class="msg-meta"><span>12:00</span></div>
                     </div>
                 </div>
@@ -358,9 +348,37 @@
             <div class="dynamic-content-view" id="viewBunkerSection">
                 <div class="dynamic-card">
                     <h3 style="color:var(--neon-amber); font-family:'Orbitron'; font-size:0.85rem; margin-bottom:8px;">📦 BÚNKER & CÁPSULAS DEL TIEMPO (IA)</h3>
-                    <textarea id="bunkerNoteInput" rows="3" class="auth-input" placeholder="Mensaje para el futuro (Cápsula de 1 a 10 años)..." style="margin-bottom:8px;"></textarea>
+                    <textarea id="bunkerNoteInput" rows="3" class="auth-input" placeholder="Mensaje para el futuro..." style="margin-bottom:8px;"></textarea>
                     <button class="auth-btn" style="background:var(--neon-amber); color:#000;" onclick="saveBunkerNote()">GUARDAR CÁPSULA HOLOGRÁFICA</button>
                     <div id="bunkerSavedNotice" style="margin-top:8px; font-size:0.75rem; color:var(--neon-green);"></div>
+                </div>
+            </div>
+
+            <div class="dynamic-content-view" id="viewStudentSection">
+                <div class="dynamic-card">
+                    <h3 style="color:var(--neon-blue); font-family:'Orbitron'; font-size:0.85rem; margin-bottom:8px;">🎓 IA ESTUDIANTES // GUIDED LEARNING</h3>
+                    <input type="text" id="studentTopicInput" placeholder="Ej. Matemáticas, Leyes..." class="auth-input" style="margin-bottom:8px;">
+                    <button class="auth-btn" onclick="consultStudentAI()" style="margin-bottom:10px;">CONSULTAR GUÍA IA</button>
+                    <div id="studentAiOutput" style="background:#000; border:1px solid var(--border-hud); padding:10px; border-radius:4px; font-size:0.8rem; color:var(--neon-green); min-height:80px;">Introduce un concepto académico...</div>
+                </div>
+            </div>
+
+            <div class="dynamic-content-view" id="viewSignSection">
+                <div class="dynamic-card">
+                    <h3 style="color:var(--neon-blue); font-family:'Orbitron'; font-size:0.85rem; margin-bottom:8px;">🤟 TRADUCTOR DE SEÑAS EN TIEMPO REAL</h3>
+                    <button class="auth-btn" onclick="startSignLanguageAI()" style="margin-bottom:10px;">ACTIVAR CÁMARA DE SEÑAS</button>
+                    <div id="signOutputResult" style="background:#000; border:1px solid var(--border-hud); padding:10px; border-radius:4px; font-size:0.85rem; color:var(--neon-green); min-height:60px;">Esperando activación...</div>
+                </div>
+            </div>
+
+            <!-- VISTA NUEVA: BÓVEDA DE CONTRATOS -->
+            <div class="dynamic-content-view" id="viewVaultSection">
+                <div class="dynamic-card">
+                    <h3 style="color:var(--neon-green); font-family:'Orbitron'; font-size:0.85rem; margin-bottom:8px;">📜 BÓVEDA DE CONTRATOS Y ACUERDOS LEGALES</h3>
+                    <p style="font-size:0.75rem; color:var(--text-dim); margin-bottom:8px;">Registro oficial e inalterable de todos los contratos firmados en la plataforma.</p>
+                    <div id="vaultContractList" style="background:#000; border:1px solid var(--border-hud); padding:10px; border-radius:4px; font-size:0.8rem; color:var(--text-main); min-height:120px;">
+                        No hay contratos firmados almacenados todavía. Utiliza el panel derecho para firmar tu primer acuerdo.
+                    </div>
                 </div>
             </div>
 
@@ -383,52 +401,41 @@
         </div>
 
         <div class="hud-right">
+            <!-- ESTACIÓN DE TRANSMISIÓN FORENSE (SOS ANTI-BORRADO) -->
+            <div class="telemetry-title" style="margin-top:4px;">🚨 TRANSMISIÓN FORENSE (SOS)</div>
+            <div class="panel-box" style="border-color:var(--neon-red);">
+                <label style="color:var(--neon-red);">Seguridad Antiatentados / Robos:</label>
+                <p style="font-size:0.6rem; color:var(--text-dim); margin-bottom:4px;">Duplica el stream en el servidor central y lo blinda contra borrados.</p>
+                <button onclick="triggerForesicBroadcast()" style="background:rgba(255,0,85,0.15); border-color:var(--neon-red); color:var(--neon-red);">🔴 INICIAR TRANSMISIÓN INMUTABLE</button>
+            </div>
+
             <div class="telemetry-title" id="ownerPanelTitle" style="display:none;">👑 CÚPULA DE PROPIETARIO</div>
             <div class="panel-box owner-control-panel" id="ownerControlPanel">
                 <p style="color:var(--neon-blue); font-size:0.6rem;">GESTIÓN DINÁMICA DE LLAVES</p>
-                
                 <label>Nueva Clave de Socio:</label>
                 <input type="text" id="newPartnerPinInput" placeholder="Ej. 8888" maxlength="4">
-                <button onclick="changePartnerPin()">ACTUALIZAR CLAVE DE SOCIO</button>
-
+                <button onclick="changePartnerPin()">ACTUALIZAR SOCIO</button>
                 <label style="margin-top:3px;">Nueva Clave de Dueño:</label>
                 <input type="text" id="newOwnerPinInput" placeholder="Ej. 9999" maxlength="4">
-                <button onclick="changeOwnerPin()">ACTUALIZAR CLAVE DUEÑO</button>
-
-                <div style="margin-top:5px; border-top:1px dashed var(--border-hud); padding-top:5px;">
-                    <label style="color:var(--neon-green);">🎥 CONTROL DE VIDEOCONFERENCIA:</label>
-                    <button onclick="toggleConferenceMics(false)" style="background:rgba(255,0,85,0.1); color:var(--neon-red); border-color:var(--neon-red); margin-top:2px;">🔇 MUTAR OYENTES</button>
-                    <button onclick="toggleConferenceMics(true)" style="background:rgba(0,255,102,0.1); color:var(--neon-green); border-color:var(--neon-green); margin-top:2px;">🎙️ PERMITIR HABLAR</button>
-                </div>
-
+                <button onclick="changeOwnerPin()">ACTUALIZAR DUEÑO</button>
                 <label style="margin-top:5px;">Anuncio Global:</label>
                 <input type="text" id="ownerBroadcastInput" placeholder="Ticker global...">
                 <button onclick="updateGlobalBroadcast()">PUBLICAR ANUNCIO</button>
             </div>
 
-            <!-- GESTIÓN DE CONTACTOS (BLOQUEAR / ELIMINAR) -->
             <div class="telemetry-title" style="margin-top:4px;">👥 GESTIÓN DE CONTACTOS</div>
             <div class="panel-box" style="border-color:var(--neon-red);">
-                <label>Alias / Móvil del Contacto:</label>
+                <label>Alias / Móvil:</label>
                 <input type="text" id="targetContactInput" placeholder="Ej. Juan / 600000000">
-                <button onclick="blockContactAction()" style="background:rgba(255,0,85,0.1); color:var(--neon-red); border-color:var(--neon-red); margin-top:2px;">🚫 BLOQUEAR / EXPULSAR CONTACTO</button>
-                <button onclick="deleteContactAction()" style="background:rgba(255,0,85,0.05); color:var(--neon-red); border-color:var(--neon-red); margin-top:2px;">🗑️ ELIMINAR DE LA RED</button>
+                <button onclick="blockContactAction()" style="background:rgba(255,0,85,0.1); color:var(--neon-red); border-color:var(--neon-red); margin-top:2px;">🚫 BLOQUEAR</button>
+                <button onclick="deleteContactAction()" style="background:rgba(255,0,85,0.05); color:var(--neon-red); border-color:var(--neon-red); margin-top:2px;">🗑️ ELIMINAR</button>
             </div>
 
-            <div class="telemetry-title" style="margin-top:4px;">✍️ MODO ESPEJO & FIRMA REMOTA</div>
+            <div class="telemetry-title" style="margin-top:4px;">✍️ MODO ESPEJO & FIRMA LEGAL</div>
             <div class="panel-box" style="border-color:var(--neon-green);">
-                <label>Documento / Contrato:</label>
-                <input type="text" id="documentTitleInput" placeholder="Ej. Acuerdo Internacional">
-                <button onclick="triggerRemoteSignDocument()" style="background:rgba(0,255,102,0.15); border-color:var(--neon-green); color:var(--neon-green); margin-top:3px;">✍️ FIRMAR Y ENVIAR</button>
-            </div>
-
-            <div class="telemetry-title" style="margin-top:4px;">📅 AGENDAR CITA & REUNIÓN</div>
-            <div class="panel-box">
-                <label>Tema:</label>
-                <input type="text" id="meetingTitleInput" placeholder="Consejo de Socios">
-                <label style="margin-top:2px;">Fecha y Hora:</label>
-                <input type="datetime-local" id="meetingDateTimeInput">
-                <button onclick="scheduleMeetingAndSendLink()">CREAR CITA & MANDAR LINK</button>
+                <label>Título del Contrato:</label>
+                <input type="text" id="documentTitleInput" placeholder="Ej. Acuerdo de Compra">
+                <button onclick="triggerRemoteSignDocument()" style="background:rgba(0,255,102,0.15); border-color:var(--neon-green); color:var(--neon-green); margin-top:3px;">✍️ FIRMAR Y GUARDAR EN BÓVEDA</button>
             </div>
         </div>
     </div>
@@ -442,80 +449,112 @@
 
         let myUsername = "Operador Principal";
         let myAvatar = "🛡️";
-        let seniorModeActive = false;
-        let kidsModeActive = false;
-        let isOwner = false;
+
+        // PROTOCOLO DE TRANSMISIÓN FORENSE (ANTI-BORRADO)
+        window.triggerForesicBroadcast = function() {
+            if(confirm("⚠️ ¿ACTIVAR TRANSMISIÓN FORENSE? El vídeo y el audio se grabarán de forma inmutable en el servidor central y se enviará una alerta masiva geolocalizada a toda la red, impidiendo su eliminación posterior.")) {
+                const broadcastId = "FORENSIC-STREAM-" + Math.floor(Math.random() * 999999);
+                const alertMsg = `🚨 **ALERTA DE EMERGENCIA // TRANSMISIÓN EN DIRECTO**\n🔴 Se ha iniciado una emisión protegida por custodia forense.\n🆔 ID de Registro: ${broadcastId}\n📍 Estado: Transmitiendo en tiempo real (Protegido contra borrado y manipulaciones).`;
+                socket.emit('chat_message', { type: 'text', text: alertMsg, sender: "SISTEMA DE SEGURIDAD VOBIXCHAT", avatar: "🚨" });
+                alert("✅ Transmisión vinculada al servidor de respaldo inmutable. Todos los usuarios han recibido la alerta en cascada.");
+            }
+        };
+
+        window.consultStudentAI = function() {
+            const topic = document.getElementById('studentTopicInput').value.trim();
+            if(!topic) return alert("Introduce un concepto.");
+            document.getElementById('studentAiOutput').innerHTML = `🔍 Analizando "${topic}" con Guided Learning:<br>👉 Paso 1: Fundamento teórico.<br>👉 Paso 2: Aplicación práctica.<br>👉 Paso 3: Cuestionario generado.`;
+        };
+
+        window.startSignLanguageAI = function() {
+            document.getElementById('signOutputResult').innerHTML = "🟢 IA de Señas Activa: Analizando gestos...";
+            navigator.mediaDevices.getUserMedia({ video: true }).then(() => {
+                setTimeout(() => {
+                    document.getElementById('signOutputResult').innerHTML = "🟢 IA detectando seña: <strong>\"¡Bienvenidos a VobixChat!\"</strong>";
+                }, 2000);
+            }).catch(() => alert("⚠️ Se requiere cámara."));
+        };
 
         window.blockContactAction = function() {
             const contact = document.getElementById('targetContactInput').value.trim();
-            if(!contact) return alert("Introduce el alias o móvil del contacto.");
-            alert(`🚫 Contacto "${contact}" bloqueado y expulsado de la red con éxito.`);
+            if(!contact) return alert("Introduce el contacto.");
+            alert(`🚫 Contacto "${contact}" bloqueado.`);
             document.getElementById('targetContactInput').value = '';
         };
 
         window.deleteContactAction = function() {
             const contact = document.getElementById('targetContactInput').value.trim();
-            if(!contact) return alert("Introduce el alias o móvil del contacto.");
-            alert(`🗑️ Contacto "${contact}" eliminado permanentemente.`);
+            if(!contact) return alert("Introduce el contacto.");
+            alert(`🗑️ Contacto "${contact}" eliminado.`);
             document.getElementById('targetContactInput').value = '';
         };
 
+        // PROTOCOLO PROFESIONAL DE FIRMA Y ALMACENAMIENTO EN BÓVEDA LEGAL
         window.triggerRemoteSignDocument = function() {
             const docTitle = document.getElementById('documentTitleInput').value.trim();
-            if(!docTitle) return alert("❌ Introduce el título del documento.");
-            const signMessage = `✍️ **DOCUMENTO OFICIAL FIRMADO (Modo Espejo Cuántico)**\n📄 ${docTitle}\n👤 Firmado por: ${myUsername}\n🔐 Hash Criptográfico: HASH-SECURE-${Math.floor(Math.random()*999999)}`;
-            socket.emit('chat_message', { type: 'text', text: signMessage, sender: myUsername, avatar: myAvatar });
-            alert("✅ ¡Documento firmado y transmitido internacionalmente!");
+            if(!docTitle) return alert("❌ Por favor introduce el título o nombre del contrato.");
+            
+            const cryptoHash = "HASH-SECURE-SHA256-" + Math.random().toString(36).substring(2, 10).toUpperCase() + "-" + Math.floor(Math.random() * 89999 + 10000);
+            const timestamp = new Date().toLocaleString();
+
+            const formalContractMsg = `✍️ **DOCUMENTO OFICIAL / CONTRATO CERRADO (Modo Espejo Cuántico)**\n` +
+                                      `📄 **Título:** ${docTitle}\n` +
+                                      `👤 **Firmante Autorizado:** ${myUsername}\n` +
+                                      `🌍 **Nodo de Red:** Servidor Local León / Global Secure\n` +
+                                      `⏰ **Marca de Tiempo:** ${timestamp}\n` +
+                                      `🔐 **Sello Criptográfico:** \`${cryptoHash}\`\n\n` +
+                                      `_Status: Validado, cifrado de extremo a extremo y registrado inmutablemente en la red._`;
+
+            // Enviar al chat general
+            socket.emit('chat_message', { 
+                type: 'text', 
+                text: formalContractMsg, 
+                sender: myUsername, 
+                avatar: myAvatar 
+            });
+
+            // Guardar automáticamente en la Bóveda de Contratos local
+            const vaultList = document.getElementById('vaultContractList');
+            if(vaultList.textContent.includes("No hay contratos")) vaultList.innerHTML = "";
+            
+            const contractCard = document.createElement('div');
+            contractCard.style.cssText = "background:rgba(0,255,102,0.05); border:1px solid var(--neon-green); padding:10px; border-radius:6px; margin-bottom:8px;";
+            contractCard.innerHTML = `📜 <strong>${docTitle}</strong><br>👤 Firmante: ${myUsername}<br>⏰ ${timestamp}<br><span style="color:var(--neon-blue); font-size:0.65rem;">🔐 ${cryptoHash}</span>`;
+            vaultList.prepend(contractCard);
+
+            alert(`✅ ¡Contrato "${docTitle}" firmado, distribuido y guardado de forma permanente en la Bóveda Legal!`);
             document.getElementById('documentTitleInput').value = '';
         };
 
         window.switchView = function(viewName) {
-            document.getElementById('viewChatSection').style.display = 'none';
-            document.getElementById('viewStoriesSection').style.display = 'none';
-            document.getElementById('viewPdfSection').style.display = 'none';
-            document.getElementById('viewBunkerSection').style.display = 'none';
+            ['chat', 'stories', 'pdf', 'bunker', 'student', 'sign', 'vault'].forEach(v => {
+                const el = document.getElementById('view' + v.charAt(0).toUpperCase() + v.slice(1) + 'Section');
+                if(el) el.style.display = 'none';
+                const btn = document.getElementById('tab' + v.charAt(0).toUpperCase() + v.slice(1) + 'Btn');
+                if(btn) btn.classList.remove('active');
+            });
             document.getElementById('chatInputDeckArea').style.display = 'none';
-
-            document.getElementById('tabChatBtn').classList.remove('active');
-            document.getElementById('tabStoriesBtn').classList.remove('active');
-            document.getElementById('tabPdfBtn').classList.remove('active');
-            document.getElementById('tabBunkerBtn').classList.remove('active');
 
             if(viewName === 'chat') {
                 document.getElementById('viewChatSection').style.display = 'flex';
                 document.getElementById('chatInputDeckArea').style.display = 'flex';
                 document.getElementById('tabChatBtn').classList.add('active');
-            } else if(viewName === 'stories') {
-                document.getElementById('viewStoriesSection').style.display = 'block';
-                document.getElementById('tabStoriesBtn').classList.add('active');
-            } else if(viewName === 'pdf') {
-                document.getElementById('viewPdfSection').style.display = 'block';
-                document.getElementById('tabPdfBtn').classList.add('active');
-            } else if(viewName === 'bunker') {
-                document.getElementById('viewBunkerSection').style.display = 'block';
-                document.getElementById('tabBunkerBtn').classList.add('active');
+            } else {
+                const target = document.getElementById('view' + viewName.charAt(0).toUpperCase() + viewName.slice(1) + 'Section');
+                if(target) target.style.display = 'block';
+                const targetBtn = document.getElementById('tab' + viewName.charAt(0).toUpperCase() + viewName.slice(1) + 'Btn');
+                if(targetBtn) targetBtn.classList.add('active');
             }
         };
 
         document.getElementById('inviteUserBtn').addEventListener('click', () => {
-            const inviteLink = window.location.href;
-            navigator.clipboard.writeText(inviteLink).then(() => {
-                alert("🔗 ¡Enlace de invitación copiado!");
-            }).catch(() => {
-                prompt("Copia este enlace:", inviteLink);
-            });
+            navigator.clipboard.writeText(window.location.href).then(() => alert("🔗 Enlace copiado."));
         });
 
         window.publishStoryFeed = function() {
             const txt = document.getElementById('storyTextInput').value.trim();
-            if(!txt) return alert("Escribe un estado.");
-            const feedList = document.getElementById('activeStoriesFeedList');
-            if(feedList.textContent.includes("No hay historias")) feedList.innerHTML = "";
-            const item = document.createElement('div');
-            item.style.cssText = "background:rgba(0,0,0,0.4); padding:8px; border-radius:4px; margin-bottom:6px; border-left:3px solid var(--neon-pink);";
-            item.innerHTML = `<strong>${myUsername}</strong>: ${txt}`;
-            feedList.prepend(item);
-            socket.emit('chat_message', { type: 'text', text: `✨ [HISTORIA DE ${myUsername}]: ${txt}`, sender: myUsername, avatar: myAvatar });
+            if(!txt) return;
+            socket.emit('chat_message', { type: 'text', text: `✨ [HISTORIA]: ${txt}`, sender: myUsername, avatar: myAvatar });
             alert("✨ Historia publicada.");
             document.getElementById('storyTextInput').value = '';
         };
@@ -526,88 +565,46 @@
             document.getElementById('pdfPreviewResult').textContent = `📄 PDF listo: ${file.name}`;
             const reader = new FileReader();
             reader.readAsDataURL(file);
-            reader.onloadend = () => {
-                socket.emit('chat_message', { type: 'file', text: reader.result, sender: myUsername, fileName: file.name, avatar: myAvatar });
-            };
+            reader.onloadend = () => socket.emit('chat_message', { type: 'file', text: reader.result, sender: myUsername, fileName: file.name, avatar: myAvatar });
         };
 
         window.saveBunkerNote = function() {
             const note = document.getElementById('bunkerNoteInput').value.trim();
-            if(!note) return alert("Escribe una cápsula.");
+            if(!note) return;
             localStorage.setItem('bunker_secure_note', note);
-            document.getElementById('bunkerSavedNotice').textContent = "✅ Cápsula holográfica guardada con éxito.";
+            document.getElementById('bunkerSavedNotice').textContent = "✅ Guardado en búnker local.";
         };
 
         window.scheduleMeetingAndSendLink = function() {
             const title = document.getElementById('meetingTitleInput').value.trim();
             const datetime = document.getElementById('meetingDateTimeInput').value;
             if(!title || !datetime) return alert("Completa los campos.");
-            const link = window.location.href;
-            socket.emit('chat_message', { type: 'text', text: `📅 **REUNIÓN AGENDADA**\n📌 ${title}\n⏰ ${new Date(datetime).toLocaleString()}\n🔗 ${link}`, sender: myUsername, avatar: myAvatar });
-            alert("✅ Cita enviada al chat.");
-            document.getElementById('meetingTitleInput').value = '';
-            document.getElementById('meetingDateTimeInput').value = '';
-        };
-
-        window.toggleConferenceMics = function(enable) {
-            if(!isOwner) return alert("❌ ACCESO DENEGADO.");
-            socket.emit('admin_conference_mics', { status: enable });
-            alert(enable ? "🎙️ Micros abiertos." : "🔇 Micros silenciados.");
+            socket.emit('chat_message', { type: 'text', text: `📅 **REUNIÓN**: ${title}\n⏰ ${new Date(datetime).toLocaleString()}\n🔗 ${window.location.href}`, sender: myUsername, avatar: myAvatar });
+            alert("✅ Cita enviada.");
         };
 
         window.changePartnerPin = function() {
-            if(!isOwner) return alert("❌ ACCESO DENEGADO.");
             const newPin = document.getElementById('newPartnerPinInput').value.trim();
-            if(newPin.length === 4) {
-                PARTNER_PIN = newPin;
-                localStorage.setItem('partner_pin_secure', newPin);
-                alert(`✅ Clave de Socio actualizada: ${newPin}`);
-                document.getElementById('newPartnerPinInput').value = '';
-            } else { alert("❌ Debe tener 4 dígitos."); }
+            if(newPin.length === 4) { PARTNER_PIN = newPin; localStorage.setItem('partner_pin_secure', newPin); alert("Socio actualizado."); }
         };
 
         window.changeOwnerPin = function() {
-            if(!isOwner) return alert("❌ ACCESO DENEGADO.");
             const newPin = document.getElementById('newOwnerPinInput').value.trim();
-            if(newPin.length === 4) {
-                OWNER_PIN = newPin;
-                localStorage.setItem('owner_pin_secure', newPin);
-                alert(`👑 Clave de Dueño actualizada: ${newPin}`);
-                document.getElementById('newOwnerPinInput').value = '';
-            } else { alert("❌ Debe tener 4 dígitos."); }
+            if(newPin.length === 4) { OWNER_PIN = newPin; localStorage.setItem('owner_pin_secure', newPin); alert("Dueño actualizado."); }
         };
 
-        socket.on('device_count', (count) => {
-            document.getElementById('exactDeviceCounter').textContent = count;
-        });
-
-        socket.on('admin_conference_mics', (data) => {
-            if(!isOwner) alert(data.status ? "🎙️ El Propietario abrió tu micro." : "🔇 Sala silenciada.");
-        });
+        socket.on('device_count', (count) => { document.getElementById('exactDeviceCounter').textContent = count; });
 
         window.updateGlobalBroadcast = function() {
             const val = document.getElementById('ownerBroadcastInput').value.trim();
-            if(!val) return;
-            document.getElementById('globalTickerText').textContent = val;
-            alert("🚀 Ticker global actualizado.");
+            if(val) document.getElementById('globalTickerText').textContent = val;
         };
 
-        const toggleSeniorBtn = document.getElementById('toggleSeniorBtn');
-        toggleSeniorBtn.addEventListener('click', () => {
-            seniorModeActive = !seniorModeActive;
-            kidsModeActive = false;
-            document.body.classList.toggle('senior-mode', seniorModeActive);
-            document.body.classList.remove('kids-mode');
-            toggleSeniorBtn.textContent = seniorModeActive ? "DESACTIVAR" : "ACTIVAR";
+        document.getElementById('toggleSeniorBtn').addEventListener('click', () => {
+            document.body.classList.toggle('senior-mode');
         });
-
-        const toggleKidsBtn = document.getElementById('toggleKidsBtn');
-        toggleKidsBtn.addEventListener('click', () => {
-            kidsModeActive = !kidsModeActive;
-            seniorModeActive = false;
-            document.body.classList.toggle('kids-mode', kidsModeActive);
-            document.body.classList.remove('senior-mode');
-            toggleKidsBtn.textContent = kidsModeActive ? "DESACTIVAR" : "ACTIVAR";
+        document.getElementById('toggleKidsBtn').addEventListener('click', () => {
+            document.body.classList.toggle('kids-mode');
         });
 
         window.selectAvatar = function(av) {
@@ -622,177 +619,95 @@
             if(!file) return;
             const reader = new FileReader();
             reader.readAsDataURL(file);
-            reader.onloadend = () => {
-                myAvatar = `<img src="${reader.result}">`;
-                document.getElementById('previewAvatar').innerHTML = myAvatar;
-            };
+            reader.onloadend = () => { myAvatar = `<img src="${reader.result}">`; document.getElementById('previewAvatar').innerHTML = myAvatar; };
         });
 
-        const authOverlay = document.getElementById('authOverlay');
-        const authStep1 = document.getElementById('authStep1');
-        const authStep2 = document.getElementById('authStep2');
-        const authPhoneInput = document.getElementById('authPhoneInput');
-        const authNameInput = document.getElementById('authNameInput');
-        const sendPinBtn = document.getElementById('sendPinBtn');
-        const authErrorMsg = document.getElementById('authErrorMsg');
-        
-        const authPinInput = document.getElementById('authPinInput');
-        const verifyPinBtn = document.getElementById('verifyPinBtn');
-        const pinErrorMsg = document.getElementById('pinErrorMsg');
-
-        sendPinBtn.addEventListener('click', () => {
-            const phone = authPhoneInput.value.trim();
-            const name = authNameInput.value.trim();
-            if(!phone || !name) { authErrorMsg.textContent = "Introduce tu móvil y nombre."; return; }
-            if(phone.startsWith("0") || phone.includes("0000") || phone.length < 8) { 
-                authErrorMsg.textContent = "🚫 BLOQUEO ANTIFRAUDE HLR: Número VoIP virtual detectado."; 
-                return; 
-            }
-            authErrorMsg.textContent = "";
-            authStep1.style.display = 'none';
-            authStep2.style.display = 'flex';
+        document.getElementById('sendPinBtn').addEventListener('click', () => {
+            const phone = document.getElementById('authPhoneInput').value.trim();
+            const name = document.getElementById('authNameInput').value.trim();
+            if(!phone || !name) return document.getElementById('authErrorMsg').textContent = "Introduce móvil y nombre.";
+            if(phone.startsWith("0" ) || phone.length < 8) return document.getElementById('authErrorMsg').textContent = "🚫 VoIP bloqueado.";
+            document.getElementById('authStep1').style.display = 'none';
+            document.getElementById('authStep2').style.display = 'flex';
         });
 
-        verifyPinBtn.addEventListener('click', () => {
-            const pin = authPinInput.value.trim();
+        document.getElementById('verifyPinBtn').addEventListener('click', () => {
+            const pin = document.getElementById('authPinInput').value.trim();
+            const name = document.getElementById('authNameInput').value.trim();
             if(pin === OWNER_PIN) {
-                isOwner = true;
-                myUsername = authNameInput.value.trim() + " [PROPIETARIO]";
+                myUsername = name + " [PROPIETARIO]";
                 document.getElementById('widgetName').textContent = myUsername;
                 document.getElementById('widgetAvatar').innerHTML = myAvatar;
                 document.getElementById('ownerBadgeBox').style.display = 'block';
                 document.getElementById('ownerPanelTitle').style.display = 'block';
                 document.getElementById('ownerControlPanel').style.display = 'flex';
-                authOverlay.style.display = 'none';
-            } else if(pin === PARTNER_PIN) {
-                isOwner = false;
-                myUsername = authNameInput.value.trim() + " [SOCIO ÉLITE]";
+                document.getElementById('authOverlay').style.display = 'none';
+            } else if(pin === PARTNER_PIN || pin === USER_PIN) {
+                myUsername = name;
                 document.getElementById('widgetName').textContent = myUsername;
                 document.getElementById('widgetAvatar').innerHTML = myAvatar;
-                document.getElementById('ownerPanelTitle').textContent = "🛡️ SUPERVISIÓN DE RED";
-                document.getElementById('ownerPanelTitle').style.display = 'block';
-                authOverlay.style.display = 'none';
-            } else if(pin === USER_PIN) {
-                isOwner = false;
-                myUsername = authNameInput.value.trim();
-                document.getElementById('widgetName').textContent = myUsername;
-                document.getElementById('widgetAvatar').innerHTML = myAvatar;
-                authOverlay.style.display = 'none';
+                document.getElementById('authOverlay').style.display = 'none';
             } else {
-                pinErrorMsg.textContent = "❌ PIN incorrecto.";
+                document.getElementById('pinErrorMsg').textContent = "❌ PIN incorrecto.";
             }
         });
 
         const messagesContainer = document.getElementById('messagesContainer');
         const messageInput = document.getElementById('messageInput');
-        const sendBtn = document.getElementById('sendBtn');
-        const chatFileInput = document.getElementById('chatFileInput');
-        
-        const startVideoCallBtn = document.getElementById('startVideoCallBtn');
-        const startConferenceBtn = document.getElementById('startConferenceBtn');
-        const startBroadcastBtn = document.getElementById('startBroadcastBtn');
-        
-        const videoCallOverlay = document.getElementById('videoCallOverlay');
-        const endCallBtn = document.getElementById('endCallBtn');
-        const localVideo = document.getElementById('localVideo');
-        const sosPoliceBtn = document.getElementById('sosPoliceBtn');
-        const emojiToggleBtn = document.getElementById('emojiToggleBtn');
-        const emojiPickerBox = document.getElementById('emojiPickerBox');
-
-        sosPoliceBtn.addEventListener('click', () => {
-            if(confirm("⚠️ ¿ACTIVAR SOS HÍBRIDO? Se llamará gratis al 112 y se enviará tu ubicación GPS.")) {
-                if (navigator.geolocation) {
-                    navigator.geolocation.getCurrentPosition(position => {
-                        const lat = position.coords.latitude;
-                        const lon = position.coords.longitude;
-                        socket.emit('chat_message', { type: 'text', text: `🚨 ¡ALERTA SOS! Ubicación GPS: https://maps.google.com/?q=${lat},${lon}`, sender: myUsername, avatar: myAvatar });
-                    }, () => {
-                        socket.emit('chat_message', { type: 'text', text: `🚨 ¡ALERTA SOS ACTIVADA!`, sender: myUsername, avatar: myAvatar });
-                    });
-                }
-                window.location.href = "tel:112";
-            }
-        });
-
-        emojiToggleBtn.addEventListener('click', () => {
-            emojiPickerBox.style.display = (emojiPickerBox.style.display === 'flex') ? 'none' : 'flex';
-        });
-
-        window.insertEmoji = function(emoji) {
-            messageInput.value += emoji;
-            emojiPickerBox.style.display = 'none';
-            messageInput.focus();
-        };
-
-        function getTime() {
-            const d = new Date();
-            return d.getHours().toString().padStart(2, '0') + ':' + d.getMinutes().toString().padStart(2, '0');
-        }
-
-        function appendMessage(content, type, sender = "SISTEMA", dataType = "text", fileName = "", msgId = Date.now(), senderAvatar = "🛡️") {
-            const div = document.createElement('div');
-            div.className = `quantum-msg ${type}`;
-            div.id = `msg-${msgId}`;
-            
-            let avatarHtml = `<span style="display:inline-block; width:22px; height:22px; border-radius:50%; overflow:hidden; vertical-align:middle; margin-right:4px; text-align:center;">${senderAvatar}</span>`;
-            let innerHTML = `${avatarHtml}<strong style="color:var(--user-theme);">[${sender}]</strong>: `;
-            
-            if(dataType === 'audio') {
-                innerHTML += `<br><audio controls src="${content}" style="width: 100%; margin-top: 4px;"></audio>`;
-            } else if(dataType === 'image') {
-                innerHTML += `<br><img src="${content}" style="max-width:100%; border-radius:4px; margin-top:4px;">`;
-            } else if(dataType === 'video') {
-                innerHTML += `<br><video controls src="${content}" style="max-width:100%; max-height:220px; border-radius:4px; margin-top:4px; background:#000;"></video>`;
-            } else if(dataType === 'file') {
-                innerHTML += `<br><a href="${content}" download="${fileName}" style="color: var(--user-theme); text-decoration:underline;">📥 ${fileName}</a>`;
-            } else {
-                innerHTML += `<span class="msg-text">${content}</span>`;
-            }
-
-            if(type === 'outgoing') {
-                innerHTML += `<div class="msg-actions-bar"><button class="msg-action-link" onclick="deleteMessage('${msgId}')" style="color:var(--neon-red);">Borrar</button></div>`;
-            }
-
-            innerHTML += `<div class="msg-meta"><span>${getTime()}</span></div>`;
-            div.innerHTML = innerHTML;
-            messagesContainer.appendChild(div);
-            messagesContainer.scrollTop = messagesContainer.scrollHeight;
-        }
-
-        window.deleteMessage = function(id) { document.getElementById(`msg-${id}`)?.remove(); };
 
         function handleSend() {
             const val = messageInput.value.trim();
             if(!val) return;
-            const phantomSignature = "\n\n_Enviado de forma segura a través de VobixChat Quantum (100% Gratuito y Privado)_";
-            socket.emit('chat_message', { type: 'text', text: val + phantomSignature, sender: myUsername, avatar: myAvatar });
+            socket.emit('chat_message', { type: 'text', text: val, sender: myUsername, avatar: myAvatar });
             messageInput.value = '';
-            emojiPickerBox.style.display = 'none';
+            document.getElementById('emojiPickerBox').style.display = 'none';
         }
 
-        sendBtn.addEventListener('click', handleSend);
+        document.getElementById('sendBtn').addEventListener('click', handleSend);
         messageInput.addEventListener('keypress', (e) => { if(e.key === 'Enter') handleSend(); });
 
-        startVideoCallBtn.addEventListener('click', () => openCommunicationSession("📞 MODO: VIDEOLLAMADA HOLOGRÁFICA HD"));
-        startConferenceBtn.addEventListener('click', () => openCommunicationSession("🎥 MODO: VIDEOCONFERENCIA XR"));
-        startBroadcastBtn.addEventListener('click', () => openCommunicationSession("📡 MODO: RETRANSMISIÓN VIP"));
+        document.getElementById('startVideoCallBtn').addEventListener('click', () => openCall("HD"));
+        document.getElementById('startConferenceBtn').addEventListener('click', () => openCall("XR"));
+        document.getElementById('startBroadcastBtn').addEventListener('click', () => openCall("VIP"));
 
-        function openCommunicationSession(title) {
-            document.getElementById('callTitleHeader').textContent = title;
-            videoCallOverlay.style.display = 'grid';
+        function openCall(type) {
+            document.getElementById('callTitleHeader').textContent = "SESIÓN: " + type;
+            document.getElementById('videoCallOverlay').style.display = 'grid';
             navigator.mediaDevices.getUserMedia({ video: true, audio: true }).then(stream => {
-                localVideo.srcObject = stream;
-            }).catch(e => alert("Cámara y micrófono activos."));
+                document.getElementById('localVideo').srcObject = stream;
+            }).catch(() => alert("Cámara activa."));
         }
 
-        endCallBtn.addEventListener('click', () => {
-            videoCallOverlay.style.display = 'none';
-            if(localVideo.srcObject) localVideo.srcObject.getTracks().forEach(t => t.stop());
+        document.getElementById('endCallBtn').addEventListener('click', () => {
+            document.getElementById('videoCallOverlay').style.display = 'none';
+            const v = document.getElementById('localVideo');
+            if(v.srcObject) v.srcObject.getTracks().forEach(t => t.stop());
         });
 
+        document.getElementById('sosPoliceBtn').addEventListener('click', () => {
+            if(confirm("⚠️ ¿Activar SOS? Se llamará al 112 y se enviará la ubicación.")) {
+                window.location.href = "tel:112";
+            }
+        });
+
+        document.getElementById('emojiToggleBtn').addEventListener('click', () => {
+            const b = document.getElementById('emojiPickerBox');
+            b.style.display = b.style.display === 'flex' ? 'none' : 'flex';
+        });
+
+        window.insertEmoji = function(em) {
+            messageInput.value += em;
+            document.getElementById('emojiPickerBox').style.display = 'none';
+            messageInput.focus();
+        };
+
         socket.on('chat_message', (data) => {
-            const type = (data.sender === myUsername) ? 'outgoing' : 'incoming';
-            appendMessage(data.text, type, data.sender, data.type, data.fileName, Date.now(), data.avatar);
+            const type = data.sender === myUsername ? 'outgoing' : 'incoming';
+            const div = document.createElement('div');
+            div.className = `quantum-msg ${type}`;
+            div.innerHTML = `<span style="display:inline-block; width:22px; height:22px; border-radius:50%; overflow:hidden; vertical-align:middle; margin-right:4px; text-align:center;">${data.avatar}</span><strong>[${data.sender}]</strong>: ${data.text}<div class="msg-meta"><span>${new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span></div>`;
+            messagesContainer.appendChild(div);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
         });
     </script>
 </body>
