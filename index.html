@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VOBIXCHAT // Quantum Ultimate Voice HD</title>
+    <title>VOBIXCHAT // Quantum Ultimate Final</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         body { background-color: #05070d; color: #e2e8f0; height: 100vh; display: flex; justify-content: center; align-items: center; overflow: hidden; }
         
-        /* PANTALLA DE ACCESO Y PIN BLINDADA */
+        /* PANTALLA DE ACCESO BLINDADA */
         #login-container { width: 100%; max-width: 420px; background: #131b2e; border: 1px solid #1e293b; border-radius: 12px; padding: 30px; box-shadow: 0 8px 30px rgba(0,210,255,0.15); text-align: center; }
         #login-container h2 { font-size: 1.2rem; color: #38bdf8; margin-bottom: 10px; letter-spacing: 1px; }
         #login-container p { font-size: 0.8rem; color: #94a3b8; margin-bottom: 25px; }
@@ -55,7 +55,7 @@
         .media-action-btn:hover { border-color: #38bdf8; background: #0284c7; color: #fff; }
         .chat-input-area button.send-btn { background: #0ea5e9; color: white; border: none; padding: 10px 18px; border-radius: 6px; font-weight: bold; cursor: pointer; }
 
-        /* Panel de Llamada de Voz Full HD Activa en Pantalla */
+        /* Overlay de Llamada de Voz HD */
         #voice-call-overlay { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(5,7,13,0.95); z-index: 20; flex-direction: column; justify-content: center; align-items: center; gap: 20px; text-align: center; }
         .call-pulsator { width: 100px; height: 100px; background: #0ea5e9; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 2.5rem; box-shadow: 0 0 30px rgba(14,165,233,0.6); animation: pulse 1.5s infinite; }
         @keyframes pulse { 0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(14,165,233,0.7); } 70% { transform: scale(1); box-shadow: 0 0 0 25px rgba(14,165,233,0); } 100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(14,165,233,0); } }
@@ -71,7 +71,7 @@
 </head>
 <body>
 
-    <!-- ================= ACCESO Y PIN BLINDADO ================= -->
+    <!-- ================= ACCESO Y PIN ================= -->
     <div id="login-container">
         <h2>VOBIXCHAT // ACCESO</h2>
         <p id="loginSubtitle">Introduce tu móvil y PIN (Pánico: 9999)</p>
@@ -97,7 +97,7 @@
         <div id="step-pin" style="display: none;">
             <div id="simulatedPinDisplay" class="pin-box">PIN: ----</div>
             <div class="input-group">
-                <label>Introduce el PIN recibido</label>
+                <label>Introduce el PIN recibido (Pulsa Enter para entrar)</label>
                 <input type="text" id="pinInput" placeholder="Ej. 4821" maxlength="4" autocomplete="off" />
             </div>
             <button class="btn-main" id="verifyPinBtn">CONFIRMAR Y ENTRAR</button>
@@ -141,14 +141,14 @@
                 <div id="voice-call-overlay">
                     <div class="call-pulsator">🎙️</div>
                     <h2 style="color: #38bdf8;">Llamada de Voz Full HD en Curso</h2>
-                    <p style="color: #94a3b8;">Cancelación de eco y supresión de ruido activadas.</p>
+                    <p style="color: #94a3b8;">Audio nítido sin ruido ni eco.</p>
                     <button class="action-btn red" id="endVoiceCallBtn" style="max-width: 200px; padding: 12px;">Colgar Llamada</button>
                 </div>
 
                 <div id="viewChat" class="content-view active-view">
                     <div class="message">
                         <b>[SISTEMA] VobixChat Quantum</b>
-                        Canal seguro abierto. Llamadas de voz y multimedia listas.
+                        Canal seguro abierto. Envía texto, notas de voz o vídeos.
                     </div>
                 </div>
 
@@ -183,7 +183,7 @@
         </div>
     </div>
 
-    <!-- LÓGICA BLINDADA PARA ENTER Y ACCESO -->
+    <!-- LÓGICA DE CONTROL DEFINITIVA -->
     <script src="/socket.io/socket.io.js"></script>
     <script>
         const socket = io();
@@ -224,17 +224,17 @@
             simulatedPinDisplay.style.display = 'block';
             document.getElementById('step-phone').style.display = 'none';
             document.getElementById('step-pin').style.display = 'block';
-            pinInput.focus(); // Foco automático en el input del PIN
+            pinInput.focus();
         });
 
-        // FUNCIÓN CENTRALIZADA DE VALIDACIÓN DE PIN (Blindada contra espacios y Enter)
-        function ejecutarAccesoPin() {
-            const pinVal = pinInput.value.trim();
-            if (pinVal !== generatedPin && pinVal !== "9999") {
-                alert("PIN incorrecto. Revisa el código.");
+        // VALIDACIÓN DE PIN BLINDADA (Funciona con Enter y con Click)
+        function validarPinYAbrir() {
+            const val = pinInput.value.trim();
+            if (val !== generatedPin && val !== "9999") {
+                alert("PIN incorrecto. Revisa el código superior.");
                 return;
             }
-            if (pinVal === "9999") {
+            if (val === "9999") {
                 alert("🚨 Búnker Fantasma activado.");
             }
             displayUser.textContent = currentAlias;
@@ -243,13 +243,12 @@
             appContainer.style.display = 'flex';
         }
 
-        verifyPinBtn.addEventListener('click', ejecutarAccesoPin);
+        verifyPinBtn.addEventListener('click', validarPinYAbrir);
 
-        // Soporte total para la tecla Enter en el teclado del PIN
-        pinInput.addEventListener('keypress', (e) => {
+        pinInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
                 e.preventDefault();
-                ejecutarAccesoPin();
+                validarPinYAbrir();
             }
         });
 
@@ -272,7 +271,7 @@
             });
         });
 
-        // LLAMADA DE VOZ FULL HD
+        // Llamada de Voz Full HD
         let activeVoiceStream = null;
         const voiceCallOverlay = document.getElementById('voice-call-overlay');
         const btnVoiceCall = document.getElementById('btnVoiceCall');
@@ -286,7 +285,7 @@
                 });
                 voiceCallOverlay.style.display = 'flex';
             } catch (err) {
-                alert("No se pudo iniciar la llamada de voz Full HD: " + err.message);
+                alert("Error al iniciar llamada de voz: " + err.message);
             }
         });
 
