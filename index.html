@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>VOBIXCHAT // Quantum WhatsApp 16K OS</title>
+    <title>VOBIXCHAT // Quantum Ultimate 16K OS</title>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
     <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
     <style>
@@ -36,12 +36,11 @@
         }
 
         body.senior-mode { font-size: 1.4rem !important; }
-        body.senior-mode .quantum-input, body.senior-mode .transmit-btn, body.senior-mode .action-btn { font-size: 1.25rem !important; padding: 12px 16px !important; }
+        body.senior-mode .quantum-input, body.senior-mode .transmit-btn, body.senior-mode .action-btn { font-size: 1.25rem !important; padding: 14px 20px !important; }
         body.senior-mode .quantum-msg { font-size: 1.25rem !important; padding: 14px 18px !important; }
-        body.kids-mode { filter: hue-rotate(90deg); }
 
         .app-container {
-            width: 100vw; max-width: 1400px; height: 100vh;
+            width: 100vw; max-width: 1600px; height: 100vh;
             background: var(--panel-hud); display: flex; flex-direction: column;
             overflow: hidden; position: relative; border: 1px solid var(--border-hud); box-shadow: 0 0 30px rgba(0,0,0,0.8);
         }
@@ -61,7 +60,7 @@
         .auth-select, .auth-input { background: #000; border: 1px solid var(--border-hud); color: #fff; padding: 10px; font-family: 'Share Tech Mono'; border-radius: 6px; outline: none; font-size: 0.9rem; width: 100%; }
         .auth-btn { background: var(--neon-blue); color: #000; border: none; padding: 12px; font-family: 'Orbitron'; font-weight: bold; border-radius: 6px; cursor: pointer; font-size: 0.9rem; text-align: center; }
 
-        /* BARRA SUPERIOR ESTILO WHATSAPP CON ICONOS DE LLAMADAS Y 3 PUNTOS */
+        /* BARRA SUPERIOR ESTILO WHATSAPP */
         .chat-topbar {
             padding: 10px 16px; background: rgba(3, 7, 15, 0.98); border-bottom: 1px solid var(--border-hud);
             display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; position: relative; z-index: 100;
@@ -76,7 +75,7 @@
         .whatsapp-icon-btn:hover { color: #fff; transform: scale(1.1); }
         .logout-action-btn { background: var(--neon-red); color: #fff; border: none; padding: 6px 12px; border-radius: 4px; font-family: 'Orbitron'; font-weight: bold; cursor: pointer; font-size: 0.75rem; }
 
-        /* MENÚ DESPLEGABLE DE LOS TRES PUNTOS (HERRAMIENTAS) */
+        /* MENÚ DE TRES PUNTOS */
         .three-dots-container { position: relative; display: inline-block; }
         .dropdown-menu-tools {
             display: none; position: absolute; right: 0; top: 40px; background: rgba(4, 10, 22, 0.98);
@@ -89,7 +88,7 @@
         }
         .dropdown-item:hover { background: rgba(0, 240, 255, 0.15); color: var(--neon-blue); border-color: var(--neon-blue); }
 
-        /* ÁREA DE CONTENIDO Y CHAT */
+        /* ÁREA DE TRABAJO */
         .workspace-area { flex: 1; display: flex; flex-direction: column; position: relative; overflow: hidden; background: #02050c; }
         .screen-view { display: flex; flex-direction: column; flex: 1; height: 100%; overflow: hidden; }
         
@@ -102,14 +101,14 @@
         .dynamic-content-view { display: none; padding: 20px; flex: 1; overflow-y: auto; font-family: 'Share Tech Mono'; }
         .dynamic-card { background: rgba(0,240,255,0.03); border: 1px solid var(--border-hud); padding: 15px; border-radius: 8px; margin-bottom: 12px; }
 
-        /* PANEL DE EMOJIS */
+        /* EMOJIS */
         .emoji-picker-box {
             display: none; position: absolute; bottom: 70px; left: 15px; background: rgba(4, 10, 22, 0.98);
             border: 1px solid var(--border-hud); border-radius: 8px; padding: 10px; gap: 6px; flex-wrap: wrap; width: 260px; z-index: 300; max-height: 180px; overflow-y: auto;
         }
         .emoji-item { font-size: 1.3rem; cursor: pointer; padding: 4px; }
 
-        /* BARRA INFERIOR DE CHAT PERFECTAMENTE ENCAJADA */
+        /* BARRA INFERIOR UNificada Y CORREGIDA (BOTÓN ENVIAR PEGADO AL INPUT) */
         .chat-input-deck {
             padding: 10px 14px; background: rgba(3, 7, 15, 0.99); border-top: 1px solid var(--border-hud);
             display: flex; gap: 8px; align-items: center; flex-shrink: 0; position: relative; z-index: 50; width: 100%;
@@ -138,7 +137,6 @@
 </head>
 <body>
 
-    <!-- AUTENTICACIÓN ANTI-VOIP Y PIN -->
     <div class="auth-overlay" id="authOverlay">
         <div class="auth-card" id="authStep1">
             <h2>VOBIXCHAT // ACCESO 16K</h2>
@@ -162,7 +160,6 @@
         </div>
     </div>
 
-    <!-- PANTALLA DE VIDEOLLAMADA / LLAMADA -->
     <div class="overlay-screen" id="mediaCallScreen">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
             <div style="font-family:'Orbitron'; color:var(--neon-blue); font-size:0.9rem;" id="callSessionTitle">CANAL DE COMUNICACIÓN EN VIVO</div>
@@ -174,21 +171,13 @@
     </div>
 
     <div class="app-container">
-        <!-- BARRA SUPERIOR ESTILO WHATSAPP -->
         <div class="chat-topbar">
             <div class="active-channel" id="activeChannelTitle">
                 <span>💬 VOBIXCHAT // SALA DIRECTA</span>
             </div>
             <div class="topbar-actions">
-                <!-- ICONO DE VIDEOLLAMADA -->
-                <button class="whatsapp-icon-btn" onclick="startVideoCall16K()" title="Videollamada 16K">
-                    📹
-                </button>
-                <!-- ICONO DE LLAMADA DE VOZ -->
-                <button class="whatsapp-icon-btn" onclick="startVoiceCallData()" title="Llamada de Voz HD">
-                    📞
-                </button>
-                <!-- MENÚ DE TRES PUNTOS (⋮) PARA HERRAMIENTAS -->
+                <button class="whatsapp-icon-btn" onclick="startVideoCall16K()" title="Videollamada 16K">📹</button>
+                <button class="whatsapp-icon-btn" onclick="startVoiceCallData()" title="Llamada de Voz HD">📞</button>
                 <div class="three-dots-container">
                     <button class="whatsapp-icon-btn" id="threeDotsToggleBtn" title="Herramientas de Trabajo">⋮</button>
                     <div class="dropdown-menu-tools" id="toolsDropdownMenu">
@@ -206,21 +195,18 @@
         </div>
 
         <div class="workspace-area">
-            <!-- PANTALLA PRINCIPAL DE CHAT -->
             <div class="screen-view" id="viewChatSection" style="display: flex; flex-direction: column; flex: 1; height: 100%;">
                 <div class="messages-display" id="messagesContainer">
                     <div class="quantum-msg incoming">
-                        <strong>[SISTEMA]</strong>: Interfaz optimizada al estilo WhatsApp (Videollamada, Llamada y Menú de Tres Puntos activos arriba).
+                        <strong>[SISTEMA]</strong>: Botón de enviar perfectamente alineado e integrado al lado del cuadro de texto.
                         <div class="msg-meta"><span>12:00</span></div>
                     </div>
                 </div>
 
-                <!-- SELECTOR DE EMOJIS -->
                 <div class="emoji-picker-box" id="emojiPickerBox">
                     <span class="emoji-item" onclick="insertEmoji('😀')">😀</span> <span class="emoji-item" onclick="insertEmoji('😂')">😂</span> <span class="emoji-item" onclick="insertEmoji('🔥')">🔥</span> <span class="emoji-item" onclick="insertEmoji('🚀')">🚀</span> <span class="emoji-item" onclick="insertEmoji('⭐')">⭐</span> <span class="emoji-item" onclick="insertEmoji('💎')">💎</span> <span class="emoji-item" onclick="insertEmoji('🎉')">🎉</span> <span class="emoji-item" onclick="insertEmoji('👍')">👍</span> <span class="emoji-item" onclick="insertEmoji('💡')">💡</span> <span class="emoji-item" onclick="insertEmoji('🛡️')">🛡️</span> <span class="emoji-item" onclick="insertEmoji('💻')">💻</span> <span class="emoji-item" onclick="insertEmoji('📂')">📂</span>
                 </div>
 
-                <!-- BARRA INFERIOR DE CHAT -->
                 <div class="chat-input-deck" id="chatInputDeckArea">
                     <button class="action-btn" id="emojiToggleBtn">😊</button>
                     <button class="action-btn" onclick="recordPureVoiceNote()">🎙️ Voz</button>
@@ -230,7 +216,6 @@
                 </div>
             </div>
 
-            <!-- VISTAS SECUNDARIAS (Nube, Reuniones, Búnker, Señas, Contratos) -->
             <div class="dynamic-content-view" id="viewCloudSection">
                 <div class="dynamic-card">
                     <h3 style="color:var(--neon-blue); font-family:'Orbitron'; font-size:0.85rem; margin-bottom:8px;">☁️ ALMACENAMIENTO ILIMITADO (VÍDEOS 16K, PELÍCULAS, OFFICE)</h3>
@@ -286,7 +271,7 @@
         let myUsername = "Operador 16K";
         let generatedRandomPin = "";
 
-        // Menú de tres puntos (⋮)
+        // Menú de tres puntos
         const threeDotsBtn = document.getElementById('threeDotsToggleBtn');
         const toolsMenu = document.getElementById('toolsDropdownMenu');
 
@@ -303,7 +288,7 @@
             toolsMenu.style.display = 'none';
         });
 
-        // Autenticación PIN y anti-VoIP
+        // Autenticación
         document.getElementById('requestRandomPinBtn').addEventListener('click', () => {
             const phone = document.getElementById('authPhoneInput').value.trim();
             const name = document.getElementById('authNameInput').value.trim();
@@ -329,7 +314,7 @@
 
         window.logoutSession = () => location.reload();
 
-        // Navegación de vistas
+        // Navegación
         window.switchView = (viewName) => {
             ['chat', 'cloud', 'zoom', 'bunker', 'sign', 'contract'].forEach(v => {
                 const el = document.getElementById('view' + v.charAt(0).toUpperCase() + v.slice(1) + 'Section');
@@ -346,7 +331,6 @@
             }
         };
 
-        // Enlace de invitación
         window.triggerInvite = () => {
             const inviteUrl = window.location.origin + window.location.pathname + "?invite=true";
             navigator.clipboard.writeText(inviteUrl).then(() => {
@@ -354,7 +338,6 @@
             });
         };
 
-        // Llamadas de voz y 16K
         let activeMediaStream = null;
         window.startVoiceCallData = async () => {
             try {
@@ -381,13 +364,11 @@
             document.getElementById('mediaCallScreen').style.display = 'none';
         };
 
-        // Modo Senior
         window.toggleSeniorMode = () => {
             document.body.classList.toggle('senior-mode');
             alert(document.body.classList.contains('senior-mode') ? "👴 Modo Senior Activado" : "Modo Senior Desactivado");
         };
 
-        // Notas de voz y vídeos
         window.recordPureVoiceNote = async () => {
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } });
@@ -416,7 +397,6 @@
             };
         };
 
-        // Reuniones Zoom Style
         window.generateZoomInvite = () => {
             const title = document.getElementById('zoomTitleInput').value.trim();
             const datetime = document.getElementById('zoomTimeInput').value;
@@ -427,7 +407,6 @@
             document.getElementById('zoomInviteOutput').textContent = "✅ Enlace generado y enviado al chat.";
         };
 
-        // Firma remota
         window.executeMirrorSignContract = () => {
             const name = document.getElementById('contractNameInput').value.trim();
             if(!name) return alert("Introduce el contrato.");
@@ -438,7 +417,6 @@
             document.getElementById('contractNameInput').value = '';
         };
 
-        // Emojis
         const emojiBox = document.getElementById('emojiPickerBox');
         document.getElementById('emojiToggleBtn').addEventListener('click', (e) => {
             e.stopPropagation();
@@ -450,7 +428,6 @@
         };
         document.addEventListener('click', () => { emojiBox.style.display = 'none'; });
 
-        // Chat
         const messagesContainer = document.getElementById('messagesContainer');
         const messageInput = document.getElementById('messageInput');
 
