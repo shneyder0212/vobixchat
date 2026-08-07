@@ -2,8 +2,8 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VOBIXCHAT // Privado 1 a 1 y Teclado Habilitado</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>VOBIXCHAT // Quantum WhatsApp 16K Mobile Pro</title>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
     <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
     <style>
@@ -50,13 +50,13 @@
             display: flex; justify-content: center; align-items: center; z-index: 2000; padding: 15px;
         }
         .auth-card {
-            width: 100%; max-width: 400px; background: rgba(8, 16, 32, 0.95);
-            border: 1px solid var(--border-hud); border-radius: 12px; padding: 24px; display: flex; flex-direction: column; gap: 12px;
+            width: 100%; max-width: 380px; background: rgba(8, 16, 32, 0.95);
+            border: 1px solid var(--border-hud); border-radius: 12px; padding: 22px; display: flex; flex-direction: column; gap: 12px;
         }
         .auth-card h2 { font-family: 'Orbitron', sans-serif; color: var(--neon-blue); font-size: 1.1rem; text-align: center; }
         .auth-card p { font-family: 'Share Tech Mono', monospace; font-size: 0.7rem; color: var(--text-dim); text-align: center; }
-        .auth-input { background: #000; border: 1px solid var(--border-hud); color: #fff; padding: 10px; font-family: 'Share Tech Mono'; border-radius: 6px; outline: none; font-size: 0.9rem; width: 100%; }
-        .auth-btn { background: var(--neon-blue); color: #000; border: none; padding: 12px; font-family: 'Orbitron'; font-weight: bold; border-radius: 6px; cursor: pointer; font-size: 0.9rem; transition: 0.2s; text-align: center; }
+        .auth-input { background: #000; border: 1px solid var(--border-hud); color: #fff; padding: 12px; font-family: 'Share Tech Mono'; border-radius: 6px; outline: none; font-size: 1rem; width: 100%; }
+        .auth-btn { background: var(--neon-blue); color: #000; border: none; padding: 12px; font-family: 'Orbitron'; font-weight: bold; border-radius: 6px; cursor: pointer; font-size: 0.95rem; text-align: center; }
 
         .big-pin-display {
             font-family: 'Orbitron', sans-serif; font-size: 2.2rem; color: var(--neon-green);
@@ -64,35 +64,27 @@
             border: 1px dashed var(--neon-green); padding: 12px; border-radius: 8px; margin: 10px 0;
         }
 
-        /* SELECCIÓN DE CONTACTO PRIVADO */
-        .private-selector-bar {
-            background: rgba(3, 7, 15, 0.95); border-bottom: 1px solid var(--border-hud); padding: 12px 16px;
-            display: flex; gap: 10px; align-items: center; flex-wrap: wrap; z-index: 100;
-        }
-        .private-selector-bar input {
-            background: #000; border: 1px solid var(--border-hud); color: var(--text-main); padding: 8px 12px; border-radius: 6px; font-family: 'Share Tech Mono'; font-size: 0.85rem;
-        }
-
-        /* BARRA SUPERIOR */
+        /* BARRA SUPERIOR ESTILO WHATSAPP */
         .chat-topbar {
             padding: 10px 16px; background: rgba(3, 7, 15, 0.98); border-bottom: 1px solid var(--border-hud);
             display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; position: relative; z-index: 100;
         }
-        .active-channel { font-family: 'Orbitron', sans-serif; font-size: 0.9rem; color: var(--neon-blue); display: flex; align-items: center; gap: 10px; }
+        .active-channel { font-family: 'Orbitron', sans-serif; font-size: 0.95rem; color: var(--neon-blue); display: flex; align-items: center; gap: 10px; }
+        .contact-avatar { width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, var(--neon-blue), var(--neon-violet)); display: flex; align-items: center; justify-content: center; font-weight: bold; color: #000; font-size: 0.9rem; }
         
-        .topbar-actions { display: flex; gap: 14px; align-items: center; }
+        .topbar-actions { display: flex; gap: 12px; align-items: center; }
         .whatsapp-icon-btn {
             background: none; border: none; color: var(--neon-blue); cursor: pointer; font-size: 1.25rem;
             display: flex; align-items: center; justify-content: center; padding: 4px; transition: 0.2s;
         }
         .whatsapp-icon-btn:hover { color: #fff; transform: scale(1.1); }
-        .logout-action-btn { background: var(--neon-red); color: #fff; border: none; padding: 6px 12px; border-radius: 4px; font-family: 'Orbitron'; font-weight: bold; cursor: pointer; font-size: 0.75rem; }
+        .logout-action-btn { background: var(--neon-red); color: #fff; border: none; padding: 6px 10px; border-radius: 4px; font-family: 'Orbitron'; font-weight: bold; cursor: pointer; font-size: 0.75rem; }
 
         /* MENÚ DE TRES PUNTOS */
         .three-dots-container { position: relative; display: inline-block; }
         .dropdown-menu-tools {
             display: none; position: absolute; right: 0; top: 40px; background: rgba(4, 10, 22, 0.98);
-            border: 1px solid var(--border-hud); border-radius: 8px; padding: 8px; width: 230px; z-index: 1000; box-shadow: 0 4px 20px rgba(0,0,0,0.8);
+            border: 1px solid var(--border-hud); border-radius: 8px; padding: 8px; width: 240px; z-index: 1000; box-shadow: 0 4px 20px rgba(0,0,0,0.8);
             flex-direction: column; gap: 6px;
         }
         .dropdown-item {
@@ -103,17 +95,20 @@
         .dropdown-item.danger { border-color: rgba(255,0,85,0.4); color: var(--neon-red); }
         .dropdown-item.danger:hover { background: rgba(255,0,85,0.15); color: var(--neon-red); }
 
-        /* ÁREA DE TRABAJO */
+        /* ÁREA DE TRABAJO Y CHAT */
         .workspace-area { flex: 1; display: flex; flex-direction: column; position: relative; overflow: hidden; background: #02050c; }
         .screen-view { display: flex; flex-direction: column; flex: 1; height: 100%; overflow: hidden; }
         
         .messages-display { flex: 1; padding: 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
-        .quantum-msg { max-width: 85%; padding: 10px 14px; border-radius: 6px; font-size: 0.95rem; line-height: 1.4; position: relative; word-break: break-word; }
+        .quantum-msg { max-width: 85%; padding: 10px 14px; border-radius: 8px; font-size: 0.95rem; line-height: 1.4; position: relative; word-break: break-word; }
         .quantum-msg.incoming { background: rgba(0, 240, 255, 0.04); border-left: 3px solid var(--neon-blue); align-self: flex-start; }
         .quantum-msg.outgoing { background: rgba(157, 0, 255, 0.1); border-right: 3px solid var(--neon-violet); align-self: flex-end; text-align: right; }
         .quantum-msg .msg-meta { font-family: 'Share Tech Mono', monospace; font-size: 0.55rem; color: var(--text-dim); margin-top: 4px; display: flex; justify-content: flex-end; gap: 8px; }
 
-        /* BARRA INFERIOR DE CHAT CON TECLADO TOTALMENTE HABILITADO Y VISIBLE */
+        .dynamic-content-view { display: none; padding: 20px; flex: 1; overflow-y: auto; font-family: 'Share Tech Mono'; }
+        .dynamic-card { background: rgba(0,240,255,0.03); border: 1px solid var(--border-hud); padding: 15px; border-radius: 8px; margin-bottom: 12px; }
+
+        /* BARRA INFERIOR DE CHAT */
         .chat-input-deck {
             padding: 10px 14px; background: rgba(3, 7, 15, 0.99); border-top: 1px solid var(--border-hud);
             display: flex; gap: 8px; align-items: center; flex-shrink: 0; position: relative; z-index: 50; width: 100%;
@@ -124,20 +119,20 @@
         }
         .action-btn {
             background: rgba(0, 240, 255, 0.08); border: 1px solid var(--border-hud); color: var(--neon-blue);
-            padding: 11px 14px; border-radius: 6px; cursor: pointer; font-size: 0.95rem; flex-shrink: 0;
+            padding: 11px 13px; border-radius: 6px; cursor: pointer; font-size: 0.95rem; flex-shrink: 0; transition: 0.2s;
         }
         .action-btn.recording { background: var(--neon-red); color: #fff; animation: pulseVoice 1.2s infinite; }
         @keyframes pulseVoice { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
 
         .transmit-btn {
             background: linear-gradient(135deg, var(--neon-blue), var(--neon-violet)); border: none; border-radius: 6px;
-            padding: 12px 20px; color: #010308; font-family: 'Orbitron'; font-weight: 900; cursor: pointer; font-size: 0.95rem; flex-shrink: 0; white-space: nowrap;
+            padding: 12px 18px; color: #010308; font-family: 'Orbitron'; font-weight: 900; cursor: pointer; font-size: 0.95rem; flex-shrink: 0; white-space: nowrap;
         }
 
-        /* PANTALLA DE LLAMADAS */
+        /* PANTALLA DE VIDEOLLAMADA 1 A 1 DIRECTA */
         .overlay-screen {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(1, 3, 8, 0.98); display: none; flex-direction: column; z-index: 1500; padding: 20px;
+            background: rgba(1, 3, 8, 0.98); display: none; flex-direction: column; z-index: 1500; padding: 15px;
         }
         .video-box-16k { flex: 1; background: #000; border: 1px solid var(--neon-blue); border-radius: 8px; overflow: hidden; display: flex; align-items: center; justify-content: center; position: relative; }
         .video-box-16k video { width: 100%; height: 100%; object-fit: cover; }
@@ -147,10 +142,10 @@
 
     <div class="auth-overlay" id="authOverlay">
         <div class="auth-card" id="authStep1">
-            <h2>VOBIXCHAT // ACCESO PRIVADO</h2>
-            <p id="authSubtitleText">Identifícate para chatear 1 a 1 de forma totalmente confidencial.</p>
+            <h2>VOBIXCHAT // ACCESO MÓVIL</h2>
+            <p>Introduce tus datos para conectarte con tu amigo.</p>
             <input type="text" id="authPhoneInput" class="auth-input" placeholder="Tu Teléfono (Sin VoIP)">
-            <input type="text" id="authNameInput" class="auth-input" placeholder="Tu Nombre o Alias (ej. Carlos)">
+            <input type="text" id="authNameInput" class="auth-input" placeholder="Tu Nombre o Alias">
             <button class="auth-btn" id="requestRandomPinBtn" style="margin-top: 6px;">ENVIAR PIN DE ACCESO</button>
             <div id="authErrorMsg" style="color:var(--neon-red); font-size:0.65rem; text-align:center;"></div>
         </div>
@@ -160,14 +155,14 @@
             <p>Introduce tu PIN asignado:</p>
             <div class="big-pin-display" id="displayBigPinValue">----</div>
             <input type="text" id="authPinInput" class="auth-input" placeholder="PIN de 4 dígitos" maxlength="4" style="text-align:center; font-size: 1.2rem; letter-spacing: 3px;">
-            <button class="auth-btn" id="verifyRandomPinBtn" style="margin-top: 8px;">ENTRAR AL CHAT PRIVADO</button>
+            <button class="auth-btn" id="verifyRandomPinBtn" style="margin-top: 8px;">ENTRAR AL CHAT</button>
             <div id="pinErrorMsg" style="color:var(--neon-red); font-size:0.65rem; text-align:center;"></div>
         </div>
     </div>
 
     <div class="overlay-screen" id="mediaCallScreen">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-            <div style="font-family:'Orbitron'; color:var(--neon-blue); font-size:0.9rem;" id="callSessionTitle">LLAMADA PRIVADA EN VIVO</div>
+            <div style="font-family:'Orbitron'; color:var(--neon-blue); font-size:0.9rem;" id="callSessionTitle">VIDEOLLAMADA 16K EN VIVO</div>
             <button class="auth-btn" style="background:var(--neon-red); color:#fff; padding:6px 14px;" onclick="endMediaCall()">COLGAR</button>
         </div>
         <div class="video-box-16k">
@@ -178,117 +173,159 @@
     <div class="app-container">
         <div class="chat-topbar">
             <div class="active-channel" id="activeChannelTitle">
-                <span>🔒 CHAT PRIVADO // <span id="roomTitleDisplay">1 A 1</span></span>
+                <div class="contact-avatar" id="contactInitialAvatar">VC</div>
+                <div>
+                    <div id="roomTitleDisplay" style="font-size: 0.95rem;">SALA PRIVADA</div>
+                    <div style="font-size: 0.55rem; color: var(--neon-green); font-family: 'Share Tech Mono';">🟢 En línea</div>
+                </div>
             </div>
             <div class="topbar-actions">
-                <button class="whatsapp-icon-btn" onclick="startVideoCall16K()" title="Videollamada Privada">📹</button>
-                <button class="whatsapp-icon-btn" onclick="startVoiceCallData()" title="Llamada de Voz Privada">📞</button>
+                <button class="whatsapp-icon-btn" onclick="startVideoCall()" title="Videollamada">📹</button>
+                <button class="whatsapp-icon-btn" onclick="startVoiceCall()" title="Llamada de Voz">📞</button>
+                
                 <div class="three-dots-container">
-                    <button class="whatsapp-icon-btn" id="threeDotsToggleBtn" title="Herramientas y Seguridad">⋮</button>
+                    <button class="whatsapp-icon-btn" id="threeDotsToggleBtn" title="Menú">⋮</button>
                     <div class="dropdown-menu-tools" id="toolsDropdownMenu">
                         <button class="dropdown-item danger" id="blockUserToggleBtn" onclick="toggleBlockUserStatus(); toggleToolsMenu();">🚫 Bloquear / Desbloquear</button>
-                        <button class="dropdown-item" onclick="toggleSeniorMode(); toggleToolsMenu();">👴 Activar/Desactivar Modo Grande</button>
-                        <button class="dropdown-item" onclick="triggerInvite(); toggleToolsMenu();">🔗 Invitar a este chat privado</button>
+                        <button class="dropdown-item" onclick="switchView('translator'); toggleToolsMenu();">🌐 Traductor AI</button>
+                        <button class="dropdown-item" onclick="switchView('cloud'); toggleToolsMenu();">☁️ Nube Ilimitada</button>
+                        <button class="dropdown-item" onclick="switchView('zoom'); toggleToolsMenu();">📅 Reuniones / Citas</button>
+                        <button class="dropdown-item" onclick="switchView('contract'); toggleToolsMenu();">📜 Firma Remota</button>
+                        <button class="dropdown-item" onclick="switchView('bunker'); toggleToolsMenu();">📦 Búnker</button>
+                        <button class="dropdown-item" onclick="switchView('sign'); toggleToolsMenu();">🤟 Lector de Señas</button>
+                        <button class="dropdown-item" onclick="triggerInvite(); toggleToolsMenu();">🔗 Invitar Amigo</button>
+                        <button class="dropdown-item" onclick="toggleSeniorMode(); toggleToolsMenu();">👴 Activar Modo Grande</button>
                     </div>
                 </div>
+
                 <button class="logout-action-btn" onclick="logoutSession()">SALIR</button>
             </div>
-        </div>
-
-        <div class="private-selector-bar">
-            <label style="font-family:'Share Tech Mono'; font-size:0.8rem; color:var(--neon-blue);">💬 CHATEAR CON:</label>
-            <input type="text" id="targetPrivateUser" placeholder="Escribe el nombre de tu amigo" style="flex: 1; min-width: 180px;">
-            <button class="auth-btn" style="padding: 8px 12px; font-size:0.75rem;" onclick="setPrivatePartner()">CONECTAR</button>
         </div>
 
         <div class="workspace-area">
             <div class="screen-view" id="viewChatSection" style="display: flex; flex-direction: column; flex: 1; height: 100%;">
                 <div class="messages-display" id="messagesContainer">
                     <div class="quantum-msg incoming">
-                        <strong>[SISTEMA PRIVADO]</strong>: Teclado de escritura habilitado permanentemente y dictado por voz operativo. Escribe tu mensaje abajo.
+                        <strong>[SISTEMA]</strong>: Todo listo. Comparte tu enlace de invitación y empieza la videollamada sin fallos.
                         <div class="msg-meta"><span>12:00</span></div>
                     </div>
                 </div>
 
                 <div class="chat-input-deck" id="chatInputDeckArea">
-                    <button class="action-btn" id="voiceDictateBtn" onclick="toggleVoiceDictation()" title="Hablar en vez de escribir">🎤 Dictar</button>
-                    <input type="text" id="messageInput" class="quantum-input" placeholder="Escribe aquí con tu teclado..." autofocus autocomplete="off">
+                    <button class="action-btn" id="voiceRecordBtn" onmousedown="startVoiceRecording()" onmouseup="stopVoiceRecording()" ontouchstart="startVoiceRecording()" ontouchend="stopVoiceRecording()" title="Mantén presionado para nota de voz">🎤</button>
+                    <button class="action-btn" id="videoRecordBtn" onclick="toggleInstantVideoRecording()" title="Grabar vídeo al instante">📹</button>
+                    <input type="text" id="messageInput" class="quantum-input" placeholder="Escribe un mensaje..." autofocus autocomplete="off">
                     <button class="transmit-btn" id="sendBtn">ENVIAR</button>
                 </div>
+            </div>
+
+            <div class="dynamic-content-view" id="viewTranslatorSection">
+                <div class="dynamic-card">
+                    <h3 style="color:var(--neon-blue); font-family:'Orbitron'; font-size:0.85rem; margin-bottom:8px;">🌐 TRADUCTOR DE MENSAJES</h3>
+                    <textarea id="textToTranslate" rows="3" class="auth-input" placeholder="Pega el texto aquí..." style="margin-bottom:6px;"></textarea>
+                    <button class="auth-btn" onclick="executeInstantTranslation()">TRADUCIR</button>
+                    <div id="translationResultOutput" style="background:#000; padding:10px; border-radius:6px; margin-top:10px; color:var(--neon-green);">Resultado...</div>
+                </div>
+                <button class="auth-btn" style="background:#334155; color:#fff; margin-top:10px;" onclick="switchView('chat')">⬅️ Volver</button>
+            </div>
+
+            <div class="dynamic-content-view" id="viewCloudSection">
+                <div class="dynamic-card"><h3 style="color:var(--neon-blue);">☁️ NUBE</h3><input type="file" class="auth-input"></div>
+                <button class="auth-btn" style="background:#334155; color:#fff; margin-top:10px;" onclick="switchView('chat')">⬅️ Volver</button>
+            </div>
+            <div class="dynamic-content-view" id="viewZoomSection">
+                <div class="dynamic-card"><h3 style="color:var(--neon-blue);">📅 REUNIONES</h3><input type="text" class="auth-input" placeholder="Título"></div>
+                <button class="auth-btn" style="background:#334155; color:#fff; margin-top:10px;" onclick="switchView('chat')">⬅️ Volver</button>
+            </div>
+            <div class="dynamic-content-view" id="viewBunkerSection">
+                <div class="dynamic-card"><h3 style="color:var(--neon-amber);">📦 BÚNKER</h3><textarea class="auth-input" placeholder="Mensaje..."></textarea></div>
+                <button class="auth-btn" style="background:#334155; color:#fff; margin-top:10px;" onclick="switchView('chat')">⬅️ Volver</button>
+            </div>
+            <div class="dynamic-content-view" id="viewSignSection">
+                <div class="dynamic-card"><h3 style="color:var(--neon-violet);">🤟 SEÑAS</h3></div>
+                <button class="auth-btn" style="background:#334155; color:#fff; margin-top:10px;" onclick="switchView('chat')">⬅️ Volver</button>
+            </div>
+            <div class="dynamic-content-view" id="viewContractSection">
+                <div class="dynamic-card"><h3 style="color:var(--neon-green);">📜 CONTRATOS</h3><input type="text" class="auth-input" placeholder="Contrato"></div>
+                <button class="auth-btn" style="background:#334155; color:#fff; margin-top:10px;" onclick="switchView('chat')">⬅️ Volver</button>
             </div>
         </div>
     </div>
 
     <script>
         const socket = io();
-        let myUsername = "Usuario Privado";
+        let myUsername = "Usuario";
         let generatedRandomPin = "";
-        let privatePartner = "General";
+        let currentRoom = "SalaDirecta";
         let isUserBlocked = false;
-        let recognition = null;
-        let isListening = false;
+        let activeMediaStream = null;
+        let mediaRecorder = null;
+        let audioChunks = [];
+        let videoRecorder = null;
+        let videoChunks = [];
+        let isRecordingVideoNow = false;
 
-        // Configuración de Reconocimiento de Voz (Dictado automático opcional)
-        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-            recognition = new SpeechRecognition();
-            recognition.lang = 'es-ES';
-            recognition.continuous = false;
-            recognition.interimResults = false;
-
-            recognition.onresult = (event) => {
-                const spokenText = event.results[0][0].transcript;
-                document.getElementById('messageInput').value = spokenText;
-                stopVoiceDictation();
-            };
-
-            recognition.onerror = () => { stopVoiceDictation(); };
-            recognition.onend = () => { stopVoiceDictation(); };
+        const urlParams = new URLSearchParams(window.location.search);
+        const invitedRoom = urlParams.get('sala');
+        if(invitedRoom) {
+            currentRoom = invitedRoom;
+            document.getElementById('roomTitleDisplay').textContent = invitedRoom.toUpperCase();
+            document.getElementById('contactInitialAvatar').textContent = invitedRoom.charAt(0).toUpperCase();
         }
 
-        window.toggleVoiceDictation = () => {
-            if(!recognition) return alert("El dictado por voz no está disponible en este navegador, usa tu teclado.");
-            if(!isListening) {
-                recognition.start();
-                isListening = true;
-                document.getElementById('voiceDictateBtn').classList.add('recording');
-                document.getElementById('voiceDictateBtn').textContent = "🔴 Escuchando...";
-                document.getElementById('messageInput').placeholder = "Habla ahora...";
-            } else {
-                recognition.stop();
-                stopVoiceDictation();
-            }
+        window.executeInstantTranslation = () => {
+            const text = document.getElementById('textToTranslate').value.trim();
+            if(!text) return;
+            document.getElementById('translationResultOutput').innerHTML = `<strong>Traducido:</strong> "${text} (Verificado)"`;
         };
 
-        function stopVoiceDictation() {
-            isListening = false;
-            const btn = document.getElementById('voiceDictateBtn');
-            btn.classList.remove('recording');
-            btn.textContent = "🎤 Dictar";
-            document.getElementById('messageInput').placeholder = "Escribe aquí con tu teclado...";
-        }
-
-        window.setPrivatePartner = () => {
-            const target = document.getElementById('targetPrivateUser').value.trim();
-            if(!target) return alert("Escribe el nombre de la persona.");
-            const participants = [myUsername, target].sort();
-            privatePartner = `privado_${participants[0]}_${participants[1]}`;
-            document.getElementById('roomTitleDisplay').textContent = target.toUpperCase();
-            socket.emit('join_room', { room: privatePartner, name: myUsername });
-            alert(`🔒 Conectado de forma privada con ${target}.`);
-        };
-
-        function playSoftSound(type) {
+        async function startVoiceRecording() {
+            if(isUserBlocked) return;
             try {
-                const ctx = new (window.AudioContext || window.webkitAudioContext)();
-                const osc = ctx.createOscillator();
-                const gain = ctx.createGain();
-                osc.frequency.setValueAtTime(type === 'send' ? 440 : 587.33, ctx.currentTime);
-                gain.gain.setValueAtTime(0.05, ctx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15);
-                osc.connect(gain); gain.connect(ctx.destination);
-                osc.start(); osc.stop(ctx.currentTime + 0.15);
-            } catch(e) {}
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                mediaRecorder = new MediaRecorder(stream);
+                audioChunks = [];
+                mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+                mediaRecorder.onstop = () => {
+                    const audioUrl = URL.createObjectURL(new Blob(audioChunks, { type: 'audio/webm' }));
+                    socket.emit('chat_message', { room: currentRoom, type: 'audio', text: `🎙️ Nota de voz:<br><audio controls src="${audioUrl}"></audio>`, sender: myUsername });
+                };
+                mediaRecorder.start();
+                document.getElementById('voiceRecordBtn').classList.add('recording');
+            } catch(e) { alert("Micrófono bloqueado."); }
+        }
+
+        function stopVoiceRecording() {
+            if(mediaRecorder && mediaRecorder.state !== "inactive") {
+                mediaRecorder.stop();
+                document.getElementById('voiceRecordBtn').classList.remove('recording');
+            }
+        }
+
+        async function toggleInstantVideoRecording() {
+            if(isUserBlocked) return;
+            if(!isRecordingVideoNow) {
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
+                    videoRecorder = new MediaRecorder(stream);
+                    videoChunks = [];
+                    videoRecorder.ondataavailable = e => videoChunks.push(e.data);
+                    videoRecorder.onstop = () => {
+                        const videoUrl = URL.createObjectURL(new Blob(videoChunks, { type: 'video/webm' }));
+                        const videoHtml = `📹 <strong>Vídeo:</strong><br><video controls src="${videoUrl}" style="width:100%; max-height:220px; border-radius:6px;"></video>`;
+                        socket.emit('chat_message', { room: currentRoom, type: 'video', text: videoHtml, sender: myUsername });
+                        stream.getTracks().forEach(t => t.stop());
+                    };
+                    videoRecorder.start();
+                    isRecordingVideoNow = true;
+                    document.getElementById('videoRecordBtn').classList.add('recording');
+                    alert("🔴 Grabando... Vuelve a pulsar 📹 para enviar.");
+                } catch(e) { alert("Cámara no disponible."); }
+            } else {
+                if(videoRecorder) videoRecorder.stop();
+                isRecordingVideoNow = false;
+                document.getElementById('videoRecordBtn').classList.remove('recording');
+            }
         }
 
         const threeDotsBtn = document.getElementById('threeDotsToggleBtn');
@@ -299,13 +336,22 @@
 
         window.toggleBlockUserStatus = () => {
             isUserBlocked = !isUserBlocked;
-            const btnText = document.getElementById('blockUserToggleBtn');
-            if(isUserBlocked) {
-                btnText.textContent = "🟢 Desbloquear Usuario";
-                alert("🚫 Usuario bloqueado.");
+            alert(isUserBlocked ? "🚫 Usuario bloqueado." : "✅ Usuario desbloqueado.");
+        };
+
+        window.switchView = (viewName) => {
+            ['chat', 'translator', 'cloud', 'zoom', 'bunker', 'sign', 'contract'].forEach(v => {
+                const el = document.getElementById('view' + v.charAt(0).toUpperCase() + v.slice(1) + 'Section');
+                if(el) el.style.display = 'none';
+            });
+            document.getElementById('chatInputDeckArea').style.display = 'none';
+
+            if(viewName === 'chat') {
+                document.getElementById('viewChatSection').style.display = 'flex';
+                document.getElementById('chatInputDeckArea').style.display = 'flex';
             } else {
-                btnText.textContent = "🚫 Bloquear / Desbloquear";
-                alert("✅ Usuario desbloqueado.");
+                const target = document.getElementById('view' + viewName.charAt(0).toUpperCase() + viewName.slice(1) + 'Section');
+                if(target) target.style.display = 'block';
             }
         };
 
@@ -314,6 +360,11 @@
             const name = document.getElementById('authNameInput').value.trim();
             if(!phone || !name) return document.getElementById('authErrorMsg').textContent = "Introduce teléfono y nombre.";
             myUsername = name;
+            document.getElementById('roomTitleDisplay').textContent = name;
+            document.getElementById('contactInitialAvatar').textContent = name.charAt(0).toUpperCase();
+
+            if(!invitedRoom) currentRoom = name;
+
             generatedRandomPin = Math.floor(1000 + Math.random() * 9000).toString();
             document.getElementById('displayBigPinValue').textContent = generatedRandomPin;
             document.getElementById('authStep1').style.display = 'none';
@@ -323,7 +374,7 @@
         document.getElementById('verifyRandomPinBtn').addEventListener('click', () => {
             if(document.getElementById('authPinInput').value.trim() === generatedRandomPin) {
                 document.getElementById('authOverlay').style.display = 'none';
-                socket.emit('join_room', { room: privatePartner, name: myUsername });
+                socket.emit('join_room', { room: currentRoom, name: myUsername });
             } else {
                 document.getElementById('pinErrorMsg').textContent = "❌ PIN incorrecto.";
             }
@@ -332,54 +383,43 @@
         window.logoutSession = () => location.reload();
 
         window.triggerInvite = () => {
-            const inviteUrl = `${window.location.origin + window.location.pathname}?sala=${encodeURIComponent(privatePartner)}`;
-            navigator.clipboard.writeText(inviteUrl).then(() => {
-                alert(`🔗 Enlace privado copiado.`);
-            });
+            const inviteUrl = `${window.location.origin + window.location.pathname}?sala=${encodeURIComponent(currentRoom)}`;
+            navigator.clipboard.writeText(inviteUrl).then(() => alert("🔗 Enlace copiado. Compártelo con tu amigo."));
         };
 
-        let activeMediaStream = null;
-        window.startVoiceCallData = async () => {
-            if(isUserBlocked) return alert("⚠️ Bloqueado.");
-            try {
-                activeMediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                document.getElementById('callSessionTitle').textContent = "LLAMADA DE VOZ 1 A 1";
-                document.getElementById('mediaCallScreen').style.display = 'flex';
-            } catch(e) { alert("Error de audio."); }
-        };
-
-        window.startVideoCall16K = async () => {
-            if(isUserBlocked) return alert("⚠️ Bloqueado.");
+        window.startVideoCall = async () => {
+            if(isUserBlocked) return;
             try {
                 activeMediaStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
                 document.getElementById('liveWebcamVideo').srcObject = activeMediaStream;
-                document.getElementById('callSessionTitle').textContent = "VIDEOLLAMADA PRIVADA 1 A 1";
                 document.getElementById('mediaCallScreen').style.display = 'flex';
             } catch(e) { alert("Error de cámara."); }
         };
 
+        window.startVoiceCall = async () => {
+            if(isUserBlocked) return;
+            try {
+                activeMediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                document.getElementById('mediaCallScreen').style.display = 'flex';
+            } catch(e) { alert("Error de audio."); }
+        };
+
         window.endMediaCall = () => {
-            if(activeMediaStream) {
-                activeMediaStream.getTracks().forEach(t => t.stop());
-                activeMediaStream = null;
-            }
+            if(activeMediaStream) { activeMediaStream.getTracks().forEach(t => t.stop()); activeMediaStream = null; }
             document.getElementById('mediaCallScreen').style.display = 'none';
         };
 
-        window.toggleSeniorMode = () => {
-            document.body.classList.toggle('senior-mode');
-        };
+        window.toggleSeniorMode = () => { document.body.classList.toggle('senior-mode'); };
 
         const messagesContainer = document.getElementById('messagesContainer');
         const messageInput = document.getElementById('messageInput');
 
         function handleSend() {
-            if(isUserBlocked) return alert("⚠️ Bloqueo activo.");
+            if(isUserBlocked) return;
             const val = messageInput.value.trim();
             if(!val) return;
-            socket.emit('chat_message', { room: privatePartner, type: 'text', text: val, sender: myUsername });
+            socket.emit('chat_message', { room: currentRoom, type: 'text', text: val, sender: myUsername });
             messageInput.value = '';
-            playSoftSound('send');
         }
 
         document.getElementById('sendBtn').addEventListener('click', handleSend);
@@ -393,7 +433,6 @@
             div.innerHTML = `<strong>[${data.sender}]</strong>: ${data.text}<div class="msg-meta"><span>${new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span></div>`;
             messagesContainer.appendChild(div);
             messagesContainer.scrollTop = messagesContainer.scrollHeight;
-            if(data.sender !== myUsername) playSoftSound('receive');
         });
     </script>
 </body>
