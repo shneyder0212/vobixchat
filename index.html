@@ -100,7 +100,7 @@
         .three-dots-container { position: relative; display: inline-block; }
         .dropdown-menu-tools {
             display: none; position: absolute; right: 0; top: 40px; background: rgba(4, 10, 22, 0.98);
-            border: 1px solid var(--border-hud); border-radius: 8px; padding: 8px; width: 230px; z-index: 1000; box-shadow: 0 4px 20px rgba(0,0,0,0.8);
+            border: 1px solid var(--border-hud); border-radius: 8px; padding: 8px; width: 240px; z-index: 1000; box-shadow: 0 4px 20px rgba(0,0,0,0.8);
             flex-direction: column; gap: 6px;
         }
         .dropdown-item {
@@ -123,6 +123,10 @@
 
         .dynamic-content-view { display: none; padding: 20px; flex: 1; overflow-y: auto; font-family: 'Share Tech Mono'; }
         .dynamic-card { background: rgba(0,240,255,0.03); border: 1px solid var(--border-hud); padding: 15px; border-radius: 8px; margin-bottom: 12px; }
+
+        /* LISTA DE AMISTADES ALMACENADAS */
+        .friends-list-container { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+        .friend-item-card { background: rgba(0,240,255,0.05); border: 1px solid var(--border-hud); padding: 10px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; font-family: 'Share Tech Mono'; }
 
         /* PANEL DE EMOJIS */
         .emoji-picker-box {
@@ -160,23 +164,19 @@
 </head>
 <body>
 
+    <!-- AUTENTICACIÓN -->
     <div class="auth-overlay" id="authOverlay">
         <div class="auth-card" id="authStep1">
             <h2>VOBIXCHAT // ACCESO 16K</h2>
-            <p id="authSubtitleText">Introduce tus datos o busca a alguien por su número de móvil.</p>
+            <p id="authSubtitleText">Introduce tus datos para acceder de forma segura.</p>
             <select id="countrySelect" class="auth-select">
                 <option value="+34">🇪🇸 España (+34)</option>
                 <option value="+1">🇩🇴 República Dominicana (+1)</option>
             </select>
             <input type="text" id="authPhoneInput" class="auth-input" placeholder="Tu número de móvil (Sin VoIP)">
             <input type="text" id="authNameInput" class="auth-input" placeholder="Tu Nombre o Alias">
-            
-            <div style="margin-top: 6px; background: rgba(0,240,255,0.04); border: 1px dashed var(--neon-blue); padding: 8px; border-radius: 6px;">
-                <label style="font-family:'Share Tech Mono'; font-size:0.65rem; color:var(--neon-blue); display:block; margin-bottom:4px;">📞 CHAT DIRECTO POR NÚMERO DE MÓVIL:</label>
-                <input type="text" id="searchTargetMobileInput" class="auth-input" placeholder="Ej. Número de móvil de tu amigo">
-            </div>
 
-            <button class="auth-btn" id="requestRandomPinBtn" style="margin-top: 6px;">ENVIAR PIN ALEATORIO</button>
+            <button class="auth-btn" id="requestRandomPinBtn" style="margin-top: 8px;">ENVIAR PIN ALEATORIO</button>
             <div id="authErrorMsg" style="color:var(--neon-red); font-size:0.65rem; text-align:center;"></div>
         </div>
 
@@ -192,6 +192,7 @@
         </div>
     </div>
 
+    <!-- PANTALLA DE VÍDEO / LLAMADAS -->
     <div class="overlay-screen" id="mediaCallScreen">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
             <div style="font-family:'Orbitron'; color:var(--neon-blue); font-size:0.9rem;" id="callSessionTitle">CANAL DE COMUNICACIÓN EN VIVO</div>
@@ -203,6 +204,7 @@
     </div>
 
     <div class="app-container">
+        <!-- BARRA SUPERIOR ESTILO WHATSAPP -->
         <div class="chat-topbar">
             <div class="active-channel" id="activeChannelTitle">
                 <span>💬 VOBIXCHAT // <span id="roomTitleDisplay">SALA DIRECTA</span></span>
@@ -213,6 +215,8 @@
                 <div class="three-dots-container">
                     <button class="whatsapp-icon-btn" id="threeDotsToggleBtn" title="Herramientas y Seguridad">⋮</button>
                     <div class="dropdown-menu-tools" id="toolsDropdownMenu">
+                        <button class="dropdown-item" onclick="searchChatByMobile(); toggleToolsMenu();">🔍 Buscar Chat por Móvil</button>
+                        <button class="dropdown-item" onclick="switchView('friends'); toggleToolsMenu();">👥 Mis Amistades Guardadas</button>
                         <button class="dropdown-item danger" id="blockUserToggleBtn" onclick="toggleBlockUserStatus(); toggleToolsMenu();">🚫 Bloquear / Desbloquear</button>
                         <button class="dropdown-item" onclick="switchView('cloud'); toggleToolsMenu();">☁️ Nube Ilimitada</button>
                         <button class="dropdown-item" onclick="switchView('zoom'); toggleToolsMenu();">📅 Reuniones / Citas</button>
@@ -229,18 +233,21 @@
         </div>
 
         <div class="workspace-area">
+            <!-- CHAT -->
             <div class="screen-view" id="viewChatSection" style="display: flex; flex-direction: column; flex: 1; height: 100%;">
                 <div class="messages-display" id="messagesContainer">
                     <div class="quantum-msg incoming">
-                        <strong>[SISTEMA]</strong>: Búsqueda y conexión por número de móvil activa. 
+                        <strong>[SISTEMA]</strong>: Almacenamiento automático de amistades activo. Consulta tu lista en el menú (⋮).
                         <div class="msg-meta"><span>12:00</span></div>
                     </div>
                 </div>
 
+                <!-- SELECTOR DE EMOJIS -->
                 <div class="emoji-picker-box" id="emojiPickerBox">
                     <span class="emoji-item" onclick="insertEmoji('😀')">😀</span> <span class="emoji-item" onclick="insertEmoji('😂')">😂</span> <span class="emoji-item" onclick="insertEmoji('🔥')">🔥</span> <span class="emoji-item" onclick="insertEmoji('🚀')">🚀</span> <span class="emoji-item" onclick="insertEmoji('⭐')">⭐</span> <span class="emoji-item" onclick="insertEmoji('💎')">💎</span> <span class="emoji-item" onclick="insertEmoji('🎉')">🎉</span> <span class="emoji-item" onclick="insertEmoji('👍')">👍</span> <span class="emoji-item" onclick="insertEmoji('💡')">💡</span> <span class="emoji-item" onclick="insertEmoji('🛡️')">🛡️</span> <span class="emoji-item" onclick="insertEmoji('💻')">💻</span> <span class="emoji-item" onclick="insertEmoji('📂')">📂</span>
                 </div>
 
+                <!-- BARRA INFERIOR DE CHAT -->
                 <div class="chat-input-deck" id="chatInputDeckArea">
                     <button class="action-btn" id="emojiToggleBtn">😊</button>
                     <button class="action-btn" onclick="recordPureVoiceNote()">🎙️ Voz</button>
@@ -250,6 +257,19 @@
                 </div>
             </div>
 
+            <!-- VISTA DE AMISTADES GUARDADAS -->
+            <div class="dynamic-content-view" id="viewFriendsSection">
+                <div class="dynamic-card">
+                    <h3 style="color:var(--neon-blue); font-family:'Orbitron'; font-size:0.85rem; margin-bottom:8px;">👥 LISTA DE AMISTADES ALMACENADAS</h3>
+                    <p style="font-size:0.75rem; color:var(--text-dim); margin-bottom:8px;">Aquí se guardan automáticamente las personas con las que te conectas.</p>
+                    <div class="friends-list-container" id="friendsListContainer">
+                        <div style="font-size:0.75rem; color:var(--text-dim);">No hay amistades guardadas todavía. Conéctate a un móvil o acepta una invitación.</div>
+                    </div>
+                </div>
+                <button class="auth-btn" style="background:#334155; color:#fff; margin-top:10px;" onclick="switchView('chat')">⬅️ Volver al Chat</button>
+            </div>
+
+            <!-- VISTAS SECUNDARIAS -->
             <div class="dynamic-content-view" id="viewCloudSection">
                 <div class="dynamic-card">
                     <h3 style="color:var(--neon-blue); font-family:'Orbitron'; font-size:0.85rem; margin-bottom:8px;">☁️ ALMACENAMIENTO ILIMITADO (VÍDEOS 16K, PELÍCULAS, OFFICE)</h3>
@@ -303,16 +323,58 @@
     <script>
         const socket = io();
         let myUsername = "Operador 16K";
+        let userPhone = "";
         let generatedRandomPin = "";
         let currentRoom = "SalaDirecta";
         let isUserBlocked = false;
+
+        // Almacenamiento local de amistades
+        let savedFriends = JSON.parse(localStorage.getItem('vobix_friends') || '[]');
+
+        function saveFriend(friendName, friendMobile) {
+            if(!friendName) return;
+            const exists = savedFriends.some(f => f.mobile === friendMobile || f.name === friendName);
+            if(!exists) {
+                savedFriends.push({ name: friendName, mobile: friendMobile || 'Directo' });
+                localStorage.setItem('vobix_friends', JSON.stringify(savedFriends));
+                renderFriendsList();
+            }
+        }
+
+        function renderFriendsList() {
+            const container = document.getElementById('friendsListContainer');
+            if(savedFriends.length === 0) {
+                container.innerHTML = `<div style="font-size:0.75rem; color:var(--text-dim);">No hay amistades guardadas todavía.</div>`;
+                return;
+            }
+            container.innerHTML = '';
+            savedFriends.forEach(friend => {
+                const card = document.createElement('div');
+                card.className = 'friend-item-card';
+                card.innerHTML = `
+                    <div>
+                        <strong style="color:var(--neon-blue);">${friend.name}</strong><br>
+                        <span style="font-size:0.65rem; color:var(--text-dim);">Móvil: ${friend.mobile}</span>
+                    </div>
+                    <button class="auth-btn" style="padding:4px 10px; font-size:0.7rem;" onclick="connectToFriend('${friend.name}')">Chatear</button>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        window.connectToFriend = (friendName) => {
+            currentRoom = "chat-" + friendName;
+            document.getElementById('roomTitleDisplay').textContent = `AMIGO: ${friendName}`;
+            socket.emit('join_room', { room: currentRoom, name: myUsername });
+            switchView('chat');
+        };
 
         const urlParams = new URLSearchParams(window.location.search);
         const invitedRoom = urlParams.get('sala');
         if(invitedRoom) {
             currentRoom = invitedRoom;
             document.getElementById('roomTitleDisplay').textContent = `MÓVIL / SALA: ${invitedRoom}`;
-            document.getElementById('authSubtitleText').textContent = `Te has conectado con el número/sala: ${invitedRoom}`;
+            saveFriend(invitedRoom, invitedRoom);
         }
 
         function playSoftSound(type) {
@@ -356,6 +418,18 @@
             toolsMenu.style.display = 'none';
         });
 
+        window.searchChatByMobile = () => {
+            const mobileTarget = prompt("Introduce el número de móvil de la persona con la que quieres chatear:");
+            if(mobileTarget && mobileTarget.trim() !== "") {
+                const cleanMobile = mobileTarget.trim();
+                currentRoom = "movil-" + cleanMobile;
+                document.getElementById('roomTitleDisplay').textContent = `MÓVIL: ${cleanMobile}`;
+                socket.emit('join_room', { room: currentRoom, name: myUsername });
+                saveFriend("Contacto " + cleanMobile, cleanMobile);
+                alert(`✅ Conectado y guardado en tus amistades.`);
+            }
+        };
+
         window.toggleBlockUserStatus = () => {
             isUserBlocked = !isUserBlocked;
             const btnText = document.getElementById('blockUserToggleBtn');
@@ -371,7 +445,6 @@
         document.getElementById('requestRandomPinBtn').addEventListener('click', () => {
             const phone = document.getElementById('authPhoneInput').value.trim();
             const name = document.getElementById('authNameInput').value.trim();
-            const targetMobile = document.getElementById('searchTargetMobileInput').value.trim();
 
             if(!phone || !name) return document.getElementById('authErrorMsg').textContent = "Introduce tu móvil y nombre.";
             if(phone.startsWith("0") || phone.length < 8 || phone.includes("voip")) {
@@ -380,14 +453,8 @@
             }
 
             myUsername = name;
-
-            // Si introduce el número de móvil de otra persona, se conectan directamente por ese número
-            if(targetMobile) {
-                currentRoom = "movil-" + targetMobile;
-                document.getElementById('roomTitleDisplay').textContent = `MÓVIL: ${targetMobile}`;
-            } else if(!invitedRoom) {
-                currentRoom = phone; // Por defecto su propio número actúa como su sala privada
-            }
+            userPhone = phone;
+            if(!invitedRoom) currentRoom = "movil-" + phone;
 
             generatedRandomPin = Math.floor(1000 + Math.random() * 9000).toString();
             document.getElementById('displayBigPinValue').textContent = generatedRandomPin;
@@ -401,6 +468,7 @@
             if(document.getElementById('authPinInput').value.trim() === generatedRandomPin) {
                 document.getElementById('authOverlay').style.display = 'none';
                 socket.emit('join_room', { room: currentRoom, name: myUsername });
+                renderFriendsList();
             } else {
                 document.getElementById('pinErrorMsg').textContent = "❌ PIN incorrecto.";
             }
@@ -409,7 +477,7 @@
         window.logoutSession = () => location.reload();
 
         window.switchView = (viewName) => {
-            ['chat', 'cloud', 'zoom', 'bunker', 'sign', 'contract'].forEach(v => {
+            ['chat', 'friends', 'cloud', 'zoom', 'bunker', 'sign', 'contract'].forEach(v => {
                 const el = document.getElementById('view' + v.charAt(0).toUpperCase() + v.slice(1) + 'Section');
                 if(el) el.style.display = 'none';
             });
@@ -421,11 +489,12 @@
             } else {
                 const target = document.getElementById('view' + viewName.charAt(0).toUpperCase() + viewName.slice(1) + 'Section');
                 if(target) target.style.display = 'block';
+                if(viewName === 'friends') renderFriendsList();
             }
         };
 
         window.triggerInvite = () => {
-            const inviteUrl = `${window.location.origin + window.location.pathname}?sala=${encodeURIComponent(currentRoom)}`;
+            const inviteUrl = `${window.location.origin + window.location.pathname}?sala=movil-${userPhone}`;
             navigator.clipboard.writeText(inviteUrl).then(() => {
                 alert(`🔗 Enlace copiado:\n\n${inviteUrl}`);
             });
@@ -547,6 +616,11 @@
 
         socket.on('chat_message', (data) => {
             if(isUserBlocked) return;
+
+            // Al recibir un mensaje, guarda automáticamente al remitente en los contactos si no está
+            if(data.sender !== myUsername) {
+                saveFriend(data.sender, data.sender);
+            }
 
             const type = data.sender === myUsername ? 'outgoing' : 'incoming';
             const div = document.createElement('div');
