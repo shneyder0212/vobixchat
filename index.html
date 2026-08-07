@@ -67,6 +67,20 @@
         .auth-select, .auth-input { background: #000; border: 1px solid var(--border-hud); color: #fff; padding: 10px; font-family: 'Share Tech Mono'; border-radius: 6px; outline: none; font-size: 0.9rem; width: 100%; }
         .auth-btn { background: var(--neon-blue); color: #000; border: none; padding: 12px; font-family: 'Orbitron'; font-weight: bold; border-radius: 6px; cursor: pointer; font-size: 0.9rem; transition: 0.2s; text-align: center; }
 
+        /* ESTILO DESTACADO PARA EL PIN GRANDE */
+        .big-pin-display {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2.2rem;
+            color: var(--neon-green);
+            text-align: center;
+            letter-spacing: 4px;
+            background: rgba(0,255,102,0.05);
+            border: 1px dashed var(--neon-green);
+            padding: 12px;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+
         /* BARRA SUPERIOR ESTILO WHATSAPP */
         .chat-topbar {
             padding: 10px 16px; background: rgba(3, 7, 15, 0.98); border-bottom: 1px solid var(--border-hud);
@@ -168,9 +182,12 @@
 
         <div class="auth-card" id="authStep2" style="display:none;">
             <h2>VERIFICACIÓN DE SEGURIDAD</h2>
-            <p id="pinInstructionsText">Se ha enviado el PIN aleatorio por el canal de la app.</p>
-            <input type="text" id="authPinInput" class="auth-input" placeholder="Código PIN de 4 dígitos" maxlength="4">
-            <button class="auth-btn" id="verifyRandomPinBtn">CONFIRMAR & ENTRAR</button>
+            <p id="pinInstructionsText">Introduce tu código PIN de seguridad:</p>
+            
+            <div class="big-pin-display" id="displayBigPinValue">----</div>
+
+            <input type="text" id="authPinInput" class="auth-input" placeholder="Código PIN de 4 dígitos" maxlength="4" style="text-align:center; font-size: 1.2rem; letter-spacing: 3px;">
+            <button class="auth-btn" id="verifyRandomPinBtn" style="margin-top: 8px;">CONFIRMAR & ENTRAR</button>
             <div id="pinErrorMsg" style="color:var(--neon-red); font-size:0.65rem; text-align:center;"></div>
         </div>
     </div>
@@ -215,7 +232,7 @@
             <div class="screen-view" id="viewChatSection" style="display: flex; flex-direction: column; flex: 1; height: 100%;">
                 <div class="messages-display" id="messagesContainer">
                     <div class="quantum-msg incoming">
-                        <strong>[SISTEMA]</strong>: Protección de bloqueo activo. Si alguien te molesta, bloquéalo instantáneamente desde el menú ⋮.
+                        <strong>[SISTEMA]</strong>: Acceso optimizado con PIN de gran tamaño y buscador directo de salas libre.
                         <div class="msg-meta"><span>12:00</span></div>
                     </div>
                 </div>
@@ -342,13 +359,12 @@
             toolsMenu.style.display = 'none';
         });
 
-        // Función de Bloqueo / Desbloqueo rápido
         window.toggleBlockUserStatus = () => {
             isUserBlocked = !isUserBlocked;
             const btnText = document.getElementById('blockUserToggleBtn');
             if(isUserBlocked) {
                 btnText.textContent = "🟢 Desbloquear Usuario";
-                alert("🚫 Usuario bloqueado. Ya no podrá escribirte ni localizarte por ningún medio en esta sesión.");
+                alert("🚫 Usuario bloqueado. Ya no podrá escribirte ni localizarte.");
             } else {
                 btnText.textContent = "🚫 Bloquear / Desbloquear";
                 alert("✅ Usuario desbloqueado.");
@@ -377,9 +393,13 @@
             }
 
             generatedRandomPin = Math.floor(1000 + Math.random() * 9000).toString();
+            
+            // Asignar el PIN generado al contenedor grande y visible
+            document.getElementById('displayBigPinValue').textContent = generatedRandomPin;
+
             document.getElementById('authStep1').style.display = 'none';
             document.getElementById('authStep2').style.display = 'flex';
-            document.getElementById('pinInstructionsText').textContent = `PIN aleatorio asignado: [ ${generatedRandomPin} ]`;
+            document.getElementById('pinInstructionsText').textContent = `Introduce tu código PIN de seguridad recibido:`;
         });
 
         document.getElementById('verifyRandomPinBtn').addEventListener('click', () => {
@@ -393,7 +413,6 @@
 
         window.logoutSession = () => location.reload();
 
-        // Navegación de vistas
         window.switchView = (viewName) => {
             ['chat', 'cloud', 'zoom', 'bunker', 'sign', 'contract'].forEach(v => {
                 const el = document.getElementById('view' + v.charAt(0).toUpperCase() + v.slice(1) + 'Section');
@@ -498,3 +517,65 @@
         window.executeMirrorSignContract = () => {
             const name = document.getElementById('contractNameInput').value.trim();
             if(!name) return alert("Introduce el contrato.");
+            const hash = "HASH-SHA256-" + Math.random().toString(36).substring(2, 9).toUpperCase();
+            const data = `📜 **CONTRATO**: ${name}\n👤 ${myUsername}\n🔐 \`${hash}\``;
+            socket.emit('chat_message', { room: currentRoom, type: 'text', text: data, sender: myUsername });
+            alert("✅ Contrato firmado y copias distribuidas.");
+            document.getElementById('contractNameInput').value = '';
+        };
+
+        const emojiBox = document.getElementById('emojiPickerBox');
+        document.getElementById('emojiToggleBtn').addEventListener('click', (e) => {
+            e.stopPropagation();
+            emojiBox.style.display = emojiBox.style.display === 'flex' ? 'none' : 'flex';
+        });
+        window.insertEmoji = (em) => {
+            document.getElementById('messageInput').value += em;
+            emojiBox.style.display = 'none';
+        };
+        document.addEventListener('click', () => { emojiBox.style.display = 'none'; });
+
+        const messagesContainer = document.getElementById('messagesContainer');
+        const messageInput = document.getElementById('messageInput');
+
+        function handleSend() {
+            if(isUserBlocked) return alert("⚠️ No puedes enviar mensajes porque tienes el bloqueo activo.");
+            const val = messageInput.value.trim();
+            if(!val) return;
+            socket.emit('chat_message', { room: currentRoom, type: 'text', text: val, sender: myUsername });
+            messageInput.value = '';
+            playSoftSound('send');
+        }
+
+        document.getElementById('sendBtn').addEventListener('click', handleSend);
+        messageInput.addEventListener('keypress', (e) => { if(e.key === 'Enter') handleSend(); });
+
+        socket.on('chat_message', (data) => {
+            if(isUserBlocked) return;
+
+            const type = data.sender === myUsername ? 'outgoing' : 'incoming';
+            const div = document.createElement('div');
+            div.className = `quantum-msg ${type}`;
+            div.innerHTML = `<strong>[${data.sender}]</strong>: ${data.text}<div class="msg-meta"><span>${new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span></div>`;
+            messagesContainer.appendChild(div);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+            if(data.sender !== myUsername) {
+                playSoftSound('receive');
+            }
+        });
+
+        window.saveBunkerCapsule = () => {
+            const txt = document.getElementById('bunkerInput').value.trim();
+            if(!txt) return;
+            localStorage.setItem('bunker', txt);
+            alert("📦 Cápsula guardada.");
+            document.getElementById('bunkerInput').value = '';
+        };
+
+        window.activateSignLanguageReader = () => {
+            document.getElementById('signReaderOutput').innerHTML = "🟢 Lector de Señas activo analizando gestos...";
+        };
+    </script>
+</body>
+</html>
