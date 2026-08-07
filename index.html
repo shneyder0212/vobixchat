@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>VOBIXCHAT // Quantum Ultimate 16K OS</title>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
     <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
@@ -32,12 +32,19 @@
             justify-content: center;
             align-items: center;
             overflow: hidden;
-            transition: font-size 0.3s ease;
+            transition: font-size 0.3s ease, filter 0.3s ease;
         }
 
+        /* MODO SENIOR */
         body.senior-mode { font-size: 1.4rem !important; }
         body.senior-mode .quantum-input, body.senior-mode .transmit-btn, body.senior-mode .action-btn { font-size: 1.25rem !important; padding: 14px 20px !important; }
         body.senior-mode .quantum-msg { font-size: 1.25rem !important; padding: 14px 18px !important; }
+
+        /* MODO KIDS */
+        body.kids-mode {
+            filter: hue-rotate(140deg) saturate(180%);
+            background-color: #0d0221;
+        }
 
         .app-container {
             width: 100vw; max-width: 1600px; height: 100vh;
@@ -52,13 +59,13 @@
             display: flex; justify-content: center; align-items: center; z-index: 2000; padding: 15px;
         }
         .auth-card {
-            width: 100%; max-width: 380px; background: rgba(8, 16, 32, 0.95);
+            width: 100%; max-width: 400px; background: rgba(8, 16, 32, 0.95);
             border: 1px solid var(--border-hud); border-radius: 12px; padding: 24px; display: flex; flex-direction: column; gap: 12px;
         }
         .auth-card h2 { font-family: 'Orbitron', sans-serif; color: var(--neon-blue); font-size: 1.1rem; text-align: center; }
         .auth-card p { font-family: 'Share Tech Mono', monospace; font-size: 0.7rem; color: var(--text-dim); text-align: center; }
         .auth-select, .auth-input { background: #000; border: 1px solid var(--border-hud); color: #fff; padding: 10px; font-family: 'Share Tech Mono'; border-radius: 6px; outline: none; font-size: 0.9rem; width: 100%; }
-        .auth-btn { background: var(--neon-blue); color: #000; border: none; padding: 12px; font-family: 'Orbitron'; font-weight: bold; border-radius: 6px; cursor: pointer; font-size: 0.9rem; text-align: center; }
+        .auth-btn { background: var(--neon-blue); color: #000; border: none; padding: 12px; font-family: 'Orbitron'; font-weight: bold; border-radius: 6px; cursor: pointer; font-size: 0.9rem; transition: 0.2s; text-align: center; }
 
         /* BARRA SUPERIOR ESTILO WHATSAPP */
         .chat-topbar {
@@ -87,6 +94,8 @@
             padding: 9px; border-radius: 5px; font-family: 'Share Tech Mono', monospace; font-size: 0.8rem; cursor: pointer; text-align: left; transition: 0.2s;
         }
         .dropdown-item:hover { background: rgba(0, 240, 255, 0.15); color: var(--neon-blue); border-color: var(--neon-blue); }
+        .dropdown-item.danger { border-color: rgba(255,0,85,0.4); color: var(--neon-red); }
+        .dropdown-item.danger:hover { background: rgba(255,0,85,0.15); color: var(--neon-red); }
 
         /* ÁREA DE TRABAJO */
         .workspace-area { flex: 1; display: flex; flex-direction: column; position: relative; overflow: hidden; background: #02050c; }
@@ -101,14 +110,14 @@
         .dynamic-content-view { display: none; padding: 20px; flex: 1; overflow-y: auto; font-family: 'Share Tech Mono'; }
         .dynamic-card { background: rgba(0,240,255,0.03); border: 1px solid var(--border-hud); padding: 15px; border-radius: 8px; margin-bottom: 12px; }
 
-        /* EMOJIS */
+        /* PANEL DE EMOJIS */
         .emoji-picker-box {
             display: none; position: absolute; bottom: 70px; left: 15px; background: rgba(4, 10, 22, 0.98);
             border: 1px solid var(--border-hud); border-radius: 8px; padding: 10px; gap: 6px; flex-wrap: wrap; width: 260px; z-index: 300; max-height: 180px; overflow-y: auto;
         }
         .emoji-item { font-size: 1.3rem; cursor: pointer; padding: 4px; }
 
-        /* BARRA INFERIOR UNificada Y CORREGIDA (BOTÓN ENVIAR PEGADO AL INPUT) */
+        /* BARRA INFERIOR DE CHAT */
         .chat-input-deck {
             padding: 10px 14px; background: rgba(3, 7, 15, 0.99); border-top: 1px solid var(--border-hud);
             display: flex; gap: 8px; align-items: center; flex-shrink: 0; position: relative; z-index: 50; width: 100%;
@@ -140,14 +149,20 @@
     <div class="auth-overlay" id="authOverlay">
         <div class="auth-card" id="authStep1">
             <h2>VOBIXCHAT // ACCESO 16K</h2>
-            <p>Sistema HLR Lookup y Bloqueo estricto de números VoIP activos.</p>
+            <p id="authSubtitleText">Introduce tus datos y conéctate con cualquier usuario de inmediato.</p>
             <select id="countrySelect" class="auth-select">
                 <option value="+34">🇪🇸 España (+34)</option>
                 <option value="+1">🇩🇴 República Dominicana (+1)</option>
             </select>
             <input type="text" id="authPhoneInput" class="auth-input" placeholder="Móvil real (Sin VoIP)">
             <input type="text" id="authNameInput" class="auth-input" placeholder="Tu Nombre o Alias">
-            <button class="auth-btn" id="requestRandomPinBtn">ENVIAR PIN ALEATORIO</button>
+            
+            <div style="margin-top: 6px; background: rgba(0,240,255,0.04); border: 1px dashed var(--neon-blue); padding: 8px; border-radius: 6px;">
+                <label style="font-family:'Share Tech Mono'; font-size:0.65rem; color:var(--neon-blue); display:block; margin-bottom:4px;">💬 CHAT DIRECTO CON CÓDIGO/SALA:</label>
+                <input type="text" id="directConnectRoomInput" class="auth-input" placeholder="Ej. Escribe el nombre de tu amigo o sala">
+            </div>
+
+            <button class="auth-btn" id="requestRandomPinBtn" style="margin-top: 6px;">ENVIAR PIN ALEATORIO</button>
             <div id="authErrorMsg" style="color:var(--neon-red); font-size:0.65rem; text-align:center;"></div>
         </div>
 
@@ -173,14 +188,15 @@
     <div class="app-container">
         <div class="chat-topbar">
             <div class="active-channel" id="activeChannelTitle">
-                <span>💬 VOBIXCHAT // SALA DIRECTA</span>
+                <span>💬 VOBIXCHAT // <span id="roomTitleDisplay">SALA DIRECTA</span></span>
             </div>
             <div class="topbar-actions">
                 <button class="whatsapp-icon-btn" onclick="startVideoCall16K()" title="Videollamada 16K">📹</button>
                 <button class="whatsapp-icon-btn" onclick="startVoiceCallData()" title="Llamada de Voz HD">📞</button>
                 <div class="three-dots-container">
-                    <button class="whatsapp-icon-btn" id="threeDotsToggleBtn" title="Herramientas de Trabajo">⋮</button>
+                    <button class="whatsapp-icon-btn" id="threeDotsToggleBtn" title="Herramientas y Seguridad">⋮</button>
                     <div class="dropdown-menu-tools" id="toolsDropdownMenu">
+                        <button class="dropdown-item danger" id="blockUserToggleBtn" onclick="toggleBlockUserStatus(); toggleToolsMenu();">🚫 Bloquear / Desbloquear</button>
                         <button class="dropdown-item" onclick="switchView('cloud'); toggleToolsMenu();">☁️ Nube Ilimitada</button>
                         <button class="dropdown-item" onclick="switchView('zoom'); toggleToolsMenu();">📅 Reuniones / Citas</button>
                         <button class="dropdown-item" onclick="switchView('contract'); toggleToolsMenu();">📜 Firma Remota (Espejo)</button>
@@ -188,6 +204,7 @@
                         <button class="dropdown-item" onclick="switchView('sign'); toggleToolsMenu();">🤟 Lector de Señas</button>
                         <button class="dropdown-item" onclick="triggerInvite(); toggleToolsMenu();">🔗 Invitar Amigo</button>
                         <button class="dropdown-item" onclick="toggleSeniorMode(); toggleToolsMenu();">👴 Activar/Desactivar Senior</button>
+                        <button class="dropdown-item" onclick="toggleKidsMode(); toggleToolsMenu();">🧸 Activar/Desactivar Kids</button>
                     </div>
                 </div>
                 <button class="logout-action-btn" onclick="logoutSession()">SALIR</button>
@@ -198,7 +215,7 @@
             <div class="screen-view" id="viewChatSection" style="display: flex; flex-direction: column; flex: 1; height: 100%;">
                 <div class="messages-display" id="messagesContainer">
                     <div class="quantum-msg incoming">
-                        <strong>[SISTEMA]</strong>: Botón de enviar perfectamente alineado e integrado al lado del cuadro de texto.
+                        <strong>[SISTEMA]</strong>: Protección de bloqueo activo. Si alguien te molesta, bloquéalo instantáneamente desde el menú ⋮.
                         <div class="msg-meta"><span>12:00</span></div>
                     </div>
                 </div>
@@ -270,6 +287,43 @@
         const socket = io();
         let myUsername = "Operador 16K";
         let generatedRandomPin = "";
+        let currentRoom = "SalaDirecta";
+        let isUserBlocked = false;
+
+        // Detección automática por URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const invitedRoom = urlParams.get('sala');
+        if(invitedRoom) {
+            currentRoom = invitedRoom;
+            document.getElementById('roomTitleDisplay').textContent = `SALA: ${invitedRoom.toUpperCase()}`;
+            document.getElementById('authSubtitleText').textContent = `Te has unido a la sala compartida de: ${invitedRoom}`;
+        }
+
+        // Sonidos suaves
+        function playSoftSound(type) {
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                
+                if(type === 'send') {
+                    osc.frequency.setValueAtTime(440, ctx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.1);
+                    gain.gain.setValueAtTime(0.05, ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.1);
+                    osc.connect(gain); gain.connect(ctx.destination);
+                    osc.start(); osc.stop(ctx.currentTime + 0.1);
+                } else if(type === 'receive') {
+                    osc.frequency.setValueAtTime(587.33, ctx.currentTime);
+                    osc.frequency.setValueAtTime(880, ctx.currentTime + 0.08);
+                    gain.gain.setValueAtTime(0.08, ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.2);
+                    osc.connect(gain); gain.connect(ctx.destination);
+                    osc.start(); osc.stop(ctx.currentTime + 0.2);
+                    if("vibrate" in navigator) navigator.vibrate([150]);
+                }
+            } catch(e) {}
+        }
 
         // Menú de tres puntos
         const threeDotsBtn = document.getElementById('threeDotsToggleBtn');
@@ -288,16 +342,40 @@
             toolsMenu.style.display = 'none';
         });
 
-        // Autenticación
+        // Función de Bloqueo / Desbloqueo rápido
+        window.toggleBlockUserStatus = () => {
+            isUserBlocked = !isUserBlocked;
+            const btnText = document.getElementById('blockUserToggleBtn');
+            if(isUserBlocked) {
+                btnText.textContent = "🟢 Desbloquear Usuario";
+                alert("🚫 Usuario bloqueado. Ya no podrá escribirte ni localizarte por ningún medio en esta sesión.");
+            } else {
+                btnText.textContent = "🚫 Bloquear / Desbloquear";
+                alert("✅ Usuario desbloqueado.");
+            }
+        };
+
+        // Autenticación PIN y buscador directo de salas
         document.getElementById('requestRandomPinBtn').addEventListener('click', () => {
             const phone = document.getElementById('authPhoneInput').value.trim();
             const name = document.getElementById('authNameInput').value.trim();
+            const directRoom = document.getElementById('directConnectRoomInput').value.trim();
+
             if(!phone || !name) return document.getElementById('authErrorMsg').textContent = "Introduce móvil y nombre.";
             if(phone.startsWith("0") || phone.length < 8 || phone.includes("voip")) {
                 alert("🚫 REGISTRO RECHAZADO: Número VoIP no permitido.");
                 return document.getElementById('authErrorMsg').textContent = "🚫 Números VoIP bloqueados.";
             }
+
             myUsername = name;
+
+            if(directRoom) {
+                currentRoom = directRoom;
+                document.getElementById('roomTitleDisplay').textContent = `SALA: ${directRoom.toUpperCase()}`;
+            } else if(!invitedRoom) {
+                currentRoom = name;
+            }
+
             generatedRandomPin = Math.floor(1000 + Math.random() * 9000).toString();
             document.getElementById('authStep1').style.display = 'none';
             document.getElementById('authStep2').style.display = 'flex';
@@ -307,6 +385,7 @@
         document.getElementById('verifyRandomPinBtn').addEventListener('click', () => {
             if(document.getElementById('authPinInput').value.trim() === generatedRandomPin) {
                 document.getElementById('authOverlay').style.display = 'none';
+                socket.emit('join_room', { room: currentRoom, name: myUsername });
             } else {
                 document.getElementById('pinErrorMsg').textContent = "❌ PIN incorrecto.";
             }
@@ -314,7 +393,7 @@
 
         window.logoutSession = () => location.reload();
 
-        // Navegación
+        // Navegación de vistas
         window.switchView = (viewName) => {
             ['chat', 'cloud', 'zoom', 'bunker', 'sign', 'contract'].forEach(v => {
                 const el = document.getElementById('view' + v.charAt(0).toUpperCase() + v.slice(1) + 'Section');
@@ -332,7 +411,7 @@
         };
 
         window.triggerInvite = () => {
-            const inviteUrl = window.location.origin + window.location.pathname + "?invite=true";
+            const inviteUrl = `${window.location.origin + window.location.pathname}?sala=${encodeURIComponent(currentRoom)}`;
             navigator.clipboard.writeText(inviteUrl).then(() => {
                 alert(`🔗 Enlace copiado:\n\n${inviteUrl}`);
             });
@@ -340,6 +419,7 @@
 
         let activeMediaStream = null;
         window.startVoiceCallData = async () => {
+            if(isUserBlocked) return alert("⚠️ No puedes realizar llamadas a un usuario bloqueado.");
             try {
                 activeMediaStream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } });
                 document.getElementById('callSessionTitle').textContent = "LLAMADA DE VOZ DE DATOS HD";
@@ -348,6 +428,7 @@
         };
 
         window.startVideoCall16K = async () => {
+            if(isUserBlocked) return alert("⚠️ No puedes realizar videollamadas a un usuario bloqueado.");
             try {
                 activeMediaStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
                 document.getElementById('liveWebcamVideo').srcObject = activeMediaStream;
@@ -369,7 +450,13 @@
             alert(document.body.classList.contains('senior-mode') ? "👴 Modo Senior Activado" : "Modo Senior Desactivado");
         };
 
+        window.toggleKidsMode = () => {
+            document.body.classList.toggle('kids-mode');
+            alert(document.body.classList.contains('kids-mode') ? "🧸 Modo Kids Activado" : "Modo Kids Desactivado");
+        };
+
         window.recordPureVoiceNote = async () => {
+            if(isUserBlocked) return alert("⚠️ Estás bloqueado y no puedes enviar notas de voz.");
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } });
                 const recorder = new MediaRecorder(stream);
@@ -377,7 +464,7 @@
                 recorder.ondataavailable = e => chunks.push(e.data);
                 recorder.onstop = () => {
                     const audioUrl = URL.createObjectURL(new Blob(chunks, { type: 'audio/webm' }));
-                    socket.emit('chat_message', { type: 'audio', text: `🎙️ Nota de Voz HD:<br><audio controls src="${audioUrl}"></audio>`, sender: myUsername });
+                    socket.emit('chat_message', { room: currentRoom, type: 'audio', text: `🎙️ Nota de Voz HD:<br><audio controls src="${audioUrl}"></audio>`, sender: myUsername });
                 };
                 recorder.start();
                 alert("🎙️ Grabando voz HD... Haz clic en Aceptar para detener.");
@@ -386,13 +473,14 @@
         };
 
         window.handleVideoUpload = (e) => {
+            if(isUserBlocked) return alert("⚠️ Usuario bloqueado.");
             const file = e.target.files[0];
             if(!file) return;
             const reader = new FileReader();
             reader.readAsDataURL(file);
             reader.onloadend = () => {
                 const videoHtml = `📹 <strong>Vídeo:</strong><br><video controls src="${reader.result}" style="width:100%; max-height:220px; border-radius:6px;"></video>`;
-                socket.emit('chat_message', { type: 'video', text: videoHtml, sender: myUsername });
+                socket.emit('chat_message', { room: currentRoom, type: 'video', text: videoHtml, sender: myUsername });
                 alert("✅ Vídeo enviado.");
             };
         };
@@ -401,66 +489,12 @@
             const title = document.getElementById('zoomTitleInput').value.trim();
             const datetime = document.getElementById('zoomTimeInput').value;
             if(!title || !datetime) return alert("Completa los datos.");
-            const meetingLink = `${window.location.origin + window.location.pathname}?meeting=${encodeURIComponent(title)}`;
+            const meetingLink = `${window.location.origin + window.location.pathname}?sala=${encodeURIComponent(currentRoom)}`;
             const infoText = `📅 **REUNIÓN**: ${title}\n⏰ ${new Date(datetime).toLocaleString()}\n🔗 ${meetingLink}`;
-            socket.emit('chat_message', { type: 'text', text: infoText, sender: myUsername });
+            socket.emit('chat_message', { room: currentRoom, type: 'text', text: infoText, sender: myUsername });
             document.getElementById('zoomInviteOutput').textContent = "✅ Enlace generado y enviado al chat.";
         };
 
         window.executeMirrorSignContract = () => {
             const name = document.getElementById('contractNameInput').value.trim();
             if(!name) return alert("Introduce el contrato.");
-            const hash = "HASH-SHA256-" + Math.random().toString(36).substring(2, 9).toUpperCase();
-            const data = `📜 **CONTRATO**: ${name}\n👤 ${myUsername}\n🔐 \`${hash}\``;
-            socket.emit('chat_message', { type: 'text', text: data, sender: myUsername });
-            alert("✅ Contrato firmado y copias distribuidas.");
-            document.getElementById('contractNameInput').value = '';
-        };
-
-        const emojiBox = document.getElementById('emojiPickerBox');
-        document.getElementById('emojiToggleBtn').addEventListener('click', (e) => {
-            e.stopPropagation();
-            emojiBox.style.display = emojiBox.style.display === 'flex' ? 'none' : 'flex';
-        });
-        window.insertEmoji = (em) => {
-            document.getElementById('messageInput').value += em;
-            emojiBox.style.display = 'none';
-        };
-        document.addEventListener('click', () => { emojiBox.style.display = 'none'; });
-
-        const messagesContainer = document.getElementById('messagesContainer');
-        const messageInput = document.getElementById('messageInput');
-
-        function handleSend() {
-            const val = messageInput.value.trim();
-            if(!val) return;
-            socket.emit('chat_message', { type: 'text', text: val, sender: myUsername });
-            messageInput.value = '';
-        }
-
-        document.getElementById('sendBtn').addEventListener('click', handleSend);
-        messageInput.addEventListener('keypress', (e) => { if(e.key === 'Enter') handleSend(); });
-
-        socket.on('chat_message', (data) => {
-            const type = data.sender === myUsername ? 'outgoing' : 'incoming';
-            const div = document.createElement('div');
-            div.className = `quantum-msg ${type}`;
-            div.innerHTML = `<strong>[${data.sender}]</strong>: ${data.text}<div class="msg-meta"><span>${new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span></div>`;
-            messagesContainer.appendChild(div);
-            messagesContainer.scrollTop = messagesContainer.scrollHeight;
-        });
-
-        window.saveBunkerCapsule = () => {
-            const txt = document.getElementById('bunkerInput').value.trim();
-            if(!txt) return;
-            localStorage.setItem('bunker', txt);
-            alert("📦 Cápsula guardada.");
-            document.getElementById('bunkerInput').value = '';
-        };
-
-        window.activateSignLanguageReader = () => {
-            document.getElementById('signReaderOutput').innerHTML = "🟢 Lector de Señas activo analizando gestos...";
-        };
-    </script>
-</body>
-</html>
