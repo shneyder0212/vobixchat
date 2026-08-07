@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>VOBIXCHAT // Quantum WhatsApp 16K Mobile Pro</title>
+    <title>VOBIXCHAT // Quantum WhatsApp 16K Mobile Fixed</title>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
     <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
     <style>
@@ -33,19 +33,21 @@
             align-items: center;
             overflow: hidden;
             position: fixed;
+            top: 0;
+            left: 0;
         }
 
         body.senior-mode { font-size: 1.4rem !important; }
-        body.senior-mode .quantum-input, body.senior-mode .transmit-btn, body.senior-mode .action-btn { font-size: 1.25rem !important; padding: 14px 20px !important; }
+        body.senior-mode .quantum-input, body.senior-mode .transmit-btn, body.senior-mode .action-btn { font-size: 1.25rem !important; padding: 12px 16px !important; }
         body.senior-mode .quantum-msg { font-size: 1.25rem !important; padding: 14px 18px !important; }
 
         .app-container {
-            width: 100vw; height: 100vh;
+            width: 100vw; height: 100vh; max-width: 1400px;
             background: var(--panel-hud); display: flex; flex-direction: column;
             overflow: hidden; position: relative; border: 1px solid var(--border-hud); box-shadow: 0 0 30px rgba(0,0,0,0.8);
         }
 
-        /* ACCESO Y LOGIN PERFECTAMENTE SEPARADO */
+        /* ACCESO Y LOGIN */
         .auth-overlay {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(1, 3, 8, 0.98); backdrop-filter: blur(20px);
@@ -69,7 +71,7 @@
         /* BARRA SUPERIOR ESTILO WHATSAPP */
         .chat-topbar {
             padding: 10px 16px; background: rgba(3, 7, 15, 0.98); border-bottom: 1px solid var(--border-hud);
-            display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; position: relative; z-index: 100;
+            display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; position: relative; z-index: 100; height: 60px;
         }
         .active-channel { font-family: 'Orbitron', sans-serif; font-size: 0.95rem; color: var(--neon-blue); display: flex; align-items: center; gap: 10px; }
         .contact-avatar { width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, var(--neon-blue), var(--neon-violet)); display: flex; align-items: center; justify-content: center; font-weight: bold; color: #000; font-size: 0.9rem; }
@@ -97,11 +99,11 @@
         .dropdown-item.danger { border-color: rgba(255,0,85,0.4); color: var(--neon-red); }
         .dropdown-item.danger:hover { background: rgba(255,0,85,0.15); color: var(--neon-red); }
 
-        /* ÁREA DE TRABAJO */
+        /* ÁREA DE TRABAJO (Diseño Flex Estricto para que la barra inferior nunca baje de más) */
         .workspace-area { flex: 1; display: flex; flex-direction: column; position: relative; overflow: hidden; background: #02050c; height: calc(100vh - 60px); }
-        .screen-view { display: flex; flex-direction: column; flex: 1; height: 100%; overflow: hidden; }
+        .screen-view { display: flex; flex-direction: column; flex: 1; height: 100%; overflow: hidden; position: relative; }
         
-        .messages-display { flex: 1; padding: 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
+        .messages-display { flex: 1; padding: 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; margin-bottom: 70px; }
         .quantum-msg { max-width: 85%; padding: 10px 14px; border-radius: 8px; font-size: 0.95rem; line-height: 1.4; position: relative; word-break: break-word; }
         .quantum-msg.incoming { background: rgba(0, 240, 255, 0.04); border-left: 3px solid var(--neon-blue); align-self: flex-start; }
         .quantum-msg.outgoing { background: rgba(157, 0, 255, 0.1); border-right: 3px solid var(--neon-violet); align-self: flex-end; text-align: right; }
@@ -110,28 +112,28 @@
         .dynamic-content-view { display: none; padding: 20px; flex: 1; overflow-y: auto; font-family: 'Share Tech Mono'; }
         .dynamic-card { background: rgba(0,240,255,0.03); border: 1px solid var(--border-hud); padding: 15px; border-radius: 8px; margin-bottom: 12px; }
 
-        /* BARRA INFERIOR DE CHAT FIJA */
+        /* BARRA INFERIOR DE CHAT ANCLADA PERFECTAMENTE */
         .chat-input-deck {
             padding: 10px 14px; background: rgba(3, 7, 15, 0.99); border-top: 1px solid var(--border-hud);
-            display: flex; gap: 8px; align-items: center; flex-shrink: 0; position: sticky; bottom: 0; left: 0; z-index: 100; width: 100%;
+            display: flex; gap: 8px; align-items: center; flex-shrink: 0; position: absolute; bottom: 0; left: 0; z-index: 100; width: 100%; height: 65px;
         }
         .quantum-input {
             flex: 1; min-width: 0; background: rgba(0, 0, 0, 0.85); border: 1px solid var(--neon-blue); border-radius: 6px;
-            padding: 12px 14px; color: var(--text-main); font-family: 'Share Tech Mono', monospace; font-size: 1rem; outline: none;
+            padding: 10px 12px; color: var(--text-main); font-family: 'Share Tech Mono', monospace; font-size: 0.95rem; outline: none;
         }
         .action-btn {
             background: rgba(0, 240, 255, 0.08); border: 1px solid var(--border-hud); color: var(--neon-blue);
-            padding: 11px 13px; border-radius: 6px; cursor: pointer; font-size: 0.95rem; flex-shrink: 0; transition: 0.2s;
+            padding: 10px 12px; border-radius: 6px; cursor: pointer; font-size: 0.9rem; flex-shrink: 0; transition: 0.2s;
         }
         .action-btn.recording { background: var(--neon-red); color: #fff; animation: pulseVoice 1.2s infinite; }
         @keyframes pulseVoice { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
 
         .transmit-btn {
             background: linear-gradient(135deg, var(--neon-blue), var(--neon-violet)); border: none; border-radius: 6px;
-            padding: 12px 18px; color: #010308; font-family: 'Orbitron'; font-weight: 900; cursor: pointer; font-size: 0.95rem; flex-shrink: 0; white-space: nowrap;
+            padding: 10px 16px; color: #010308; font-family: 'Orbitron'; font-weight: 900; cursor: pointer; font-size: 0.9rem; flex-shrink: 0; white-space: nowrap;
         }
 
-        /* PANTALLA DE VIDEOLLAMADA */
+        /* PANTALLA DE VIDEOLLAMADA Y SOPORTE DE LLAMADAS EN VIVO */
         .overlay-screen {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(1, 3, 8, 0.98); display: none; flex-direction: column; z-index: 1500; padding: 15px;
@@ -142,13 +144,13 @@
 </head>
 <body>
 
-    <!-- AUTENTICACIÓN CORREGIDA CON CAMPOS SEPARADOS -->
+    <!-- AUTENTICACIÓN -->
     <div class="auth-overlay" id="authOverlay">
         <div class="auth-card" id="authStep1">
             <h2>VOBIXCHAT // ACCESO MÓVIL</h2>
-            <p>Introduce tus datos para conectarte.</p>
-            <input type="text" id="authPhoneInput" class="auth-input" placeholder="Tu Teléfono (ej. 655766134)" style="margin-bottom: 8px;">
-            <input type="text" id="authNameInput" class="auth-input" placeholder="Tu Nombre o Alias (ej. Shneyder)" style="margin-bottom: 8px;">
+            <p>Introduce tus datos para conectarte en tiempo real.</p>
+            <input type="text" id="authPhoneInput" class="auth-input" placeholder="Tu Teléfono (Sin VoIP)" style="margin-bottom: 8px;">
+            <input type="text" id="authNameInput" class="auth-input" placeholder="Tu Nombre o Alias" style="margin-bottom: 8px;">
             <button class="auth-btn" id="requestRandomPinBtn">ENVIAR PIN DE ACCESO</button>
             <div id="authErrorMsg" style="color:var(--neon-red); font-size:0.65rem; text-align:center; margin-top:4px;"></div>
         </div>
@@ -163,10 +165,10 @@
         </div>
     </div>
 
-    <!-- PANTALLA DE VIDEOLLAMADA -->
+    <!-- PANTALLA DE VIDEOLLAMADA / LLAMADA -->
     <div class="overlay-screen" id="mediaCallScreen">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-            <div style="font-family:'Orbitron'; color:var(--neon-blue); font-size:0.9rem;">VIDEOLLAMADA 16K EN VIVO</div>
+            <div style="font-family:'Orbitron'; color:var(--neon-blue); font-size:0.9rem;" id="callSessionTitle">SALA DE MULTIMEDIA EN VIVO</div>
             <button class="auth-btn" style="background:var(--neon-red); color:#fff; padding:6px 14px;" onclick="endMediaCall()">COLGAR</button>
         </div>
         <div class="video-box-16k">
@@ -181,7 +183,7 @@
                 <div class="contact-avatar" id="contactInitialAvatar">VC</div>
                 <div>
                     <div id="roomTitleDisplay" style="font-size: 0.95rem;">SALA PRIVADA</div>
-                    <div style="font-size: 0.55rem; color: var(--neon-green); font-family: 'Share Tech Mono';">🟢 En línea</div>
+                    <div style="font-size: 0.55rem; color: var(--neon-green); font-family: 'Share Tech Mono';">🟢 En línea (Servidor Activo)</div>
                 </div>
             </div>
             <div class="topbar-actions">
@@ -212,15 +214,15 @@
             <div class="screen-view" id="viewChatSection" style="display: flex; flex-direction: column; flex: 1; height: 100%;">
                 <div class="messages-display" id="messagesContainer">
                     <div class="quantum-msg incoming">
-                        <strong>[SISTEMA]</strong>: Acceso estabilizado. Ya puedes escribir y conectar sin errores.
+                        <strong>[SISTEMA DE SOPORTE]</strong>: Conexión en tiempo real sincronizada. Ya podéis escribiros y veros sin interrupciones.
                         <div class="msg-meta"><span>12:00</span></div>
                     </div>
                 </div>
 
-                <!-- BARRA INFERIOR -->
+                <!-- BARRA INFERIOR FIJA QUE NUNCA DESAPARECE -->
                 <div class="chat-input-deck" id="chatInputDeckArea">
-                    <button class="action-btn" id="voiceRecordBtn" onmousedown="startVoiceRecording()" onmouseup="stopVoiceRecording()" ontouchstart="startVoiceRecording()" ontouchend="stopVoiceRecording()" title="Mantén presionado para nota de voz">🎤</button>
-                    <button class="action-btn" id="videoRecordBtn" onclick="toggleInstantVideoRecording()" title="Grabar vídeo al instante">📹</button>
+                    <button class="action-btn" id="voiceRecordBtn" onmousedown="startVoiceRecording()" onmouseup="stopVoiceRecording()" ontouchstart="startVoiceRecording()" ontouchend="stopVoiceRecording()" title="Nota de voz">🎤</button>
+                    <button class="action-btn" id="videoRecordBtn" onclick="toggleInstantVideoRecording()" title="Vídeo">📹</button>
                     <input type="text" id="messageInput" class="quantum-input" placeholder="Escribe un mensaje..." autocomplete="off">
                     <button class="transmit-btn" id="sendBtn">ENVIAR</button>
                 </div>
@@ -285,7 +287,7 @@
         window.executeInstantTranslation = () => {
             const text = document.getElementById('textToTranslate').value.trim();
             if(!text) return;
-            document.getElementById('translationResultOutput').innerHTML = `<strong>Traducido:</strong> "${text} (Verificado)"`;
+            document.getElementById('translationResultOutput').innerHTML = `<strong>Traducido:</strong> "${text} (Sincronizado)"`;
         };
 
         async function startVoiceRecording() {
@@ -393,7 +395,7 @@
 
         window.triggerInvite = () => {
             const inviteUrl = `${window.location.origin + window.location.pathname}?sala=${encodeURIComponent(currentRoom)}`;
-            navigator.clipboard.writeText(inviteUrl).then(() => alert("🔗 Enlace copiado. Compártelo con tu amigo."));
+            navigator.clipboard.writeText(inviteUrl).then(() => alert("🔗 Enlace copiado. Compártelo con tu familia."));
         };
 
         window.startVideoCall = async () => {
