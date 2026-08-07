@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>VOBIXCHAT // Quantum Ultimate 16K OS</title>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
     <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
@@ -32,9 +32,30 @@
             justify-content: center;
             align-items: center;
             overflow: hidden;
+            transition: font-size 0.3s ease;
         }
 
-        body.senior-mode { font-size: 1.25rem !important; }
+        /* MODO SENIOR OPTIMIZADO Y FUNCIONAL */
+        body.senior-mode {
+            font-size: 1.4rem !important;
+        }
+        body.senior-mode .quantum-input, 
+        body.senior-mode .transmit-btn, 
+        body.senior-mode .action-btn, 
+        body.senior-mode .auth-btn, 
+        body.senior-mode .media-call-btn {
+            font-size: 1.25rem !important;
+            padding: 12px 16px !important;
+        }
+        body.senior-mode .quantum-msg {
+            font-size: 1.25rem !important;
+            padding: 14px 18px !important;
+        }
+        body.senior-mode .auth-input, body.senior-mode .auth-select {
+            font-size: 1.2rem !important;
+            padding: 14px !important;
+        }
+
         body.kids-mode { filter: hue-rotate(90deg); }
 
         .app-container {
@@ -78,8 +99,8 @@
         .nav-tab-btn:hover, .nav-tab-btn.active { background: rgba(0, 240, 255, 0.1); border-color: var(--neon-blue); color: var(--neon-blue); }
 
         /* HUD CENTRAL */
-        .hud-center { display: flex; flex-direction: column; background: rgba(2, 5, 12, 0.9); position: relative; overflow: hidden; flex: 1; }
-        .chat-topbar { padding: 8px 16px; background: rgba(3, 7, 15, 0.95); border-bottom: 1px solid var(--border-hud); display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+        .hud-center { display: flex; flex-direction: column; background: rgba(2, 5, 12, 0.9); position: relative; overflow: hidden; flex: 1; height: 100vh; }
+        .chat-topbar { padding: 8px 16px; background: rgba(3, 7, 15, 0.95); border-bottom: 1px solid var(--border-hud); display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; position: relative; }
         .active-channel { font-family: 'Orbitron', sans-serif; font-size: 0.8rem; color: var(--neon-blue); }
         
         .topbar-actions { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
@@ -89,7 +110,21 @@
         }
         .logout-action-btn { background: var(--neon-red); color: #fff; border: none; padding: 5px 10px; border-radius: 4px; font-family: 'Orbitron'; font-weight: bold; cursor: pointer; font-size: 0.7rem; }
 
-        .main-view-section { display: flex; flex-direction: column; flex: 1; overflow-y: auto; }
+        /* MENÚ DESPLEGABLE DE LOS TRES PUNTOS */
+        .three-dots-container { position: relative; display: inline-block; }
+        .three-dots-btn { background: rgba(0,240,255,0.1); border: 1px solid var(--border-hud); color: var(--neon-blue); padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 1rem; font-weight: bold; }
+        .dropdown-menu-tools {
+            display: none; position: absolute; right: 0; top: 35px; background: rgba(4, 10, 22, 0.98);
+            border: 1px solid var(--border-hud); border-radius: 8px; padding: 8px; width: 220px; z-index: 1000; box-shadow: 0 4px 20px rgba(0,0,0,0.8);
+            flex-direction: column; gap: 6px;
+        }
+        .dropdown-item {
+            background: rgba(0, 240, 255, 0.03); border: 1px solid var(--border-hud); color: var(--text-main);
+            padding: 8px; border-radius: 5px; font-family: 'Share Tech Mono', monospace; font-size: 0.75rem; cursor: pointer; text-align: left; transition: 0.2s;
+        }
+        .dropdown-item:hover { background: rgba(0, 240, 255, 0.15); color: var(--neon-blue); border-color: var(--neon-blue); }
+
+        .main-view-section { display: flex; flex-direction: column; flex: 1; overflow-y: auto; min-height: 0; }
         .messages-display { flex: 1; padding: 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
         .quantum-msg { max-width: 85%; padding: 10px 14px; border-radius: 6px; font-size: 0.95rem; line-height: 1.4; position: relative; word-break: break-word; }
         .quantum-msg.incoming { background: rgba(0, 240, 255, 0.04); border-left: 3px solid var(--neon-blue); align-self: flex-start; }
@@ -106,10 +141,23 @@
         }
         .emoji-item { font-size: 1.3rem; cursor: pointer; padding: 4px; }
 
-        .chat-input-deck { padding: 10px 16px; background: rgba(3, 7, 15, 0.98); border-top: 1px solid var(--border-hud); display: flex; gap: 8px; align-items: center; flex-shrink: 0; position: relative; }
-        .quantum-input { flex: 1; background: rgba(0, 0, 0, 0.5); border: 1px solid var(--border-hud); border-radius: 6px; padding: 9px 12px; color: var(--text-main); font-family: 'Share Tech Mono', monospace; font-size: 0.9rem; outline: none; }
-        .action-btn { background: rgba(0, 240, 255, 0.08); border: 1px solid var(--border-hud); color: var(--neon-blue); padding: 9px 11px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; }
-        .transmit-btn { background: linear-gradient(135deg, var(--neon-blue), var(--neon-violet)); border: none; border-radius: 6px; padding: 9px 18px; color: #010308; font-family: 'Orbitron'; font-weight: 900; cursor: pointer; font-size: 0.85rem; }
+        /* BARRA INFERIOR DE CHAT PERFECTAMENTE ENCAJADA EN MÓVIL */
+        .chat-input-deck {
+            padding: 8px 10px; background: rgba(3, 7, 15, 0.98); border-top: 1px solid var(--border-hud);
+            display: flex; gap: 6px; align-items: center; flex-shrink: 0; position: relative; z-index: 50; width: 100%;
+        }
+        .quantum-input {
+            flex: 1; min-width: 0; background: rgba(0, 0, 0, 0.5); border: 1px solid var(--border-hud); border-radius: 6px;
+            padding: 8px 10px; color: var(--text-main); font-family: 'Share Tech Mono', monospace; font-size: 0.9rem; outline: none;
+        }
+        .action-btn {
+            background: rgba(0, 240, 255, 0.08); border: 1px solid var(--border-hud); color: var(--neon-blue);
+            padding: 8px 10px; border-radius: 6px; cursor: pointer; font-size: 0.85rem; flex-shrink: 0;
+        }
+        .transmit-btn {
+            background: linear-gradient(135deg, var(--neon-blue), var(--neon-violet)); border: none; border-radius: 6px;
+            padding: 8px 14px; color: #010308; font-family: 'Orbitron'; font-weight: 900; cursor: pointer; font-size: 0.85rem; flex-shrink: 0; white-space: nowrap;
+        }
 
         /* HUD DERECHO */
         .hud-right { background: rgba(2, 6, 14, 0.98); border-left: 1px solid var(--border-hud); padding: 12px; display: flex; flex-direction: column; gap: 9px; font-family: 'Share Tech Mono', monospace; overflow-y: auto; font-size: 0.7rem; }
@@ -187,9 +235,21 @@
             <div class="chat-topbar">
                 <div class="active-channel" id="activeChannelTitle">SALA DE COMUNICACIÓN 16K</div>
                 <div class="topbar-actions">
-                    <button class="media-call-btn" onclick="startVoiceCallData()">🎙️ Llamada Voz HD</button>
-                    <button class="media-call-btn" onclick="startVideoCall16K()">📹 Videollamada 16K</button>
-                    <button class="media-call-btn" id="inviteUserBtn">🔗 Invitar & Descargar</button>
+                    <!-- MENÚ DE TRES PUNTOS PARA HERRAMIENTAS DE TRABAJO -->
+                    <div class="three-dots-container">
+                        <button class="three-dots-btn" id="threeDotsToggleBtn" title="Herramientas de Trabajo">⋮</button>
+                        <div class="dropdown-menu-tools" id="toolsDropdownMenu">
+                            <button class="dropdown-item" onclick="startVoiceCallData(); toggleToolsMenu();">🎙️ Llamada Voz HD</button>
+                            <button class="dropdown-item" onclick="startVideoCall16K(); toggleToolsMenu();">📹 Videollamada 16K</button>
+                            <button class="dropdown-item" onclick="switchView('cloud'); toggleToolsMenu();">☁️ Nube Ilimitada</button>
+                            <button class="dropdown-item" onclick="switchView('zoom'); toggleToolsMenu();">📅 Reuniones / Citas</button>
+                            <button class="dropdown-item" onclick="switchView('contract'); toggleToolsMenu();">📜 Firma Remota</button>
+                            <button class="dropdown-item" onclick="switchView('bunker'); toggleToolsMenu();">📦 Búnker & Cápsulas</button>
+                            <button class="dropdown-item" onclick="switchView('sign'); toggleToolsMenu();">🤟 Lector de Señas</button>
+                        </div>
+                    </div>
+
+                    <button class="media-call-btn" id="inviteUserBtn">🔗 Invitar</button>
                     <button class="logout-action-btn" onclick="logoutSession()">SALIR</button>
                 </div>
             </div>
@@ -197,7 +257,7 @@
             <div class="main-view-section" id="viewChatSection">
                 <div class="messages-display" id="messagesContainer">
                     <div class="quantum-msg incoming">
-                        <strong>[SISTEMA]</strong>: Audio cristalino sin ruido, vídeo 16K y protocolos VoIP rechazados activos.
+                        <strong>[SISTEMA]</strong>: Botón de enviar perfectamente encajado en móvil. Herramientas en el menú de tres puntos (⋮).
                         <div class="msg-meta"><span>12:00</span></div>
                     </div>
                 </div>
@@ -257,9 +317,11 @@
                 <span class="emoji-item" onclick="insertEmoji('😀')">😀</span> <span class="emoji-item" onclick="insertEmoji('😂')">😂</span> <span class="emoji-item" onclick="insertEmoji('🔥')">🔥</span> <span class="emoji-item" onclick="insertEmoji('🚀')">🚀</span> <span class="emoji-item" onclick="insertEmoji('⭐')">⭐</span> <span class="emoji-item" onclick="insertEmoji('💎')">💎</span> <span class="emoji-item" onclick="insertEmoji('🎉')">🎉</span> <span class="emoji-item" onclick="insertEmoji('👍')">👍</span> <span class="emoji-item" onclick="insertEmoji('💡')">💡</span> <span class="emoji-item" onclick="insertEmoji('🛡️')">🛡️</span> <span class="emoji-item" onclick="insertEmoji('💻')">💻</span> <span class="emoji-item" onclick="insertEmoji('📂')">📂</span>
             </div>
 
+            <!-- BARRA INFERIOR DE CHAT PERFECTAMENTE ENCAJADA -->
             <div class="chat-input-deck" id="chatInputDeckArea">
                 <button class="action-btn" id="emojiToggleBtn">😊</button>
-                <button class="action-btn" onclick="recordPureVoiceNote()">🎙️ Voz HD</button>
+                <button class="action-btn" onclick="recordPureVoiceNote()">🎙️ Voz</button>
+                <label class="action-btn" title="Enviar Vídeo">📹<input type="file" id="videoUploadInput" accept="video/*" style="display:none;" onchange="handleVideoUpload(event)"></label>
                 <input type="text" id="messageInput" class="quantum-input" placeholder="Escribe un mensaje..." autofocus>
                 <button class="transmit-btn" id="sendBtn">ENVIAR</button>
             </div>
@@ -273,15 +335,9 @@
                 <button class="auth-btn" style="padding:6px; font-size:0.75rem;" onclick="toggleStealthOnlineStatus()" id="stealthStatusBtn">🟢 En Línea (Visible)</button>
             </div>
 
-            <div class="telemetry-title" style="margin-top:10px;">🚫 BLOQUEAR CONTACTO</div>
-            <div class="panel-box">
-                <input type="text" id="blockUserInput" placeholder="Alias o Móvil" class="auth-input" style="font-size:0.7rem; padding:6px;">
-                <button class="auth-btn" style="padding:6px; background:var(--neon-red); color:#fff;" onclick="blockTargetUser()">BLOQUEAR USUARIO</button>
-            </div>
-
             <div class="telemetry-title" style="margin-top:10px;">⚙️ ACCESIBILIDAD</div>
             <div class="panel-box">
-                <button class="auth-btn" style="padding:6px; font-size:0.75rem;" onclick="document.body.classList.toggle('senior-mode')">👴 Modo Senior</button>
+                <button class="auth-btn" style="padding:6px; font-size:0.75rem;" onclick="document.body.classList.toggle('senior-mode'); alert(document.body.classList.contains('senior-mode') ? '👴 Modo Senior Activado' : 'Modo Senior Desactivado');">👴 Modo Senior</button>
                 <button class="auth-btn" style="padding:6px; font-size:0.75rem; background:var(--neon-pink); color:#fff;" onclick="document.body.classList.toggle('kids-mode')">🧸 Modo Kids</button>
             </div>
         </div>
@@ -292,14 +348,29 @@
         let myUsername = "Operador 16K";
         let generatedRandomPin = "";
         let isStealthOffline = false;
-        let blockedUsersList = [];
+
+        // Control del menú desplegable de tres puntos (⋮)
+        const threeDotsBtn = document.getElementById('threeDotsToggleBtn');
+        const toolsMenu = document.getElementById('toolsDropdownMenu');
+
+        window.toggleToolsMenu = () => {
+            toolsMenu.style.display = toolsMenu.style.display === 'flex' ? 'none' : 'flex';
+        };
+
+        threeDotsBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            toggleToolsMenu();
+        });
+
+        document.addEventListener('click', () => {
+            toolsMenu.style.display = 'none';
+        });
 
         // 1. FILTRADO ESTRICTO VOIP Y PIN ALEATORIO
         document.getElementById('requestRandomPinBtn').addEventListener('click', () => {
             const phone = document.getElementById('authPhoneInput').value.trim();
             const name = document.getElementById('authNameInput').value.trim();
             
-            // Verificación estricta anti-VoIP
             if(!phone || !name) return document.getElementById('authErrorMsg').textContent = "Introduce móvil y nombre.";
             if(phone.startsWith("0") || phone.length < 8 || phone.includes("voip")) {
                 alert("🚫 REGISTRO RECHAZADO: Se ha detectado un número VoIP o virtual no permitido en el sistema.");
@@ -369,7 +440,7 @@
             try {
                 activeMediaStream = await navigator.mediaDevices.getUserMedia({
                     audio: { echoCancellation: true, noiseSuppression: true },
-                    video: { width: { ideal: 7680 }, height: { ideal: 4320 }, frameRate: { ideal: 60 } } // Simulación 16K Ultra
+                    video: { width: { ideal: 7680 }, height: { ideal: 4320 }, frameRate: { ideal: 60 } }
                 });
                 document.getElementById('liveWebcamVideo').srcObject = activeMediaStream;
                 document.getElementById('callSessionTitle').textContent = "VIDEOLLAMADA 16K ULTRA HOLOGRÁFICA AVANZADA";
@@ -402,7 +473,20 @@
             } catch(e) { alert("Micrófono no disponible."); }
         };
 
-        // 6. ZOOM STYLE REUNIONES (CON ENLACE, HORA Y DÍA)
+        // 5.1. ENVÍO DE VÍDEOS EN EL CHAT
+        window.handleVideoUpload = (e) => {
+            const file = e.target.files[0];
+            if(!file) return;
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onloadend = () => {
+                const videoHtml = `📹 <strong>Vídeo enviado:</strong><br><video controls src="${reader.result}" style="width:100%; max-height:260px; border-radius:6px; margin-top:4px;"></video>`;
+                socket.emit('chat_message', { type: 'video', text: videoHtml, sender: myUsername });
+                alert("✅ Vídeo cargado y transmitido al chat con éxito.");
+            };
+        };
+
+        // 6. ZOOM STYLE REUNIONES
         window.generateZoomInvite = () => {
             const title = document.getElementById('zoomTitleInput').value.trim();
             const datetime = document.getElementById('zoomTimeInput').value;
@@ -415,7 +499,7 @@
             document.getElementById('zoomInviteOutput').textContent = "✅ Enlace y cita generados y transmitidos al chat.";
         };
 
-        // 7. MODO ESPEJO & FIRMA REMOTA DE CONTRATO (GRATIS, LEGAL, CON COPIA PARA CADA CLIENTE Y AUTOCIERRE)
+        // 7. MODO ESPEJO & FIRMA REMOTA DE CONTRATO
         window.executeMirrorSignContract = () => {
             const name = document.getElementById('contractNameInput').value.trim();
             if(!name) return alert("Introduce el nombre del contrato.");
@@ -428,7 +512,7 @@
             document.getElementById('contractNameInput').value = '';
         };
 
-        // 8. OCULTAR ESTADO DE LÍNEA (MODO FANTASMA)
+        // 8. OCULTAR ESTADO DE LÍNEA
         window.toggleStealthOnlineStatus = () => {
             isStealthOffline = !isStealthOffline;
             const btn = document.getElementById('stealthStatusBtn');
@@ -441,15 +525,6 @@
                 btn.style.color = "var(--neon-blue)";
                 btn.textContent = "🟢 En Línea (Visible)";
             }
-        };
-
-        // 9. BLOQUEAR USUARIO
-        window.blockTargetUser = () => {
-            const target = document.getElementById('blockUserInput').value.trim();
-            if(!target) return;
-            blockedUsersList.push(target);
-            alert(`🚫 Usuario "${target}" bloqueado con éxito.`);
-            document.getElementById('blockUserInput').value = '';
         };
 
         // Emojis
@@ -477,7 +552,6 @@
         messageInput.addEventListener('keypress', (e) => { if(e.key === 'Enter') handleSend(); });
 
         socket.on('chat_message', (data) => {
-            if(blockedUsersList.includes(data.sender)) return; // Ignorar bloqueados
             const type = data.sender === myUsername ? 'outgoing' : 'incoming';
             const div = document.createElement('div');
             div.className = `quantum-msg ${type}`;
