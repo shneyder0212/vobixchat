@@ -38,7 +38,7 @@
         }
 
         body.senior-mode { font-size: 1.4rem !important; }
-        body.senior-mode .quantum-input, body.senior-mode .transmit-btn, body.senior-mode .action-btn { font-size: 1.1rem !important; padding: 10px 12px !important; }
+        body.senior-mode .quantum-input, body.senior-mode .action-btn { font-size: 1.1rem !important; padding: 10px 12px !important; }
         body.senior-mode .quantum-msg { font-size: 1.25rem !important; padding: 14px 18px !important; }
 
         .app-container {
@@ -73,21 +73,32 @@
             font-family: 'Share Tech Mono'; font-size: 0.75rem; color: var(--neon-blue); text-align: center; margin-bottom: 8px; display: none;
         }
 
-        /* BARRA SUPERIOR */
-        .chat-topbar {
+        /* BARRA SUPERIOR PRINCIPAL (MODIFICADA CON NOMBRE DE USUARIO AL MEDIO Y SALIR AJUSTADO) */
+        .main-header-bar {
             padding: 8px 12px; background: rgba(3, 7, 15, 0.98); border-bottom: 1px solid var(--border-hud);
             display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; position: relative; z-index: 100; height: 55px;
         }
-        .active-channel { font-family: 'Orbitron', sans-serif; font-size: 0.85rem; color: var(--neon-blue); display: flex; align-items: center; gap: 8px; }
-        .contact-avatar { width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, var(--neon-blue), var(--neon-violet)); display: flex; align-items: center; justify-content: center; font-weight: bold; color: #000; font-size: 0.8rem; flex-shrink: 0; }
+        .app-title-main { font-family: 'Orbitron', sans-serif; font-size: 0.9rem; color: var(--text-main); font-weight: 700; }
         
-        .topbar-actions { display: flex; gap: 8px; align-items: center; }
+        .header-center-user {
+            display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; flex: 1; padding: 0 8px;
+        }
+        .header-username-display { font-family: 'Orbitron', sans-serif; font-size: 0.85rem; color: var(--neon-blue); font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 140px; }
+        .header-user-status { font-size: 0.5rem; color: var(--neon-green); font-family: 'Share Tech Mono'; }
+
+        .header-right-group { display: flex; gap: 6px; align-items: center; flex-shrink: 0; }
         .whatsapp-icon-btn {
             background: none; border: none; color: var(--neon-blue); cursor: pointer; font-size: 1.1rem;
             display: flex; align-items: center; justify-content: center; padding: 4px; transition: 0.2s;
         }
         .whatsapp-icon-btn:hover { color: #fff; transform: scale(1.1); }
-        .logout-action-btn { background: var(--neon-red); color: #fff; border: none; padding: 5px 8px; border-radius: 4px; font-family: 'Orbitron'; font-weight: bold; cursor: pointer; font-size: 0.7rem; flex-shrink: 0; }
+        
+        /* BOTÓN SALIR DENTRO DEL MARGEN */
+        .logout-action-btn { 
+            background: var(--neon-red); color: #fff; border: none; padding: 5px 8px; 
+            border-radius: 4px; font-family: 'Orbitron'; font-weight: bold; cursor: pointer; 
+            font-size: 0.65rem; flex-shrink: 0; white-space: nowrap;
+        }
 
         /* MENÚ DESPLEGABLE */
         .three-dots-container { position: relative; display: inline-block; }
@@ -133,7 +144,7 @@
         }
         .writing-popup-footer { display: flex; justify-content: flex-end; gap: 8px; }
 
-        /* BARRA INFERIOR DE CHAT FIJA */
+        /* BARRA INFERIOR DE CHAT (SIN BOTÓN ENVIAR ABAJO) */
         .chat-input-deck {
             padding: 8px 12px; 
             background: rgba(3, 7, 15, 0.99); 
@@ -152,7 +163,7 @@
         }
         .quantum-input {
             flex: 1; min-width: 0; background: rgba(0, 0, 0, 0.85); border: 1px solid var(--neon-blue); border-radius: 6px;
-            padding: 8px 10px; color: var(--text-main); font-family: 'Share Tech Mono', monospace; font-size: 0.85rem; outline: none;
+            padding: 8px 10px; color: var(--text-main); font-family: 'Share Tech Mono', monospace; font-size: 0.85rem; outline: none; cursor: pointer;
         }
         .action-btn {
             background: rgba(0, 240, 255, 0.08); border: 1px solid var(--border-hud); color: var(--neon-blue);
@@ -161,11 +172,6 @@
         }
         .action-btn.recording { background: var(--neon-red); color: #fff; animation: pulseVoice 1.2s infinite; }
         @keyframes pulseVoice { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
-
-        .transmit-btn {
-            background: linear-gradient(135deg, var(--neon-blue), var(--neon-violet)); border: none; border-radius: 6px;
-            padding: 8px 14px; color: #010308; font-family: 'Orbitron'; font-weight: 900; cursor: pointer; font-size: 0.8rem; flex-shrink: 0; white-space: nowrap;
-        }
 
         /* PANTALLA DE VIDEOLLAMADA */
         .overlay-screen {
@@ -184,9 +190,9 @@
             <div class="install-banner" id="iosInstallHint">
                 🍏 <strong>Usuario de iPhone:</strong> Toca el botón <strong>Compartir</strong> abajo y selecciona <strong>"Añadir a inicio"</strong>.
             </div>
-            <p>Introduce tus datos y tu nombre de usuario único (@alias).</p>
+            <p>Introduce tus datos para conectarte en tiempo real.</p>
             <input type="text" id="authPhoneInput" class="auth-input" placeholder="Tu Teléfono" style="margin-bottom: 8px;">
-            <input type="text" id="authNameInput" class="auth-input" placeholder="Tu Nombre o Alias (ej. @emilio)" style="margin-bottom: 8px;">
+            <input type="text" id="authNameInput" class="auth-input" placeholder="Tu Nombre o Alias" style="margin-bottom: 8px;">
             <button class="auth-btn" id="requestRandomPinBtn">ENVIAR PIN DE ACCESO</button>
             <div id="authErrorMsg" style="color:var(--neon-red); font-size:0.65rem; text-align:center; margin-top:4px;"></div>
         </div>
@@ -201,20 +207,6 @@
         </div>
     </div>
 
-    <!-- PANTALLA DE BÚSQUEDA DE CONTACTO / @ALIAS -->
-    <div class="overlay-screen" id="searchContactScreen" style="background: rgba(1, 3, 8, 0.95); z-index: 1600; padding: 20px; display: none; flex-direction: column;">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-            <div style="font-family:'Orbitron'; color:var(--neon-blue); font-size:0.9rem;">🔍 BUSCAR CONTACTO (@ALIAS / TEL)</div>
-            <button class="auth-btn" style="background:var(--neon-red); color:#fff; padding:6px 12px;" onclick="closeSearchContact()">CERRAMIENTO</button>
-        </div>
-        <div class="dynamic-card" style="display: flex; flex-direction: column; gap: 10px;">
-            <p style="font-size: 0.75rem; color: var(--text-dim);">Escribe el @usuario o número de teléfono registrado para abrir sala instantánea:</p>
-            <input type="text" id="searchTargetInput" class="auth-input" placeholder="Ej. @shneyder o 600000000">
-            <button class="auth-btn" onclick="executeSearchContact()">LOCALIZAR Y CONECTAR</button>
-            <div id="searchResultFeedback" style="font-size: 0.75rem; color: var(--neon-green); text-align: center;"></div>
-        </div>
-    </div>
-
     <div class="overlay-screen" id="mediaCallScreen">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
             <div style="font-family:'Orbitron'; color:var(--neon-blue); font-size:0.9rem;">VIDEOLLAMADA EN VIVO</div>
@@ -226,22 +218,22 @@
     </div>
 
     <div class="app-container">
-        <div class="chat-topbar">
-            <div class="active-channel" id="activeChannelTitle">
-                <div class="contact-avatar" id="contactInitialAvatar">VC</div>
-                <div>
-                    <div id="roomTitleDisplay" style="font-size: 0.85rem;">SALA PRIVADA</div>
-                    <div style="font-size: 0.5rem; color: var(--neon-green); font-family: 'Share Tech Mono';">🟢 En línea</div>
-                </div>
+        <!-- BARRA SUPERIOR PRINCIPAL MODIFICADA -->
+        <div class="main-header-bar">
+            <div class="app-title-main">VOBIXCHAT</div>
+            
+            <div class="header-center-user">
+                <div class="header-username-display" id="roomTitleDisplay">SALA PRIVADA</div>
+                <div class="header-user-status">🟢 En línea</div>
             </div>
-            <div class="topbar-actions">
+
+            <div class="header-right-group">
                 <button class="whatsapp-icon-btn" onclick="startVideoCall()" title="Videollamada">📹</button>
                 <button class="whatsapp-icon-btn" onclick="startVoiceCall()" title="Llamada de Voz">📞</button>
                 
                 <div class="three-dots-container">
                     <button class="whatsapp-icon-btn" id="threeDotsToggleBtn" title="Menú">⋮</button>
                     <div class="dropdown-menu-tools" id="toolsDropdownMenu">
-                        <button class="dropdown-item" onclick="openSearchContact(); toggleToolsMenu();">🔍 Buscar por @Alias o Tel</button>
                         <button class="dropdown-item danger" onclick="toggleBlockUserStatus(); toggleToolsMenu();">🚫 Bloquear / Desbloquear</button>
                         <button class="dropdown-item" onclick="switchView('translator'); toggleToolsMenu();">🌐 Traductor AI</button>
                         <button class="dropdown-item" onclick="switchView('cloud'); toggleToolsMenu();">☁️ Nube Ilimitada</button>
@@ -262,7 +254,7 @@
             <div class="screen-view" id="viewChatSection" style="display: flex; flex-direction: column; flex: 1; height: 100%;">
                 <div class="messages-display" id="messagesContainer">
                     <div class="quantum-msg incoming">
-                        <strong>[SISTEMA]</strong>: Directorio @alias habilitado. Conectado con éxito.
+                        <strong>[SISTEMA]</strong>: Compatible con iPhone y Android. Conectado con éxito.
                         <div class="msg-meta"><span>12:00</span></div>
                     </div>
                 </div>
@@ -279,11 +271,11 @@
                     </div>
                 </div>
 
+                <!-- BARRA INFERIOR DE CHAT SIN EL BOTÓN ENVIAR -->
                 <div class="chat-input-deck" id="chatInputDeckArea">
                     <button class="action-btn" id="voiceRecordBtn" onmousedown="startVoiceRecording()" onmouseup="stopVoiceRecording()" ontouchstart="startVoiceRecording()" ontouchend="stopVoiceRecording()" title="Nota de voz">🎤</button>
                     <button class="action-btn" id="videoRecordBtn" onclick="toggleInstantVideoRecording()" title="Vídeo">📹</button>
                     <input type="text" id="messageInput" class="quantum-input" placeholder="Toca para escribir..." readonly autocomplete="off">
-                    <button class="transmit-btn" id="sendBtn">ENVIAR</button>
                 </div>
             </div>
 
@@ -323,7 +315,6 @@
     <script>
         const socket = io();
         let myUsername = "Usuario";
-        let myPhone = "";
         let generatedRandomPin = "";
         let currentRoom = "SalaDirecta";
         let isUserBlocked = false;
@@ -343,8 +334,7 @@
         const invitedRoom = urlParams.get('sala');
         if(invitedRoom) {
             currentRoom = invitedRoom;
-            document.getElementById('roomTitleDisplay').textContent = invitedRoom.toUpperCase();
-            document.getElementById('contactInitialAvatar').textContent = invitedRoom.charAt(0).toUpperCase();
+            document.getElementById('roomTitleDisplay').textContent = "@" + invitedRoom.toUpperCase();
         }
 
         window.executeInstantTranslation = () => {
@@ -408,41 +398,6 @@
         threeDotsBtn.addEventListener('click', (e) => { e.stopPropagation(); toggleToolsMenu(); });
         document.addEventListener('click', () => { toolsMenu.style.display = 'none'; });
 
-        // FUNCIONES DE BÚSQUEDA DE CONTACTO POR @ALIAS O TELÉFONO
-        window.openSearchContact = () => {
-            document.getElementById('searchContactScreen').style.display = 'flex';
-        };
-        window.closeSearchContact = () => {
-            document.getElementById('searchContactScreen').style.display = 'none';
-        };
-        window.executeSearchContact = () => {
-            const query = document.getElementById('searchTargetInput').value.trim();
-            const feedback = document.getElementById('searchResultFeedback');
-            if(!query) {
-                feedback.textContent = "Introduce un @alias o número válido.";
-                return;
-            }
-            // Emitimos evento al servidor para buscar/conectar con el usuario destino
-            socket.emit('search_user', { query: query }, (response) => {
-                if(response && response.success) {
-                    currentRoom = response.roomName;
-                    document.getElementById('roomTitleDisplay').textContent = currentRoom.toUpperCase();
-                    document.getElementById('contactInitialAvatar').textContent = currentRoom.charAt(0).toUpperCase();
-                    socket.emit('join_room', { room: currentRoom, name: myUsername });
-                    feedback.textContent = `✅ Conectado con éxito a ${currentRoom}`;
-                    setTimeout(() => { closeSearchContact(); }, 1200);
-                } else {
-                    // Modo simulado o fallback si el backend aún no procesa la ruta exacta
-                    currentRoom = query.startsWith('@') ? query.substring(1) : query;
-                    document.getElementById('roomTitleDisplay').textContent = currentRoom.toUpperCase();
-                    document.getElementById('contactInitialAvatar').textContent = currentRoom.charAt(0).toUpperCase();
-                    socket.emit('join_room', { room: currentRoom, name: myUsername });
-                    feedback.textContent = `🔗 Sala abierta para ${query}`;
-                    setTimeout(() => { closeSearchContact(); }, 1200);
-                }
-            });
-        };
-
         window.toggleBlockUserStatus = () => {
             isUserBlocked = !isUserBlocked;
             alert(isUserBlocked ? "🚫 Usuario bloqueado." : "✅ Usuario desbloqueado.");
@@ -467,15 +422,11 @@
         document.getElementById('requestRandomPinBtn').addEventListener('click', () => {
             const phone = document.getElementById('authPhoneInput').value.trim();
             const name = document.getElementById('authNameInput').value.trim();
-            if(!phone || !name) return document.getElementById('authErrorMsg').textContent = "Introduce teléfono y alias (ej. @emilio).";
-            
-            myPhone = phone;
-            myUsername = name.startsWith('@') ? name : '@' + name;
-            
-            document.getElementById('roomTitleDisplay').textContent = myUsername.toUpperCase();
-            document.getElementById('contactInitialAvatar').textContent = myUsername.charAt(1).toUpperCase();
+            if(!phone || !name) return document.getElementById('authErrorMsg').textContent = "Introduce teléfono y nombre.";
+            myUsername = name;
+            document.getElementById('roomTitleDisplay').textContent = "@" + name.toUpperCase();
 
-            if(!invitedRoom) currentRoom = myUsername;
+            if(!invitedRoom) currentRoom = name;
 
             generatedRandomPin = Math.floor(1000 + Math.random() * 9000).toString();
             document.getElementById('displayBigPinValue').textContent = generatedRandomPin;
@@ -486,7 +437,6 @@
         document.getElementById('verifyRandomPinBtn').addEventListener('click', () => {
             if(document.getElementById('authPinInput').value.trim() === generatedRandomPin) {
                 document.getElementById('authOverlay').style.display = 'none';
-                socket.emit('register_user_profile', { phone: myPhone, alias: myUsername });
                 socket.emit('join_room', { room: currentRoom, name: myUsername });
             } else {
                 document.getElementById('pinErrorMsg').textContent = "❌ PIN incorrecto.";
@@ -547,22 +497,6 @@
             popupMessageInput.value = '';
             writingPopup.classList.remove('active');
         };
-
-        function handleSend() {
-            if(isUserBlocked) return;
-            const val = messageInput.value.trim();
-            if(!val) return;
-            socket.emit('chat_message', { room: currentRoom, type: 'text', text: val, sender: myUsername });
-            messageInput.value = '';
-        }
-
-        document.getElementById('sendBtn').addEventListener('click', () => {
-            if(messageInput.value.trim()) {
-                handleSend();
-            } else {
-                messageInput.click();
-            }
-        });
 
         socket.on('chat_message', (data) => {
             if(isUserBlocked) return;
