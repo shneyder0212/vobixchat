@@ -7,7 +7,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
     <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
     <style>
-        /* TEMAS VISUALES DINÁMICOS */
         :root, body.theme-violet {
             --bg-quantum: #090212;
             --panel-hud: rgba(14, 5, 26, 0.98);
@@ -71,11 +70,10 @@
             overscroll-behavior-y: none;
         }
 
-        /* MODO SENIOR ADAPTADO */
         body.senior-mode { font-size: 1.2rem !important; }
         body.senior-mode .quantum-input, body.senior-mode .action-btn { font-size: 1.1rem !important; padding: 10px 12px !important; }
         body.senior-mode .quantum-msg { font-size: 1.15rem !important; padding: 12px 16px !important; }
-        body.senior-mode .dropdown-item { font-size: 0.9rem !important; padding: 10px !important; }
+        body.senior-mode .dropdown-item { font-size: 0.9rem !important; padding: 12px !important; }
 
         .app-container {
             width: 100vw; height: 100vh; max-width: 1400px;
@@ -84,7 +82,6 @@
             backdrop-filter: blur(15px);
         }
 
-        /* ACCESO Y LOGIN */
         .auth-overlay {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(4, 2, 8, 0.96); backdrop-filter: blur(25px);
@@ -119,7 +116,6 @@
             font-family: 'Share Tech Mono'; font-size: 0.75rem; color: var(--neon-blue); text-align: center; margin-bottom: 8px; display: none;
         }
 
-        /* BARRA SUPERIOR MÓVIL */
         .main-header-bar {
             padding: 4px 6px; background: rgba(2, 4, 10, 0.95); border-bottom: 1px solid var(--border-hud);
             display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; position: relative; z-index: 100; height: 50px;
@@ -160,39 +156,43 @@
             font-size: 0.5rem; flex-shrink: 0; white-space: nowrap;
         }
 
-        /* MENÚ DESPLEGABLE CON SCROLL VERTICAL FLUIDO OPTIMIZADO */
         .three-dots-container { position: relative; display: inline-block; }
         .dropdown-menu-tools {
             display: none; 
-            position: absolute; 
-            right: 0; 
-            top: 40px; 
-            background: var(--panel-hud);
-            border: 1px solid var(--border-hud); 
-            border-radius: 8px; 
-            padding: 8px; 
-            width: 250px; 
-            
-            /* Optimizado para que se mueva fluidamente hacia arriba y hacia abajo */
-            max-height: 45vh; 
-            overflow-y: auto; 
-            z-index: 99999; 
+            position: fixed; 
+            right: 10px; 
+            top: 60px; 
+            background: rgba(14, 5, 26, 0.99);
+            border: 2px solid var(--neon-blue); 
+            border-radius: 12px; 
+            padding: 10px; 
+            width: 260px; 
+            max-height: 70vh; 
+            overflow-y: scroll !important; 
+            z-index: 999999; 
             -webkit-overflow-scrolling: touch;
-            
-            box-shadow: 0 4px 25px rgba(0,0,0,0.9);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.95);
             flex-direction: column; 
-            gap: 6px; 
-            backdrop-filter: blur(15px);
+            gap: 8px; 
         }
         .dropdown-item {
-            background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-hud); color: var(--text-main);
-            padding: 9px 10px; border-radius: 5px; font-family: 'Share Tech Mono', monospace; font-size: 0.75rem; cursor: pointer; text-align: left; transition: 0.2s;
+            background: rgba(0, 240, 255, 0.08); 
+            border: 1px solid var(--border-hud); 
+            color: var(--text-main);
+            padding: 12px; 
+            border-radius: 8px; 
+            font-family: 'Share Tech Mono', monospace; 
+            font-size: 0.85rem; 
+            cursor: pointer; 
+            text-align: left; 
+            transition: 0.2s;
+            display: block;
+            width: 100%;
         }
-        .dropdown-item:hover { background: rgba(0, 240, 255, 0.15); color: var(--neon-blue); border-color: var(--neon-blue); }
-        .dropdown-item.danger { border-color: rgba(255,0,85,0.4); color: var(--neon-red); }
-        .dropdown-item.danger:hover { background: rgba(255,0,85,0.15); color: var(--neon-red); }
+        .dropdown-item:hover { background: rgba(0, 240, 255, 0.2); color: var(--neon-blue); border-color: var(--neon-blue); }
+        .dropdown-item.danger { border-color: rgba(255,0,85,0.4); color: var(--neon-red); background: rgba(255,0,85,0.05); }
+        .dropdown-item.danger:hover { background: rgba(255,0,85,0.2); color: var(--neon-red); }
 
-        /* ÁREA DE TRABAJO */
         .workspace-area { flex: 1; display: flex; flex-direction: column; position: relative; overflow: hidden; background: transparent; height: calc(100vh - 50px); }
         .screen-view { display: flex; flex-direction: column; flex: 1; height: 100%; overflow: hidden; position: relative; }
         
@@ -205,7 +205,6 @@
         .dynamic-content-view { display: none; padding: 20px; flex: 1; overflow-y: auto; font-family: 'Share Tech Mono'; }
         .dynamic-card { background: rgba(255,255,255,0.02); border: 1px solid var(--border-hud); padding: 15px; border-radius: 8px; margin-bottom: 12px; }
 
-        /* MODO CHAT INMERSIVO */
         .writing-popup-overlay {
             position: absolute; top: 0; left: 0; right: 0; bottom: 0;
             background: var(--panel-hud);
@@ -240,32 +239,18 @@
         .translator-select { background: #000; color: var(--neon-blue); border: 1px solid var(--border-hud); border-radius: 4px; padding: 3px; font-size: 0.65rem; outline: none; }
         
         .bunker-mode-box { display: flex; align-items: center; gap: 4px; color: var(--neon-amber); cursor: pointer; }
-
         .writing-popup-footer { display: flex; justify-content: flex-end; gap: 8px; }
 
-        /* BARRA INFERIOR DE CHAT */
         .chat-input-deck {
-            padding: 8px 12px; 
-            background: rgba(2, 4, 10, 0.95); 
-            border-top: 1px solid var(--border-hud);
-            display: flex; 
-            gap: 8px; 
-            align-items: center; 
-            flex-shrink: 0; 
-            position: absolute; 
-            bottom: env(safe-area-inset-bottom, 12px); 
-            left: 0; 
-            right: 0; 
-            z-index: 100; 
-            height: 60px;
-            width: 100%;
+            padding: 8px 12px; background: rgba(2, 4, 10, 0.95); border-top: 1px solid var(--border-hud);
+            display: flex; gap: 8px; align-items: center; flex-shrink: 0; position: absolute; 
+            bottom: env(safe-area-inset-bottom, 12px); left: 0; right: 0; z-index: 100; height: 60px; width: 100%;
         }
         .quantum-input {
             flex: 1; min-width: 0; background: rgba(0, 0, 0, 0.85); border: 1px solid var(--neon-blue); border-radius: 25px;
             padding: 9px 15px; color: var(--text-main); font-family: 'Share Tech Mono', monospace; font-size: 0.85rem; outline: none; cursor: pointer;
         }
 
-        /* PANTALLA DE LLAMADA 16K CENTRADA Y ADAPTADA A MÓVILES */
         .overlay-screen {
             position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
             background: rgba(1, 3, 8, 0.98); display: none; flex-direction: column; z-index: 1500; padding: 10px; box-sizing: border-box;
@@ -481,7 +466,6 @@
 
         let misContactosPrivados = JSON.parse(localStorage.getItem('vobix_contactos') || '[]');
 
-        // DETECTOR AUTOMÁTICO DE PAÍS / REGIÓN AL CARGAR LA APP
         window.addEventListener('DOMContentLoaded', () => {
             const userLang = navigator.language || navigator.userLanguage || 'es-ES';
             const badge = document.getElementById('detectedCountryBadge');
@@ -609,7 +593,7 @@
                 document.getElementById('liveWebcamVideo').srcObject = activeMediaStream;
                 document.getElementById('mediaCallScreen').style.display = 'flex';
             } catch(e) {
-                alert("No se pudo acceder a la cámara o micrófono en alta definición.");
+                alert("No se pudo acceder a la cámara o micrófono. Verifica los permisos de tu navegador.");
             }
         };
 
@@ -625,7 +609,7 @@
                 document.getElementById('liveWebcamVideo').srcObject = activeMediaStream;
                 document.getElementById('mediaCallScreen').style.display = 'flex';
             } catch(e) {
-                alert("No se pudo iniciar la llamada de voz.");
+                alert("No se pudo iniciar la llamada de voz. Verifica los permisos de tu micrófono.");
             }
         };
 
