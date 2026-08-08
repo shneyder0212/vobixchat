@@ -3,648 +3,213 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VOBIXCHAT // Quantum Ultimate 16K OS</title>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
-    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <title>VOBIXCHAT</title>
     <style>
-        :root {
-            --bg-quantum: #010308;
-            --panel-hud: rgba(5, 12, 25, 0.98);
-            --neon-blue: #00f0ff;
-            --neon-violet: #9d00ff;
-            --neon-green: #00ff66;
-            --neon-amber: #ffaa00;
-            --neon-red: #ff0055;
-            --neon-pink: #ff00ea;
-            --text-main: #f0f6fc;
-            --text-dim: #7a9ec2;
-            --border-hud: rgba(0, 240, 255, 0.18);
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, sans-serif; }
+        body { background-color: #0b0b0b; color: #fff; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+        
+        /* 1. ZONA SUPERIOR: Sala Directa y Botón Salir Arriba */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #1a1a1a;
+            padding: 12px 15px;
+            border-bottom: 2px solid #00ffcc;
+            width: 100%;
+        }
+        .sala-directa { font-size: 16px; font-weight: bold; color: #00ffcc; }
+        .btn-salir {
+            background-color: #ff3333;
+            color: white;
+            border: none;
+            padding: 6px 14px;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-
-        body {
-            background-color: var(--bg-quantum);
-            font-family: 'Rajdhani', sans-serif;
-            color: var(--text-main);
-            height: 100vh;
+        /* 2. PANTALLA DE LOGIN (Si no está registrado) */
+        #login-screen {
             display: flex;
+            flex-direction: column;
             justify-content: center;
             align-items: center;
-            overflow: hidden;
-            transition: font-size 0.3s ease, filter 0.3s ease;
+            flex: 1;
+            padding: 20px;
+            background: #0b0b0b;
         }
-
-        /* MODO SENIOR */
-        body.senior-mode { font-size: 1.4rem !important; }
-        body.senior-mode .quantum-input, body.senior-mode .transmit-btn, body.senior-mode .action-btn { font-size: 1.25rem !important; padding: 14px 20px !important; }
-        body.senior-mode .quantum-msg { font-size: 1.25rem !important; padding: 14px 18px !important; }
-
-        /* MODO KIDS */
-        body.kids-mode {
-            filter: hue-rotate(140deg) saturate(180%);
-            background-color: #0d0221;
-        }
-
-        .app-container {
-            width: 100vw; max-width: 1600px; height: 100vh;
-            background: var(--panel-hud); display: flex; flex-direction: column;
-            overflow: hidden; position: relative; border: 1px solid var(--border-hud); box-shadow: 0 0 30px rgba(0,0,0,0.8);
-        }
-
-        /* ACCESO Y VERIFICACIÓN ANTI-VOIP */
-        .auth-overlay {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(1, 3, 8, 0.98); backdrop-filter: blur(20px);
-            display: flex; justify-content: center; align-items: center; z-index: 2000; padding: 15px;
-        }
-        .auth-card {
-            width: 100%; max-width: 400px; background: rgba(8, 16, 32, 0.95);
-            border: 1px solid var(--border-hud); border-radius: 12px; padding: 24px; display: flex; flex-direction: column; gap: 12px;
-        }
-        .auth-card h2 { font-family: 'Orbitron', sans-serif; color: var(--neon-blue); font-size: 1.1rem; text-align: center; }
-        .auth-card p { font-family: 'Share Tech Mono', monospace; font-size: 0.7rem; color: var(--text-dim); text-align: center; }
-        .auth-select, .auth-input { background: #000; border: 1px solid var(--border-hud); color: #fff; padding: 10px; font-family: 'Share Tech Mono'; border-radius: 6px; outline: none; font-size: 0.9rem; width: 100%; }
-        .auth-btn { background: var(--neon-blue); color: #000; border: none; padding: 12px; font-family: 'Orbitron'; font-weight: bold; border-radius: 6px; cursor: pointer; font-size: 0.9rem; transition: 0.2s; text-align: center; }
-
-        /* ESTILO DESTACADO PARA EL PIN GRANDE */
-        .big-pin-display {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 2.2rem;
-            color: var(--neon-green);
-            text-align: center;
-            letter-spacing: 4px;
-            background: rgba(0,255,102,0.05);
-            border: 1px dashed var(--neon-green);
+        #login-screen input {
+            width: 100%;
+            max-width: 300px;
             padding: 12px;
+            margin-bottom: 10px;
             border-radius: 8px;
-            margin: 10px 0;
+            border: 1px solid #444;
+            background: #222;
+            color: #fff;
+        }
+        #login-screen button {
+            width: 100%;
+            max-width: 300px;
+            padding: 12px;
+            background: #00ffcc;
+            color: #000;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
         }
 
-        /* BARRA SUPERIOR ESTILO WHATSAPP */
-        .chat-topbar {
-            padding: 10px 16px; background: rgba(3, 7, 15, 0.98); border-bottom: 1px solid var(--border-hud);
-            display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; position: relative; z-index: 100;
+        /* 3. ZONA DE CHAT (Oculta hasta iniciar sesión) */
+        #chat-screen {
+            display: none;
+            flex-direction: column;
+            flex: 1;
+            overflow: hidden;
         }
-        .active-channel { font-family: 'Orbitron', sans-serif; font-size: 0.9rem; color: var(--neon-blue); display: flex; align-items: center; gap: 10px; }
-        
-        .topbar-actions { display: flex; gap: 14px; align-items: center; }
-        .whatsapp-icon-btn {
-            background: none; border: none; color: var(--neon-blue); cursor: pointer; font-size: 1.25rem;
-            display: flex; align-items: center; justify-content: center; padding: 4px; transition: 0.2s;
+        #chat-messages {
+            flex: 1;
+            padding: 15px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            scroll-behavior: smooth;
         }
-        .whatsapp-icon-btn:hover { color: #fff; transform: scale(1.1); }
-        .logout-action-btn { background: var(--neon-red); color: #fff; border: none; padding: 6px 12px; border-radius: 4px; font-family: 'Orbitron'; font-weight: bold; cursor: pointer; font-size: 0.75rem; }
+        .message {
+            padding: 10px 14px;
+            border-radius: 10px;
+            max-width: 80%;
+            word-wrap: break-word;
+            animation: subirMensaje 0.3s ease-out;
+        }
+        .user-msg { background: #00ffcc; color: #000; align-self: flex-end; }
+        .bot-msg { background: #222; color: #fff; align-self: flex-start; border: 1px solid #444; }
 
-        /* MENÚ DE TRES PUNTOS */
-        .three-dots-container { position: relative; display: inline-block; }
-        .dropdown-menu-tools {
-            display: none; position: absolute; right: 0; top: 40px; background: rgba(4, 10, 22, 0.98);
-            border: 1px solid var(--border-hud); border-radius: 8px; padding: 8px; width: 240px; z-index: 1000; box-shadow: 0 4px 20px rgba(0,0,0,0.8);
-            flex-direction: column; gap: 6px;
-        }
-        .dropdown-item {
-            background: rgba(0, 240, 255, 0.03); border: 1px solid var(--border-hud); color: var(--text-main);
-            padding: 9px; border-radius: 5px; font-family: 'Share Tech Mono', monospace; font-size: 0.8rem; cursor: pointer; text-align: left; transition: 0.2s;
-        }
-        .dropdown-item:hover { background: rgba(0, 240, 255, 0.15); color: var(--neon-blue); border-color: var(--neon-blue); }
-        .dropdown-item.danger { border-color: rgba(255,0,85,0.4); color: var(--neon-red); }
-        .dropdown-item.danger:hover { background: rgba(255,0,85,0.15); color: var(--neon-red); }
-
-        /* ÁREA DE TRABAJO */
-        .workspace-area { flex: 1; display: flex; flex-direction: column; position: relative; overflow: hidden; background: #02050c; }
-        .screen-view { display: flex; flex-direction: column; flex: 1; height: 100%; overflow: hidden; }
-        
-        .messages-display { flex: 1; padding: 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
-        .quantum-msg { max-width: 85%; padding: 10px 14px; border-radius: 6px; font-size: 0.95rem; line-height: 1.4; position: relative; word-break: break-word; }
-        .quantum-msg.incoming { background: rgba(0, 240, 255, 0.04); border-left: 3px solid var(--neon-blue); align-self: flex-start; }
-        .quantum-msg.outgoing { background: rgba(157, 0, 255, 0.1); border-right: 3px solid var(--neon-violet); align-self: flex-end; text-align: right; }
-        .quantum-msg .msg-meta { font-family: 'Share Tech Mono', monospace; font-size: 0.55rem; color: var(--text-dim); margin-top: 4px; display: flex; justify-content: flex-end; gap: 8px; }
-
-        .dynamic-content-view { display: none; padding: 20px; flex: 1; overflow-y: auto; font-family: 'Share Tech Mono'; }
-        .dynamic-card { background: rgba(0,240,255,0.03); border: 1px solid var(--border-hud); padding: 15px; border-radius: 8px; margin-bottom: 12px; }
-
-        /* LISTA DE AMISTADES ALMACENADAS */
-        .friends-list-container { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
-        .friend-item-card { background: rgba(0,240,255,0.05); border: 1px solid var(--border-hud); padding: 10px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; font-family: 'Share Tech Mono'; }
-
-        /* PANEL DE EMOJIS */
-        .emoji-picker-box {
-            display: none; position: absolute; bottom: 70px; left: 15px; background: rgba(4, 10, 22, 0.98);
-            border: 1px solid var(--border-hud); border-radius: 8px; padding: 10px; gap: 6px; flex-wrap: wrap; width: 260px; z-index: 300; max-height: 180px; overflow-y: auto;
-        }
-        .emoji-item { font-size: 1.3rem; cursor: pointer; padding: 4px; }
-
-        /* BARRA INFERIOR DE CHAT */
-        .chat-input-deck {
-            padding: 10px 14px; background: rgba(3, 7, 15, 0.99); border-top: 1px solid var(--border-hud);
-            display: flex; gap: 8px; align-items: center; flex-shrink: 0; position: relative; z-index: 50; width: 100%;
-        }
-        .quantum-input {
-            flex: 1; min-width: 0; background: rgba(0, 0, 0, 0.5); border: 1px solid var(--border-hud); border-radius: 6px;
-            padding: 10px 12px; color: var(--text-main); font-family: 'Share Tech Mono', monospace; font-size: 0.95rem; outline: none;
-        }
-        .action-btn {
-            background: rgba(0, 240, 255, 0.08); border: 1px solid var(--border-hud); color: var(--neon-blue);
-            padding: 10px 12px; border-radius: 6px; cursor: pointer; font-size: 0.9rem; flex-shrink: 0;
-        }
-        .transmit-btn {
-            background: linear-gradient(135deg, var(--neon-blue), var(--neon-violet)); border: none; border-radius: 6px;
-            padding: 10px 18px; color: #010308; font-family: 'Orbitron'; font-weight: 900; cursor: pointer; font-size: 0.9rem; flex-shrink: 0; white-space: nowrap;
+        @keyframes subirMensaje {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
-        /* PANTALLA DE LLAMADAS */
-        .overlay-screen {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(1, 3, 8, 0.98); display: none; flex-direction: column; z-index: 1500; padding: 20px;
+        /* 4. BARRA DE ESCRITURA INFERIOR */
+        #chat-input-area {
+            display: flex;
+            padding: 10px;
+            background: #1a1a1a;
+            border-top: 1px solid #333;
         }
-        .video-box-16k { flex: 1; background: #000; border: 1px solid var(--neon-blue); border-radius: 8px; overflow: hidden; display: flex; align-items: center; justify-content: center; position: relative; }
-        .video-box-16k video { width: 100%; height: 100%; object-fit: cover; }
+        #chat-input-area input {
+            flex: 1;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #444;
+            background: #222;
+            color: #fff;
+            outline: none;
+        }
+        #chat-input-area button {
+            background: #00ffcc;
+            color: #000;
+            border: none;
+            padding: 0 16px;
+            margin-left: 8px;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
 
-    <!-- AUTENTICACIÓN -->
-    <div class="auth-overlay" id="authOverlay">
-        <div class="auth-card" id="authStep1">
-            <h2>VOBIXCHAT // ACCESO 16K</h2>
-            <p id="authSubtitleText">Introduce tus datos para acceder de forma segura.</p>
-            <select id="countrySelect" class="auth-select">
-                <option value="+34">🇪🇸 España (+34)</option>
-                <option value="+1">🇩🇴 República Dominicana (+1)</option>
-            </select>
-            <input type="text" id="authPhoneInput" class="auth-input" placeholder="Tu número de móvil (Sin VoIP)">
-            <input type="text" id="authNameInput" class="auth-input" placeholder="Tu Nombre o Alias">
+    <header>
+        <div class="sala-directa">🟢 Sala Directa: VOBIXCHAT</div>
+        <button class="btn-salir" onclick="cerrarSesion()">Salir</button>
+    </header>
 
-            <button class="auth-btn" id="requestRandomPinBtn" style="margin-top: 8px;">ENVIAR PIN ALEATORIO</button>
-            <div id="authErrorMsg" style="color:var(--neon-red); font-size:0.65rem; text-align:center;"></div>
-        </div>
-
-        <div class="auth-card" id="authStep2" style="display:none;">
-            <h2>VERIFICACIÓN DE SEGURIDAD</h2>
-            <p id="pinInstructionsText">Introduce tu código PIN de seguridad:</p>
-            
-            <div class="big-pin-display" id="displayBigPinValue">----</div>
-
-            <input type="text" id="authPinInput" class="auth-input" placeholder="Código PIN de 4 dígitos" maxlength="4" style="text-align:center; font-size: 1.2rem; letter-spacing: 3px;">
-            <button class="auth-btn" id="verifyRandomPinBtn" style="margin-top: 8px;">CONFIRMAR & ENTRAR</button>
-            <div id="pinErrorMsg" style="color:var(--neon-red); font-size:0.65rem; text-align:center;"></div>
-        </div>
+    <div id="login-screen">
+        <h2 style="margin-bottom: 20px; color: #00ffcc;">Bienvenido a VOBIXCHAT</h2>
+        <input type="text" id="username" placeholder="Escribe tu nombre para entrar...">
+        <button onclick="guardarRegistro()">Entrar a la App</button>
     </div>
 
-    <!-- PANTALLA DE VÍDEO / LLAMADAS -->
-    <div class="overlay-screen" id="mediaCallScreen">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-            <div style="font-family:'Orbitron'; color:var(--neon-blue); font-size:0.9rem;" id="callSessionTitle">CANAL DE COMUNICACIÓN EN VIVO</div>
-            <button class="auth-btn" style="background:var(--neon-red); color:#fff; padding:6px 14px;" onclick="endMediaCall()">COLGAR</button>
+    <div id="chat-screen">
+        <div id="chat-messages">
+            <div class="message bot-msg">¡Hola! Ya estás conectado para siempre en VOBIXCHAT. Escribe algo y verás cómo los mensajes suben fluidos.</div>
         </div>
-        <div class="video-box-16k">
-            <video id="liveWebcamVideo" autoplay playsinline muted></video>
-        </div>
-    </div>
-
-    <div class="app-container">
-        <!-- BARRA SUPERIOR ESTILO WHATSAPP -->
-        <div class="chat-topbar">
-            <div class="active-channel" id="activeChannelTitle">
-                <span>💬 VOBIXCHAT // <span id="roomTitleDisplay">SALA DIRECTA</span></span>
-            </div>
-            <div class="topbar-actions">
-                <button class="whatsapp-icon-btn" onclick="startVideoCall16K()" title="Videollamada 16K">📹</button>
-                <button class="whatsapp-icon-btn" onclick="startVoiceCallData()" title="Llamada de Voz HD">📞</button>
-                <div class="three-dots-container">
-                    <button class="whatsapp-icon-btn" id="threeDotsToggleBtn" title="Herramientas y Seguridad">⋮</button>
-                    <div class="dropdown-menu-tools" id="toolsDropdownMenu">
-                        <button class="dropdown-item" onclick="searchChatByMobile(); toggleToolsMenu();">🔍 Buscar Chat por Móvil</button>
-                        <button class="dropdown-item" onclick="switchView('friends'); toggleToolsMenu();">👥 Mis Amistades Guardadas</button>
-                        <button class="dropdown-item danger" id="blockUserToggleBtn" onclick="toggleBlockUserStatus(); toggleToolsMenu();">🚫 Bloquear / Desbloquear</button>
-                        <button class="dropdown-item" onclick="switchView('cloud'); toggleToolsMenu();">☁️ Nube Ilimitada</button>
-                        <button class="dropdown-item" onclick="switchView('zoom'); toggleToolsMenu();">📅 Reuniones / Citas</button>
-                        <button class="dropdown-item" onclick="switchView('contract'); toggleToolsMenu();">📜 Firma Remota (Espejo)</button>
-                        <button class="dropdown-item" onclick="switchView('bunker'); toggleToolsMenu();">📦 Búnker & Cápsulas</button>
-                        <button class="dropdown-item" onclick="switchView('sign'); toggleToolsMenu();">🤟 Lector de Señas</button>
-                        <button class="dropdown-item" onclick="triggerInvite(); toggleToolsMenu();">🔗 Invitar Amigo</button>
-                        <button class="dropdown-item" onclick="toggleSeniorMode(); toggleToolsMenu();">👴 Activar/Desactivar Senior</button>
-                        <button class="dropdown-item" onclick="toggleKidsMode(); toggleToolsMenu();">🧸 Activar/Desactivar Kids</button>
-                    </div>
-                </div>
-                <button class="logout-action-btn" onclick="logoutSession()">SALIR</button>
-            </div>
-        </div>
-
-        <div class="workspace-area">
-            <!-- CHAT -->
-            <div class="screen-view" id="viewChatSection" style="display: flex; flex-direction: column; flex: 1; height: 100%;">
-                <div class="messages-display" id="messagesContainer">
-                    <div class="quantum-msg incoming">
-                        <strong>[SISTEMA]</strong>: Almacenamiento automático de amistades activo. Consulta tu lista en el menú (⋮).
-                        <div class="msg-meta"><span>12:00</span></div>
-                    </div>
-                </div>
-
-                <!-- SELECTOR DE EMOJIS -->
-                <div class="emoji-picker-box" id="emojiPickerBox">
-                    <span class="emoji-item" onclick="insertEmoji('😀')">😀</span> <span class="emoji-item" onclick="insertEmoji('😂')">😂</span> <span class="emoji-item" onclick="insertEmoji('🔥')">🔥</span> <span class="emoji-item" onclick="insertEmoji('🚀')">🚀</span> <span class="emoji-item" onclick="insertEmoji('⭐')">⭐</span> <span class="emoji-item" onclick="insertEmoji('💎')">💎</span> <span class="emoji-item" onclick="insertEmoji('🎉')">🎉</span> <span class="emoji-item" onclick="insertEmoji('👍')">👍</span> <span class="emoji-item" onclick="insertEmoji('💡')">💡</span> <span class="emoji-item" onclick="insertEmoji('🛡️')">🛡️</span> <span class="emoji-item" onclick="insertEmoji('💻')">💻</span> <span class="emoji-item" onclick="insertEmoji('📂')">📂</span>
-                </div>
-
-                <!-- BARRA INFERIOR DE CHAT -->
-                <div class="chat-input-deck" id="chatInputDeckArea">
-                    <button class="action-btn" id="emojiToggleBtn">😊</button>
-                    <button class="action-btn" onclick="recordPureVoiceNote()">🎙️ Voz</button>
-                    <label class="action-btn" title="Enviar Vídeo">📹<input type="file" id="videoUploadInput" accept="video/*" style="display:none;" onchange="handleVideoUpload(event)"></label>
-                    <input type="text" id="messageInput" class="quantum-input" placeholder="Escribe un mensaje..." autofocus autocomplete="off">
-                    <button class="transmit-btn" id="sendBtn">ENVIAR</button>
-                </div>
-            </div>
-
-            <!-- VISTA DE AMISTADES GUARDADAS -->
-            <div class="dynamic-content-view" id="viewFriendsSection">
-                <div class="dynamic-card">
-                    <h3 style="color:var(--neon-blue); font-family:'Orbitron'; font-size:0.85rem; margin-bottom:8px;">👥 LISTA DE AMISTADES ALMACENADAS</h3>
-                    <p style="font-size:0.75rem; color:var(--text-dim); margin-bottom:8px;">Aquí se guardan automáticamente las personas con las que te conectas.</p>
-                    <div class="friends-list-container" id="friendsListContainer">
-                        <div style="font-size:0.75rem; color:var(--text-dim);">No hay amistades guardadas todavía. Conéctate a un móvil o acepta una invitación.</div>
-                    </div>
-                </div>
-                <button class="auth-btn" style="background:#334155; color:#fff; margin-top:10px;" onclick="switchView('chat')">⬅️ Volver al Chat</button>
-            </div>
-
-            <!-- VISTAS SECUNDARIAS -->
-            <div class="dynamic-content-view" id="viewCloudSection">
-                <div class="dynamic-card">
-                    <h3 style="color:var(--neon-blue); font-family:'Orbitron'; font-size:0.85rem; margin-bottom:8px;">☁️ ALMACENAMIENTO ILIMITADO (VÍDEOS 16K, PELÍCULAS, OFFICE)</h3>
-                    <input type="file" id="cloudFileInput" class="auth-input" style="margin-bottom:8px;">
-                    <button class="auth-btn" onclick="alert('Archivo cargado a la nube ilimitada.')">SUBIR A LA NUBE</button>
-                </div>
-                <button class="auth-btn" style="background:#334155; color:#fff; margin-top:10px;" onclick="switchView('chat')">⬅️ Volver al Chat</button>
-            </div>
-
-            <div class="dynamic-content-view" id="viewZoomSection">
-                <div class="dynamic-card">
-                    <h3 style="color:var(--neon-blue); font-family:'Orbitron'; font-size:0.85rem; margin-bottom:8px;">📅 PROGRAMAR REUNIÓN / CITA</h3>
-                    <input type="text" id="zoomTitleInput" placeholder="Título de la reunión" class="auth-input" style="margin-bottom:6px;">
-                    <input type="datetime-local" id="zoomTimeInput" class="auth-input" style="margin-bottom:6px;">
-                    <button class="auth-btn" onclick="generateZoomInvite()">GENERAR ENLACE Y CITA</button>
-                    <div id="zoomInviteOutput" style="margin-top:8px; font-size:0.75rem; color:var(--neon-green);"></div>
-                </div>
-                <button class="auth-btn" style="background:#334155; color:#fff; margin-top:10px;" onclick="switchView('chat')">⬅️ Volver al Chat</button>
-            </div>
-
-            <div class="dynamic-content-view" id="viewBunkerSection">
-                <div class="dynamic-card">
-                    <h3 style="color:var(--neon-amber); font-family:'Orbitron'; font-size:0.85rem; margin-bottom:8px;">📦 BÚNKER Y CÁPSULAS DEL TIEMPO</h3>
-                    <textarea id="bunkerInput" rows="3" class="auth-input" placeholder="Mensaje cifrado para el futuro..." style="margin-bottom:6px;"></textarea>
-                    <button class="auth-btn" style="background:var(--neon-amber); color:#000;" onclick="saveBunkerCapsule()">SELLAR CÁPSULA HOLOGRÁFICA</button>
-                </div>
-                <button class="auth-btn" style="background:#334155; color:#fff; margin-top:10px;" onclick="switchView('chat')">⬅️ Volver al Chat</button>
-            </div>
-
-            <div class="dynamic-content-view" id="viewSignSection">
-                <div class="dynamic-card">
-                    <h3 style="color:var(--neon-violet); font-family:'Orbitron'; font-size:0.85rem; margin-bottom:8px;">🤟 LECTOR DE LENGUAJE DE SEÑAS POR IA</h3>
-                    <button class="auth-btn" onclick="activateSignLanguageReader()">ACTIVAR CÁMARA DE SEÑAS</button>
-                    <div id="signReaderOutput" style="background:#000; padding:10px; border-radius:6px; margin-top:8px; color:var(--neon-green);">Esperando gestos...</div>
-                </div>
-                <button class="auth-btn" style="background:#334155; color:#fff; margin-top:10px;" onclick="switchView('chat')">⬅️ Volver al Chat</button>
-            </div>
-
-            <div class="dynamic-content-view" id="viewContractSection">
-                <div class="dynamic-card">
-                    <h3 style="color:var(--neon-green); font-family:'Orbitron'; font-size:0.85rem; margin-bottom:8px;">📜 MODO ESPEJO & FIRMA REMOTA DE CONTRATO</h3>
-                    <p style="font-size:0.75rem; color:var(--text-dim); margin-bottom:8px;">Firma un contrato a distancia de forma legal y gratuita.</p>
-                    <input type="text" id="contractNameInput" placeholder="Nombre del Contrato (ej. Venta de Inmueble)" class="auth-input" style="margin-bottom:6px;">
-                    <button class="auth-btn" style="background:var(--neon-green); color:#000;" onclick="executeMirrorSignContract()">FIRMAR & ENVIAR COPIA LEGAL</button>
-                </div>
-                <button class="auth-btn" style="background:#334155; color:#fff; margin-top:10px;" onclick="switchView('chat')">⬅️ Volver al Chat</button>
-            </div>
+        <div id="chat-input-area">
+            <input type="text" id="message-input" placeholder="Escribe un mensaje..." onkeypress="manejarEnter(event)">
+            <button onclick="enviarMensaje()">Enviar</button>
         </div>
     </div>
 
     <script>
-        const socket = io();
-        let myUsername = "Operador 16K";
-        let userPhone = "";
-        let generatedRandomPin = "";
-        let currentRoom = "SalaDirecta";
-        let isUserBlocked = false;
-
-        // Almacenamiento local de amistades
-        let savedFriends = JSON.parse(localStorage.getItem('vobix_friends') || '[]');
-
-        function saveFriend(friendName, friendMobile) {
-            if(!friendName) return;
-            const exists = savedFriends.some(f => f.mobile === friendMobile || f.name === friendName);
-            if(!exists) {
-                savedFriends.push({ name: friendName, mobile: friendMobile || 'Directo' });
-                localStorage.setItem('vobix_friends', JSON.stringify(savedFriends));
-                renderFriendsList();
-            }
-        }
-
-        function renderFriendsList() {
-            const container = document.getElementById('friendsListContainer');
-            if(savedFriends.length === 0) {
-                container.innerHTML = `<div style="font-size:0.75rem; color:var(--text-dim);">No hay amistades guardadas todavía.</div>`;
-                return;
-            }
-            container.innerHTML = '';
-            savedFriends.forEach(friend => {
-                const card = document.createElement('div');
-                card.className = 'friend-item-card';
-                card.innerHTML = `
-                    <div>
-                        <strong style="color:var(--neon-blue);">${friend.name}</strong><br>
-                        <span style="font-size:0.65rem; color:var(--text-dim);">Móvil: ${friend.mobile}</span>
-                    </div>
-                    <button class="auth-btn" style="padding:4px 10px; font-size:0.7rem;" onclick="connectToFriend('${friend.name}')">Chatear</button>
-                `;
-                container.appendChild(card);
-            });
-        }
-
-        window.connectToFriend = (friendName) => {
-            currentRoom = "chat-" + friendName;
-            document.getElementById('roomTitleDisplay').textContent = `AMIGO: ${friendName}`;
-            socket.emit('join_room', { room: currentRoom, name: myUsername });
-            switchView('chat');
-        };
-
-        const urlParams = new URLSearchParams(window.location.search);
-        const invitedRoom = urlParams.get('sala');
-        if(invitedRoom) {
-            currentRoom = invitedRoom;
-            document.getElementById('roomTitleDisplay').textContent = `MÓVIL / SALA: ${invitedRoom}`;
-            saveFriend(invitedRoom, invitedRoom);
-        }
-
-        function playSoftSound(type) {
-            try {
-                const ctx = new (window.AudioContext || window.webkitAudioContext)();
-                const osc = ctx.createOscillator();
-                const gain = ctx.createGain();
-                
-                if(type === 'send') {
-                    osc.frequency.setValueAtTime(440, ctx.currentTime);
-                    osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.1);
-                    gain.gain.setValueAtTime(0.05, ctx.currentTime);
-                    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.1);
-                    osc.connect(gain); gain.connect(ctx.destination);
-                    osc.start(); osc.stop(ctx.currentTime + 0.1);
-                } else if(type === 'receive') {
-                    osc.frequency.setValueAtTime(587.33, ctx.currentTime);
-                    osc.frequency.setValueAtTime(880, ctx.currentTime + 0.08);
-                    gain.gain.setValueAtTime(0.08, ctx.currentTime);
-                    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.2);
-                    osc.connect(gain); gain.connect(ctx.destination);
-                    osc.start(); osc.stop(ctx.currentTime + 0.2);
-                    if("vibrate" in navigator) navigator.vibrate([150]);
-                }
-            } catch(e) {}
-        }
-
-        const threeDotsBtn = document.getElementById('threeDotsToggleBtn');
-        const toolsMenu = document.getElementById('toolsDropdownMenu');
-
-        window.toggleToolsMenu = () => {
-            toolsMenu.style.display = toolsMenu.style.display === 'flex' ? 'none' : 'flex';
-        };
-
-        threeDotsBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            toggleToolsMenu();
-        });
-
-        document.addEventListener('click', () => {
-            toolsMenu.style.display = 'none';
-        });
-
-        window.searchChatByMobile = () => {
-            const mobileTarget = prompt("Introduce el número de móvil de la persona con la que quieres chatear:");
-            if(mobileTarget && mobileTarget.trim() !== "") {
-                const cleanMobile = mobileTarget.trim();
-                currentRoom = "movil-" + cleanMobile;
-                document.getElementById('roomTitleDisplay').textContent = `MÓVIL: ${cleanMobile}`;
-                socket.emit('join_room', { room: currentRoom, name: myUsername });
-                saveFriend("Contacto " + cleanMobile, cleanMobile);
-                alert(`✅ Conectado y guardado en tus amistades.`);
+        // COMPROBAR SI YA ESTABA REGISTRADO ANTES (Para que no se borre nunca la sesión)
+        window.onload = function() {
+            const usuarioGuardado = localStorage.getItem("vobixchat_usuario");
+            if (usuarioGuardado) {
+                mostrarChat();
             }
         };
 
-        window.toggleBlockUserStatus = () => {
-            isUserBlocked = !isUserBlocked;
-            const btnText = document.getElementById('blockUserToggleBtn');
-            if(isUserBlocked) {
-                btnText.textContent = "🟢 Desbloquear Usuario";
-                alert("🚫 Usuario bloqueado.");
+        function guardarRegistro() {
+            const nombre = document.getElementById("username").value.trim();
+            if (nombre !== "") {
+                localStorage.setItem("vobixchat_usuario", nombre); // Se guarda para siempre en el móvil
+                mostrarChat();
             } else {
-                btnText.textContent = "🚫 Bloquear / Desbloquear";
-                alert("✅ Usuario desbloqueado.");
+                alert("Por favor, introduce un nombre.");
             }
-        };
-
-        document.getElementById('requestRandomPinBtn').addEventListener('click', () => {
-            const phone = document.getElementById('authPhoneInput').value.trim();
-            const name = document.getElementById('authNameInput').value.trim();
-
-            if(!phone || !name) return document.getElementById('authErrorMsg').textContent = "Introduce tu móvil y nombre.";
-            if(phone.startsWith("0") || phone.length < 8 || phone.includes("voip")) {
-                alert("🚫 REGISTRO RECHAZADO: Número VoIP no permitido.");
-                return document.getElementById('authErrorMsg').textContent = "🚫 Números VoIP bloqueados.";
-            }
-
-            myUsername = name;
-            userPhone = phone;
-            if(!invitedRoom) currentRoom = "movil-" + phone;
-
-            generatedRandomPin = Math.floor(1000 + Math.random() * 9000).toString();
-            document.getElementById('displayBigPinValue').textContent = generatedRandomPin;
-
-            document.getElementById('authStep1').style.display = 'none';
-            document.getElementById('authStep2').style.display = 'flex';
-            document.getElementById('pinInstructionsText').textContent = `Introduce tu código PIN de seguridad recibido:`;
-        });
-
-        document.getElementById('verifyRandomPinBtn').addEventListener('click', () => {
-            if(document.getElementById('authPinInput').value.trim() === generatedRandomPin) {
-                document.getElementById('authOverlay').style.display = 'none';
-                socket.emit('join_room', { room: currentRoom, name: myUsername });
-                renderFriendsList();
-            } else {
-                document.getElementById('pinErrorMsg').textContent = "❌ PIN incorrecto.";
-            }
-        });
-
-        window.logoutSession = () => location.reload();
-
-        window.switchView = (viewName) => {
-            ['chat', 'friends', 'cloud', 'zoom', 'bunker', 'sign', 'contract'].forEach(v => {
-                const el = document.getElementById('view' + v.charAt(0).toUpperCase() + v.slice(1) + 'Section');
-                if(el) el.style.display = 'none';
-            });
-            document.getElementById('chatInputDeckArea').style.display = 'none';
-
-            if(viewName === 'chat') {
-                document.getElementById('viewChatSection').style.display = 'flex';
-                document.getElementById('chatInputDeckArea').style.display = 'flex';
-            } else {
-                const target = document.getElementById('view' + viewName.charAt(0).toUpperCase() + viewName.slice(1) + 'Section');
-                if(target) target.style.display = 'block';
-                if(viewName === 'friends') renderFriendsList();
-            }
-        };
-
-        window.triggerInvite = () => {
-            const inviteUrl = `${window.location.origin + window.location.pathname}?sala=movil-${userPhone}`;
-            navigator.clipboard.writeText(inviteUrl).then(() => {
-                alert(`🔗 Enlace copiado:\n\n${inviteUrl}`);
-            });
-        };
-
-        let activeMediaStream = null;
-        window.startVoiceCallData = async () => {
-            if(isUserBlocked) return alert("⚠️ Bloqueado.");
-            try {
-                activeMediaStream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } });
-                document.getElementById('callSessionTitle').textContent = "LLAMADA DE VOZ DE DATOS HD";
-                document.getElementById('mediaCallScreen').style.display = 'flex';
-            } catch(e) { alert("Error de audio."); }
-        };
-
-        window.startVideoCall16K = async () => {
-            if(isUserBlocked) return alert("⚠️ Bloqueado.");
-            try {
-                activeMediaStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
-                document.getElementById('liveWebcamVideo').srcObject = activeMediaStream;
-                document.getElementById('callSessionTitle').textContent = "VIDEOLLAMADA 16K ULTRA HD";
-                document.getElementById('mediaCallScreen').style.display = 'flex';
-            } catch(e) { alert("Error de cámara."); }
-        };
-
-        window.endMediaCall = () => {
-            if(activeMediaStream) {
-                activeMediaStream.getTracks().forEach(t => t.stop());
-                activeMediaStream = null;
-            }
-            document.getElementById('mediaCallScreen').style.display = 'none';
-        };
-
-        window.toggleSeniorMode = () => {
-            document.body.classList.toggle('senior-mode');
-            alert(document.body.classList.contains('senior-mode') ? "👴 Modo Senior Activado" : "Modo Senior Desactivado");
-        };
-
-        window.toggleKidsMode = () => {
-            document.body.classList.toggle('kids-mode');
-            alert(document.body.classList.contains('kids-mode') ? "🧸 Modo Kids Activado" : "Modo Kids Desactivado");
-        };
-
-        window.recordPureVoiceNote = async () => {
-            if(isUserBlocked) return alert("⚠️ Bloqueado.");
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } });
-                const recorder = new MediaRecorder(stream);
-                let chunks = [];
-                recorder.ondataavailable = e => chunks.push(e.data);
-                recorder.onstop = () => {
-                    const audioUrl = URL.createObjectURL(new Blob(chunks, { type: 'audio/webm' }));
-                    socket.emit('chat_message', { room: currentRoom, type: 'audio', text: `🎙️ Nota de Voz HD:<br><audio controls src="${audioUrl}"></audio>`, sender: myUsername });
-                };
-                recorder.start();
-                alert("🎙️ Grabando voz HD...");
-                setTimeout(() => recorder.stop(), 4000);
-            } catch(e) { alert("Micrófono no disponible."); }
-        };
-
-        window.handleVideoUpload = (e) => {
-            if(isUserBlocked) return alert("⚠️ Bloqueado.");
-            const file = e.target.files[0];
-            if(!file) return;
-            const reader = new FileReader();
-            reader.readAsDataURL(file);
-            reader.onloadend = () => {
-                const videoHtml = `📹 <strong>Vídeo:</strong><br><video controls src="${reader.result}" style="width:100%; max-height:220px; border-radius:6px;"></video>`;
-                socket.emit('chat_message', { room: currentRoom, type: 'video', text: videoHtml, sender: myUsername });
-                alert("✅ Vídeo enviado.");
-            };
-        };
-
-        window.generateZoomInvite = () => {
-            const title = document.getElementById('zoomTitleInput').value.trim();
-            const datetime = document.getElementById('zoomTimeInput').value;
-            if(!title || !datetime) return alert("Completa los datos.");
-            const meetingLink = `${window.location.origin + window.location.pathname}?sala=${encodeURIComponent(currentRoom)}`;
-            const infoText = `📅 **REUNIÓN**: ${title}\n⏰ ${new Date(datetime).toLocaleString()}\n🔗 ${meetingLink}`;
-            socket.emit('chat_message', { room: currentRoom, type: 'text', text: infoText, sender: myUsername });
-            document.getElementById('zoomInviteOutput').textContent = "✅ Enlace generado.";
-        };
-
-        window.executeMirrorSignContract = () => {
-            const name = document.getElementById('contractNameInput').value.trim();
-            if(!name) return alert("Introduce el contrato.");
-            const hash = "HASH-SHA256-" + Math.random().toString(36).substring(2, 9).toUpperCase();
-            const data = `📜 **CONTRATO**: ${name}\n👤 ${myUsername}\n🔐 \`${hash}\``;
-            socket.emit('chat_message', { room: currentRoom, type: 'text', text: data, sender: myUsername });
-            alert("✅ Contrato firmado.");
-            document.getElementById('contractNameInput').value = '';
-        };
-
-        const emojiBox = document.getElementById('emojiPickerBox');
-        document.getElementById('emojiToggleBtn').addEventListener('click', (e) => {
-            e.stopPropagation();
-            emojiBox.style.display = emojiBox.style.display === 'flex' ? 'none' : 'flex';
-        });
-        window.insertEmoji = (em) => {
-            document.getElementById('messageInput').value += em;
-            emojiBox.style.display = 'none';
-        };
-        document.addEventListener('click', () => { emojiBox.style.display = 'none'; });
-
-        const messagesContainer = document.getElementById('messagesContainer');
-        const messageInput = document.getElementById('messageInput');
-
-        function handleSend() {
-            if(isUserBlocked) return alert("⚠️ Bloqueado.");
-            const val = messageInput.value.trim();
-            if(!val) return;
-            socket.emit('chat_message', { room: currentRoom, type: 'text', text: val, sender: myUsername });
-            messageInput.value = '';
-            playSoftSound('send');
         }
 
-        document.getElementById('sendBtn').addEventListener('click', handleSend);
-        messageInput.addEventListener('keypress', (e) => { if(e.key === 'Enter') handleSend(); });
+        function mostrarChat() {
+            document.getElementById("login-screen").style.display = "none";
+            document.getElementById("chat-screen").style.display = "flex";
+            irAlFondo();
+        }
 
-        socket.on('chat_message', (data) => {
-            if(isUserBlocked) return;
+        function cerrarSesion() {
+            localStorage.removeItem("vobixchat_usuario"); // Borra el registro solo si le dan al botón salir
+            location.reload();
+        }
 
-            // Al recibir un mensaje, guarda automáticamente al remitente en los contactos si no está
-            if(data.sender !== myUsername) {
-                saveFriend(data.sender, data.sender);
+        function manejarEnter(event) {
+            if (event.key === "Enter") {
+                enviarMensaje();
             }
+        }
 
-            const type = data.sender === myUsername ? 'outgoing' : 'incoming';
-            const div = document.createElement('div');
-            div.className = `quantum-msg ${type}`;
-            div.innerHTML = `<strong>[${data.sender}]</strong>: ${data.text}<div class="msg-meta"><span>${new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span></div>`;
-            messagesContainer.appendChild(div);
-            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        function enviarMensaje() {
+            const input = document.getElementById("message-input");
+            const texto = input.value.trim();
+            if (texto === "") return;
 
-            if(data.sender !== myUsername) {
-                playSoftSound('receive');
-            }
-        });
+            const contenedorChat = document.getElementById("chat-messages");
 
-        window.saveBunkerCapsule = () => {
-            const txt = document.getElementById('bunkerInput').value.trim();
-            if(!txt) return;
-            localStorage.setItem('bunker', txt);
-            alert("📦 Cápsula guardada.");
-            document.getElementById('bunkerInput').value = '';
-        };
+            // Crear mensaje del usuario
+            const msgUser = document.createElement("div");
+            msgUser.className = "message user-msg";
+            msgUser.textContent = texto;
+            contenedorChat.appendChild(msgUser);
 
-        window.activateSignLanguageReader = () => {
-            document.getElementById('signReaderOutput').innerHTML = "🟢 Lector de Señas activo.";
-        };
+            input.value = "";
+            irAlFondo();
+
+            // Simular respuesta automática del bot para probar el movimiento hacia arriba
+            setTimeout(() => {
+                const msgBot = document.createElement("div");
+                msgBot.className = "message bot-msg";
+                msgBot.textContent = "Eco: " + texto;
+                contenedorChat.appendChild(msgBot);
+                irAlFondo();
+            }, 500);
+        }
+
+        // Función automática para que los mensajes suban y se mantengan visibles abajo
+        function irAlFondo() {
+            const contenedorChat = document.getElementById("chat-messages");
+            contenedorChat.scrollTop = contenedorChat.scrollHeight;
+        }
     </script>
 </body>
 </html>
