@@ -109,14 +109,42 @@
             font-family: 'Share Tech Mono'; font-size: 0.75rem; color: var(--neon-blue); text-align: center; margin-bottom: 8px; display: none;
         }
 
-        /* BARRA SUPERIOR MÓVIL ULTRA-COMPACTA Y OPTIMIZADA */
+        /* VISTA DE AGENDA DE CONTACTOS PRINCIPAL (ESTILO WHATSAPP) */
+        .contacts-screen-view {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--panel-hud); display: flex; flex-direction: column; z-index: 1200; padding: 15px;
+        }
+        .contacts-header {
+            display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;
+            border-bottom: 1px solid var(--border-hud); padding-bottom: 10px;
+        }
+        .contacts-header h2 { font-family: 'Orbitron'; color: var(--neon-blue); font-size: 1.1rem; }
+        
+        .contacts-list-container {
+            flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px;
+        }
+        .contact-item-card {
+            background: rgba(0, 240, 255, 0.03); border: 1px solid var(--border-hud); border-radius: 10px;
+            padding: 12px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; transition: 0.2s;
+        }
+        .contact-item-card:hover { background: rgba(0, 240, 255, 0.1); border-color: var(--neon-blue); }
+        .contact-item-left { display: flex; align-items: center; gap: 12px; }
+        .contact-avatar-small {
+            width: 40px; height: 40px; border-radius: 50%; border: 1.5px solid var(--neon-blue);
+            background: linear-gradient(135deg, var(--neon-blue), var(--neon-violet));
+            display: flex; align-items: center; justify-content: center; font-family: 'Orbitron'; font-weight: bold; color: #000; font-size: 0.85rem;
+        }
+        .contact-name-text { font-family: 'Orbitron'; font-size: 0.9rem; color: var(--text-main); font-weight: bold; }
+        .contact-status-text { font-size: 0.6rem; color: var(--neon-green); font-family: 'Share Tech Mono'; }
+
+        /* BARRA SUPERIOR MÓVIL EN CHAT ACTIVO */
         .main-header-bar {
             padding: 4px 6px; background: rgba(2, 4, 10, 0.95); border-bottom: 1px solid var(--border-hud);
             display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; position: relative; z-index: 100; height: 50px;
         }
         
         .header-profile-section {
-            display: flex; align-items: center; gap: 5px; flex: 1; min-width: 0;
+            display: flex; align-items: center; gap: 5px; flex: 1; min-width: 0; cursor: pointer;
         }
         .profile-avatar-container {
             width: 30px; height: 30px; border-radius: 50%; border: 1px solid var(--neon-blue);
@@ -136,7 +164,6 @@
         }
         .whatsapp-icon-btn:hover { color: #fff; transform: scale(1.1); }
         
-        /* BOTÓN ESCUDO ANTIRRUIDO CUÁNTICO COMPACTO */
         .shield-quantum-btn {
             background: rgba(0, 240, 255, 0.08); border: 1px solid var(--neon-blue); color: var(--neon-blue);
             border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center;
@@ -178,7 +205,7 @@
         .dynamic-content-view { display: none; padding: 20px; flex: 1; overflow-y: auto; font-family: 'Share Tech Mono'; }
         .dynamic-card { background: rgba(255,255,255,0.02); border: 1px solid var(--border-hud); padding: 15px; border-radius: 8px; margin-bottom: 12px; }
 
-        /* MODO CHAT INMERSIVO / PANTALLA COMPLETA ESTILO WHATSAPP NATIVO */
+        /* MODO CHAT INMERSIVO / PANTALLA COMPLETA ESTILO WHATSAPP */
         .writing-popup-overlay {
             position: absolute; top: 0; left: 0; right: 0; bottom: 0;
             background: var(--panel-hud);
@@ -216,7 +243,7 @@
 
         .writing-popup-footer { display: flex; justify-content: flex-end; gap: 8px; }
 
-        /* BARRA INFERIOR DE CHAT ESTILO WHATSAPP (SE OCULTa AL ENTRAR AL CHAT INMERSIVO) */
+        /* BARRA INFERIOR DE CHAT ESTILO WHATSAPP */
         .chat-input-deck {
             padding: 8px 12px; 
             background: rgba(2, 4, 10, 0.95); 
@@ -272,6 +299,20 @@
         </div>
     </div>
 
+    <!-- PANTALLA DE AGENDA DE CONTACTOS (INICIAL AL ENTRAR) -->
+    <div class="contacts-screen-view" id="contactsScreenView" style="display:none;">
+        <div class="contacts-header">
+            <h2>📇 MIS CONTACTOS VOBIXCHAT</h2>
+            <button class="auth-btn" style="padding: 6px 12px; font-size: 0.75rem;" onclick="addNewContactPrompt()">+ Añadir Contacto</button>
+        </div>
+        <div class="contacts-list-container" id="contactsListContainer">
+            <!-- Los contactos se cargarán aquí dinámicamente -->
+        </div>
+        <div style="margin-top: 10px; text-align: center;">
+            <button class="auth-btn" style="background: rgba(255,0,85,0.2); color: var(--neon-red); border: 1px solid var(--neon-red); font-size: 0.75rem; padding: 8px;" onclick="logoutSession()">CERRAR SESIÓN</button>
+        </div>
+    </div>
+
     <div class="overlay-screen" id="mediaCallScreen">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
             <div style="font-family:'Orbitron'; color:var(--neon-blue); font-size:0.8rem;">LLAMADA 16K (ANTIRRUIDO ACTIVO)</div>
@@ -285,11 +326,11 @@
     <div class="app-container">
         <!-- BARRA SUPERIOR MÓVIL OPTIMIZADA Y AGRUPADA -->
         <div class="main-header-bar">
-            <div class="header-profile-section">
+            <div class="header-profile-section" onclick="returnToContactsList()" title="Volver a Contactos">
                 <div class="profile-avatar-container" id="profileAvatarInitial">VC</div>
                 <div class="header-info-group">
                     <div class="header-username-display" id="roomTitleDisplay">@SALA</div>
-                    <div class="header-user-status">🟢 En línea</div>
+                    <div class="header-user-status">🟢 En línea (Tocar para contactos)</div>
                 </div>
             </div>
 
@@ -301,6 +342,7 @@
                 <div class="three-dots-container">
                     <button class="whatsapp-icon-btn" id="threeDotsToggleBtn" title="Menú">⋮</button>
                     <div class="dropdown-menu-tools" id="toolsDropdownMenu">
+                        <button class="dropdown-item" onclick="returnToContactsList(); toggleToolsMenu();">📇 Ver Mis Contactos</button>
                         <button class="dropdown-item" onclick="switchTheme('violet'); toggleToolsMenu();">🟪 Tema: Cyber-Vortex (Violeta)</button>
                         <button class="dropdown-item" onclick="switchTheme('blue'); toggleToolsMenu();">🟦 Tema: Quantum Grid (Azul)</button>
                         <button class="dropdown-item" onclick="switchTheme('matrix'); toggleToolsMenu();">🟩 Tema: Cyberpunk Matrix (Verde)</button>
@@ -311,7 +353,6 @@
                         <button class="dropdown-item" onclick="switchView('contract'); toggleToolsMenu();">📜 Firma Remota</button>
                         <button class="dropdown-item" onclick="switchView('bunker'); toggleToolsMenu();">📦 Búnker</button>
                         <button class="dropdown-item" onclick="switchView('sign'); toggleToolsMenu();">🤟 Lector de Señas</button>
-                        <button class="dropdown-item" onclick="triggerInvite(); toggleToolsMenu();">🔗 Invitar Amigo</button>
                         <button class="dropdown-item" onclick="toggleSeniorMode(); toggleToolsMenu();">👴 Activar Modo Grande</button>
                     </div>
                 </div>
@@ -324,7 +365,7 @@
             <div class="screen-view" id="viewChatSection" style="display: flex; flex-direction: column; flex: 1; height: 100%;">
                 <div class="messages-display" id="messagesContainer">
                     <div class="quantum-msg incoming">
-                        <strong>[SISTEMA]</strong>: Modo chat inmersivo de pantalla completa activado.
+                        <strong>[SISTEMA]</strong>: Selecciona un contacto de tu agenda para iniciar múltiples conversaciones activas.
                         <div class="msg-meta"><span>12:00</span></div>
                     </div>
                 </div>
@@ -422,6 +463,56 @@
         let isBunkerActive = false;
         let isQuantumShieldActive = true;
 
+        // AGENDA DE CONTACTOS LOCALES PERSISTENTES
+        let myContacts = [
+            { name: "Flor", room: "sala_flor", status: "En línea (16K)" },
+            { name: "Mamá", room: "sala_mama", status: "Disponible" },
+            { name: "Soporte Vobix", room: "sala_soporte", status: "Canal seguro" }
+        ];
+
+        function renderContactsList() {
+            const container = document.getElementById('contactsListContainer');
+            container.innerHTML = "";
+            myContacts.forEach(contact => {
+                const card = document.createElement('div');
+                card.className = 'contact-item-card';
+                card.onclick = () => selectContactChat(contact.room, contact.name);
+                card.innerHTML = `
+                    <div class="contact-item-left">
+                        <div class="contact-avatar-small">${contact.name.charAt(0).toUpperCase()}</div>
+                        <div>
+                            <div class="contact-name-text">${contact.name}</div>
+                            <div class="contact-status-text">🟢 ${contact.status}</div>
+                        </div>
+                    </div>
+                    <div style="font-family:'Orbitron'; color:var(--neon-blue); font-size:0.75rem;">CHATEAR ➔</div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        window.addNewContactPrompt = () => {
+            const newName = prompt("Introduce el nombre o alias de tu nuevo contacto:");
+            if(newName && newName.trim() !== "") {
+                const roomKey = "sala_" + newName.trim().toLowerCase().replace(/\s+/g, '_');
+                myContacts.push({ name: newName.trim(), room: roomKey, status: "En línea" });
+                renderContactsList();
+            }
+        };
+
+        window.selectContactChat = (roomName, contactName) => {
+            currentRoom = roomName;
+            document.getElementById('roomTitleDisplay').textContent = contactName.toUpperCase();
+            document.getElementById('profileAvatarInitial').textContent = contactName.charAt(0).toUpperCase();
+            document.getElementById('contactsScreenView').style.display = 'none';
+            socket.emit('join_room', { room: currentRoom, name: myUsername });
+            document.getElementById('messagesContainer').innerHTML = `<div class="quantum-msg incoming"><strong>[SISTEMA]</strong>: Conversación privada abierta con ${contactName}.<div class="msg-meta"><span>${new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span></div></div>`;
+        };
+
+        window.returnToContactsList = () => {
+            document.getElementById('contactsScreenView').style.display = 'flex';
+        };
+
         window.switchTheme = (themeName) => {
             document.body.className = 'theme-' + themeName;
             localStorage.setItem('vobix_theme', themeName);
@@ -435,17 +526,6 @@
         const isIos = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
         if (isIos) {
             document.getElementById('iosInstallHint').style.display = 'block';
-        }
-
-        const urlParams = new URLSearchParams(window.location.search);
-        const invitedRoom = urlParams.get('sala');
-        if(invitedRoom) {
-            currentRoom = invitedRoom;
-            document.getElementById('roomTitleDisplay').textContent = invitedRoom.toUpperCase();
-            document.getElementById('profileAvatarInitial').textContent = invitedRoom.charAt(0).toUpperCase();
-        } else {
-            document.getElementById('roomTitleDisplay').textContent = "SALA_PRIVADA";
-            document.getElementById('profileAvatarInitial').textContent = "SP";
         }
 
         window.executeInstantTranslation = () => {
@@ -559,11 +639,7 @@
             const name = document.getElementById('authNameInput').value.trim();
             if(!phone || !name) return document.getElementById('authErrorMsg').textContent = "Introduce teléfono y nombre.";
             myUsername = name;
-            document.getElementById('roomTitleDisplay').textContent = name;
-            document.getElementById('profileAvatarInitial').textContent = name.charAt(0).toUpperCase();
-
-            if(!invitedRoom) currentRoom = name;
-
+            
             generatedRandomPin = Math.floor(1000 + Math.random() * 9000).toString();
             document.getElementById('displayBigPinValue').textContent = generatedRandomPin;
             document.getElementById('authStep1').style.display = 'none';
@@ -573,7 +649,8 @@
         document.getElementById('verifyRandomPinBtn').addEventListener('click', () => {
             if(document.getElementById('authPinInput').value.trim() === generatedRandomPin) {
                 document.getElementById('authOverlay').style.display = 'none';
-                socket.emit('join_room', { room: currentRoom, name: myUsername });
+                renderContactsList();
+                document.getElementById('contactsScreenView').style.display = 'flex'; // Muestra la agenda de contactos al entrar
             } else {
                 document.getElementById('pinErrorMsg').textContent = "❌ PIN incorrecto.";
             }
@@ -628,7 +705,6 @@
 
         messageInput.addEventListener('click', () => {
             if(isUserBlocked) return;
-            // Clonar mensajes actuales al modo inmersivo para tener el historial centrado como WhatsApp
             immersiveChatHistory.innerHTML = messagesContainer.innerHTML;
             writingPopup.classList.add('active');
             chatInputDeckArea.style.display = 'none'; 
