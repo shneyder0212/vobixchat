@@ -73,38 +73,38 @@
             font-family: 'Share Tech Mono'; font-size: 0.75rem; color: var(--neon-blue); text-align: center; margin-bottom: 8px; display: none;
         }
 
-        /* BARRA SUPERIOR SAGRADA: VOBIXCHAT (IZQUIERDA) - USUARIO (CENTRO EXACTO) - ICONOS/LOGO (DERECHA) */
+        /* ÚNICA BARRA SUPERIOR MAESTRA UNIFICADA */
         .main-header-bar {
             padding: 8px 12px; background: rgba(3, 7, 15, 0.98); border-bottom: 1px solid var(--border-hud);
             display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; position: relative; z-index: 100; height: 55px;
         }
-        .app-title-sagrada { font-family: 'Orbitron', sans-serif; font-size: 1rem; color: var(--text-main); font-weight: 900; flex-shrink: 0; letter-spacing: 1px; }
+        .app-title-sagrada { font-family: 'Orbitron', sans-serif; font-size: 0.9rem; color: var(--text-main); font-weight: 900; flex-shrink: 0; letter-spacing: 0.5px; }
         
         .header-center-user {
-            display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; flex: 1; padding: 0 10px; overflow: hidden;
+            display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; flex: 1; padding: 0 6px; overflow: hidden;
         }
-        .header-username-display { font-family: 'Orbitron', sans-serif; font-size: 0.9rem; color: var(--neon-blue); font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
-        .header-user-status { font-size: 0.55rem; color: var(--neon-green); font-family: 'Share Tech Mono'; }
+        .header-username-display { font-family: 'Orbitron', sans-serif; font-size: 0.8rem; color: var(--neon-blue); font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+        .header-user-status { font-size: 0.5rem; color: var(--neon-green); font-family: 'Share Tech Mono'; }
 
-        .header-right-group { display: flex; gap: 6px; align-items: center; flex-shrink: 0; }
+        .header-right-group { display: flex; gap: 5px; align-items: center; flex-shrink: 0; }
         .whatsapp-icon-btn {
-            background: none; border: none; color: var(--neon-blue); cursor: pointer; font-size: 1.1rem;
-            display: flex; align-items: center; justify-content: center; padding: 4px; transition: 0.2s;
+            background: none; border: none; color: var(--neon-blue); cursor: pointer; font-size: 1rem;
+            display: flex; align-items: center; justify-content: center; padding: 3px; transition: 0.2s;
         }
         .whatsapp-icon-btn:hover { color: #fff; transform: scale(1.1); }
         
         /* LOGOTIPO DE OJOS A LA DERECHA */
         .header-eye-logo {
-            width: 32px; height: 32px; border-radius: 6px; background: rgba(0,240,255,0.05);
-            border: 1px solid var(--border-hud); display: flex; align-items: center; justify-content: center; overflow: hidden;
+            width: 30px; height: 30px; border-radius: 6px; background: rgba(0,240,255,0.05);
+            border: 1px solid var(--border-hud); display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0;
         }
-        .header-eye-logo img { width: 100%; height: 100%; object-fit: cover; }
+        .header-eye-logo svg { width: 16px; height: 16px; }
 
         /* BOTÓN SALIR DENTRO DEL MARGEN */
         .logout-action-btn { 
-            background: var(--neon-red); color: #fff; border: none; padding: 5px 8px; 
+            background: var(--neon-red); color: #fff; border: none; padding: 4px 6px; 
             border-radius: 4px; font-family: 'Orbitron'; font-weight: bold; cursor: pointer; 
-            font-size: 0.65rem; flex-shrink: 0; white-space: nowrap;
+            font-size: 0.6rem; flex-shrink: 0; white-space: nowrap;
         }
 
         /* MENÚ DESPLEGABLE */
@@ -151,7 +151,7 @@
         }
         .writing-popup-footer { display: flex; justify-content: flex-end; gap: 8px; }
 
-        /* BARRA INFERIOR DE CHAT (LIMPIA, SIN TEXTOS DUPLICADOS) */
+        /* BARRA INFERIOR DE CHAT LIMPIA */
         .chat-input-deck {
             padding: 8px 12px; 
             background: rgba(3, 7, 15, 0.99); 
@@ -225,7 +225,7 @@
     </div>
 
     <div class="app-container">
-        <!-- BARRA SUPERIOR SAGRADA Y LIMPIA -->
+        <!-- BARRA SUPERIOR ÚNICA Y UNIFICADA (VOBIXCHAT - USUARIO CENTRADO - ICONOS / SALIR / LOGO) -->
         <div class="main-header-bar">
             <div class="app-title-sagrada">VOBIXCHAT</div>
             
@@ -256,7 +256,7 @@
                 <button class="logout-action-btn" onclick="logoutSession()">SALIR</button>
 
                 <div class="header-eye-logo" title="Quantum Eye">
-                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="var(--neon-blue)" stroke-width="2">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="var(--neon-blue)" stroke-width="2">
                         <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
                         <circle cx="12" cy="12" r="3"></circle>
                     </svg>
