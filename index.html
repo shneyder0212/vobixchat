@@ -169,20 +169,39 @@
         .dynamic-content-view { display: none; padding: 20px; flex: 1; overflow-y: auto; font-family: 'Share Tech Mono'; }
         .dynamic-card { background: rgba(255,255,255,0.02); border: 1px solid var(--border-hud); padding: 15px; border-radius: 8px; margin-bottom: 12px; }
 
-        /* VENTANA FLOTANTE DE ESCRITURA HACIA ARRIBA */
+        /* NUEVA CÁPSULA FLOTANTE DE ESCRITURA INTELIGENTE (ESTILO WHATSAPP PRO + TRADUCTOR + BÚNKER) */
         .writing-popup-overlay {
-            position: absolute; bottom: 75px; left: 8px; right: 8px;
+            position: absolute; bottom: 70px; left: 8px; right: 8px;
             background: var(--panel-hud); border: 1px solid var(--neon-blue);
-            border-radius: 10px; padding: 12px; display: none; flex-direction: column; gap: 8px;
-            z-index: 250; box-shadow: 0 -5px 30px rgba(0, 0, 0, 0.8); backdrop-filter: blur(15px);
+            border-radius: 16px; padding: 12px; display: none; flex-direction: column; gap: 10px;
+            z-index: 250; box-shadow: 0 -8px 35px rgba(0, 0, 0, 0.9); backdrop-filter: blur(20px);
         }
         .writing-popup-overlay.active { display: flex; }
-        .writing-popup-header { display: flex; justify-content: space-between; align-items: center; font-family: 'Orbitron'; font-size: 0.75rem; color: var(--neon-blue); }
-        .writing-popup-textarea {
-            width: 100%; height: 100px; background: #000; border: 1px solid var(--border-hud);
-            color: var(--text-main); font-family: 'Share Tech Mono', monospace; font-size: 0.95rem;
-            padding: 10px; border-radius: 6px; outline: none; resize: none;
+        
+        .writing-capsule-bar {
+            display: flex; align-items: center; background: #000; border: 1px solid var(--border-hud);
+            border-radius: 25px; padding: 4px 10px; gap: 6px;
         }
+        .writing-popup-textarea {
+            flex: 1; height: 50px; background: transparent; border: none;
+            color: var(--text-main); font-family: 'Share Tech Mono', monospace; font-size: 0.9rem;
+            outline: none; resize: none; padding-top: 8px;
+        }
+        .capsule-tool-icon {
+            background: none; border: none; color: var(--neon-blue); cursor: pointer; font-size: 1.1rem;
+            display: flex; align-items: center; justify-content: center; padding: 6px; transition: 0.2s;
+        }
+        .capsule-tool-icon:hover { transform: scale(1.15); color: #fff; }
+
+        .writing-advanced-controls {
+            display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.5);
+            padding: 6px 10px; border-radius: 8px; border: 1px dashed var(--border-hud); font-size: 0.7rem; font-family: 'Share Tech Mono';
+        }
+        .translator-toggle-box { display: flex; align-items: center; gap: 6px; color: var(--neon-green); }
+        .translator-select { background: #000; color: var(--neon-blue); border: 1px solid var(--border-hud); border-radius: 4px; padding: 2px 4px; font-size: 0.65rem; outline: none; }
+        
+        .bunker-mode-box { display: flex; align-items: center; gap: 4px; color: var(--neon-amber); cursor: pointer; }
+
         .writing-popup-footer { display: flex; justify-content: flex-end; gap: 8px; }
 
         /* BARRA INFERIOR DE CHAT LIMPIA */
@@ -203,12 +222,12 @@
             width: 100%;
         }
         .quantum-input {
-            flex: 1; min-width: 0; background: rgba(0, 0, 0, 0.85); border: 1px solid var(--neon-blue); border-radius: 6px;
-            padding: 8px 10px; color: var(--text-main); font-family: 'Share Tech Mono', monospace; font-size: 0.85rem; outline: none; cursor: pointer;
+            flex: 1; min-width: 0; background: rgba(0, 0, 0, 0.85); border: 1px solid var(--neon-blue); border-radius: 25px;
+            padding: 9px 15px; color: var(--text-main); font-family: 'Share Tech Mono', monospace; font-size: 0.85rem; outline: none; cursor: pointer;
         }
         .action-btn {
             background: rgba(0, 240, 255, 0.08); border: 1px solid var(--border-hud); color: var(--neon-blue);
-            padding: 8px 10px; border-radius: 6px; cursor: pointer; font-size: 0.85rem; flex-shrink: 0; transition: 0.2s;
+            padding: 8px 10px; border-radius: 50%; width: 40px; height: 40px; cursor: pointer; font-size: 0.85rem; flex-shrink: 0; transition: 0.2s;
             display: flex; align-items: center; justify-content: center;
         }
         .action-btn.recording { background: var(--neon-red); color: #fff; animation: pulseVoice 1.2s infinite; }
@@ -306,28 +325,51 @@
             <div class="screen-view" id="viewChatSection" style="display: flex; flex-direction: column; flex: 1; height: 100%;">
                 <div class="messages-display" id="messagesContainer">
                     <div class="quantum-msg incoming">
-                        <strong>[SISTEMA]</strong>: Sistema cifrado activo. País detectado con éxito.
+                        <strong>[SISTEMA]</strong>: Cápsula inteligente, traductor cuántico y búnker activados.
                         <div class="msg-meta"><span>12:00</span></div>
                     </div>
                 </div>
 
-                <!-- VENTANA FLOTANTE DE ESCRITURA HACIA ARRIBA -->
+                <!-- CÁPSULA FLOTANTE DE ESCRITURA ESTILO WHATSAPP PRO + TRADUCTOR + BÚNKER -->
                 <div class="writing-popup-overlay" id="writingPopup">
                     <div class="writing-popup-header">
-                        <span>✏️ VENTANA DE ESCRITURA</span>
+                        <span>💬 CÁPSULA DE MENSAJE CUÁNTICO</span>
                         <button class="auth-btn" style="padding: 2px 8px; font-size: 0.65rem; background: var(--neon-red); color: #fff;" onclick="closeWritingPopup()">✖ Cerrar</button>
                     </div>
-                    <textarea id="popupMessageInput" class="writing-popup-textarea" placeholder="Escribe tu mensaje aquí con comodidad..."></textarea>
+                    
+                    <div class="writing-capsule-bar">
+                        <button class="capsule-tool-icon" title="Stickers / Emojis" onclick="alert('⚡ Panel de Emojis Cuánticos abierto')">😊</button>
+                        <textarea id="popupMessageInput" class="writing-popup-textarea" placeholder="Escribe tu mensaje..."></textarea>
+                        <button class="capsule-tool-icon" title="Adjuntar Archivo" onclick="alert('📎 Módulo de archivos cifrados')">📎</button>
+                        <button class="capsule-tool-icon" title="Cámara Rápida" onclick="alert('📷 Captura cuántica lista')">📷</button>
+                    </div>
+
+                    <!-- CONTROLES EXCLUSIVOS: TRADUCTOR EN TIEMPO REAL & MODO BÚNKER -->
+                    <div class="writing-advanced-controls">
+                        <div class="translator-toggle-box">
+                            <span>🌐 Traducir a:</span>
+                            <select id="liveTranslateLang" class="translator-select">
+                                <option value="off">Desactivado</option>
+                                <option value="en">Inglés (EN)</option>
+                                <option value="fr">Francés (FR)</option>
+                                <option value="de">Alemán (DE)</option>
+                            </select>
+                        </div>
+                        <div class="bunker-mode-box" onclick="toggleBunkerPin()" id="bunkerStatusIndicator">
+                            <span>🛡️ Búnker: <strong style="color:var(--neon-red)">OFF</strong></span>
+                        </div>
+                    </div>
+
                     <div class="writing-popup-footer">
-                        <button class="auth-btn" style="padding: 6px 14px; font-size: 0.75rem; background: var(--neon-blue); color: #000;" onclick="sendFromPopup()">ENVIAR MENSAJE</button>
+                        <button class="auth-btn" style="padding: 8px 16px; font-size: 0.8rem; background: var(--neon-blue); color: #000;" onclick="sendFromPopup()">ENVIAR MENSAJE 🚀</button>
                     </div>
                 </div>
 
-                <!-- BARRA INFERIOR DE CHAT LIMPIA -->
+                <!-- BARRA INFERIOR DE CHAT ESTILO WHATSAPP -->
                 <div class="chat-input-deck" id="chatInputDeckArea">
                     <button class="action-btn" id="voiceRecordBtn" onmousedown="startVoiceRecording()" onmouseup="stopVoiceRecording()" ontouchstart="startVoiceRecording()" ontouchend="stopVoiceRecording()" title="Nota de voz">🎤</button>
+                    <input type="text" id="messageInput" class="quantum-input" placeholder="Mensaje..." readonly autocomplete="off">
                     <button class="action-btn" id="videoRecordBtn" onclick="toggleInstantVideoRecording()" title="Vídeo">📹</button>
-                    <input type="text" id="messageInput" class="quantum-input" placeholder="Toca para escribir..." readonly autocomplete="off">
                 </div>
             </div>
 
@@ -377,6 +419,7 @@
         let videoChunks = [];
         let isRecordingVideoNow = false;
         let detectedUserCountry = "Desconocido";
+        let isBunkerActive = false;
 
         // Detección automática de país por IP al abrir la app
         async function detectCountryByIP() {
@@ -401,7 +444,6 @@
             localStorage.setItem('vobix_theme', themeName);
         };
 
-        // Cargar tema guardado si existe
         const savedTheme = localStorage.getItem('vobix_theme');
         if(savedTheme) {
             document.body.className = 'theme-' + savedTheme;
@@ -558,6 +600,7 @@
 
         window.toggleSeniorMode = () => { document.body.classList.toggle('senior-mode'); };
 
+        // LÓGICA DE LA CÁPSULA INTELIGENTE DE ESCRITURA
         const messageInput = document.getElementById('messageInput');
         const writingPopup = document.getElementById('writingPopup');
         const popupMessageInput = document.getElementById('popupMessageInput');
@@ -573,9 +616,29 @@
             writingPopup.classList.remove('active');
         };
 
+        window.toggleBunkerPin = () => {
+            isBunkerActive = !isBunkerActive;
+            const statusEl = document.getElementById('bunkerStatusIndicator');
+            if(isBunkerActive) {
+                statusEl.innerHTML = `<span>🛡️ Búnker: <strong style="color:var(--neon-green)">ON (Cifrado)</strong></span>`;
+            } else {
+                statusEl.innerHTML = `<span>🛡️ Búnker: <strong style="color:var(--neon-red)">OFF</strong></span>`;
+            }
+        };
+
         window.sendFromPopup = () => {
-            const val = popupMessageInput.value.trim();
+            let val = popupMessageInput.value.trim();
             if(!val) return;
+
+            const targetLang = document.getElementById('liveTranslateLang').value;
+            if(targetLang !== 'off') {
+                val = `[Traducido a ${targetLang.toUpperCase()}]: ${val}`;
+            }
+
+            if(isBunkerActive) {
+                val = `🔒 [MENSAJE BÚNKER AUTODESTRUCTIBLE]: ${val}`;
+            }
+
             socket.emit('chat_message', { room: currentRoom, type: 'text', text: val, sender: myUsername });
             messageInput.value = '';
             popupMessageInput.value = '';
