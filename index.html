@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>VOBIXCHAT // Quantum Final</title>
+    <title>VOBIXCHAT // Quantum Direct</title>
     <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -12,13 +12,11 @@
             width: 100vw; height: 100vh; display: flex; flex-direction: column; overflow: hidden; 
         }
         
-        /* Barra superior */
         #header { 
             height: 55px; background: #111; display: flex; align-items: center; 
             justify-content: space-between; padding: 0 15px; border-bottom: 2px solid #00f0ff; flex-shrink: 0; 
         }
         
-        /* Mensajes */
         #messages { 
             flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 10px; 
         }
@@ -28,7 +26,6 @@
         }
         .msg.outgoing { background: #004d40; align-self: flex-end; border-color: #00897b; }
         
-        /* Barra fija inferior para que el teclado Samsung abra siempre */
         #input-area { 
             height: 70px; background: #000; display: flex; align-items: center; 
             padding: 10px; gap: 10px; border-top: 1px solid #00f0ff; flex-shrink: 0; width: 100%; 
@@ -42,7 +39,6 @@
             border-radius: 25px; font-weight: bold; cursor: pointer; flex-shrink: 0; font-size: 15px; 
         }
 
-        /* Pantalla de llamadas estilo WhatsApp */
         .overlay-screen {
             position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
             background: #0b141a; display: none; flex-direction: column; z-index: 1500; justify-content: space-between; padding: 20px;
@@ -85,7 +81,7 @@
     </div>
 
     <div id="messages">
-        <div class="msg">Conectado a VOBIXCHAT. Escribe un mensaje abajo.</div>
+        <div class="msg">Conectado a VOBIXCHAT.</div>
     </div>
 
     <div id="input-area">
@@ -93,18 +89,14 @@
         <button id="sendBtn" onclick="enviarMensaje()">ENVIAR</button>
     </div>
 
-    <!-- Pantalla de llamadas -->
     <div class="overlay-screen" id="mediaCallScreen">
         <video id="remoteVideo" autoplay playsinline></video>
-        
         <div class="voice-call-ui" id="voiceCallUI">
             <div class="caller-avatar" id="callAvatarText">W</div>
             <div style="font-size: 24px; font-weight: bold;" id="callContactName">William</div>
             <div style="font-size: 15px; color: #8696a0;" id="callStatusText">Conectando llamada...</div>
         </div>
-
         <video id="localVideo" autoplay playsinline muted></video>
-
         <div class="call-controls-bar">
             <button class="call-action-btn" id="toggleMuteAudioBtn" onclick="toggleMuteAudio()">🎤 Silenciar</button>
             <button class="call-action-btn danger" onclick="endMediaCall()">COLGAR ☎</button>
