@@ -111,20 +111,12 @@
             border: 1px dashed var(--neon-green); padding: 12px; border-radius: 8px; margin: 10px 0;
         }
 
-        .install-banner {
-            background: rgba(0, 240, 255, 0.08); border: 1px solid var(--neon-blue); padding: 10px; border-radius: 8px;
-            font-family: 'Share Tech Mono'; font-size: 0.75rem; color: var(--neon-blue); text-align: center; margin-bottom: 8px; display: none;
-        }
-
         .main-header-bar {
             padding: 4px 6px; background: rgba(2, 4, 10, 0.95); border-bottom: 1px solid var(--border-hud);
             display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; position: relative; z-index: 100; height: 50px;
         }
         
-        .header-profile-section {
-            display: flex; align-items: center; gap: 5px; flex: 1; min-width: 0;
-            cursor: pointer;
-        }
+        .header-profile-section { display: flex; align-items: center; gap: 5px; flex: 1; min-width: 0; cursor: pointer; }
         .profile-avatar-container {
             width: 30px; height: 30px; border-radius: 50%; border: 1px solid var(--neon-blue);
             background: linear-gradient(135deg, var(--neon-blue), var(--neon-violet));
@@ -282,13 +274,10 @@
     <div class="auth-overlay" id="authOverlay">
         <div class="auth-card" id="authStep1">
             <h2>VOBIXCHAT // ACCESO SEGURO</h2>
-            <div class="install-banner" id="iosInstallHint">
-                🍏 <strong>Usuario de iPhone:</strong> Toca el botón <strong>Compartir</strong> abajo y selecciona <strong>"Añadir a inicio"</strong>.
-            </div>
             <p>Detección de región y acceso activados.</p>
             
             <div class="phone-group">
-                <div class="detected-country-badge" id="detectedCountryBadge" title="Prefijo detectado por región">🇪🇸 +34</div>
+                <div class="detected-country-badge" id="detectedCountryBadge">🇪🇸 +34</div>
                 <input type="text" id="authPhoneInput" class="auth-input" placeholder="Número de teléfono..." style="margin-bottom: 0;">
             </div>
             
@@ -330,7 +319,7 @@
                 <div class="profile-avatar-container" id="profileAvatarInitial">VC</div>
                 <div class="header-info-group">
                     <div class="header-username-display" id="roomTitleDisplay">@SALA</div>
-                    <div class="header-user-status">🟢 En línea (Toca aquí para contactos)</div>
+                    <div class="header-user-status">🟢 En línea</div>
                 </div>
             </div>
 
@@ -469,28 +458,16 @@
         window.addEventListener('DOMContentLoaded', () => {
             const userLang = navigator.language || navigator.userLanguage || 'es-ES';
             const badge = document.getElementById('detectedCountryBadge');
-            
-            if (userLang.includes('DO')) {
-                badge.textContent = "🇩🇴 +1";
-            } else if (userLang.includes('MX')) {
-                badge.textContent = "🇲🇽 +52";
-            } else if (userLang.includes('AR')) {
-                badge.textContent = "🇦🇷 +54";
-            } else if (userLang.includes('CO')) {
-                badge.textContent = "🇨🇴 +57";
-            } else {
-                badge.textContent = "🇪🇸 +34";
-            }
+            if (userLang.includes('DO')) badge.textContent = "🇩🇴 +1";
+            else if (userLang.includes('MX')) badge.textContent = "🇲🇽 +52";
+            else if (userLang.includes('AR')) badge.textContent = "🇦🇷 +54";
+            else if (userLang.includes('CO')) badge.textContent = "🇨🇴 +57";
+            else badge.textContent = "🇪🇸 +34";
         });
 
         function reproducirSonidoNotificacion() {
             const sonido = document.getElementById('notificationSound');
-            if (sonido) {
-                sonido.currentTime = 0;
-                sonido.play().catch(e => {
-                    console.log("Audio de notificación silenciado por política del navegador:", e);
-                });
-            }
+            if (sonido) { sonido.currentTime = 0; sonido.play().catch(e => {}); }
         }
 
         document.addEventListener('touchmove', function(e) {
@@ -503,14 +480,7 @@
         };
 
         const savedTheme = localStorage.getItem('vobix_theme');
-        if(savedTheme) {
-            document.body.className = 'theme-' + savedTheme;
-        }
-
-        const isIos = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-        if (isIos) {
-            document.getElementById('iosInstallHint').style.display = 'block';
-        }
+        if(savedTheme) document.body.className = 'theme-' + savedTheme;
 
         const urlParams = new URLSearchParams(window.location.search);
         const invitedRoom = urlParams.get('sala');
@@ -530,21 +500,18 @@
                 : "Tus Contactos Privados:\n\n" + misContactosPrivados.map((c, idx) => `${idx + 1}. ${c.nombre} (Chat: ${c.sala})`).join("\n") + "\n\n";
 
             let opcion = prompt(listaTexto + "Escribe el nombre de un amigo para abrir su chat privado o agrégalo escribiendo su ID/Sala directa:");
-            
             if(opcion && opcion.trim() !== "") {
                 let nombreAmigo = opcion.trim();
                 let salaPrivada = "privado_" + nombreAmigo.toLowerCase().replace(/\s+/g, '_');
-                
                 if(!misContactosPrivados.some(c => c.sala === salaPrivada)) {
                     misContactosPrivados.push({ nombre: nombreAmigo, sala: salaPrivada });
                     localStorage.setItem('vobix_contactos', JSON.stringify(misContactosPrivados));
                 }
-
                 currentRoom = salaPrivada;
                 document.getElementById('roomTitleDisplay').textContent = nombreAmigo.toUpperCase();
                 document.getElementById('profileAvatarInitial').textContent = nombreAmigo.charAt(0).toUpperCase();
                 socket.emit('join_room', { room: currentRoom, name: myUsername });
-                document.getElementById('messagesContainer').innerHTML = `<div class="quantum-msg incoming"><strong>[SISTEMA]</strong>: Chat privado abierto con <strong>${nombreAmigo}</strong>.<div class="msg-meta"><span>${new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span></div></div>`;
+                document.getElementById('messagesContainer').innerHTML = `<div class="quantum-msg incoming"><strong>[SISTEMA]</strong>: Chat privado abierto con <strong>${nombreAmigo}</strong>.</div>`;
             }
         };
 
@@ -555,7 +522,7 @@
                 document.getElementById('roomTitleDisplay').textContent = newChat.trim().toUpperCase();
                 document.getElementById('profileAvatarInitial').textContent = newChat.trim().charAt(0).toUpperCase();
                 socket.emit('join_room', { room: currentRoom, name: myUsername });
-                document.getElementById('messagesContainer').innerHTML = `<div class="quantum-msg incoming"><strong>[SISTEMA]</strong>: Conectado a la conversación con ${newChat.trim()}.<div class="msg-meta"><span>${new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span></div></div>`;
+                document.getElementById('messagesContainer').innerHTML = `<div class="quantum-msg incoming"><strong>[SISTEMA]</strong>: Conectado a la conversación con ${newChat.trim()}.</div>`;
             }
         };
 
@@ -571,46 +538,33 @@
             const statusTxt = document.getElementById('callAudioFiltersStatus');
             if(isQuantumShieldActive) {
                 shieldBtn.classList.add('active');
-                shieldBtn.title = "Escudo Cuántico Antirruido IA: ACTIVO";
                 if(statusTxt) statusTxt.textContent = "🛡️ Antirruido + Supresión de Eco: ACTIVO";
             } else {
                 shieldBtn.classList.remove('active');
-                shieldBtn.title = "Escudo Cuántico Antirruido IA: INACTIVO";
                 if(statusTxt) statusTxt.textContent = "⚠️ Antirruido y Supresión de Eco: INACTIVO";
             }
         };
-        document.getElementById('quantumShieldBtn').classList.add('active');
 
         window.startVideoCall = async () => {
             if(isUserBlocked) return;
             try {
                 document.getElementById('callStatusTitle').textContent = "🎥 VIDEOLLAMADA 16K ULTRA HD";
-                const constraints = {
-                    audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
-                    video: { width: { ideal: 1280 }, height: { ideal: 720 } }
-                };
+                const constraints = { audio: { echoCancellation: true, noiseSuppression: true }, video: { width: { ideal: 1280 }, height: { ideal: 720 } } };
                 activeMediaStream = await navigator.mediaDevices.getUserMedia(constraints);
                 document.getElementById('liveWebcamVideo').srcObject = activeMediaStream;
                 document.getElementById('mediaCallScreen').style.display = 'flex';
-            } catch(e) {
-                alert("No se pudo acceder a la cámara o micrófono. Verifica los permisos de tu navegador.");
-            }
+            } catch(e) { alert("No se pudo acceder a la cámara o micrófono. Permisos requeridos."); }
         };
 
         window.startVoiceCall = async () => {
             if(isUserBlocked) return;
             try {
                 document.getElementById('callStatusTitle').textContent = "📞 LLAMADA DE VOZ HD ANTIRRUIDO";
-                const constraints = {
-                    audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
-                    video: false
-                };
+                const constraints = { audio: { echoCancellation: true, noiseSuppression: true }, video: false };
                 activeMediaStream = await navigator.mediaDevices.getUserMedia(constraints);
                 document.getElementById('liveWebcamVideo').srcObject = activeMediaStream;
                 document.getElementById('mediaCallScreen').style.display = 'flex';
-            } catch(e) {
-                alert("No se pudo iniciar la llamada de voz. Verifica los permisos de tu micrófono.");
-            }
+            } catch(e) { alert("No se pudo iniciar la llamada de voz."); }
         };
 
         window.endMediaCall = () => {
@@ -627,14 +581,7 @@
                 const audioTrack = activeMediaStream.getAudioTracks()[0];
                 if(audioTrack) {
                     audioTrack.enabled = !audioTrack.enabled;
-                    const btn = document.getElementById('toggleMuteAudioBtn');
-                    if(audioTrack.enabled) {
-                        btn.classList.add('active');
-                        btn.textContent = "🎤 Silenciar Mic";
-                    } else {
-                        btn.classList.remove('active');
-                        btn.textContent = "🔇 Mic Silenciado";
-                    }
+                    document.getElementById('toggleMuteAudioBtn').textContent = audioTrack.enabled ? "🎤 Silenciar Mic" : "🔇 Mic Silenciado";
                 }
             }
         };
@@ -644,16 +591,7 @@
                 const videoTrack = activeMediaStream.getVideoTracks()[0];
                 if(videoTrack) {
                     videoTrack.enabled = !videoTrack.enabled;
-                    const btn = document.getElementById('toggleVideoCamBtn');
-                    if(videoTrack.enabled) {
-                        btn.classList.add('active');
-                        btn.textContent = "📹 Cámara HD";
-                    } else {
-                        btn.classList.remove('active');
-                        btn.textContent = "📷 Cámara Pausada";
-                    }
-                } else {
-                    alert("Esta es una llamada puramente de voz HD.");
+                    document.getElementById('toggleVideoCamBtn').textContent = videoTrack.enabled ? "📹 Cámara HD" : "📷 Cámara Pausada";
                 }
             }
         };
@@ -661,14 +599,13 @@
         async function startVoiceRecording() {
             if(isUserBlocked) return;
             try {
-                const constraints = { audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } };
-                const stream = await navigator.mediaDevices.getUserMedia(constraints);
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
                 mediaRecorder = new MediaRecorder(stream);
                 audioChunks = [];
                 mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
                 mediaRecorder.onstop = () => {
                     const audioUrl = URL.createObjectURL(new Blob(audioChunks, { type: 'audio/webm' }));
-                    socket.emit('chat_message', { room: currentRoom, type: 'audio', text: `🎙️ Nota de voz HD Antirruido:<br><audio controls src="${audioUrl}"></audio>`, sender: myUsername });
+                    socket.emit('chat_message', { room: currentRoom, type: 'audio', text: `🎙️ Nota de voz HD:<br><audio controls src="${audioUrl}"></audio>`, sender: myUsername });
                 };
                 mediaRecorder.start();
                 document.getElementById('popupVoiceBtn').classList.add('recording');
@@ -686,11 +623,7 @@
             if(isUserBlocked) return;
             if(!isRecordingVideoNow) {
                 try {
-                    const constraints = {
-                        audio: { echoCancellation: true, noiseSuppression: true },
-                        video: { width: { ideal: 1280 }, height: { ideal: 720 } }
-                    };
-                    const stream = await navigator.mediaDevices.getUserMedia(constraints);
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
                     videoRecorder = new MediaRecorder(stream);
                     videoChunks = [];
                     videoRecorder.ondataavailable = e => videoChunks.push(e.data);
@@ -703,7 +636,7 @@
                     videoRecorder.start();
                     isRecordingVideoNow = true;
                     document.getElementById('popupVideoBtn').classList.add('recording');
-                    alert("🔴 Grabando vídeo... Vuelve a pulsar para enviar.");
+                    alert("🔴 Grabando... Vuelve a pulsar para enviar.");
                 } catch(e) { alert("Cámara no disponible."); }
             } else {
                 if(videoRecorder) videoRecorder.stop();
@@ -742,16 +675,10 @@
         document.getElementById('requestRandomPinBtn').addEventListener('click', () => {
             const phone = document.getElementById('authPhoneInput').value.trim();
             const name = document.getElementById('authNameInput').value.trim();
-            
-            if(!phone || !name) {
-                document.getElementById('authErrorMsg').textContent = "Introduce teléfono y nombre válidos.";
-                return;
-            }
-            
+            if(!phone || !name) { document.getElementById('authErrorMsg').textContent = "Introduce teléfono y nombre."; return; }
             myUsername = name;
             document.getElementById('roomTitleDisplay').textContent = name.toUpperCase();
             document.getElementById('profileAvatarInitial').textContent = name.charAt(0).toUpperCase();
-
             generatedRandomPin = Math.floor(1000 + Math.random() * 9000).toString();
             document.getElementById('displayBigPinValue').textContent = generatedRandomPin;
             document.getElementById('authStep1').style.display = 'none';
@@ -763,13 +690,10 @@
             if(enteredPin === generatedRandomPin || enteredPin.length === 4) {
                 document.getElementById('authOverlay').style.display = 'none';
                 socket.emit('join_room', { room: currentRoom, name: myUsername });
-            } else {
-                document.getElementById('pinErrorMsg').textContent = "❌ PIN incorrecto (deben ser 4 dígitos).";
-            }
+            } else { document.getElementById('pinErrorMsg').textContent = "❌ PIN incorrecto."; }
         });
 
         window.logoutSession = () => location.reload();
-
         window.toggleSeniorMode = () => { document.body.classList.toggle('senior-mode'); };
 
         const messageInput = document.getElementById('messageInput');
@@ -797,25 +721,15 @@
         window.toggleBunkerPin = () => {
             isBunkerActive = !isBunkerActive;
             const statusEl = document.getElementById('bunkerStatusIndicator');
-            if(isBunkerActive) {
-                statusEl.innerHTML = `<span>🛡️ Búnker: <strong style="color:var(--neon-green)">ON</strong></span>`;
-            } else {
-                statusEl.innerHTML = `<span>🛡️ Búnker: <strong style="color:var(--neon-red)">OFF</strong></span>`;
-            }
+            statusEl.innerHTML = isBunkerActive ? `<span>🛡️ Búnker: <strong style="color:var(--neon-green)">ON</strong></span>` : `<span>🛡️ Búnker: <strong style="color:var(--neon-red)">OFF</strong></span>`;
         };
 
         window.sendFromPopup = () => {
             let val = popupMessageInput.value.trim();
             if(!val) return;
-
             const targetLang = document.getElementById('liveTranslateLang').value;
-            if(targetLang !== 'off') {
-                val = `[Traducido a ${targetLang.toUpperCase()}]: ${val}`;
-            }
-
-            if(isBunkerActive) {
-                val = `🔒 [MENSAJE BÚNKER AUTODESTRUCTIBLE]: ${val}`;
-            }
+            if(targetLang !== 'off') val = `[Traducido a ${targetLang.toUpperCase()}]: ${val}`;
+            if(isBunkerActive) val = `🔒 [BÚNKER AUTODESTRUCTIBLE]: ${val}`;
 
             socket.emit('chat_message', { room: currentRoom, type: 'text', text: val, sender: myUsername });
             messageInput.value = '';
@@ -826,10 +740,7 @@
 
         socket.on('chat_message', (data) => {
             if(isUserBlocked) return;
-            
-            if (data.sender !== myUsername) {
-                reproducirSonidoNotificacion();
-            }
+            if (data.sender !== myUsername) reproducirSonidoNotificacion();
 
             const type = data.sender === myUsername ? 'outgoing' : 'incoming';
             const div = document.createElement('div');
