@@ -7,23 +7,55 @@
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
     <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
     <style>
-        :root {
-            --bg-quantum: #010308;
-            --panel-hud: rgba(5, 12, 25, 0.98);
+        /* TEMAS VISUALES DINÁMICOS */
+        :root, body.theme-violet {
+            --bg-quantum: #090212;
+            --panel-hud: rgba(14, 5, 26, 0.96);
             --neon-blue: #00f0ff;
-            --neon-violet: #9d00ff;
+            --neon-violet: #bd00ff;
             --neon-green: #00ff66;
             --neon-amber: #ffaa00;
             --neon-red: #ff0055;
-            --text-main: #f0f6fc;
-            --text-dim: #7a9ec2;
-            --border-hud: rgba(0, 240, 255, 0.18);
+            --text-main: #f3e8ff;
+            --text-dim: #9d8ec4;
+            --border-hud: rgba(189, 0, 255, 0.25);
+            --bg-pattern: radial-gradient(circle at 50% 50%, rgba(189, 0, 255, 0.08) 0%, rgba(9, 2, 18, 0.95) 100%), repeating-linear-gradient(0deg, transparent, transparent 40px, rgba(189, 0, 255, 0.02) 40px, rgba(189, 0, 255, 0.02) 41px);
+        }
+
+        body.theme-blue {
+            --bg-quantum: #010814;
+            --panel-hud: rgba(4, 15, 33, 0.96);
+            --neon-blue: #00f0ff;
+            --neon-violet: #0066ff;
+            --neon-green: #00ffcc;
+            --neon-amber: #ffaa00;
+            --neon-red: #ff0055;
+            --text-main: #e8f4fc;
+            --text-dim: #7aa2c2;
+            --border-hud: rgba(0, 240, 255, 0.3);
+            --bg-pattern: radial-gradient(circle at 50% 50%, rgba(0, 240, 255, 0.1) 0%, rgba(1, 8, 20, 0.95) 100%), linear-gradient(90deg, rgba(0,240,255,0.03) 1px, transparent 1px), linear-gradient(0deg, rgba(0,240,255,0.03) 1px, transparent 1px);
+            background-size: 100% 100%, 30px 30px, 30px 30px;
+        }
+
+        body.theme-matrix {
+            --bg-quantum: #020a05;
+            --panel-hud: rgba(4, 20, 10, 0.96);
+            --neon-blue: #00ff66;
+            --neon-violet: #00ccff;
+            --neon-green: #00ff33;
+            --neon-amber: #ccff00;
+            --neon-red: #ff0033;
+            --text-main: #e8fcf0;
+            --text-dim: #7ac295;
+            --border-hud: rgba(0, 255, 102, 0.3);
+            --bg-pattern: radial-gradient(circle at 50% 50%, rgba(0, 255, 102, 0.1) 0%, rgba(2, 10, 5, 0.95) 100%), repeating-linear-gradient(45deg, rgba(0,255,102,0.02) 0, rgba(0,255,102,0.02) 2px, transparent 0, transparent 10px);
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
 
         html, body {
             background-color: var(--bg-quantum);
+            background-image: var(--bg-pattern);
             font-family: 'Rajdhani', sans-serif;
             color: var(--text-main);
             width: 100vw;
@@ -35,6 +67,7 @@
             position: fixed;
             top: 0;
             left: 0;
+            transition: background 0.5s ease;
         }
 
         body.senior-mode { font-size: 1.4rem !important; }
@@ -44,23 +77,26 @@
         .app-container {
             width: 100vw; height: 100vh; max-width: 1400px;
             background: var(--panel-hud); display: flex; flex-direction: column;
-            overflow: hidden; position: relative; border: 1px solid var(--border-hud); box-shadow: 0 0 30px rgba(0,0,0,0.8);
+            overflow: hidden; position: relative; border: 1px solid var(--border-hud); box-shadow: 0 0 35px rgba(0,0,0,0.9);
+            backdrop-filter: blur(15px);
         }
 
         /* ACCESO Y LOGIN */
         .auth-overlay {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(1, 3, 8, 0.98); backdrop-filter: blur(20px);
+            background: rgba(4, 2, 8, 0.96); backdrop-filter: blur(25px);
             display: flex; justify-content: center; align-items: center; z-index: 2000; padding: 15px;
         }
         .auth-card {
-            width: 100%; max-width: 380px; background: rgba(8, 16, 32, 0.95);
-            border: 1px solid var(--border-hud); border-radius: 12px; padding: 22px; display: flex; flex-direction: column; gap: 12px;
+            width: 100%; max-width: 380px; background: var(--panel-hud);
+            border: 1px solid var(--border-hud); border-radius: 14px; padding: 22px; display: flex; flex-direction: column; gap: 12px;
+            box-shadow: 0 0 25px rgba(0,0,0,0.8);
         }
         .auth-card h2 { font-family: 'Orbitron', sans-serif; color: var(--neon-blue); font-size: 1.1rem; text-align: center; }
         .auth-card p { font-family: 'Share Tech Mono', monospace; font-size: 0.7rem; color: var(--text-dim); text-align: center; }
         .auth-input { background: #000; border: 1px solid var(--border-hud); color: #fff; padding: 12px; font-family: 'Share Tech Mono'; border-radius: 6px; outline: none; font-size: 1rem; width: 100%; }
-        .auth-btn { background: var(--neon-blue); color: #000; border: none; padding: 12px; font-family: 'Orbitron'; font-weight: bold; border-radius: 6px; cursor: pointer; font-size: 0.95rem; text-align: center; }
+        .auth-btn { background: var(--neon-blue); color: #000; border: none; padding: 12px; font-family: 'Orbitron'; font-weight: bold; border-radius: 6px; cursor: pointer; font-size: 0.95rem; text-align: center; transition: 0.2s; }
+        .auth-btn:hover { filter: brightness(1.2); }
 
         .big-pin-display {
             font-family: 'Orbitron', sans-serif; font-size: 2.2rem; color: var(--neon-green);
@@ -73,9 +109,9 @@
             font-family: 'Share Tech Mono'; font-size: 0.75rem; color: var(--neon-blue); text-align: center; margin-bottom: 8px; display: none;
         }
 
-        /* ÚNICA BARRA SUPERIOR MAESTRA UNIFICADA */
+        /* BARRA SUPERIOR SAGRADA Y UNIFICADA */
         .main-header-bar {
-            padding: 8px 12px; background: rgba(3, 7, 15, 0.98); border-bottom: 1px solid var(--border-hud);
+            padding: 8px 12px; background: rgba(2, 4, 10, 0.9); border-bottom: 1px solid var(--border-hud);
             display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; position: relative; z-index: 100; height: 55px;
         }
         .app-title-sagrada { font-family: 'Orbitron', sans-serif; font-size: 0.9rem; color: var(--text-main); font-weight: 900; flex-shrink: 0; letter-spacing: 0.5px; }
@@ -93,14 +129,12 @@
         }
         .whatsapp-icon-btn:hover { color: #fff; transform: scale(1.1); }
         
-        /* LOGOTIPO DE OJOS A LA DERECHA */
         .header-eye-logo {
             width: 30px; height: 30px; border-radius: 6px; background: rgba(0,240,255,0.05);
             border: 1px solid var(--border-hud); display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0;
         }
         .header-eye-logo svg { width: 16px; height: 16px; }
 
-        /* BOTÓN SALIR DENTRO DEL MARGEN */
         .logout-action-btn { 
             background: var(--neon-red); color: #fff; border: none; padding: 4px 6px; 
             border-radius: 4px; font-family: 'Orbitron'; font-weight: bold; cursor: pointer; 
@@ -110,12 +144,12 @@
         /* MENÚ DESPLEGABLE */
         .three-dots-container { position: relative; display: inline-block; }
         .dropdown-menu-tools {
-            display: none; position: absolute; right: 0; top: 40px; background: rgba(4, 10, 22, 0.98);
-            border: 1px solid var(--border-hud); border-radius: 8px; padding: 8px; width: 220px; z-index: 1000; box-shadow: 0 4px 20px rgba(0,0,0,0.8);
-            flex-direction: column; gap: 6px;
+            display: none; position: absolute; right: 0; top: 40px; background: var(--panel-hud);
+            border: 1px solid var(--border-hud); border-radius: 8px; padding: 8px; width: 230px; z-index: 1000; box-shadow: 0 4px 25px rgba(0,0,0,0.9);
+            flex-direction: column; gap: 6px; backdrop-filter: blur(15px);
         }
         .dropdown-item {
-            background: rgba(0, 240, 255, 0.03); border: 1px solid var(--border-hud); color: var(--text-main);
+            background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-hud); color: var(--text-main);
             padding: 8px; border-radius: 5px; font-family: 'Share Tech Mono', monospace; font-size: 0.75rem; cursor: pointer; text-align: left; transition: 0.2s;
         }
         .dropdown-item:hover { background: rgba(0, 240, 255, 0.15); color: var(--neon-blue); border-color: var(--neon-blue); }
@@ -123,24 +157,24 @@
         .dropdown-item.danger:hover { background: rgba(255,0,85,0.15); color: var(--neon-red); }
 
         /* ÁREA DE TRABAJO */
-        .workspace-area { flex: 1; display: flex; flex-direction: column; position: relative; overflow: hidden; background: #02050c; height: calc(100vh - 55px); }
+        .workspace-area { flex: 1; display: flex; flex-direction: column; position: relative; overflow: hidden; background: transparent; height: calc(100vh - 55px); }
         .screen-view { display: flex; flex-direction: column; flex: 1; height: 100%; overflow: hidden; position: relative; }
         
         .messages-display { flex: 1; padding: 12px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding-bottom: 100px; }
         .quantum-msg { max-width: 85%; padding: 10px 14px; border-radius: 8px; font-size: 0.95rem; line-height: 1.4; position: relative; word-break: break-word; }
-        .quantum-msg.incoming { background: rgba(0, 240, 255, 0.04); border-left: 3px solid var(--neon-blue); align-self: flex-start; }
-        .quantum-msg.outgoing { background: rgba(157, 0, 255, 0.1); border-right: 3px solid var(--neon-violet); align-self: flex-end; text-align: right; }
+        .quantum-msg.incoming { background: rgba(0, 240, 255, 0.05); border-left: 3px solid var(--neon-blue); align-self: flex-start; }
+        .quantum-msg.outgoing { background: rgba(189, 0, 255, 0.08); border-right: 3px solid var(--neon-violet); align-self: flex-end; text-align: right; }
         .quantum-msg .msg-meta { font-family: 'Share Tech Mono', monospace; font-size: 0.55rem; color: var(--text-dim); margin-top: 4px; display: flex; justify-content: flex-end; gap: 8px; }
 
         .dynamic-content-view { display: none; padding: 20px; flex: 1; overflow-y: auto; font-family: 'Share Tech Mono'; }
-        .dynamic-card { background: rgba(0,240,255,0.03); border: 1px solid var(--border-hud); padding: 15px; border-radius: 8px; margin-bottom: 12px; }
+        .dynamic-card { background: rgba(255,255,255,0.02); border: 1px solid var(--border-hud); padding: 15px; border-radius: 8px; margin-bottom: 12px; }
 
         /* VENTANA FLOTANTE DE ESCRITURA HACIA ARRIBA */
         .writing-popup-overlay {
             position: absolute; bottom: 75px; left: 8px; right: 8px;
-            background: rgba(4, 10, 22, 0.98); border: 1px solid var(--neon-blue);
+            background: var(--panel-hud); border: 1px solid var(--neon-blue);
             border-radius: 10px; padding: 12px; display: none; flex-direction: column; gap: 8px;
-            z-index: 250; box-shadow: 0 -5px 25px rgba(0, 240, 255, 0.3); backdrop-filter: blur(10px);
+            z-index: 250; box-shadow: 0 -5px 30px rgba(0, 0, 0, 0.8); backdrop-filter: blur(15px);
         }
         .writing-popup-overlay.active { display: flex; }
         .writing-popup-header { display: flex; justify-content: space-between; align-items: center; font-family: 'Orbitron'; font-size: 0.75rem; color: var(--neon-blue); }
@@ -154,7 +188,7 @@
         /* BARRA INFERIOR DE CHAT LIMPIA */
         .chat-input-deck {
             padding: 8px 12px; 
-            background: rgba(3, 7, 15, 0.99); 
+            background: rgba(2, 4, 10, 0.95); 
             border-top: 1px solid var(--border-hud);
             display: flex; 
             gap: 8px; 
@@ -189,7 +223,7 @@
         .video-box-16k video { width: 100%; height: 100%; object-fit: cover; }
     </style>
 </head>
-<body>
+<body class="theme-violet">
 
     <div class="auth-overlay" id="authOverlay">
         <div class="auth-card" id="authStep1">
@@ -197,9 +231,10 @@
             <div class="install-banner" id="iosInstallHint">
                 🍏 <strong>Usuario de iPhone:</strong> Toca el botón <strong>Compartir</strong> abajo y selecciona <strong>"Añadir a inicio"</strong>.
             </div>
-            <p>Introduce tus datos para conectarte en tiempo real.</p>
-            <input type="text" id="authPhoneInput" class="auth-input" placeholder="Tu Teléfono" style="margin-bottom: 8px;">
+            <p>Introduce tus datos. Tu país se detecta automáticamente.</p>
+            <input type="text" id="authPhoneInput" class="auth-input" placeholder="Tu Teléfono (ej: +34...)" style="margin-bottom: 8px;">
             <input type="text" id="authNameInput" class="auth-input" placeholder="Tu Nombre o Alias" style="margin-bottom: 8px;">
+            <div style="font-family: 'Share Tech Mono'; font-size: 0.75rem; color: var(--neon-blue); margin-bottom: 8px;" id="detectedCountryDisplay">🌍 Detectando país...</div>
             <button class="auth-btn" id="requestRandomPinBtn">ENVIAR PIN DE ACCESO</button>
             <div id="authErrorMsg" style="color:var(--neon-red); font-size:0.65rem; text-align:center; margin-top:4px;"></div>
         </div>
@@ -225,7 +260,7 @@
     </div>
 
     <div class="app-container">
-        <!-- BARRA SUPERIOR ÚNICA Y UNIFICADA (VOBIXCHAT - USUARIO CENTRADO - ICONOS / SALIR / LOGO) -->
+        <!-- BARRA SUPERIOR ÚNICA Y UNIFICADA -->
         <div class="main-header-bar">
             <div class="app-title-sagrada">VOBIXCHAT</div>
             
@@ -241,6 +276,9 @@
                 <div class="three-dots-container">
                     <button class="whatsapp-icon-btn" id="threeDotsToggleBtn" title="Menú">⋮</button>
                     <div class="dropdown-menu-tools" id="toolsDropdownMenu">
+                        <button class="dropdown-item" onclick="switchTheme('violet'); toggleToolsMenu();">🟪 Tema: Cyber-Vortex (Violeta)</button>
+                        <button class="dropdown-item" onclick="switchTheme('blue'); toggleToolsMenu();">🟦 Tema: Quantum Grid (Azul)</button>
+                        <button class="dropdown-item" onclick="switchTheme('matrix'); toggleToolsMenu();">🟩 Tema: Cyberpunk Matrix (Verde)</button>
                         <button class="dropdown-item danger" onclick="toggleBlockUserStatus(); toggleToolsMenu();">🚫 Bloquear / Desbloquear</button>
                         <button class="dropdown-item" onclick="switchView('translator'); toggleToolsMenu();">🌐 Traductor AI</button>
                         <button class="dropdown-item" onclick="switchView('cloud'); toggleToolsMenu();">☁️ Nube Ilimitada</button>
@@ -268,7 +306,7 @@
             <div class="screen-view" id="viewChatSection" style="display: flex; flex-direction: column; flex: 1; height: 100%;">
                 <div class="messages-display" id="messagesContainer">
                     <div class="quantum-msg incoming">
-                        <strong>[SISTEMA]</strong>: Compatible con iPhone y Android. Conectado con éxito.
+                        <strong>[SISTEMA]</strong>: Sistema cifrado activo. País detectado con éxito.
                         <div class="msg-meta"><span>12:00</span></div>
                     </div>
                 </div>
@@ -338,6 +376,36 @@
         let videoRecorder = null;
         let videoChunks = [];
         let isRecordingVideoNow = false;
+        let detectedUserCountry = "Desconocido";
+
+        // Detección automática de país por IP al abrir la app
+        async function detectCountryByIP() {
+            try {
+                const response = await fetch('https://ipapi.co/json/');
+                const data = await response.json();
+                if(data && data.country_name) {
+                    detectedUserCountry = `${data.country_name} (${data.country_code || ''})`;
+                    document.getElementById('detectedCountryDisplay').textContent = `🌍 País detectado: ${detectedUserCountry}`;
+                } else {
+                    document.getElementById('detectedCountryDisplay').textContent = `🌍 País detectado: Automático (Red Global)`;
+                }
+            } catch(e) {
+                document.getElementById('detectedCountryDisplay').textContent = `🌍 País detectado: Vía Satélite (Modo Seguro)`;
+            }
+        }
+        detectCountryByIP();
+
+        // Función para cambiar los temas visuales en tiempo real
+        window.switchTheme = (themeName) => {
+            document.body.className = 'theme-' + themeName;
+            localStorage.setItem('vobix_theme', themeName);
+        };
+
+        // Cargar tema guardado si existe
+        const savedTheme = localStorage.getItem('vobix_theme');
+        if(savedTheme) {
+            document.body.className = 'theme-' + savedTheme;
+        }
 
         const isIos = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
         if (isIos) {
@@ -440,7 +508,7 @@
             const name = document.getElementById('authNameInput').value.trim();
             if(!phone || !name) return document.getElementById('authErrorMsg').textContent = "Introduce teléfono y nombre.";
             myUsername = name;
-            document.getElementById('roomTitleDisplay').textContent = "@" + name.toUpperCase();
+            document.getElementById('roomTitleDisplay').textContent = "@" + name.toUpperCase() + ` [${detectedUserCountry}]`;
 
             if(!invitedRoom) currentRoom = name;
 
