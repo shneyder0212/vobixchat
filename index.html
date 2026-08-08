@@ -109,7 +109,7 @@
             font-family: 'Share Tech Mono'; font-size: 0.75rem; color: var(--neon-blue); text-align: center; margin-bottom: 8px; display: none;
         }
 
-        /* BARRA SUPERIOR SAGRADA Y UNIFICADA */
+        /* BARRA SUPERIOR SAGRADA Y UNIFICADA (SIN MOSTRAR PAÍS) */
         .main-header-bar {
             padding: 8px 12px; background: rgba(2, 4, 10, 0.9); border-bottom: 1px solid var(--border-hud);
             display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; position: relative; z-index: 100; height: 55px;
@@ -169,7 +169,7 @@
         .dynamic-content-view { display: none; padding: 20px; flex: 1; overflow-y: auto; font-family: 'Share Tech Mono'; }
         .dynamic-card { background: rgba(255,255,255,0.02); border: 1px solid var(--border-hud); padding: 15px; border-radius: 8px; margin-bottom: 12px; }
 
-        /* NUEVA CÁPSULA FLOTANTE DE ESCRITURA INTELIGENTE (ESTILO WHATSAPP PRO + TRADUCTOR + BÚNKER) */
+        /* CÁPSULA FLOTANTE DE ESCRITURA INTELIGENTE CON MICRÓFONO Y CÁMARA ARRIBA */
         .writing-popup-overlay {
             position: absolute; bottom: 70px; left: 8px; right: 8px;
             background: var(--panel-hud); border: 1px solid var(--neon-blue);
@@ -192,6 +192,7 @@
             display: flex; align-items: center; justify-content: center; padding: 6px; transition: 0.2s;
         }
         .capsule-tool-icon:hover { transform: scale(1.15); color: #fff; }
+        .capsule-tool-icon.recording { color: var(--neon-red); animation: pulseVoice 1.2s infinite; }
 
         .writing-advanced-controls {
             display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.5);
@@ -204,7 +205,7 @@
 
         .writing-popup-footer { display: flex; justify-content: flex-end; gap: 8px; }
 
-        /* BARRA INFERIOR DE CHAT LIMPIA */
+        /* BARRA INFERIOR DE CHAT LIMPIA (SIN MICRÓFONO NI CÁMARA AFUERA) */
         .chat-input-deck {
             padding: 8px 12px; 
             background: rgba(2, 4, 10, 0.95); 
@@ -225,13 +226,6 @@
             flex: 1; min-width: 0; background: rgba(0, 0, 0, 0.85); border: 1px solid var(--neon-blue); border-radius: 25px;
             padding: 9px 15px; color: var(--text-main); font-family: 'Share Tech Mono', monospace; font-size: 0.85rem; outline: none; cursor: pointer;
         }
-        .action-btn {
-            background: rgba(0, 240, 255, 0.08); border: 1px solid var(--border-hud); color: var(--neon-blue);
-            padding: 8px 10px; border-radius: 50%; width: 40px; height: 40px; cursor: pointer; font-size: 0.85rem; flex-shrink: 0; transition: 0.2s;
-            display: flex; align-items: center; justify-content: center;
-        }
-        .action-btn.recording { background: var(--neon-red); color: #fff; animation: pulseVoice 1.2s infinite; }
-        @keyframes pulseVoice { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
 
         /* PANTALLA DE VIDEOLLAMADA */
         .overlay-screen {
@@ -250,10 +244,9 @@
             <div class="install-banner" id="iosInstallHint">
                 🍏 <strong>Usuario de iPhone:</strong> Toca el botón <strong>Compartir</strong> abajo y selecciona <strong>"Añadir a inicio"</strong>.
             </div>
-            <p>Introduce tus datos. Tu país se detecta automáticamente.</p>
+            <p>Introduce tus datos de acceso seguro.</p>
             <input type="text" id="authPhoneInput" class="auth-input" placeholder="Tu Teléfono (ej: +34...)" style="margin-bottom: 8px;">
             <input type="text" id="authNameInput" class="auth-input" placeholder="Tu Nombre o Alias" style="margin-bottom: 8px;">
-            <div style="font-family: 'Share Tech Mono'; font-size: 0.75rem; color: var(--neon-blue); margin-bottom: 8px;" id="detectedCountryDisplay">🌍 Detectando país...</div>
             <button class="auth-btn" id="requestRandomPinBtn">ENVIAR PIN DE ACCESO</button>
             <div id="authErrorMsg" style="color:var(--neon-red); font-size:0.65rem; text-align:center; margin-top:4px;"></div>
         </div>
@@ -279,7 +272,7 @@
     </div>
 
     <div class="app-container">
-        <!-- BARRA SUPERIOR ÚNICA Y UNIFICADA -->
+        <!-- BARRA SUPERIOR ÚNICA Y UNIFICADA (PRIVACIDAD DE PAÍS ACTIVADA) -->
         <div class="main-header-bar">
             <div class="app-title-sagrada">VOBIXCHAT</div>
             
@@ -325,12 +318,12 @@
             <div class="screen-view" id="viewChatSection" style="display: flex; flex-direction: column; flex: 1; height: 100%;">
                 <div class="messages-display" id="messagesContainer">
                     <div class="quantum-msg incoming">
-                        <strong>[SISTEMA]</strong>: Cápsula inteligente, traductor cuántico y búnker activados.
+                        <strong>[SISTEMA]</strong>: Interfaz optimizada. Controles multimedia integrados en cápsula.
                         <div class="msg-meta"><span>12:00</span></div>
                     </div>
                 </div>
 
-                <!-- CÁPSULA FLOTANTE DE ESCRITURA ESTILO WHATSAPP PRO + TRADUCTOR + BÚNKER -->
+                <!-- CÁPSULA FLOTANTE DE ESCRITURA CON MICRÓFONO Y CÁMARA INTEGRADOS -->
                 <div class="writing-popup-overlay" id="writingPopup">
                     <div class="writing-popup-header">
                         <span>💬 CÁPSULA DE MENSAJE CUÁNTICO</span>
@@ -338,10 +331,12 @@
                     </div>
                     
                     <div class="writing-capsule-bar">
+                        <!-- MICRÓFONO Y CÁMARA MOVIDOS DENTRO DE LA CÁPSULA ARRIBA -->
+                        <button class="capsule-tool-icon" id="popupVoiceBtn" title="Nota de voz" onmousedown="startVoiceRecording()" onmouseup="stopVoiceRecording()" ontouchstart="startVoiceRecording()" ontouchend="stopVoiceRecording()">🎤</button>
+                        <button class="capsule-tool-icon" id="popupVideoBtn" title="Vídeo / Cámara" onclick="toggleInstantVideoRecording()">📹</button>
                         <button class="capsule-tool-icon" title="Stickers / Emojis" onclick="alert('⚡ Panel de Emojis Cuánticos abierto')">😊</button>
                         <textarea id="popupMessageInput" class="writing-popup-textarea" placeholder="Escribe tu mensaje..."></textarea>
                         <button class="capsule-tool-icon" title="Adjuntar Archivo" onclick="alert('📎 Módulo de archivos cifrados')">📎</button>
-                        <button class="capsule-tool-icon" title="Cámara Rápida" onclick="alert('📷 Captura cuántica lista')">📷</button>
                     </div>
 
                     <!-- CONTROLES EXCLUSIVOS: TRADUCTOR EN TIEMPO REAL & MODO BÚNKER -->
@@ -365,11 +360,9 @@
                     </div>
                 </div>
 
-                <!-- BARRA INFERIOR DE CHAT ESTILO WHATSAPP -->
+                <!-- BARRA INFERIOR DE CHAT LIMPIA (SIN MICRÓFONO NI CÁMARA FUERA) -->
                 <div class="chat-input-deck" id="chatInputDeckArea">
-                    <button class="action-btn" id="voiceRecordBtn" onmousedown="startVoiceRecording()" onmouseup="stopVoiceRecording()" ontouchstart="startVoiceRecording()" ontouchend="stopVoiceRecording()" title="Nota de voz">🎤</button>
                     <input type="text" id="messageInput" class="quantum-input" placeholder="Mensaje..." readonly autocomplete="off">
-                    <button class="action-btn" id="videoRecordBtn" onclick="toggleInstantVideoRecording()" title="Vídeo">📹</button>
                 </div>
             </div>
 
@@ -418,25 +411,7 @@
         let videoRecorder = null;
         let videoChunks = [];
         let isRecordingVideoNow = false;
-        let detectedUserCountry = "Desconocido";
         let isBunkerActive = false;
-
-        // Detección automática de país por IP al abrir la app
-        async function detectCountryByIP() {
-            try {
-                const response = await fetch('https://ipapi.co/json/');
-                const data = await response.json();
-                if(data && data.country_name) {
-                    detectedUserCountry = `${data.country_name} (${data.country_code || ''})`;
-                    document.getElementById('detectedCountryDisplay').textContent = `🌍 País detectado: ${detectedUserCountry}`;
-                } else {
-                    document.getElementById('detectedCountryDisplay').textContent = `🌍 País detectado: Automático (Red Global)`;
-                }
-            } catch(e) {
-                document.getElementById('detectedCountryDisplay').textContent = `🌍 País detectado: Vía Satélite (Modo Seguro)`;
-            }
-        }
-        detectCountryByIP();
 
         // Función para cambiar los temas visuales en tiempo real
         window.switchTheme = (themeName) => {
@@ -481,14 +456,14 @@
                     socket.emit('chat_message', { room: currentRoom, type: 'audio', text: `🎙️ Nota de voz:<br><audio controls src="${audioUrl}"></audio>`, sender: myUsername });
                 };
                 mediaRecorder.start();
-                document.getElementById('voiceRecordBtn').classList.add('recording');
+                document.getElementById('popupVoiceBtn').classList.add('recording');
             } catch(e) { alert("Micrófono bloqueado."); }
         }
 
         function stopVoiceRecording() {
             if(mediaRecorder && mediaRecorder.state !== "inactive") {
                 mediaRecorder.stop();
-                document.getElementById('voiceRecordBtn').classList.remove('recording');
+                document.getElementById('popupVoiceBtn').classList.remove('recording');
             }
         }
 
@@ -508,13 +483,13 @@
                     };
                     videoRecorder.start();
                     isRecordingVideoNow = true;
-                    document.getElementById('videoRecordBtn').classList.add('recording');
-                    alert("🔴 Grabando... Vuelve a pulsar 📹 para enviar.");
+                    document.getElementById('popupVideoBtn').classList.add('recording');
+                    alert("🔴 Grabando vídeo en cápsula... Vuelve a pulsar para enviar.");
                 } catch(e) { alert("Cámara no disponible."); }
             } else {
                 if(videoRecorder) videoRecorder.stop();
                 isRecordingVideoNow = false;
-                document.getElementById('videoRecordBtn').classList.remove('recording');
+                document.getElementById('popupVideoBtn').classList.remove('recording');
             }
         }
 
@@ -550,7 +525,8 @@
             const name = document.getElementById('authNameInput').value.trim();
             if(!phone || !name) return document.getElementById('authErrorMsg').textContent = "Introduce teléfono y nombre.";
             myUsername = name;
-            document.getElementById('roomTitleDisplay').textContent = "@" + name.toUpperCase() + ` [${detectedUserCountry}]`;
+            // PRIVACIDAD TOTAL: Se muestra estrictamente el nombre/alias del usuario sin rastros del país
+            document.getElementById('roomTitleDisplay').textContent = "@" + name.toUpperCase();
 
             if(!invitedRoom) currentRoom = name;
 
