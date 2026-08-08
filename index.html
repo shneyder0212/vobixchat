@@ -178,45 +178,45 @@
         .dynamic-content-view { display: none; padding: 20px; flex: 1; overflow-y: auto; font-family: 'Share Tech Mono'; }
         .dynamic-card { background: rgba(255,255,255,0.02); border: 1px solid var(--border-hud); padding: 15px; border-radius: 8px; margin-bottom: 12px; }
 
-        /* CÁPSULA FLOTANTE EXPANDIDA (CUBRE TODO EL ESPACIO INFERIOR AL ESCRIBIR) */
+        /* MODO CHAT INMERSIVO / PANTALLA COMPLETA ESTILO WHATSAPP NATIVO */
         .writing-popup-overlay {
-            position: absolute; bottom: 0; left: 0; right: 0; top: 0;
-            background: var(--panel-hud); border-top: 1px solid var(--neon-blue);
-            padding: 15px; display: none; flex-direction: column; justify-content: flex-end; gap: 12px;
+            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            background: var(--panel-hud);
+            padding: 12px; display: none; flex-direction: column; justify-content: flex-end; gap: 10px;
             z-index: 250; backdrop-filter: blur(20px);
         }
         .writing-popup-overlay.active { display: flex; }
         
-        .writing-popup-header { display: flex; justify-content: space-between; align-items: center; font-family: 'Orbitron'; font-size: 0.8rem; color: var(--neon-blue); }
+        .writing-popup-header { display: flex; justify-content: space-between; align-items: center; font-family: 'Orbitron'; font-size: 0.75rem; color: var(--neon-blue); border-bottom: 1px solid var(--border-hud); padding-bottom: 6px; }
         
         .writing-capsule-bar {
             display: flex; align-items: center; background: #000; border: 1px solid var(--border-hud);
-            border-radius: 20px; padding: 6px 10px; gap: 6px;
+            border-radius: 25px; padding: 6px 12px; gap: 8px;
         }
         .writing-popup-textarea {
-            flex: 1; height: 90px; background: transparent; border: none;
+            flex: 1; height: 50px; background: transparent; border: none;
             color: var(--text-main); font-family: 'Share Tech Mono', monospace; font-size: 0.95rem;
             outline: none; resize: none; padding-top: 6px;
         }
         .capsule-tool-icon {
             background: none; border: none; color: var(--neon-blue); cursor: pointer; font-size: 1.1rem;
-            display: flex; align-items: center; justify-content: center; padding: 6px; transition: 0.2s; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center; padding: 4px; transition: 0.2s; flex-shrink: 0;
         }
         .capsule-tool-icon:hover { transform: scale(1.15); color: #fff; }
         .capsule-tool-icon.recording { color: var(--neon-red); animation: pulseVoice 1.2s infinite; }
 
         .writing-advanced-controls {
             display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.6);
-            padding: 8px 12px; border-radius: 8px; border: 1px dashed var(--border-hud); font-size: 0.75rem; font-family: 'Share Tech Mono';
+            padding: 6px 10px; border-radius: 8px; border: 1px dashed var(--border-hud); font-size: 0.7rem; font-family: 'Share Tech Mono';
         }
         .translator-toggle-box { display: flex; align-items: center; gap: 6px; color: var(--neon-green); }
-        .translator-select { background: #000; color: var(--neon-blue); border: 1px solid var(--border-hud); border-radius: 4px; padding: 4px; font-size: 0.7rem; outline: none; }
+        .translator-select { background: #000; color: var(--neon-blue); border: 1px solid var(--border-hud); border-radius: 4px; padding: 3px; font-size: 0.65rem; outline: none; }
         
         .bunker-mode-box { display: flex; align-items: center; gap: 4px; color: var(--neon-amber); cursor: pointer; }
 
         .writing-popup-footer { display: flex; justify-content: flex-end; gap: 8px; }
 
-        /* BARRA INFERIOR DE CHAT QUE SE OCULTA AL ABRIR LA CÁPSULA */
+        /* BARRA INFERIOR DE CHAT ESTILO WHATSAPP (SE OCULTa AL ENTRAR AL CHAT INMERSIVO) */
         .chat-input-deck {
             padding: 8px 12px; 
             background: rgba(2, 4, 10, 0.95); 
@@ -324,23 +324,27 @@
             <div class="screen-view" id="viewChatSection" style="display: flex; flex-direction: column; flex: 1; height: 100%;">
                 <div class="messages-display" id="messagesContainer">
                     <div class="quantum-msg incoming">
-                        <strong>[SISTEMA]</strong>: Cápsula expandible y optimización móvil completadas.
+                        <strong>[SISTEMA]</strong>: Modo chat inmersivo de pantalla completa activado.
                         <div class="msg-meta"><span>12:00</span></div>
                     </div>
                 </div>
 
-                <!-- CÁPSULA EXPANDIBLE DE ESCRITURA (CUBRE TODO EL ESPACIO INFERIOR) -->
+                <!-- MODO CHAT INMERSIVO DE PANTALLA COMPLETA (ESTILO WHATSAPP) -->
                 <div class="writing-popup-overlay" id="writingPopup">
                     <div class="writing-popup-header">
-                        <span>💬 CÁPSULA DE MENSAJE CUÁNTICO</span>
-                        <button class="auth-btn" style="padding: 4px 10px; font-size: 0.7rem; background: var(--neon-red); color: #fff;" onclick="closeWritingPopup()">✖ Cerrar</button>
+                        <span>💬 CONVERSACIÓN ACTIVA</span>
+                        <button class="auth-btn" style="padding: 4px 10px; font-size: 0.7rem; background: var(--neon-red); color: #fff;" onclick="closeWritingPopup()">✖ Volver al Chat</button>
+                    </div>
+
+                    <div style="flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding: 4px 0;" id="immersiveChatHistory">
+                        <!-- Historial espejo limpio para enfoque total -->
                     </div>
                     
                     <div class="writing-capsule-bar">
                         <button class="capsule-tool-icon" id="popupVoiceBtn" title="Nota de voz" onmousedown="startVoiceRecording()" onmouseup="stopVoiceRecording()" ontouchstart="startVoiceRecording()" ontouchend="stopVoiceRecording()">🎤</button>
                         <button class="capsule-tool-icon" id="popupVideoBtn" title="Vídeo / Cámara" onclick="toggleInstantVideoRecording()">📹</button>
                         <button class="capsule-tool-icon" title="Stickers" onclick="alert('⚡ Panel de Emojis Cuánticos abierto')">😊</button>
-                        <textarea id="popupMessageInput" class="writing-popup-textarea" placeholder="Escribe tu mensaje aquí..."></textarea>
+                        <textarea id="popupMessageInput" class="writing-popup-textarea" placeholder="Mensaje..."></textarea>
                         <button class="capsule-tool-icon" title="Adjuntar" onclick="alert('📎 Módulo de archivos cifrados')">📎</button>
                     </div>
 
@@ -364,7 +368,7 @@
                     </div>
                 </div>
 
-                <!-- BARRA INFERIOR DE CHAT (SE OCULTA CUANDO LA CÁPSULA ESTÁ ACTIVA) -->
+                <!-- BARRA INFERIOR DE CHAT ESTILO WHATSAPP -->
                 <div class="chat-input-deck" id="chatInputDeckArea">
                     <input type="text" id="messageInput" class="quantum-input" placeholder="Mensaje..." readonly autocomplete="off">
                 </div>
@@ -619,18 +623,23 @@
         const writingPopup = document.getElementById('writingPopup');
         const popupMessageInput = document.getElementById('popupMessageInput');
         const chatInputDeckArea = document.getElementById('chatInputDeckArea');
+        const messagesContainer = document.getElementById('messagesContainer');
+        const immersiveChatHistory = document.getElementById('immersiveChatHistory');
 
         messageInput.addEventListener('click', () => {
             if(isUserBlocked) return;
+            // Clonar mensajes actuales al modo inmersivo para tener el historial centrado como WhatsApp
+            immersiveChatHistory.innerHTML = messagesContainer.innerHTML;
             writingPopup.classList.add('active');
-            chatInputDeckArea.style.display = 'none'; // Oculta la barra inferior vacía para ganar espacio absoluto
+            chatInputDeckArea.style.display = 'none'; 
             popupMessageInput.value = messageInput.value;
             popupMessageInput.focus();
+            immersiveChatHistory.scrollTop = immersiveChatHistory.scrollHeight;
         });
 
         window.closeWritingPopup = () => {
             writingPopup.classList.remove('active');
-            chatInputDeckArea.style.display = 'flex'; // Restaura la barra inferior al cerrar
+            chatInputDeckArea.style.display = 'flex'; 
         };
 
         window.toggleBunkerPin = () => {
@@ -666,12 +675,17 @@
         socket.on('chat_message', (data) => {
             if(isUserBlocked) return;
             const type = data.sender === myUsername ? 'outgoing' : 'incoming';
-            const messagesContainer = document.getElementById('messagesContainer');
             const div = document.createElement('div');
             div.className = `quantum-msg ${type}`;
             div.innerHTML = `<strong>[${data.sender}]</strong>: ${data.text}<div class="msg-meta"><span>${new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span></div>`;
-            messagesContainer.appendChild(div);
+            
+            messagesContainer.appendChild(div.cloneNode(true));
             messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+            if(writingPopup.classList.contains('active')) {
+                immersiveChatHistory.appendChild(div);
+                immersiveChatHistory.scrollTop = immersiveChatHistory.scrollHeight;
+            }
         });
     </script>
 </body>
