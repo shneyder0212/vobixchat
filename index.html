@@ -194,7 +194,6 @@
         .dynamic-content-view { display: none; padding: 20px; flex: 1; overflow-y: auto; font-family: 'Share Tech Mono'; }
         .dynamic-card { background: rgba(255,255,255,0.02); border: 1px solid var(--border-hud); padding: 15px; border-radius: 8px; margin-bottom: 12px; }
 
-        /* --- VENTANA FLOTANTE DE ESCRITURA Y TECLADO --- */
         .writing-popup-overlay {
             position: absolute; top: 0; left: 0; right: 0; bottom: 0;
             background: var(--panel-hud);
@@ -241,7 +240,6 @@
             padding: 8px 15px; color: var(--text-main); font-family: 'Share Tech Mono', monospace; font-size: 0.9rem; outline: none;
         }
 
-        /* --- PANTALLA DE LLAMADAS CON WEBRTC REAL --- */
         .overlay-screen {
             position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
             background: rgba(1, 3, 8, 0.98); display: none; flex-direction: column; z-index: 1500; padding: 10px; box-sizing: border-box;
@@ -298,7 +296,6 @@
         </div>
     </div>
 
-    <!-- PANTALLA DE LLAMADA WEBRTC MULTI-DISPOSITIVO -->
     <div class="overlay-screen" id="mediaCallScreen">
         <div class="call-header-hud">
             <div>
@@ -365,7 +362,7 @@
             <div class="screen-view" id="viewChatSection" style="display: flex; flex-direction: column; flex: 1; height: 100%;">
                 <div class="messages-display" id="messagesContainer">
                     <div class="quantum-msg incoming">
-                        <strong>[SISTEMA]</strong>: Bienvenid@ a VOBIXCHAT. Conexión y llamadas P2P listas.
+                        <strong>[SISTEMA]</strong>: Bienvenid@ a VOBIXCHAT. Teclado y llamadas P2P optimizadas.
                         <div class="msg-meta"><span>12:00</span></div>
                     </div>
                 </div>
@@ -534,7 +531,6 @@
             }
         };
 
-        // --- WEBRTC LLAMADAS P2P REALES ---
         window.startVideoCall = async (withVideo) => {
             if(isUserBlocked) return;
             isVideoCallActive = withVideo;
@@ -693,18 +689,25 @@
         const messagesContainer = document.getElementById('messagesContainer');
         const immersiveChatHistory = document.getElementById('immersiveChatHistory');
 
-        // Activación directa del teclado en móviles
-        messageInput.addEventListener('click', () => {
+        // APERTURA FORZADA DEL TECLADO TÁCTIL EN MÓVILES
+        const abrirTecladoFlotante = (e) => {
             if(isUserBlocked) return;
+            e.preventDefault();
             immersiveChatHistory.innerHTML = messagesContainer.innerHTML;
             writingPopup.classList.add('active');
             chatInputDeckArea.style.display = 'none'; 
             popupMessageInput.value = messageInput.value;
+            
             setTimeout(() => {
                 popupMessageInput.focus();
-            }, 100);
+                popupMessageInput.click();
+            }, 50);
+
             immersiveChatHistory.scrollTop = immersiveChatHistory.scrollHeight;
-        });
+        };
+
+        messageInput.addEventListener('click', abrirTecladoFlotante);
+        messageInput.addEventListener('touchend', abrirTecladoFlotante);
 
         window.closeWritingPopup = () => {
             writingPopup.classList.remove('active');
