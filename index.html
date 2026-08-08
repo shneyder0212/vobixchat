@@ -7,7 +7,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
     <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
     <style>
-        /* TEMAS VISUALES DINÁMICOS */
         :root, body.theme-violet {
             --bg-quantum: #090212;
             --panel-hud: rgba(14, 5, 26, 0.98);
@@ -77,6 +76,29 @@
             backdrop-filter: blur(15px);
         }
 
+        /* ACCESO Y LOGIN */
+        .auth-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(4, 2, 8, 0.96); backdrop-filter: blur(25px);
+            display: flex; justify-content: center; align-items: center; z-index: 2000; padding: 15px;
+        }
+        .auth-card {
+            width: 100%; max-width: 380px; background: var(--panel-hud);
+            border: 1px solid var(--border-hud); border-radius: 14px; padding: 22px; display: flex; flex-direction: column; gap: 12px;
+            box-shadow: 0 0 25px rgba(0,0,0,0.8);
+        }
+        .auth-card h2 { font-family: 'Orbitron', sans-serif; color: var(--neon-blue); font-size: 1.1rem; text-align: center; }
+        .auth-card p { font-family: 'Share Tech Mono', monospace; font-size: 0.7rem; color: var(--text-dim); text-align: center; }
+        .auth-input { background: #000; border: 1px solid var(--border-hud); color: #fff; padding: 12px; font-family: 'Share Tech Mono'; border-radius: 6px; outline: none; font-size: 1rem; width: 100%; }
+        .auth-btn { background: var(--neon-blue); color: #000; border: none; padding: 12px; font-family: 'Orbitron'; font-weight: bold; border-radius: 6px; cursor: pointer; font-size: 0.95rem; text-align: center; transition: 0.2s; }
+        .auth-btn:hover { filter: brightness(1.2); }
+
+        .big-pin-display {
+            font-family: 'Orbitron', sans-serif; font-size: 2.2rem; color: var(--neon-green);
+            text-align: center; letter-spacing: 4px; background: rgba(0,255,102,0.05);
+            border: 1px dashed var(--neon-green); padding: 12px; border-radius: 8px; margin: 10px 0;
+        }
+
         /* BARRA SUPERIOR */
         .main-header-bar {
             padding: 4px 6px; background: rgba(2, 4, 10, 0.95); border-bottom: 1px solid var(--border-hud);
@@ -98,24 +120,33 @@
         .whatsapp-icon-btn { background: none; border: none; color: var(--neon-blue); cursor: pointer; font-size: 0.9rem; padding: 3px; }
         .logout-action-btn { background: var(--neon-red); color: #fff; border: none; padding: 3px 5px; border-radius: 4px; font-size: 0.5rem; cursor: pointer; }
 
-        /* MENÚ DESPLEGABLE CON SCROLL INTEGRADO (SOLUCIÓN) */
-        .three-dots-container { position: relative; display: inline-block; }
-        .dropdown-menu-tools {
-            display: none; position: absolute; right: 0; top: 45px; background: var(--panel-hud);
-            border: 1px solid var(--border-hud); border-radius: 8px; padding: 8px; width: 220px; 
-            max-height: 60vh; /* Límite para que no se salga de pantalla */
-            overflow-y: auto; /* SCROLL PROPIO PARA MÓVIL */
-            z-index: 5000; /* Z-INDEX MÁS ALTO PARA QUE FLOTE POR ENCIMA DE TODO */
-            box-shadow: 0 10px 30px rgba(0,0,0,0.9);
-            flex-direction: column; gap: 6px; backdrop-filter: blur(20px);
+        /* NUEVO MENÚ MODAL CENTRADO (ESTILO VENTANA FLOTANTE PERFECTA) */
+        .modal-menu-overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(2, 2, 8, 0.85); backdrop-filter: blur(10px); z-index: 9999;
+            justify-content: center; align-items: center; padding: 20px;
+        }
+        .modal-menu-box {
+            background: var(--panel-hud); border: 1px solid var(--neon-blue); border-radius: 16px;
+            width: 100%; max-width: 340px; max-height: 80vh; display: flex; flex-direction: column;
+            box-shadow: 0 0 40px rgba(0, 240, 255, 0.3); overflow: hidden;
+        }
+        .modal-menu-header {
+            padding: 12px 15px; background: rgba(0,0,0,0.6); border-bottom: 1px solid var(--border-hud);
+            display: flex; justify-content: space-between; align-items: center; font-family: 'Orbitron'; color: var(--neon-blue); font-size: 0.85rem;
+        }
+        .modal-menu-content {
+            padding: 12px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; flex: 1;
         }
         .dropdown-item {
             background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-hud); color: var(--text-main);
-            padding: 10px; border-radius: 6px; font-family: 'Share Tech Mono', monospace; font-size: 0.8rem; cursor: pointer; text-align: left;
+            padding: 11px 14px; border-radius: 8px; font-family: 'Share Tech Mono', monospace; font-size: 0.85rem; cursor: pointer; text-align: left; transition: 0.2s;
         }
-        .dropdown-item:hover { background: rgba(0, 240, 255, 0.15); }
+        .dropdown-item:hover { background: rgba(0, 240, 255, 0.15); color: var(--neon-blue); border-color: var(--neon-blue); }
+        .dropdown-item.danger { border-color: rgba(255,0,85,0.4); color: var(--neon-red); }
+        .dropdown-item.danger:hover { background: rgba(255,0,85,0.15); }
 
-        /* MODO CHAT INMERSIVO */
+        /* ÁREA CHAT */
         .workspace-area { flex: 1; display: flex; flex-direction: column; position: relative; overflow: hidden; height: calc(100vh - 50px); }
         .messages-display { flex: 1; padding: 12px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding-bottom: 90px; }
         
@@ -137,28 +168,53 @@
 </head>
 <body class="theme-violet">
 
+    <div class="auth-overlay" id="authOverlay">
+        <div class="auth-card">
+            <h2>VOBIXCHAT // ACCESO</h2>
+            <p>Introduce tus datos de acceso.</p>
+            <input type="text" id="authPhoneInput" class="auth-input" placeholder="Tu Teléfono" style="margin-bottom: 8px;">
+            <input type="text" id="authNameInput" class="auth-input" placeholder="Tu Nombre o Alias" style="margin-bottom: 8px;">
+            <button class="auth-btn" id="requestRandomPinBtn">ENVIAR PIN</button>
+            <div id="authErrorMsg" style="color:var(--neon-red); font-size:0.65rem; text-align:center; margin-top:4px;"></div>
+        </div>
+    </div>
+
     <!-- BARRA SUPERIOR -->
     <div class="main-header-bar">
-        <div class="header-profile-section" onclick="returnToContactsList()">
+        <div class="header-profile-section">
             <div class="profile-avatar-container" id="profileAvatarInitial">V</div>
             <div class="header-info-group">
                 <div class="header-username-display" id="roomTitleDisplay">GENERAL</div>
-                <div class="header-user-status">🟢 Conectado</div>
+                <div class="header-user-status">🟢 En línea</div>
             </div>
         </div>
 
         <div class="header-right-group">
-            <button class="three-dots-container" id="threeDotsToggleBtn" style="background:none; border:none; color:var(--neon-blue); font-size:1.2rem; cursor:pointer;">⋮
-                <div class="dropdown-menu-tools" id="toolsDropdownMenu">
-                    <button class="dropdown-item" onclick="switchActiveChatPrompt()">💬 Nuevo Chat</button>
-                    <button class="dropdown-item" onclick="switchTheme('violet')">🟪 Tema: Violeta</button>
-                    <button class="dropdown-item" onclick="switchTheme('blue')">🟦 Tema: Azul</button>
-                    <button class="dropdown-item" onclick="switchTheme('matrix')">🟩 Tema: Verde</button>
-                    <button class="dropdown-item" onclick="alert('Funciones activas')">🛡️ Escudo IA</button>
-                    <button class="dropdown-item" onclick="alert('Nube')">☁️ Nube</button>
-                    <button class="dropdown-item" onclick="alert('Señas')">🤟 Señas</button>
-                </div>
-            </button>
+            <button class="whatsapp-icon-btn" onclick="openToolsModal()" title="Menú de Herramientas" style="font-size: 1.2rem;">⋮</button>
+            <button class="logout-action-btn" onclick="location.reload()">SALIR</button>
+        </div>
+    </div>
+
+    <!-- VENTANA MODAL DE HERRAMIENTAS CENTRADA -->
+    <div class="modal-menu-overlay" id="toolsModalOverlay" onclick="closeToolsModal(event)">
+        <div class="modal-menu-box" onclick="event.stopPropagation()">
+            <div class="modal-menu-header">
+                <span>🛠️ HERRAMIENTAS VOBIX</span>
+                <button onclick="closeToolsModal()" style="background:none; border:none; color:var(--neon-red); font-weight:bold; font-size:1rem; cursor:pointer;">✕</button>
+            </div>
+            <div class="modal-menu-content">
+                <button class="dropdown-item" onclick="switchActiveChatPrompt(); closeToolsModal();">💬 Abrir Nuevo Chat / Sala</button>
+                <button class="dropdown-item" onclick="switchTheme('violet'); closeToolsModal();">🟪 Tema: Cyber-Vortex (Violeta)</button>
+                <button class="dropdown-item" onclick="switchTheme('blue'); closeToolsModal();">🟦 Tema: Quantum Grid (Azul)</button>
+                <button class="dropdown-item" onclick="switchTheme('matrix'); closeToolsModal();">🟩 Tema: Cyberpunk Matrix (Verde)</button>
+                <button class="dropdown-item danger" onclick="alert('Usuario bloqueado'); closeToolsModal();">🚫 Bloquear / Desbloquear</button>
+                <button class="dropdown-item" onclick="alert('Traductor AI abierto'); closeToolsModal();">🌐 Traductor AI</button>
+                <button class="dropdown-item" onclick="alert('Nube abierta'); closeToolsModal();">☁️ Nube Ilimitada</button>
+                <button class="dropdown-item" onclick="alert('Reuniones'); closeToolsModal();">📅 Reuniones / Citas</button>
+                <button class="dropdown-item" onclick="alert('Firma'); closeToolsModal();">📜 Firma Remota</button>
+                <button class="dropdown-item" onclick="alert('Búnker'); closeToolsModal();">📦 Búnker</button>
+                <button class="dropdown-item" onclick="alert('Señas'); closeToolsModal();">🤟 Lector de Señas</button>
+            </div>
         </div>
     </div>
 
@@ -166,7 +222,7 @@
     <div class="workspace-area">
         <div class="messages-display" id="messagesContainer">
             <div class="quantum-msg incoming" style="background:rgba(0,240,255,0.05); padding:10px; border-radius:8px;">
-                <strong>[SISTEMA]</strong>: Menú optimizado con scroll interno.
+                <strong>[SISTEMA]</strong>: Menú centralizado modal activado con éxito.
             </div>
         </div>
 
@@ -176,27 +232,38 @@
     </div>
 
     <script>
-        // Lógica de menú
-        const threeDotsBtn = document.getElementById('threeDotsToggleBtn');
-        const toolsMenu = document.getElementById('toolsDropdownMenu');
-        
-        threeDotsBtn.addEventListener('click', (e) => { 
-            e.stopPropagation(); 
-            toolsMenu.style.display = toolsMenu.style.display === 'flex' ? 'none' : 'flex'; 
-        });
-        
-        document.addEventListener('click', () => { toolsMenu.style.display = 'none'; });
+        const socket = io();
+        let myUsername = "Usuario";
 
-        // Cambiar chat
+        document.getElementById('requestRandomPinBtn').addEventListener('click', () => {
+            const name = document.getElementById('authNameInput').value.trim();
+            if(!name) return document.getElementById('authErrorMsg').textContent = "Introduce un nombre.";
+            myUsername = name;
+            document.getElementById('roomTitleDisplay').textContent = name.toUpperCase();
+            document.getElementById('profileAvatarInitial').textContent = name.charAt(0).toUpperCase();
+            document.getElementById('authOverlay').style.display = 'none';
+        });
+
+        // Control de la ventana modal central
+        const toolsModalOverlay = document.getElementById('toolsModalOverlay');
+        window.openToolsModal = () => { toolsModalOverlay.style.display = 'flex'; };
+        window.closeToolsModal = () => { toolsModalOverlay.style.display = 'none'; };
+
         window.switchActiveChatPrompt = () => {
-            const newChat = prompt("Nombre de la sala/contacto:");
-            if(newChat) {
-                document.getElementById('roomTitleDisplay').textContent = newChat.toUpperCase();
-                document.getElementById('profileAvatarInitial').textContent = newChat.charAt(0).toUpperCase();
+            const newChat = prompt("Nombre de la sala o contacto:");
+            if(newChat && newChat.trim() !== "") {
+                document.getElementById('roomTitleDisplay').textContent = newChat.trim().toUpperCase();
+                document.getElementById('profileAvatarInitial').textContent = newChat.trim().charAt(0).toUpperCase();
             }
         };
 
-        window.switchTheme = (themeName) => document.body.className = 'theme-' + themeName;
+        window.switchTheme = (themeName) => {
+            document.body.className = 'theme-' + themeName;
+            localStorage.setItem('vobix_theme', themeName);
+        };
+
+        const savedTheme = localStorage.getItem('vobix_theme');
+        if(savedTheme) document.body.className = 'theme-' + savedTheme;
     </script>
 </body>
 </html>
