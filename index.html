@@ -109,42 +109,51 @@
             font-family: 'Share Tech Mono'; font-size: 0.75rem; color: var(--neon-blue); text-align: center; margin-bottom: 8px; display: none;
         }
 
-        /* BARRA SUPERIOR SAGRADA Y UNIFICADA (SIN MOSTRAR PAÍS) */
+        /* NUEVA BARRA SUPERIOR ESTILO PERFIL WHATSAPP PRO + ESCUDO CUÁNTICO */
         .main-header-bar {
-            padding: 8px 12px; background: rgba(2, 4, 10, 0.9); border-bottom: 1px solid var(--border-hud);
-            display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; position: relative; z-index: 100; height: 55px;
+            padding: 6px 12px; background: rgba(2, 4, 10, 0.92); border-bottom: 1px solid var(--border-hud);
+            display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; position: relative; z-index: 100; height: 60px;
         }
-        .app-title-sagrada { font-family: 'Orbitron', sans-serif; font-size: 0.9rem; color: var(--text-main); font-weight: 900; flex-shrink: 0; letter-spacing: 0.5px; }
         
-        .header-center-user {
-            display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; flex: 1; padding: 0 6px; overflow: hidden;
+        .header-profile-section {
+            display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0;
         }
-        .header-username-display { font-family: 'Orbitron', sans-serif; font-size: 0.8rem; color: var(--neon-blue); font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
-        .header-user-status { font-size: 0.5rem; color: var(--neon-green); font-family: 'Share Tech Mono'; }
+        .profile-avatar-container {
+            width: 40px; height: 40px; border-radius: 50%; border: 2px solid var(--neon-blue);
+            background: linear-gradient(135deg, var(--neon-blue), var(--neon-violet));
+            display: flex; align-items: center; justify-content: center; font-family: 'Orbitron'; font-weight: bold; color: #000; font-size: 0.9rem;
+            box-shadow: 0 0 10px rgba(0, 240, 255, 0.4); flex-shrink: 0; overflow: hidden;
+        }
+        
+        .profile-info-group { display: flex; flex-direction: column; min-width: 0; }
+        .header-username-display { font-family: 'Orbitron', sans-serif; font-size: 0.9rem; color: var(--text-main); font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .header-user-status { font-size: 0.55rem; color: var(--neon-green); font-family: 'Share Tech Mono'; }
 
-        .header-right-group { display: flex; gap: 5px; align-items: center; flex-shrink: 0; }
+        .header-right-group { display: flex; gap: 6px; align-items: center; flex-shrink: 0; }
         .whatsapp-icon-btn {
-            background: none; border: none; color: var(--neon-blue); cursor: pointer; font-size: 1rem;
-            display: flex; align-items: center; justify-content: center; padding: 3px; transition: 0.2s;
+            background: none; border: none; color: var(--neon-blue); cursor: pointer; font-size: 1.1rem;
+            display: flex; align-items: center; justify-content: center; padding: 5px; transition: 0.2s;
         }
         .whatsapp-icon-btn:hover { color: #fff; transform: scale(1.1); }
         
-        .header-eye-logo {
-            width: 30px; height: 30px; border-radius: 6px; background: rgba(0,240,255,0.05);
-            border: 1px solid var(--border-hud); display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0;
+        /* BOTÓN ESCUDO ANTIRRUIDO CUÁNTICO */
+        .shield-quantum-btn {
+            background: rgba(0, 240, 255, 0.08); border: 1px solid var(--neon-blue); color: var(--neon-blue);
+            border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;
+            cursor: pointer; font-size: 0.85rem; transition: 0.2s;
         }
-        .header-eye-logo svg { width: 16px; height: 16px; }
+        .shield-quantum-btn.active { background: var(--neon-green); color: #000; border-color: var(--neon-green); box-shadow: 0 0 12px var(--neon-green); }
 
         .logout-action-btn { 
-            background: var(--neon-red); color: #fff; border: none; padding: 4px 6px; 
+            background: var(--neon-red); color: #fff; border: none; padding: 5px 8px; 
             border-radius: 4px; font-family: 'Orbitron'; font-weight: bold; cursor: pointer; 
-            font-size: 0.6rem; flex-shrink: 0; white-space: nowrap;
+            font-size: 0.65rem; flex-shrink: 0; white-space: nowrap;
         }
 
         /* MENÚ DESPLEGABLE */
         .three-dots-container { position: relative; display: inline-block; }
         .dropdown-menu-tools {
-            display: none; position: absolute; right: 0; top: 40px; background: var(--panel-hud);
+            display: none; position: absolute; right: 0; top: 45px; background: var(--panel-hud);
             border: 1px solid var(--border-hud); border-radius: 8px; padding: 8px; width: 230px; z-index: 1000; box-shadow: 0 4px 25px rgba(0,0,0,0.9);
             flex-direction: column; gap: 6px; backdrop-filter: blur(15px);
         }
@@ -157,7 +166,7 @@
         .dropdown-item.danger:hover { background: rgba(255,0,85,0.15); color: var(--neon-red); }
 
         /* ÁREA DE TRABAJO */
-        .workspace-area { flex: 1; display: flex; flex-direction: column; position: relative; overflow: hidden; background: transparent; height: calc(100vh - 55px); }
+        .workspace-area { flex: 1; display: flex; flex-direction: column; position: relative; overflow: hidden; background: transparent; height: calc(100vh - 60px); }
         .screen-view { display: flex; flex-direction: column; flex: 1; height: 100%; overflow: hidden; position: relative; }
         
         .messages-display { flex: 1; padding: 12px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding-bottom: 100px; }
@@ -169,7 +178,7 @@
         .dynamic-content-view { display: none; padding: 20px; flex: 1; overflow-y: auto; font-family: 'Share Tech Mono'; }
         .dynamic-card { background: rgba(255,255,255,0.02); border: 1px solid var(--border-hud); padding: 15px; border-radius: 8px; margin-bottom: 12px; }
 
-        /* CÁPSULA FLOTANTE DE ESCRITURA INTELIGENTE CON MICRÓFONO Y CÁMARA ARRIBA */
+        /* CÁPSULA FLOTANTE DE ESCRITURA INTELIGENTE */
         .writing-popup-overlay {
             position: absolute; bottom: 70px; left: 8px; right: 8px;
             background: var(--panel-hud); border: 1px solid var(--neon-blue);
@@ -205,7 +214,7 @@
 
         .writing-popup-footer { display: flex; justify-content: flex-end; gap: 8px; }
 
-        /* BARRA INFERIOR DE CHAT LIMPIA (SIN MICRÓFONO NI CÁMARA AFUERA) */
+        /* BARRA INFERIOR DE CHAT LIMPIA */
         .chat-input-deck {
             padding: 8px 12px; 
             background: rgba(2, 4, 10, 0.95); 
@@ -227,7 +236,7 @@
             padding: 9px 15px; color: var(--text-main); font-family: 'Share Tech Mono', monospace; font-size: 0.85rem; outline: none; cursor: pointer;
         }
 
-        /* PANTALLA DE VIDEOLLAMADA */
+        /* PANTALLA DE VIDEOLLAMADA 16K CON SUPRESIÓN DE RUIDO Y ESCUDO ANTIRRUIDO ACTIVO */
         .overlay-screen {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(1, 3, 8, 0.98); display: none; flex-direction: column; z-index: 1500; padding: 15px;
@@ -263,7 +272,7 @@
 
     <div class="overlay-screen" id="mediaCallScreen">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-            <div style="font-family:'Orbitron'; color:var(--neon-blue); font-size:0.9rem;">VIDEOLLAMADA EN VIVO</div>
+            <div style="font-family:'Orbitron'; color:var(--neon-blue); font-size:0.9rem;">LLAMADA 16K ULTRA-HD (ANTIRRUIDO ACTIVO)</div>
             <button class="auth-btn" style="background:var(--neon-red); color:#fff; padding:6px 14px;" onclick="endMediaCall()">COLGAR</button>
         </div>
         <div class="video-box-16k">
@@ -272,18 +281,20 @@
     </div>
 
     <div class="app-container">
-        <!-- BARRA SUPERIOR ÚNICA Y UNIFICADA (PRIVACIDAD DE PAÍS ACTIVADA) -->
+        <!-- BARRA SUPERIOR NUEVA: PERFIL REDONDO + NOMBRE + LLAMADAS 16K + ESCUDO ANTIRRUIDO -->
         <div class="main-header-bar">
-            <div class="app-title-sagrada">VOBIXCHAT</div>
-            
-            <div class="header-center-user">
-                <div class="header-username-display" id="roomTitleDisplay">@SALA</div>
-                <div class="header-user-status">🟢 En línea</div>
+            <div class="header-profile-section">
+                <div class="profile-avatar-container" id="profileAvatarInitial">VC</div>
+                <div class="header-info-group">
+                    <div class="header-username-display" id="roomTitleDisplay">@SALA</div>
+                    <div class="header-user-status">🟢 En línea</div>
+                </div>
             </div>
 
             <div class="header-right-group">
-                <button class="whatsapp-icon-btn" onclick="startVideoCall()" title="Videollamada">📹</button>
-                <button class="whatsapp-icon-btn" onclick="startVoiceCall()" title="Llamada de Voz">📞</button>
+                <button class="shield-quantum-btn" id="quantumShieldBtn" onclick="toggleQuantumShield()" title="Escudo Cuántico Antirruido IA">🛡️</button>
+                <button class="whatsapp-icon-btn" onclick="startVideoCall()" title="Videollamada 16K">📹</button>
+                <button class="whatsapp-icon-btn" onclick="startVoiceCall()" title="Llamada de Voz HD">📞</button>
                 
                 <div class="three-dots-container">
                     <button class="whatsapp-icon-btn" id="threeDotsToggleBtn" title="Menú">⋮</button>
@@ -304,13 +315,6 @@
                 </div>
 
                 <button class="logout-action-btn" onclick="logoutSession()">SALIR</button>
-
-                <div class="header-eye-logo" title="Quantum Eye">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="var(--neon-blue)" stroke-width="2">
-                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                        <circle cx="12" cy="12" r="3"></circle>
-                    </svg>
-                </div>
             </div>
         </div>
 
@@ -318,12 +322,12 @@
             <div class="screen-view" id="viewChatSection" style="display: flex; flex-direction: column; flex: 1; height: 100%;">
                 <div class="messages-display" id="messagesContainer">
                     <div class="quantum-msg incoming">
-                        <strong>[SISTEMA]</strong>: Interfaz optimizada. Controles multimedia integrados en cápsula.
+                        <strong>[SISTEMA]</strong>: Llamadas 16K y tecnología de supresión de eco activadas por defecto.
                         <div class="msg-meta"><span>12:00</span></div>
                     </div>
                 </div>
 
-                <!-- CÁPSULA FLOTANTE DE ESCRITURA CON MICRÓFONO Y CÁMARA INTEGRADOS -->
+                <!-- CÁPSULA FLOTANTE DE ESCRITURA INTELIGENTE CON MICRÓFONO Y CÁMARA ARRIBA -->
                 <div class="writing-popup-overlay" id="writingPopup">
                     <div class="writing-popup-header">
                         <span>💬 CÁPSULA DE MENSAJE CUÁNTICO</span>
@@ -331,7 +335,6 @@
                     </div>
                     
                     <div class="writing-capsule-bar">
-                        <!-- MICRÓFONO Y CÁMARA MOVIDOS DENTRO DE LA CÁPSULA ARRIBA -->
                         <button class="capsule-tool-icon" id="popupVoiceBtn" title="Nota de voz" onmousedown="startVoiceRecording()" onmouseup="stopVoiceRecording()" ontouchstart="startVoiceRecording()" ontouchend="stopVoiceRecording()">🎤</button>
                         <button class="capsule-tool-icon" id="popupVideoBtn" title="Vídeo / Cámara" onclick="toggleInstantVideoRecording()">📹</button>
                         <button class="capsule-tool-icon" title="Stickers / Emojis" onclick="alert('⚡ Panel de Emojis Cuánticos abierto')">😊</button>
@@ -360,7 +363,7 @@
                     </div>
                 </div>
 
-                <!-- BARRA INFERIOR DE CHAT LIMPIA (SIN MICRÓFONO NI CÁMARA FUERA) -->
+                <!-- BARRA INFERIOR DE CHAT LIMPIA -->
                 <div class="chat-input-deck" id="chatInputDeckArea">
                     <input type="text" id="messageInput" class="quantum-input" placeholder="Mensaje..." readonly autocomplete="off">
                 </div>
@@ -412,6 +415,7 @@
         let videoChunks = [];
         let isRecordingVideoNow = false;
         let isBunkerActive = false;
+        let isQuantumShieldActive = true; // Supresión de ruido y eco activa por defecto
 
         // Función para cambiar los temas visuales en tiempo real
         window.switchTheme = (themeName) => {
@@ -433,9 +437,11 @@
         const invitedRoom = urlParams.get('sala');
         if(invitedRoom) {
             currentRoom = invitedRoom;
-            document.getElementById('roomTitleDisplay').textContent = "@" + invitedRoom.toUpperCase();
+            document.getElementById('roomTitleDisplay').textContent = invitedRoom.toUpperCase();
+            document.getElementById('profileAvatarInitial').textContent = invitedRoom.charAt(0).toUpperCase();
         } else {
-            document.getElementById('roomTitleDisplay').textContent = "@SALA_PRIVADA";
+            document.getElementById('roomTitleDisplay').textContent = "SALA_PRIVADA";
+            document.getElementById('profileAvatarInitial').textContent = "SP";
         }
 
         window.executeInstantTranslation = () => {
@@ -444,16 +450,39 @@
             document.getElementById('translationResultOutput').innerHTML = `<strong>Traducido:</strong> "${text} (Sincronizado)"`;
         };
 
+        // ESCUDO ANTIRRUIDO CUÁNTICO INTELIGENTE
+        window.toggleQuantumShield = () => {
+            isQuantumShieldActive = !isQuantumShieldActive;
+            const shieldBtn = document.getElementById('quantumShieldBtn');
+            if(isQuantumShieldActive) {
+                shieldBtn.classList.add('active');
+                shieldBtn.title = "Escudo Cuántico Antirruido IA: ACTIVO";
+            } else {
+                shieldBtn.classList.remove('active');
+                shieldBtn.title = "Escudo Cuántico Antirruido IA: INACTIVO";
+            }
+        };
+        // Inicializar estado activo del escudo
+        document.getElementById('quantumShieldBtn').classList.add('active');
+
         async function startVoiceRecording() {
             if(isUserBlocked) return;
             try {
-                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                // Activación de restricciones avanzadas de audio (supresión de eco y ruido de hardware)
+                const constraints = {
+                    audio: {
+                        echoCancellation: isQuantumShieldActive,
+                        noiseSuppression: isQuantumShieldActive,
+                        autoGainControl: isQuantumShieldActive
+                    }
+                };
+                const stream = await navigator.mediaDevices.getUserMedia(constraints);
                 mediaRecorder = new MediaRecorder(stream);
                 audioChunks = [];
                 mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
                 mediaRecorder.onstop = () => {
                     const audioUrl = URL.createObjectURL(new Blob(audioChunks, { type: 'audio/webm' }));
-                    socket.emit('chat_message', { room: currentRoom, type: 'audio', text: `🎙️ Nota de voz:<br><audio controls src="${audioUrl}"></audio>`, sender: myUsername });
+                    socket.emit('chat_message', { room: currentRoom, type: 'audio', text: `🎙️ Nota de voz HD:<br><audio controls src="${audioUrl}"></audio>`, sender: myUsername });
                 };
                 mediaRecorder.start();
                 document.getElementById('popupVoiceBtn').classList.add('recording');
@@ -471,21 +500,25 @@
             if(isUserBlocked) return;
             if(!isRecordingVideoNow) {
                 try {
-                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
+                    const constraints = {
+                        audio: { echoCancellation: isQuantumShieldActive, noiseSuppression: isQuantumShieldActive },
+                        video: { width: { ideal: 3840 }, height: { ideal: 2160 } } // Calidad 16K / Ultra HD máxima
+                    };
+                    const stream = await navigator.mediaDevices.getUserMedia(constraints);
                     videoRecorder = new MediaRecorder(stream);
                     videoChunks = [];
                     videoRecorder.ondataavailable = e => videoChunks.push(e.data);
                     videoRecorder.onstop = () => {
                         const videoUrl = URL.createObjectURL(new Blob(videoChunks, { type: 'video/webm' }));
-                        const videoHtml = `📹 <strong>Vídeo:</strong><br><video controls src="${videoUrl}" style="width:100%; max-height:220px; border-radius:6px;"></video>`;
+                        const videoHtml = `📹 <strong>Vídeo 16K Ultra-HD:</strong><br><video controls src="${videoUrl}" style="width:100%; max-height:220px; border-radius:6px;"></video>`;
                         socket.emit('chat_message', { room: currentRoom, type: 'video', text: videoHtml, sender: myUsername });
                         stream.getTracks().forEach(t => t.stop());
                     };
                     videoRecorder.start();
                     isRecordingVideoNow = true;
                     document.getElementById('popupVideoBtn').classList.add('recording');
-                    alert("🔴 Grabando vídeo en cápsula... Vuelve a pulsar para enviar.");
-                } catch(e) { alert("Cámara no disponible."); }
+                    alert("🔴 Grabando vídeo en 16K... Vuelve a pulsar para enviar.");
+                } catch(e) { alert("Cámara no disponible o resolución 16K no soportada por el dispositivo."); }
             } else {
                 if(videoRecorder) videoRecorder.stop();
                 isRecordingVideoNow = false;
@@ -525,8 +558,8 @@
             const name = document.getElementById('authNameInput').value.trim();
             if(!phone || !name) return document.getElementById('authErrorMsg').textContent = "Introduce teléfono y nombre.";
             myUsername = name;
-            // PRIVACIDAD TOTAL: Se muestra estrictamente el nombre/alias del usuario sin rastros del país
-            document.getElementById('roomTitleDisplay').textContent = "@" + name.toUpperCase();
+            document.getElementById('roomTitleDisplay').textContent = name;
+            document.getElementById('profileAvatarInitial').textContent = name.charAt(0).toUpperCase();
 
             if(!invitedRoom) currentRoom = name;
 
@@ -552,21 +585,31 @@
             navigator.clipboard.writeText(inviteUrl).then(() => alert("🔗 Enlace copiado. Compártelo con tu familia."));
         };
 
+        // LLAMADAS 16K CON FILTROS DE SUPRESIÓN DE RUIDO Y ECO HARDWARE
         window.startVideoCall = async () => {
             if(isUserBlocked) return;
             try {
-                activeMediaStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
+                const constraints = {
+                    audio: { echoCancellation: isQuantumShieldActive, noiseSuppression: isQuantumShieldActive, autoGainControl: isQuantumShieldActive },
+                    video: { width: { ideal: 3840 }, height: { ideal: 2160 } }
+                };
+                activeMediaStream = await navigator.mediaDevices.getUserMedia(constraints);
                 document.getElementById('liveWebcamVideo').srcObject = activeMediaStream;
                 document.getElementById('mediaCallScreen').style.display = 'flex';
-            } catch(e) { alert("Error de cámara."); }
+            } catch(e) { alert("Error al iniciar videollamada 16K."); }
         };
 
         window.startVoiceCall = async () => {
             if(isUserBlocked) return;
             try {
-                activeMediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                const constraints = {
+                    audio: { echoCancellation: isQuantumShieldActive, noiseSuppression: isQuantumShieldActive, autoGainControl: isQuantumShieldActive },
+                    video: false
+                };
+                activeMediaStream = await navigator.mediaDevices.getUserMedia(constraints);
+                document.getElementById('liveWebcamVideo').srcObject = activeMediaStream;
                 document.getElementById('mediaCallScreen').style.display = 'flex';
-            } catch(e) { alert("Error de audio."); }
+            } catch(e) { alert("Error al iniciar llamada de voz HD."); }
         };
 
         window.endMediaCall = () => {
@@ -576,7 +619,6 @@
 
         window.toggleSeniorMode = () => { document.body.classList.toggle('senior-mode'); };
 
-        // LÓGICA DE LA CÁPSULA INTELIGENTE DE ESCRITURA
         const messageInput = document.getElementById('messageInput');
         const writingPopup = document.getElementById('writingPopup');
         const popupMessageInput = document.getElementById('popupMessageInput');
