@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>VOBIXCHAT // Quantum WhatsApp 16K Mobile Pro</title>
+    <title>VOBIXCHAT // Quantum Mobile Pro</title>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
     <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
     <style>
@@ -71,11 +71,11 @@
             overscroll-behavior-y: none;
         }
 
-        /* ADAPTACIÓN SEGURA DEL MODO SENIOR PARA EL TEXTO Y LAS HERRAMIENTAS */
-        body.senior-mode { font-size: 1.3rem !important; }
+        /* MODO SENIOR ADAPTADO */
+        body.senior-mode { font-size: 1.2rem !important; }
         body.senior-mode .quantum-input, body.senior-mode .action-btn { font-size: 1.1rem !important; padding: 10px 12px !important; }
-        body.senior-mode .quantum-msg { font-size: 1.25rem !important; padding: 14px 18px !important; }
-        body.senior-mode .dropdown-item { font-size: 1rem !important; padding: 12px 14px !important; }
+        body.senior-mode .quantum-msg { font-size: 1.15rem !important; padding: 12px 16px !important; }
+        body.senior-mode .dropdown-item { font-size: 0.9rem !important; padding: 10px !important; }
 
         .app-container {
             width: 100vw; height: 100vh; max-width: 1400px;
@@ -112,7 +112,7 @@
             font-family: 'Share Tech Mono'; font-size: 0.75rem; color: var(--neon-blue); text-align: center; margin-bottom: 8px; display: none;
         }
 
-        /* BARRA SUPERIOR MÓVIL ULTRA-COMPACTA Y OPTIMIZADA */
+        /* BARRA SUPERIOR MÓVIL */
         .main-header-bar {
             padding: 4px 6px; background: rgba(2, 4, 10, 0.95); border-bottom: 1px solid var(--border-hud);
             display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; position: relative; z-index: 100; height: 50px;
@@ -153,7 +153,7 @@
             font-size: 0.5rem; flex-shrink: 0; white-space: nowrap;
         }
 
-        /* MENÚ DESPLEGABLE CON SCROLL Y Z-INDEX CORREGIDO */
+        /* MENÚ DESPLEGABLE CORREGIDO CON SCROLL FLUIDO */
         .three-dots-container { position: relative; display: inline-block; }
         .dropdown-menu-tools {
             display: none; 
@@ -166,9 +166,11 @@
             padding: 8px; 
             width: 240px; 
             
-            max-height: 55vh; 
+            /* Ajustes exactos para permitir scroll vertical completo */
+            max-height: 48vh; 
             overflow-y: auto; 
             z-index: 99999; 
+            -webkit-overflow-scrolling: touch;
             
             box-shadow: 0 4px 25px rgba(0,0,0,0.9);
             flex-direction: column; 
@@ -177,7 +179,7 @@
         }
         .dropdown-item {
             background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-hud); color: var(--text-main);
-            padding: 9px 10px; border-radius: 5px; font-family: 'Share Tech Mono', monospace; font-size: 0.75rem; cursor: pointer; text-align: left; transition: 0.2s;
+            padding: 8px 10px; border-radius: 5px; font-family: 'Share Tech Mono', monospace; font-size: 0.75rem; cursor: pointer; text-align: left; transition: 0.2s;
         }
         .dropdown-item:hover { background: rgba(0, 240, 255, 0.15); color: var(--neon-blue); border-color: var(--neon-blue); }
         .dropdown-item.danger { border-color: rgba(255,0,85,0.4); color: var(--neon-red); }
@@ -196,7 +198,7 @@
         .dynamic-content-view { display: none; padding: 20px; flex: 1; overflow-y: auto; font-family: 'Share Tech Mono'; }
         .dynamic-card { background: rgba(255,255,255,0.02); border: 1px solid var(--border-hud); padding: 15px; border-radius: 8px; margin-bottom: 12px; }
 
-        /* MODO CHAT INMERSIVO / PANTALLA COMPLETA ESTILO WHATSAPP */
+        /* MODO CHAT INMERSIVO */
         .writing-popup-overlay {
             position: absolute; top: 0; left: 0; right: 0; bottom: 0;
             background: var(--panel-hud);
@@ -234,7 +236,7 @@
 
         .writing-popup-footer { display: flex; justify-content: flex-end; gap: 8px; }
 
-        /* BARRA INFERIOR DE CHAT ESTILO WHATSAPP */
+        /* BARRA INFERIOR DE CHAT */
         .chat-input-deck {
             padding: 8px 12px; 
             background: rgba(2, 4, 10, 0.95); 
@@ -256,7 +258,7 @@
             padding: 9px 15px; color: var(--text-main); font-family: 'Share Tech Mono', monospace; font-size: 0.85rem; outline: none; cursor: pointer;
         }
 
-        /* PANTALLA DE VIDEOLLAMADA 16K CON SUPRESIÓN DE RUIDO Y ESCUDO ANTIRRUIDO ACTIVO */
+        /* PANTALLA DE VIDEOLLAMADA */
         .overlay-screen {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(1, 3, 8, 0.98); display: none; flex-direction: column; z-index: 1500; padding: 15px;
@@ -301,7 +303,7 @@
     </div>
 
     <div class="app-container">
-        <!-- BARRA SUPERIOR MÓVIL DIRECTA Y LIMPIA ESTILO WHATSAPP -->
+        <!-- BARRA SUPERIOR MÓVIL -->
         <div class="main-header-bar">
             <div class="header-profile-section" onclick="abrirAgendaContactos()" title="Mis Contactos / Chats Privados">
                 <div class="profile-avatar-container" id="profileAvatarInitial">VC</div>
@@ -318,8 +320,9 @@
                 
                 <div class="three-dots-container">
                     <button class="whatsapp-icon-btn" id="threeDotsToggleBtn" title="Menú">⋮</button>
+                    <!-- MENÚ DE HERRAMIENTAS CON SCROLL Y TEXTO MODIFICADO -->
                     <div class="dropdown-menu-tools" id="toolsDropdownMenu">
-                        <button class="dropdown-item" onclick="abrirAgendaContactos(); toggleToolsMenu();" style="color:var(--neon-green); border-color:var(--neon-green);">👥 Mis Contactos (Estilo WhatsApp)</button>
+                        <button class="dropdown-item" onclick="abrirAgendaContactos(); toggleToolsMenu();" style="color:var(--neon-green); border-color:var(--neon-green);">👥 Mis Contactos Privados</button>
                         <button class="dropdown-item" onclick="switchActiveChatPrompt(); toggleToolsMenu();">💬 Cambiar por Nombre de Sala</button>
                         <button class="dropdown-item" onclick="switchTheme('violet'); toggleToolsMenu();">🟪 Tema: Cyber-Vortex (Violeta)</button>
                         <button class="dropdown-item" onclick="switchTheme('blue'); toggleToolsMenu();">🟦 Tema: Quantum Grid (Azul)</button>
@@ -348,16 +351,14 @@
                     </div>
                 </div>
 
-                <!-- MODO CHAT INMERSIVO DE PANTALLA COMPLETA (ESTILO WHATSAPP) -->
+                <!-- MODO CHAT INMERSIVO -->
                 <div class="writing-popup-overlay" id="writingPopup">
                     <div class="writing-popup-header">
                         <span>💬 CONVERSACIÓN ACTIVA</span>
                         <button class="auth-btn" style="padding: 4px 10px; font-size: 0.7rem; background: var(--neon-red); color: #fff;" onclick="closeWritingPopup()">✖ Volver al Chat</button>
                     </div>
 
-                    <div style="flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding: 4px 0;" id="immersiveChatHistory">
-                        <!-- Historial espejo limpio para enfoque total -->
-                    </div>
+                    <div style="flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding: 4px 0;" id="immersiveChatHistory"></div>
                     
                     <div class="writing-capsule-bar">
                         <button class="capsule-tool-icon" id="popupVoiceBtn" title="Nota de voz" onmousedown="startVoiceRecording()" onmouseup="stopVoiceRecording()" ontouchstart="startVoiceRecording()" ontouchend="stopVoiceRecording()">🎤</button>
@@ -387,7 +388,7 @@
                     </div>
                 </div>
 
-                <!-- BARRA INFERIOR DE CHAT ESTILO WHATSAPP -->
+                <!-- BARRA INFERIOR DE CHAT -->
                 <div class="chat-input-deck" id="chatInputDeckArea">
                     <input type="text" id="messageInput" class="quantum-input" placeholder="Mensaje..." readonly autocomplete="off">
                 </div>
@@ -426,7 +427,7 @@
         </div>
     </div>
 
-    <!-- SCRIPT DE AUDIO PARA LA NOTIFICACIÓN DE MENSAJE -->
+    <!-- SCRIPT DE AUDIO PARA NOTIFICACIÓN -->
     <audio id="notificationSound" preload="auto">
         <source src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" type="audio/mpeg">
     </audio>
