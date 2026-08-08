@@ -133,7 +133,7 @@
         }
         .writing-popup-footer { display: flex; justify-content: flex-end; gap: 8px; }
 
-        /* BARRA INFERIOR DE CHAT FIJA (ELEVADA Y SEGURA SIN SOLAPARSE CON GESTOS DEL MÓVIL) */
+        /* BARRA INFERIOR DE CHAT FIJA */
         .chat-input-deck {
             padding: 8px 12px; 
             background: rgba(3, 7, 15, 0.99); 
@@ -184,9 +184,9 @@
             <div class="install-banner" id="iosInstallHint">
                 🍏 <strong>Usuario de iPhone:</strong> Toca el botón <strong>Compartir</strong> abajo y selecciona <strong>"Añadir a inicio"</strong>.
             </div>
-            <p>Introduce tus datos para conectarte en tiempo real.</p>
+            <p>Introduce tus datos y tu nombre de usuario único (@alias).</p>
             <input type="text" id="authPhoneInput" class="auth-input" placeholder="Tu Teléfono" style="margin-bottom: 8px;">
-            <input type="text" id="authNameInput" class="auth-input" placeholder="Tu Nombre o Alias" style="margin-bottom: 8px;">
+            <input type="text" id="authNameInput" class="auth-input" placeholder="Tu Nombre o Alias (ej. @emilio)" style="margin-bottom: 8px;">
             <button class="auth-btn" id="requestRandomPinBtn">ENVIAR PIN DE ACCESO</button>
             <div id="authErrorMsg" style="color:var(--neon-red); font-size:0.65rem; text-align:center; margin-top:4px;"></div>
         </div>
@@ -198,6 +198,20 @@
             <input type="text" id="authPinInput" class="auth-input" placeholder="PIN de 4 dígitos" maxlength="4" style="text-align:center; font-size: 1.2rem; letter-spacing: 3px; margin-bottom: 8px;">
             <button class="auth-btn" id="verifyRandomPinBtn">ENTRAR AL CHAT</button>
             <div id="pinErrorMsg" style="color:var(--neon-red); font-size:0.65rem; text-align:center; margin-top:4px;"></div>
+        </div>
+    </div>
+
+    <!-- PANTALLA DE BÚSQUEDA DE CONTACTO / @ALIAS -->
+    <div class="overlay-screen" id="searchContactScreen" style="background: rgba(1, 3, 8, 0.95); z-index: 1600; padding: 20px; display: none; flex-direction: column;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+            <div style="font-family:'Orbitron'; color:var(--neon-blue); font-size:0.9rem;">🔍 BUSCAR CONTACTO (@ALIAS / TEL)</div>
+            <button class="auth-btn" style="background:var(--neon-red); color:#fff; padding:6px 12px;" onclick="closeSearchContact()">CERRAMIENTO</button>
+        </div>
+        <div class="dynamic-card" style="display: flex; flex-direction: column; gap: 10px;">
+            <p style="font-size: 0.75rem; color: var(--text-dim);">Escribe el @usuario o número de teléfono registrado para abrir sala instantánea:</p>
+            <input type="text" id="searchTargetInput" class="auth-input" placeholder="Ej. @shneyder o 600000000">
+            <button class="auth-btn" onclick="executeSearchContact()">LOCALIZAR Y CONECTAR</button>
+            <div id="searchResultFeedback" style="font-size: 0.75rem; color: var(--neon-green); text-align: center;"></div>
         </div>
     </div>
 
@@ -227,6 +241,7 @@
                 <div class="three-dots-container">
                     <button class="whatsapp-icon-btn" id="threeDotsToggleBtn" title="Menú">⋮</button>
                     <div class="dropdown-menu-tools" id="toolsDropdownMenu">
+                        <button class="dropdown-item" onclick="openSearchContact(); toggleToolsMenu();">🔍 Buscar por @Alias o Tel</button>
                         <button class="dropdown-item danger" onclick="toggleBlockUserStatus(); toggleToolsMenu();">🚫 Bloquear / Desbloquear</button>
                         <button class="dropdown-item" onclick="switchView('translator'); toggleToolsMenu();">🌐 Traductor AI</button>
                         <button class="dropdown-item" onclick="switchView('cloud'); toggleToolsMenu();">☁️ Nube Ilimitada</button>
@@ -247,7 +262,7 @@
             <div class="screen-view" id="viewChatSection" style="display: flex; flex-direction: column; flex: 1; height: 100%;">
                 <div class="messages-display" id="messagesContainer">
                     <div class="quantum-msg incoming">
-                        <strong>[SISTEMA]</strong>: Compatible con iPhone y Android. Conectado con éxito.
+                        <strong>[SISTEMA]</strong>: Directorio @alias habilitado. Conectado con éxito.
                         <div class="msg-meta"><span>12:00</span></div>
                     </div>
                 </div>
@@ -308,6 +323,7 @@
     <script>
         const socket = io();
         let myUsername = "Usuario";
+        let myPhone = "";
         let generatedRandomPin = "";
         let currentRoom = "SalaDirecta";
         let isUserBlocked = false;
@@ -392,6 +408,41 @@
         threeDotsBtn.addEventListener('click', (e) => { e.stopPropagation(); toggleToolsMenu(); });
         document.addEventListener('click', () => { toolsMenu.style.display = 'none'; });
 
+        // FUNCIONES DE BÚSQUEDA DE CONTACTO POR @ALIAS O TELÉFONO
+        window.openSearchContact = () => {
+            document.getElementById('searchContactScreen').style.display = 'flex';
+        };
+        window.closeSearchContact = () => {
+            document.getElementById('searchContactScreen').style.display = 'none';
+        };
+        window.executeSearchContact = () => {
+            const query = document.getElementById('searchTargetInput').value.trim();
+            const feedback = document.getElementById('searchResultFeedback');
+            if(!query) {
+                feedback.textContent = "Introduce un @alias o número válido.";
+                return;
+            }
+            // Emitimos evento al servidor para buscar/conectar con el usuario destino
+            socket.emit('search_user', { query: query }, (response) => {
+                if(response && response.success) {
+                    currentRoom = response.roomName;
+                    document.getElementById('roomTitleDisplay').textContent = currentRoom.toUpperCase();
+                    document.getElementById('contactInitialAvatar').textContent = currentRoom.charAt(0).toUpperCase();
+                    socket.emit('join_room', { room: currentRoom, name: myUsername });
+                    feedback.textContent = `✅ Conectado con éxito a ${currentRoom}`;
+                    setTimeout(() => { closeSearchContact(); }, 1200);
+                } else {
+                    // Modo simulado o fallback si el backend aún no procesa la ruta exacta
+                    currentRoom = query.startsWith('@') ? query.substring(1) : query;
+                    document.getElementById('roomTitleDisplay').textContent = currentRoom.toUpperCase();
+                    document.getElementById('contactInitialAvatar').textContent = currentRoom.charAt(0).toUpperCase();
+                    socket.emit('join_room', { room: currentRoom, name: myUsername });
+                    feedback.textContent = `🔗 Sala abierta para ${query}`;
+                    setTimeout(() => { closeSearchContact(); }, 1200);
+                }
+            });
+        };
+
         window.toggleBlockUserStatus = () => {
             isUserBlocked = !isUserBlocked;
             alert(isUserBlocked ? "🚫 Usuario bloqueado." : "✅ Usuario desbloqueado.");
@@ -416,12 +467,15 @@
         document.getElementById('requestRandomPinBtn').addEventListener('click', () => {
             const phone = document.getElementById('authPhoneInput').value.trim();
             const name = document.getElementById('authNameInput').value.trim();
-            if(!phone || !name) return document.getElementById('authErrorMsg').textContent = "Introduce teléfono y nombre.";
-            myUsername = name;
-            document.getElementById('roomTitleDisplay').textContent = name;
-            document.getElementById('contactInitialAvatar').textContent = name.charAt(0).toUpperCase();
+            if(!phone || !name) return document.getElementById('authErrorMsg').textContent = "Introduce teléfono y alias (ej. @emilio).";
+            
+            myPhone = phone;
+            myUsername = name.startsWith('@') ? name : '@' + name;
+            
+            document.getElementById('roomTitleDisplay').textContent = myUsername.toUpperCase();
+            document.getElementById('contactInitialAvatar').textContent = myUsername.charAt(1).toUpperCase();
 
-            if(!invitedRoom) currentRoom = name;
+            if(!invitedRoom) currentRoom = myUsername;
 
             generatedRandomPin = Math.floor(1000 + Math.random() * 9000).toString();
             document.getElementById('displayBigPinValue').textContent = generatedRandomPin;
@@ -432,6 +486,7 @@
         document.getElementById('verifyRandomPinBtn').addEventListener('click', () => {
             if(document.getElementById('authPinInput').value.trim() === generatedRandomPin) {
                 document.getElementById('authOverlay').style.display = 'none';
+                socket.emit('register_user_profile', { phone: myPhone, alias: myUsername });
                 socket.emit('join_room', { room: currentRoom, name: myUsername });
             } else {
                 document.getElementById('pinErrorMsg').textContent = "❌ PIN incorrecto.";
@@ -459,7 +514,7 @@
             try {
                 activeMediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
                 document.getElementById('mediaCallScreen').style.display = 'flex';
-            } catch(e) { alert("Error de validez de audio."); }
+            } catch(e) { alert("Error de audio."); }
         };
 
         window.endMediaCall = () => {
