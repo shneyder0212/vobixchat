@@ -84,7 +84,7 @@
             backdrop-filter: blur(15px);
         }
 
-        /* ACCESO Y LOGIN */
+        /* ACCESO Y LOGIN REESTRUCTURADO */
         .auth-overlay {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(4, 2, 8, 0.96); backdrop-filter: blur(25px);
@@ -98,6 +98,13 @@
         .auth-card h2 { font-family: 'Orbitron', sans-serif; color: var(--neon-blue); font-size: 1.1rem; text-align: center; }
         .auth-card p { font-family: 'Share Tech Mono', monospace; font-size: 0.7rem; color: var(--text-dim); text-align: center; }
         .auth-input { background: #000; border: 1px solid var(--border-hud); color: #fff; padding: 12px; font-family: 'Share Tech Mono'; border-radius: 6px; outline: none; font-size: 1rem; width: 100%; }
+        
+        .phone-group { display: flex; gap: 6px; align-items: center; }
+        .detected-country-badge {
+            background: rgba(0, 240, 255, 0.08); border: 1px solid var(--neon-blue); color: var(--neon-blue);
+            padding: 12px 10px; font-family: 'Share Tech Mono'; font-size: 0.85rem; border-radius: 6px; text-align: center; white-space: nowrap;
+        }
+
         .auth-btn { background: var(--neon-blue); color: #000; border: none; padding: 12px; font-family: 'Orbitron'; font-weight: bold; border-radius: 6px; cursor: pointer; font-size: 0.95rem; text-align: center; transition: 0.2s; }
         .auth-btn:hover { filter: brightness(1.2); }
 
@@ -257,7 +264,7 @@
             padding: 9px 15px; color: var(--text-main); font-family: 'Share Tech Mono', monospace; font-size: 0.85rem; outline: none; cursor: pointer;
         }
 
-        /* PANTALLA DE LLAMADA HD / 16K CON FILTROS ANTIRRUIDO Y SUPRESIÓN DE ECO */
+        /* PANTALLA DE LLAMADA */
         .overlay-screen {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(1, 3, 8, 0.98); display: none; flex-direction: column; z-index: 1500; padding: 15px;
@@ -287,13 +294,18 @@
 
     <div class="auth-overlay" id="authOverlay">
         <div class="auth-card" id="authStep1">
-            <h2>VOBIXCHAT // ACCESO MÓVIL</h2>
+            <h2>VOBIXCHAT // ACCESO SEGURO</h2>
             <div class="install-banner" id="iosInstallHint">
                 🍏 <strong>Usuario de iPhone:</strong> Toca el botón <strong>Compartir</strong> abajo y selecciona <strong>"Añadir a inicio"</strong>.
             </div>
-            <p>Introduce tus datos de acceso seguro.</p>
-            <input type="text" id="authPhoneInput" class="auth-input" placeholder="Tu Teléfono (ej: +34...)" style="margin-bottom: 8px;">
-            <input type="text" id="authNameInput" class="auth-input" placeholder="Tu Nombre o Alias (ej: H)" style="margin-bottom: 8px;">
+            <p>Detección de región y acceso activados.</p>
+            
+            <div class="phone-group">
+                <div class="detected-country-badge" id="detectedCountryBadge" title="Prefijo detectado por región">🇪🇸 +34</div>
+                <input type="text" id="authPhoneInput" class="auth-input" placeholder="Número de teléfono..." style="margin-bottom: 0;">
+            </div>
+            
+            <input type="text" id="authNameInput" class="auth-input" placeholder="Tu Nombre o Alias (ej: H)" style="margin-top: 8px; margin-bottom: 8px;">
             <button class="auth-btn" id="requestRandomPinBtn">ENVIAR PIN DE ACCESO</button>
             <div id="authErrorMsg" style="color:var(--neon-red); font-size:0.65rem; text-align:center; margin-top:4px;"></div>
         </div>
@@ -308,7 +320,7 @@
         </div>
     </div>
 
-    <!-- PANTALLA DE LLAMADA DE VOZ / VÍDEO 16K CON FILTROS ANTIRRUIDO, SUPRESIÓN DE ECO Y GANANCIA AUTOMÁTICA -->
+    <!-- PANTALLA DE LLAMADA HD / 16K CON FILTROS ANTIRRUIDO -->
     <div class="overlay-screen" id="mediaCallScreen">
         <div class="call-header-hud">
             <div>
@@ -370,7 +382,7 @@
             <div class="screen-view" id="viewChatSection" style="display: flex; flex-direction: column; flex: 1; height: 100%;">
                 <div class="messages-display" id="messagesContainer">
                     <div class="quantum-msg incoming">
-                        <strong>[SISTEMA]</strong>: Bienvenid@ a VOBIXCHAT. Llamadas de voz y vídeo 16K con supresión avanzada de eco y ruido listas.
+                        <strong>[SISTEMA]</strong>: Bienvenid@ a VOBIXCHAT. Selector de país automático y llamadas HD listas.
                         <div class="msg-meta"><span>12:00</span></div>
                     </div>
                 </div>
@@ -473,6 +485,25 @@
 
         let misContactosPrivados = JSON.parse(localStorage.getItem('vobix_contactos') || '[]');
 
+        // DETECTOR AUTOMÁTICO DE PAÍS / REGIÓN AL CARGAR LA APP
+        window.addEventListener('DOMContentLoaded', () => {
+            const userLang = navigator.language || navigator.userLanguage || 'es-ES';
+            const badge = document.getElementById('detectedCountryBadge');
+            
+            // Asignación inteligente basada en la localización del navegador
+            if (userLang.includes('DO')) {
+                badge.textContent = "🇩🇴 +1";
+            } else if (userLang.includes('MX')) {
+                badge.textContent = "🇲🇽 +52";
+            } else if (userLang.includes('AR')) {
+                badge.textContent = "🇦🇷 +54";
+            } else if (userLang.includes('CO')) {
+                badge.textContent = "🇨🇴 +57";
+            } else {
+                badge.textContent = "🇪🇸 +34"; // Por defecto España u otros hispanohablantes
+            }
+        });
+
         function reproducirSonidoNotificacion() {
             const sonido = document.getElementById('notificationSound');
             if (sonido) {
@@ -571,21 +602,13 @@
         };
         document.getElementById('quantumShieldBtn').classList.add('active');
 
-        // MÓDULO DE LLAMADAS 16K CON FILTROS NATIVOS ANTIRRUIDO Y SUPRESIÓN DE ECO
         window.startVideoCall = async () => {
             if(isUserBlocked) return;
             try {
                 document.getElementById('callStatusTitle').textContent = "🎥 VIDEOLLAMADA 16K ULTRA HD";
                 const constraints = {
-                    audio: {
-                        echoCancellation: true,      // Supresión de eco activa
-                        noiseSuppression: true,      // Supresión de ruido de fondo
-                        autoGainControl: true        // Control automático de volumen
-                    },
-                    video: { 
-                        width: { ideal: 3840 }, 
-                        height: { ideal: 2160 } 
-                    }
+                    audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
+                    video: { width: { ideal: 3840 }, height: { ideal: 2160 } }
                 };
                 activeMediaStream = await navigator.mediaDevices.getUserMedia(constraints);
                 document.getElementById('liveWebcamVideo').srcObject = activeMediaStream;
@@ -600,11 +623,7 @@
             try {
                 document.getElementById('callStatusTitle').textContent = "📞 LLAMADA DE VOZ HD ANTIRRUIDO";
                 const constraints = {
-                    audio: {
-                        echoCancellation: true,      // Supresión total de eco
-                        noiseSuppression: true,      // Filtro antirruido activo
-                        autoGainControl: true        // Estabilización de voz
-                    },
+                    audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
                     video: false
                 };
                 activeMediaStream = await navigator.mediaDevices.getUserMedia(constraints);
@@ -663,13 +682,7 @@
         async function startVoiceRecording() {
             if(isUserBlocked) return;
             try {
-                const constraints = {
-                    audio: {
-                        echoCancellation: true,
-                        noiseSuppression: true,
-                        autoGainControl: true
-                    }
-                };
+                const constraints = { audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } };
                 const stream = await navigator.mediaDevices.getUserMedia(constraints);
                 mediaRecorder = new MediaRecorder(stream);
                 audioChunks = [];
