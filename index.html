@@ -8,115 +8,111 @@
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, sans-serif; }
         body { background-color: #0b0b0b; color: #fff; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
         
-        header { display: flex; justify-content: space-between; align-items: center; background: #1a1a1a; padding: 10px 15px; border-bottom: 2px solid #00ffcc; }
-        .sala-directa { font-size: 15px; font-weight: bold; color: #00ffcc; }
-        .btn-menu { background: none; border: none; color: #fff; font-size: 22px; cursor: pointer; padding: 0 5px; }
-        .btn-salir { background-color: #ff3333; color: white; border: none; padding: 5px 12px; border-radius: 6px; font-weight: bold; cursor: pointer; }
+        header { display: flex; justify-content: space-between; align-items: center; background: #1a1a1a; padding: 12px 15px; border-bottom: 2px solid #00ffcc; }
+        .sala-directa { font-size: 16px; font-weight: bold; color: #00ffcc; }
+        .btn-salir { background-color: #ff3333; color: white; border: none; padding: 6px 14px; border-radius: 6px; font-weight: bold; cursor: pointer; }
 
-        #dropdown-menu { display: none; position: absolute; top: 50px; right: 15px; background: #222; border: 1px solid #444; border-radius: 8px; z-index: 100; width: 220px; }
-        #dropdown-menu a { display: block; padding: 12px; color: #fff; text-decoration: none; border-bottom: 1px solid #333; cursor: pointer; }
+        #login-screen { display: flex; flex-direction: column; justify-content: center; align-items: center; flex: 1; padding: 20px; background: #0b0b0b; }
+        #login-screen input { width: 100%; max-width: 300px; padding: 12px; margin-bottom: 10px; border-radius: 8px; border: 1px solid #444; background: #222; color: #fff; }
+        #login-screen button { width: 100%; max-width: 300px; padding: 12px; background: #00ffcc; color: #000; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
 
         #chat-screen { display: none; flex-direction: column; flex: 1; overflow: hidden; }
-        #chat-messages { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
+        #chat-messages { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; scroll-behavior: smooth; }
         
-        .message { padding: 10px 14px; border-radius: 10px; max-width: 80%; animation: subirMensaje 0.3s ease-out; }
+        .message { padding: 10px 14px; border-radius: 10px; max-width: 80%; word-wrap: break-word; animation: subirMensaje 0.3s ease-out; }
         .user-msg { background: #00ffcc; color: #000; align-self: flex-end; }
         .bot-msg { background: #222; color: #fff; align-self: flex-start; border: 1px solid #444; }
         @keyframes subirMensaje { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
 
         #chat-input-area { display: flex; padding: 12px 12px 25px 12px; background: #1a1a1a; border-top: 1px solid #333; }
-        #chat-input-area input { flex: 1; padding: 12px; border-radius: 8px; border: 1px solid #444; background: #222; color: #fff; }
+        #chat-input-area input { flex: 1; padding: 12px; border-radius: 8px; border: 1px solid #444; background: #222; color: #fff; outline: none; }
         #chat-input-area button { background: #00ffcc; color: #000; border: none; padding: 0 18px; margin-left: 8px; border-radius: 8px; font-weight: bold; cursor: pointer; }
     </style>
 </head>
 <body>
 
     <header>
-        <div class="sala-directa">🟢 VOBIXCHAT</div>
-        <div>
-            <button class="btn-menu" onclick="toggleMenu()">⋮</button>
-            <button class="btn-salir" onclick="cerrarSesion()">Salir</button>
-        </div>
+        <div class="sala-directa">🟢 VOBIXCHAT // SALA DIRECTA</div>
+        <button class="btn-salir" onclick="cerrarSesion()">Salir</button>
     </header>
-
-    <div id="dropdown-menu">
-        <a onclick="abrirAgendaMovil()">📇 Abrir agenda del móvil</a>
-        <a onclick="alert('Lista de Amigos')">👥 Lista de Amigos</a>
-    </div>
 
     <div id="login-screen">
         <h2 style="margin-bottom: 20px; color: #00ffcc;">VOBIXCHAT</h2>
-        <input type="text" id="username" placeholder="Tu nombre...">
-        <button onclick="guardarRegistro()">Entrar</button>
+        <input type="text" id="username" placeholder="Escribe tu nombre para entrar...">
+        <button onclick="guardarRegistro()">Entrar a la App</button>
     </div>
 
     <div id="chat-screen">
         <div id="chat-messages">
-            <div class="message bot-msg">Sistema listo. Abre la agenda desde los tres puntos (⋮) para elegir contactos de tu móvil.</div>
+            <div class="message bot-msg">¡Hola! Ya estás conectado en VOBIXCHAT.</div>
         </div>
         <div id="chat-input-area">
-            <input type="text" id="message-input" placeholder="Escribe un mensaje...">
+            <input type="text" id="message-input" placeholder="Escribe un mensaje..." onkeypress="manejarEnter(event)">
             <button onclick="enviarMensaje()">Enviar</button>
         </div>
     </div>
 
     <script>
-        window.onload = () => { if (localStorage.getItem("vobixchat_usuario")) mostrarChat(); };
-        
-        function mostrarChat() {
-            document.getElementById("login-screen").style.display = "none";
-            document.getElementById("chat-screen").style.display = "flex";
-        }
+        window.onload = function() {
+            if (localStorage.getItem("vobixchat_usuario")) {
+                mostrarChat();
+            }
+        };
 
         function guardarRegistro() {
             const nombre = document.getElementById("username").value.trim();
-            if (nombre) { localStorage.setItem("vobixchat_usuario", nombre); mostrarChat(); }
-        }
-
-        function toggleMenu() { document.getElementById("dropdown-menu").style.display = document.getElementById("dropdown-menu").style.display === "block" ? "none" : "block"; }
-        
-        // FUNCIÓN PARA ABRIR LA AGENDA REAL DEL TELÉFONO
-        async function abrirAgendaMovil() {
-            toggleMenu();
-            const supported = 'contacts' in navigator && 'Select' in navigator.contacts;
-            
-            if (supported) {
-                try {
-                    const props = ['name', 'tel'];
-                    const opts = { multiple: false };
-                    const resultados = await navigator.contacts.select(props, opts);
-                    
-                    if (resultados.length > 0) {
-                        const contacto = resultados[0];
-                        const nombre = contacto.name ? contacto.name[0] : "Sin nombre";
-                        const telefono = contacto.tel ? contacto.tel[0] : "Sin teléfono";
-                        agregarMensaje("Sistema", "Contacto seleccionado de tu móvil: " + nombre + " (" + telefono + ")", "bot-msg");
-                    }
-                } catch (ex) {
-                    alert("No se pudo acceder a los contactos o se canceló la selección.");
-                }
+            if (nombre !== "") {
+                localStorage.setItem("vobixchat_usuario", nombre);
+                mostrarChat();
             } else {
-                alert("Tu navegador o dispositivo no permite acceso directo a la agenda de contactos.");
+                alert("Por favor, introduce un nombre.");
             }
         }
 
-        function agregarMensaje(remitente, texto, clase) {
-            const contenedor = document.getElementById("chat-messages");
-            const div = document.createElement("div");
-            div.className = "message " + clase;
-            div.textContent = texto;
-            contenedor.appendChild(div);
-            contenedor.scrollTop = contenedor.scrollHeight;
+        function mostrarChat() {
+            document.getElementById("login-screen").style.display = "none";
+            document.getElementById("chat-screen").style.display = "flex";
+            irAlFondo();
+        }
+
+        function cerrarSesion() {
+            localStorage.removeItem("vobixchat_usuario");
+            location.reload();
+        }
+
+        function manejarEnter(event) {
+            if (event.key === "Enter") {
+                enviarMensaje();
+            }
         }
 
         function enviarMensaje() {
             const input = document.getElementById("message-input");
-            if (input.value.trim()) {
-                agregarMensaje("Yo", input.value, "user-msg");
-                input.value = "";
-            }
+            const texto = input.value.trim();
+            if (texto === "") return;
+
+            const contenedorChat = document.getElementById("chat-messages");
+            const msgUser = document.createElement("div");
+            msgUser.className = "message user-msg";
+            msgUser.textContent = texto;
+            contenedorChat.appendChild(msgUser);
+
+            input.value = "";
+            irAlFondo();
+
+            setTimeout(() => {
+                const msgBot = document.createElement("div");
+                msgBot.className = "message bot-msg";
+                msgBot.textContent = "Eco: " + texto;
+                contenedorChat.appendChild(msgBot);
+                irAlFondo();
+            }, 500);
         }
-        function cerrarSesion() { localStorage.removeItem("vobixchat_usuario"); location.reload(); }
+
+        function irAlFondo() {
+            const contenedorChat = document.getElementById("chat-messages");
+            contenedorChat.scrollTop = contenedorChat.scrollHeight;
+        }
     </script>
 </body>
 </html>
