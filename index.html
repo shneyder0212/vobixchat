@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>VOBIXCHAT // Quantum WhatsApp 16K Mobile Pro</title>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
     <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
@@ -108,7 +108,7 @@
         .workspace-area { flex: 1; display: flex; flex-direction: column; position: relative; overflow: hidden; background: #02050c; height: calc(100vh - 55px); }
         .screen-view { display: flex; flex-direction: column; flex: 1; height: 100%; overflow: hidden; position: relative; }
         
-        .messages-display { flex: 1; padding: 12px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding-bottom: 90px; }
+        .messages-display { flex: 1; padding: 12px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding-bottom: 100px; }
         .quantum-msg { max-width: 85%; padding: 10px 14px; border-radius: 8px; font-size: 0.95rem; line-height: 1.4; position: relative; word-break: break-word; }
         .quantum-msg.incoming { background: rgba(0, 240, 255, 0.04); border-left: 3px solid var(--neon-blue); align-self: flex-start; }
         .quantum-msg.outgoing { background: rgba(157, 0, 255, 0.1); border-right: 3px solid var(--neon-violet); align-self: flex-end; text-align: right; }
@@ -119,24 +119,35 @@
 
         /* VENTANA FLOTANTE DE ESCRITURA HACIA ARRIBA */
         .writing-popup-overlay {
-            position: absolute; bottom: 65px; left: 8px; right: 8px;
-            background: rgba(4, 10, 22, 0.95); border: 1px solid var(--neon-blue);
+            position: absolute; bottom: 75px; left: 8px; right: 8px;
+            background: rgba(4, 10, 22, 0.98); border: 1px solid var(--neon-blue);
             border-radius: 10px; padding: 12px; display: none; flex-direction: column; gap: 8px;
-            z-index: 250; box-shadow: 0 -5px 25px rgba(0, 240, 255, 0.2); backdrop-filter: blur(10px);
+            z-index: 250; box-shadow: 0 -5px 25px rgba(0, 240, 255, 0.3); backdrop-filter: blur(10px);
         }
         .writing-popup-overlay.active { display: flex; }
         .writing-popup-header { display: flex; justify-content: space-between; align-items: center; font-family: 'Orbitron'; font-size: 0.75rem; color: var(--neon-blue); }
         .writing-popup-textarea {
-            width: 100%; height: 90px; background: #000; border: 1px solid var(--border-hud);
+            width: 100%; height: 100px; background: #000; border: 1px solid var(--border-hud);
             color: var(--text-main); font-family: 'Share Tech Mono', monospace; font-size: 0.95rem;
             padding: 10px; border-radius: 6px; outline: none; resize: none;
         }
         .writing-popup-footer { display: flex; justify-content: flex-end; gap: 8px; }
 
-        /* BARRA INFERIOR DE CHAT FIJA (DENTRO DEL MARGEN) */
+        /* BARRA INFERIOR DE CHAT FIJA (ELEVADA Y SEGURA SIN SOLAPARSE CON GESTOS DEL MÓVIL) */
         .chat-input-deck {
-            padding: 8px 10px; background: rgba(3, 7, 15, 0.99); border-top: 1px solid var(--border-hud);
-            display: flex; gap: 6px; align-items: center; flex-shrink: 0; position: absolute; bottom: 0; left: 0; right: 0; z-index: 100; height: 60px;
+            padding: 8px 12px; 
+            background: rgba(3, 7, 15, 0.99); 
+            border-top: 1px solid var(--border-hud);
+            display: flex; 
+            gap: 8px; 
+            align-items: center; 
+            flex-shrink: 0; 
+            position: absolute; 
+            bottom: env(safe-area-inset-bottom, 12px); 
+            left: 0; 
+            right: 0; 
+            z-index: 100; 
+            height: 60px;
             width: 100%;
         }
         .quantum-input {
@@ -153,7 +164,7 @@
 
         .transmit-btn {
             background: linear-gradient(135deg, var(--neon-blue), var(--neon-violet)); border: none; border-radius: 6px;
-            padding: 8px 12px; color: #010308; font-family: 'Orbitron'; font-weight: 900; cursor: pointer; font-size: 0.8rem; flex-shrink: 0; white-space: nowrap;
+            padding: 8px 14px; color: #010308; font-family: 'Orbitron'; font-weight: 900; cursor: pointer; font-size: 0.8rem; flex-shrink: 0; white-space: nowrap;
         }
 
         /* PANTALLA DE VIDEOLLAMADA */
@@ -448,7 +459,7 @@
             try {
                 activeMediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
                 document.getElementById('mediaCallScreen').style.display = 'flex';
-            } catch(e) { alert("Error de audio."); }
+            } catch(e) { alert("Error de validez de audio."); }
         };
 
         window.endMediaCall = () => {
@@ -458,7 +469,6 @@
 
         window.toggleSeniorMode = () => { document.body.classList.toggle('senior-mode'); };
 
-        // LÓGICA DE LA VENTANA FLOTANTE DE ESCRITURA HACIA ARRIBA
         const messageInput = document.getElementById('messageInput');
         const writingPopup = document.getElementById('writingPopup');
         const popupMessageInput = document.getElementById('popupMessageInput');
