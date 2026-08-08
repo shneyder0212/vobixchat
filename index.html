@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>VOBIXCHAT // Quantum Mobile Pro</title>
+    <title>VOBIXCHAT // Quantum WhatsApp Fix</title>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
     <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
     <style>
@@ -21,34 +21,6 @@
             --bg-pattern: radial-gradient(circle at 50% 50%, rgba(189, 0, 255, 0.08) 0%, rgba(9, 2, 18, 0.95) 100%), repeating-linear-gradient(0deg, transparent, transparent 40px, rgba(189, 0, 255, 0.02) 40px, rgba(189, 0, 255, 0.02) 41px);
         }
 
-        body.theme-blue {
-            --bg-quantum: #010814;
-            --panel-hud: rgba(4, 15, 33, 0.98);
-            --neon-blue: #00f0ff;
-            --neon-violet: #0066ff;
-            --neon-green: #00ffcc;
-            --neon-amber: #ffaa00;
-            --neon-red: #ff0055;
-            --text-main: #e8f4fc;
-            --text-dim: #7aa2c2;
-            --border-hud: rgba(0, 240, 255, 0.3);
-            --bg-pattern: radial-gradient(circle at 50% 50%, rgba(0, 240, 255, 0.1) 0%, rgba(1, 8, 20, 0.95) 100%), linear-gradient(90deg, rgba(0,240,255,0.03) 1px, transparent 1px), linear-gradient(0deg, rgba(0,240,255,0.03) 1px, transparent 1px);
-        }
-
-        body.theme-matrix {
-            --bg-quantum: #020a05;
-            --panel-hud: rgba(4, 20, 10, 0.98);
-            --neon-blue: #00ff66;
-            --neon-violet: #00ccff;
-            --neon-green: #00ff33;
-            --neon-amber: #ccff00;
-            --neon-red: #ff0033;
-            --text-main: #e8fcf0;
-            --text-dim: #7ac295;
-            --border-hud: rgba(0, 255, 102, 0.3);
-            --bg-pattern: radial-gradient(circle at 50% 50%, rgba(0, 255, 102, 0.1) 0%, rgba(2, 10, 5, 0.95) 100%), repeating-linear-gradient(45deg, rgba(0,255,102,0.02) 0, rgba(0,255,102,0.02) 2px, transparent 0, transparent 10px);
-        }
-
         * { box-sizing: border-box; margin: 0; padding: 0; }
 
         html, body {
@@ -56,22 +28,10 @@
             background-image: var(--bg-pattern);
             font-family: 'Rajdhani', sans-serif;
             color: var(--text-main);
-            width: 100vw;
-            height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            overflow: hidden;
-            position: fixed;
-            top: 0;
-            left: 0;
-            overscroll-behavior-y: none;
+            width: 100vw; height: 100vh;
+            display: flex; justify-content: center; align-items: center;
+            overflow: hidden; position: fixed; top: 0; left: 0; overscroll-behavior-y: none;
         }
-
-        body.senior-mode { font-size: 1.2rem !important; }
-        body.senior-mode .quantum-input, body.senior-mode .action-btn { font-size: 1.1rem !important; padding: 10px 12px !important; }
-        body.senior-mode .quantum-msg { font-size: 1.15rem !important; padding: 12px 16px !important; }
-        body.senior-mode .dropdown-item { font-size: 0.9rem !important; padding: 12px !important; }
 
         .app-container {
             width: 100vw; height: 100vh; max-width: 1400px;
@@ -148,36 +108,16 @@
 
         .three-dots-container { position: relative; display: inline-block; }
         .dropdown-menu-tools {
-            display: none; 
-            position: absolute; 
-            right: 0; 
-            top: 40px; 
-            background: rgba(10, 3, 20, 0.98);
-            border: 2px solid var(--neon-blue); 
-            border-radius: 12px; 
-            padding: 8px; 
-            width: 270px; 
-            max-height: 65vh; 
-            overflow-y: auto !important; 
-            -webkit-overflow-scrolling: touch;
-            z-index: 99999; 
-            box-shadow: 0 10px 35px rgba(0,0,0,0.95);
-            flex-direction: column; 
-            gap: 6px; 
+            display: none; position: absolute; right: 0; top: 40px; 
+            background: rgba(10, 3, 20, 0.98); border: 2px solid var(--neon-blue); 
+            border-radius: 12px; padding: 8px; width: 270px; max-height: 65vh; 
+            overflow-y: auto !important; -webkit-overflow-scrolling: touch;
+            z-index: 99999; box-shadow: 0 10px 35px rgba(0,0,0,0.95); flex-direction: column; gap: 6px; 
         }
         .dropdown-item {
-            background: rgba(0, 240, 255, 0.08); 
-            border: 1px solid var(--border-hud); 
-            color: var(--text-main);
-            padding: 10px 12px; 
-            border-radius: 8px; 
-            font-family: 'Share Tech Mono', monospace; 
-            font-size: 0.8rem; 
-            cursor: pointer; 
-            text-align: left; 
-            transition: 0.2s;
-            display: block;
-            width: 100%;
+            background: rgba(0, 240, 255, 0.08); border: 1px solid var(--border-hud); color: var(--text-main);
+            padding: 10px 12px; border-radius: 8px; font-family: 'Share Tech Mono', monospace; font-size: 0.8rem; 
+            cursor: pointer; text-align: left; transition: 0.2s; display: block; width: 100%;
         }
         .dropdown-item:hover { background: rgba(0, 240, 255, 0.2); color: var(--neon-blue); border-color: var(--neon-blue); }
         .dropdown-item.danger { border-color: rgba(255,0,85,0.4); color: var(--neon-red); background: rgba(255,0,85,0.05); }
@@ -194,79 +134,51 @@
         .dynamic-content-view { display: none; padding: 20px; flex: 1; overflow-y: auto; font-family: 'Share Tech Mono'; }
         .dynamic-card { background: rgba(255,255,255,0.02); border: 1px solid var(--border-hud); padding: 15px; border-radius: 8px; margin-bottom: 12px; }
 
-        .writing-popup-overlay {
-            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-            background: var(--panel-hud);
-            padding: 10px; display: none; flex-direction: column; justify-content: flex-end; gap: 8px;
-            z-index: 250; backdrop-filter: blur(20px);
-        }
-        .writing-popup-overlay.active { display: flex; }
-        
-        .writing-popup-header { display: flex; justify-content: space-between; align-items: center; font-family: 'Orbitron'; font-size: 0.75rem; color: var(--neon-blue); border-bottom: 1px solid var(--border-hud); padding-bottom: 6px; }
-        
-        .writing-capsule-bar {
-            display: flex; align-items: center; background: #000; border: 1px solid var(--border-hud);
-            border-radius: 25px; padding: 6px 12px; gap: 8px;
-        }
-        .writing-popup-textarea {
-            flex: 1; height: 45px; background: transparent; border: none;
-            color: var(--text-main); font-family: 'Share Tech Mono', monospace; font-size: 1rem;
-            outline: none; resize: none; padding-top: 6px;
-        }
-        .capsule-tool-icon {
-            background: none; border: none; color: var(--neon-blue); cursor: pointer; font-size: 1.1rem;
-            display: flex; align-items: center; justify-content: center; padding: 4px; transition: 0.2s; flex-shrink: 0;
-        }
-        .capsule-tool-icon:hover { transform: scale(1.15); color: #fff; }
-        .capsule-tool-icon.recording { color: var(--neon-red); animation: pulseVoice 1.2s infinite; }
-
-        .writing-advanced-controls {
-            display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.6);
-            padding: 6px 10px; border-radius: 8px; border: 1px dashed var(--border-hud); font-size: 0.7rem; font-family: 'Share Tech Mono';
-        }
-        .translator-toggle-box { display: flex; align-items: center; gap: 6px; color: var(--neon-green); }
-        .translator-select { background: #000; color: var(--neon-blue); border: 1px solid var(--border-hud); border-radius: 4px; padding: 3px; font-size: 0.65rem; outline: none; }
-        
-        .bunker-mode-box { display: flex; align-items: center; gap: 4px; color: var(--neon-amber); cursor: pointer; }
-        .writing-popup-footer { display: flex; justify-content: flex-end; gap: 8px; }
-
+        /* --- TECLADO FIJO ABAJO PARA SAMSUNG S24 PLUS (SIN VENTANAS OCULTAS) --- */
         .chat-input-deck {
             padding: 8px 12px; background: rgba(2, 4, 10, 0.95); border-top: 1px solid var(--border-hud);
             display: flex; gap: 8px; align-items: center; flex-shrink: 0; position: absolute; 
-            bottom: 0; left: 0; right: 0; z-index: 100; height: 55px; width: 100%;
+            bottom: 0; left: 0; right: 0; z-index: 100; height: 60px; width: 100%;
         }
         .quantum-input {
             flex: 1; min-width: 0; background: rgba(0, 0, 0, 0.85); border: 1px solid var(--neon-blue); border-radius: 25px;
-            padding: 8px 15px; color: var(--text-main); font-family: 'Share Tech Mono', monospace; font-size: 0.9rem; outline: none;
+            padding: 10px 18px; color: var(--text-main); font-family: 'Share Tech Mono', monospace; font-size: 1rem; outline: none;
+        }
+        .send-action-btn {
+            background: var(--neon-blue); color: #000; border: none; padding: 0 20px; height: 44px;
+            border-radius: 22px; font-family: 'Orbitron'; font-weight: bold; cursor: pointer; font-size: 0.85rem; flex-shrink: 0;
         }
 
+        /* --- LLAMADAS ESTILO WHATSAPP (UNA SOLA PANTALLA / CÁMARA FLOTANTE) --- */
         .overlay-screen {
             position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-            background: rgba(1, 3, 8, 0.98); display: none; flex-direction: column; z-index: 1500; padding: 10px; box-sizing: border-box;
+            background: #0b141a; display: none; flex-direction: column; z-index: 1500; justify-content: space-between; padding: 20px;
         }
-        .call-header-hud {
-            display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;
-            background: rgba(0, 240, 255, 0.05); border: 1px solid var(--border-hud); padding: 8px 12px; border-radius: 8px;
+        #remoteVideo {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: 1; background: #000;
         }
-        .video-grid-container {
-            flex: 1; display: flex; gap: 10px; width: 100%; max-height: calc(100vh - 130px); justify-content: center; align-items: center;
+        #localVideo {
+            position: absolute; top: 20px; right: 20px; width: 110px; height: 160px; object-fit: cover;
+            border-radius: 12px; border: 2px solid #00f0ff; background: #000; z-index: 10; display: none;
         }
-        .video-box-16k {
-            flex: 1; background: #000; border: 1px solid var(--neon-blue); border-radius: 8px; overflow: hidden;
-            display: flex; align-items: center; justify-content: center; position: relative; box-shadow: 0 0 30px rgba(0,240,255,0.2);
-            height: 100%;
+        .voice-call-ui {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle, #1f2c34 0%, #0b141a 100%);
+            display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 5; gap: 20px;
         }
-        .video-box-16k video { width: 100%; height: 100%; object-fit: contain; }
-        
+        .caller-avatar {
+            width: 110px; height: 110px; border-radius: 50%; background: #00f0ff; color: #000;
+            display: flex; align-items: center; justify-content: center; font-size: 45px; font-weight: bold;
+            box-shadow: 0 0 25px rgba(0,240,255,0.4);
+        }
         .call-controls-bar {
-            display: flex; justify-content: center; gap: 10px; margin-top: 10px;
+            position: relative; z-index: 20; display: flex; justify-content: center; gap: 20px; margin-bottom: 25px;
         }
-        .call-control-btn {
-            background: rgba(0, 240, 255, 0.1); border: 1px solid var(--neon-blue); color: var(--neon-blue);
-            padding: 8px 16px; border-radius: 25px; font-family: 'Orbitron'; font-weight: bold; cursor: pointer; transition: 0.2s; font-size: 0.75rem;
+        .call-action-btn {
+            background: rgba(255,255,255,0.2); border: none; color: #fff; padding: 15px 30px;
+            border-radius: 30px; font-weight: bold; cursor: pointer; font-size: 15px; backdrop-filter: blur(5px);
         }
-        .call-control-btn.active { background: var(--neon-green); color: #000; border-color: var(--neon-green); }
-        .call-control-btn.danger { background: var(--neon-red); color: #fff; border-color: var(--neon-red); }
+        .call-action-btn.danger { background: #ff3b30; }
     </style>
 </head>
 <body class="theme-violet">
@@ -275,12 +187,10 @@
         <div class="auth-card" id="authStep1">
             <h2>VOBIXCHAT // ACCESO SEGURO</h2>
             <p>Detección de región y acceso activados.</p>
-            
             <div class="phone-group">
                 <div class="detected-country-badge" id="detectedCountryBadge">🇪🇸 +34</div>
                 <input type="text" id="authPhoneInput" class="auth-input" placeholder="Número de teléfono..." style="margin-bottom: 0;">
             </div>
-            
             <input type="text" id="authNameInput" class="auth-input" placeholder="Tu Nombre o Alias (ej: Shneyder)" style="margin-top: 8px; margin-bottom: 8px;">
             <button class="auth-btn" id="requestRandomPinBtn">ENVIAR PIN DE ACCESO</button>
             <div id="authErrorMsg" style="color:var(--neon-red); font-size:0.65rem; text-align:center; margin-top:4px;"></div>
@@ -296,27 +206,18 @@
         </div>
     </div>
 
+    <!-- Pantalla de llamadas estilo WhatsApp -->
     <div class="overlay-screen" id="mediaCallScreen">
-        <div class="call-header-hud">
-            <div>
-                <div style="font-family:'Orbitron'; color:var(--neon-blue); font-size:0.75rem;" id="callStatusTitle">CANAL DE ALTA DEFINICIÓN 16K</div>
-                <div style="font-family:'Share Tech Mono'; font-size:0.5rem; color:var(--neon-green);" id="callAudioFiltersStatus">🛡️ WebRTC P2P Enlazado Activo</div>
-            </div>
-            <button class="auth-btn" style="background:var(--neon-red); color:#fff; padding:5px 10px; font-size:0.65rem;" onclick="endMediaCall()">COLGAR ☎️</button>
+        <video id="remoteVideo" autoplay playsinline></video>
+        <div class="voice-call-ui" id="voiceCallUI">
+            <div class="caller-avatar" id="callAvatarText">W</div>
+            <div style="font-size: 24px; font-weight: bold;" id="callContactName">William</div>
+            <div style="font-size: 15px; color: #8696a0;" id="callStatusText">Conectando llamada...</div>
         </div>
-        <div class="video-grid-container">
-            <div class="video-box-16k">
-                <span style="position:absolute; top:10px; left:10px; font-family:'Share Tech Mono'; font-size:0.6rem; color:var(--neon-blue); z-index:10;">MI CÁMARA</span>
-                <video id="localVideo" autoplay playsinline muted></video>
-            </div>
-            <div class="video-box-16k">
-                <span style="position:absolute; top:10px; left:10px; font-family:'Share Tech Mono'; font-size:0.6rem; color:var(--neon-green); z-index:10;">CÁMARA DE LA OTRA PERSONA</span>
-                <video id="remoteVideo" autoplay playsinline></video>
-            </div>
-        </div>
+        <video id="localVideo" autoplay playsinline muted></video>
         <div class="call-controls-bar">
-            <button class="call-control-btn active" id="toggleMuteAudioBtn" onclick="toggleMuteAudio()">🎤 Silenciar Mic</button>
-            <button class="call-control-btn active" id="toggleVideoCamBtn" onclick="toggleVideoCam()">📹 Cámara HD</button>
+            <button class="call-action-btn" id="toggleMuteAudioBtn" onclick="toggleMuteAudio()">🎤 Silenciar</button>
+            <button class="call-action-btn danger" onclick="endMediaCall()">COLGAR ☎</button>
         </div>
     </div>
 
@@ -332,8 +233,8 @@
 
             <div class="header-right-group">
                 <button class="shield-quantum-btn" id="quantumShieldBtn" onclick="toggleQuantumShield()" title="Escudo Cuántico Antirruido IA">🛡️</button>
-                <button class="whatsapp-icon-btn" onclick="startVideoCall(true)" title="Videollamada 16K Ultra HD">📹</button>
-                <button class="whatsapp-icon-btn" onclick="startVideoCall(false)" title="Llamada de Voz HD Antirruido">📞</button>
+                <button class="whatsapp-icon-btn" onclick="iniciarLlamada('video')" title="Videollamada 16K Ultra HD">📹</button>
+                <button class="whatsapp-icon-btn" onclick="iniciarLlamada('audio')" title="Llamada de Voz HD Antirruido">📞</button>
                 
                 <div class="three-dots-container">
                     <button class="whatsapp-icon-btn" id="threeDotsToggleBtn" title="Menú">⋮</button>
@@ -362,52 +263,19 @@
             <div class="screen-view" id="viewChatSection" style="display: flex; flex-direction: column; flex: 1; height: 100%;">
                 <div class="messages-display" id="messagesContainer">
                     <div class="quantum-msg incoming">
-                        <strong>[SISTEMA]</strong>: Bienvenid@ a VOBIXCHAT. Teclado y llamadas P2P optimizadas.
+                        <strong>[SISTEMA]</strong>: Bienvenid@ a VOBIXCHAT. Teclado y llamadas estilo WhatsApp listos.
                         <div class="msg-meta"><span>12:00</span></div>
                     </div>
                 </div>
 
-                <div class="writing-popup-overlay" id="writingPopup">
-                    <div class="writing-popup-header">
-                        <span>💬 CONVERSACIÓN ACTIVA</span>
-                        <button class="auth-btn" style="padding: 4px 10px; font-size: 0.7rem; background: var(--neon-red); color: #fff;" onclick="closeWritingPopup()">✖ Volver al Chat</button>
-                    </div>
-
-                    <div style="flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding: 4px 0;" id="immersiveChatHistory"></div>
-                    
-                    <div class="writing-capsule-bar">
-                        <button class="capsule-tool-icon" id="popupVoiceBtn" title="Nota de voz" onmousedown="startVoiceRecording()" onmouseup="stopVoiceRecording()" ontouchstart="startVoiceRecording()" ontouchend="stopVoiceRecording()">🎤</button>
-                        <button class="capsule-tool-icon" id="popupVideoBtn" title="Vídeo / Cámara" onclick="toggleInstantVideoRecording()">📹</button>
-                        <button class="capsule-tool-icon" title="Stickers" onclick="alert('⚡ Panel de Emojis Cuánticos abierto')">😊</button>
-                        <textarea id="popupMessageInput" class="writing-popup-textarea" placeholder="Escribe tu mensaje aquí..."></textarea>
-                        <button class="capsule-tool-icon" title="Adjuntar" onclick="alert('📎 Módulo de archivos cifrados')">📎</button>
-                    </div>
-
-                    <div class="writing-advanced-controls">
-                        <div class="translator-toggle-box">
-                            <span>🌐 Traducir:</span>
-                            <select id="liveTranslateLang" class="translator-select">
-                                <option value="off">Off</option>
-                                <option value="en">EN</option>
-                                <option value="fr">FR</option>
-                                <option value="de">DE</option>
-                            </select>
-                        </div>
-                        <div class="bunker-mode-box" onclick="toggleBunkerPin()" id="bunkerStatusIndicator">
-                            <span>🛡️ Búnker: <strong style="color:var(--neon-red)">OFF</strong></span>
-                        </div>
-                    </div>
-
-                    <div class="writing-popup-footer">
-                        <button class="auth-btn" style="padding: 10px 20px; font-size: 0.85rem; background: var(--neon-blue); color: #000; width: 100%;" onclick="sendFromPopup()">ENVIAR MENSAJE 🚀</button>
-                    </div>
-                </div>
-
+                <!-- CAMPO DE ESCRITURA FIJO DIRECTO PARA SAMSUNG S24 PLUS -->
                 <div class="chat-input-deck" id="chatInputDeckArea">
-                    <input type="text" id="messageInput" class="quantum-input" placeholder="Toca aquí para escribir..." autocomplete="off">
+                    <input type="text" id="messageInput" class="quantum-input" placeholder="Escribe tu mensaje..." autocomplete="off">
+                    <button class="send-action-btn" onclick="enviarMensajeDirecto()">ENVIAR</button>
                 </div>
             </div>
 
+            <!-- Resto de vistas de herramientas -->
             <div class="dynamic-content-view" id="viewTranslatorSection">
                 <div class="dynamic-card">
                     <h3 style="color:var(--neon-blue); font-family:'Orbitron'; font-size:0.85rem; margin-bottom:8px;">🌐 TRADUCTOR DE MENSAJES</h3>
@@ -417,7 +285,6 @@
                 </div>
                 <button class="auth-btn" style="background:#334155; color:#fff; margin-top:10px;" onclick="switchView('chat')">⬅️ Volver</button>
             </div>
-
             <div class="dynamic-content-view" id="viewCloudSection">
                 <div class="dynamic-card"><h3 style="color:var(--neon-blue);">☁️ NUBE</h3><input type="file" class="auth-input"></div>
                 <button class="auth-btn" style="background:#334155; color:#fff; margin-top:10px;" onclick="switchView('chat')">⬅️ Volver</button>
@@ -531,22 +398,37 @@
             }
         };
 
-        window.startVideoCall = async (withVideo) => {
+        // --- LLAMADAS ESTILO WHATSAPP (UNA SOLA PANTALLA) ---
+        window.iniciarLlamada = async (tipo) => {
             if(isUserBlocked) return;
-            isVideoCallActive = withVideo;
-            document.getElementById('callStatusTitle').textContent = withVideo ? "🎥 VIDEOLLAMADA 16K P2P" : "📞 LLAMADA DE VOZ P2P";
-            
+            isVideoCallActive = (tipo === 'video');
+
+            document.getElementById('mediaCallScreen').style.display = 'flex';
+
+            if (isVideoCallActive) {
+                document.getElementById('voiceCallUI').style.display = 'none';
+                document.getElementById('localVideo').style.display = 'block';
+                document.getElementById('remoteVideo').style.display = 'block';
+            } else {
+                document.getElementById('voiceCallUI').style.display = 'flex';
+                document.getElementById('localVideo').style.display = 'none';
+                document.getElementById('remoteVideo').style.display = 'none';
+            }
+
             try {
                 localStream = await navigator.mediaDevices.getUserMedia({
                     audio: { echoCancellation: true, noiseSuppression: true },
-                    video: withVideo ? { width: { ideal: 1280 }, height: { ideal: 720 } } : false
+                    video: isVideoCallActive ? { width: { ideal: 1280 }, height: { ideal: 720 } } : false
                 });
-                document.getElementById('localVideo').srcObject = localStream;
-                document.getElementById('mediaCallScreen').style.display = 'flex';
 
-                socket.emit('call_user', { room: currentRoom, sender: myUsername });
+                if (isVideoCallActive) {
+                    document.getElementById('localVideo').srcObject = localStream;
+                }
+
+                socket.emit('call_user', { room: currentRoom, sender: myUsername, type: tipo });
             } catch(e) {
                 alert("Permiso denegado de cámara o micrófono.");
+                endMediaCall();
             }
         };
 
@@ -558,7 +440,9 @@
             });
 
             peerConnection.ontrack = event => {
-                document.getElementById('remoteVideo').srcObject = event.streams[0];
+                if (isVideoCallActive) {
+                    document.getElementById('remoteVideo').srcObject = event.streams[0];
+                }
             };
 
             peerConnection.onicecandidate = event => {
@@ -571,7 +455,7 @@
         socket.on('call_incoming', async (data) => {
             if (data.sender === myUsername) return;
             if (confirm(`📞 ¡Llamada entrante de ${data.sender}! ¿Deseas contestar?`)) {
-                await window.startVideoCall(true);
+                await window.iniciarLlamada(data.type || 'video');
                 createPeerConnection(data.socketId);
                 const offer = await peerConnection.createOffer();
                 await peerConnection.setLocalDescription(offer);
@@ -616,17 +500,7 @@
                 const audioTrack = localStream.getAudioTracks()[0];
                 if(audioTrack) {
                     audioTrack.enabled = !audioTrack.enabled;
-                    document.getElementById('toggleMuteAudioBtn').textContent = audioTrack.enabled ? "🎤 Silenciar Mic" : "🔇 Mic Silenciado";
-                }
-            }
-        };
-
-        window.toggleVideoCam = () => {
-            if(localStream && isVideoCallActive) {
-                const videoTrack = localStream.getVideoTracks()[0];
-                if(videoTrack) {
-                    videoTrack.enabled = !videoTrack.enabled;
-                    document.getElementById('toggleVideoCamBtn').textContent = videoTrack.enabled ? "📹 Cámara HD" : "📷 Cámara Pausada";
+                    document.getElementById('toggleMuteAudioBtn').textContent = audioTrack.enabled ? "🎤 Silenciar" : "🔇 Activado";
                 }
             }
         };
@@ -682,43 +556,20 @@
         window.logoutSession = () => location.reload();
         window.toggleSeniorMode = () => { document.body.classList.toggle('senior-mode'); };
 
-        const messageInput = document.getElementById('messageInput');
-        const writingPopup = document.getElementById('writingPopup');
-        const popupMessageInput = document.getElementById('popupMessageInput');
-        const chatInputDeckArea = document.getElementById('chatInputDeckArea');
-        const messagesContainer = document.getElementById('messagesContainer');
-        const immersiveChatHistory = document.getElementById('immersiveChatHistory');
-
-        // CORRECCIÓN TÁCTIL PURA PARA SAMSUNG S24 PLUS (SIN BLOQUEAR EL TECLADO)
-        messageInput.addEventListener('click', () => {
-            if(isUserBlocked) return;
-            immersiveChatHistory.innerHTML = messagesContainer.innerHTML;
-            writingPopup.classList.add('active');
-            chatInputDeckArea.style.display = 'none'; 
-            popupMessageInput.value = messageInput.value;
+        // --- ENVÍO DIRECTO Y TECLADO NATIVO FUNCIONAL EN S24 PLUS ---
+        function enviarMensajeDirecto() {
+            const input = document.getElementById('messageInput');
+            let val = input.value.trim();
+            if(!val || isUserBlocked) return;
             
-            // Foco limpio sin preventDefault para forzar la apertura del teclado Samsung
-            setTimeout(() => {
-                popupMessageInput.focus();
-            }, 50);
-
-            immersiveChatHistory.scrollTop = immersiveChatHistory.scrollHeight;
-        });
-
-        window.closeWritingPopup = () => {
-            writingPopup.classList.remove('active');
-            chatInputDeckArea.style.display = 'flex'; 
-        };
-
-        window.sendFromPopup = () => {
-            let val = popupMessageInput.value.trim();
-            if(!val) return;
             socket.emit('chat_message', { room: currentRoom, type: 'text', text: val, sender: myUsername });
-            messageInput.value = '';
-            popupMessageInput.value = '';
-            writingPopup.classList.remove('active');
-            chatInputDeckArea.style.display = 'flex';
-        };
+            input.value = '';
+            input.focus();
+        }
+
+        document.getElementById('messageInput').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') enviarMensajeDirecto();
+        });
 
         socket.on('chat_message', (data) => {
             if(isUserBlocked) return;
@@ -729,13 +580,9 @@
             div.className = `quantum-msg ${type}`;
             div.innerHTML = `<strong>[${data.sender}]</strong>: ${data.text}<div class="msg-meta"><span>${new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span></div>`;
             
-            messagesContainer.appendChild(div.cloneNode(true));
+            const messagesContainer = document.getElementById('messagesContainer');
+            messagesContainer.appendChild(div);
             messagesContainer.scrollTop = messagesContainer.scrollHeight;
-
-            if(writingPopup.classList.contains('active')) {
-                immersiveChatHistory.appendChild(div);
-                immersiveChatHistory.scrollTop = immersiveChatHistory.scrollHeight;
-            }
         });
     </script>
 </body>
