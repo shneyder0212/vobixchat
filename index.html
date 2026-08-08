@@ -33,7 +33,6 @@
             --text-dim: #7aa2c2;
             --border-hud: rgba(0, 240, 255, 0.3);
             --bg-pattern: radial-gradient(circle at 50% 50%, rgba(0, 240, 255, 0.1) 0%, rgba(1, 8, 20, 0.95) 100%), linear-gradient(90deg, rgba(0,240,255,0.03) 1px, transparent 1px), linear-gradient(0deg, rgba(0,240,255,0.03) 1px, transparent 1px);
-            background-size: 100% 100%, 30px 30px, 30px 30px;
         }
 
         body.theme-matrix {
@@ -66,7 +65,6 @@
             position: fixed;
             top: 0;
             left: 0;
-            transition: background 0.5s ease;
             overscroll-behavior-y: none;
         }
 
@@ -112,13 +110,13 @@
         }
 
         .main-header-bar {
-            padding: 4px 6px; background: rgba(2, 4, 10, 0.95); border-bottom: 1px solid var(--border-hud);
+            padding: 4px 8px; background: rgba(2, 4, 10, 0.95); border-bottom: 1px solid var(--border-hud);
             display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; position: relative; z-index: 100; height: 50px;
         }
         
-        .header-profile-section { display: flex; align-items: center; gap: 5px; flex: 1; min-width: 0; cursor: pointer; }
+        .header-profile-section { display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0; cursor: pointer; }
         .profile-avatar-container {
-            width: 30px; height: 30px; border-radius: 50%; border: 1px solid var(--neon-blue);
+            width: 32px; height: 32px; border-radius: 50%; border: 1px solid var(--neon-blue);
             background: linear-gradient(135deg, var(--neon-blue), var(--neon-violet));
             display: flex; align-items: center; justify-content: center; font-family: 'Orbitron'; font-weight: bold; color: #000; font-size: 0.75rem;
             box-shadow: 0 0 6px rgba(0, 240, 255, 0.4); flex-shrink: 0; overflow: hidden;
@@ -126,55 +124,56 @@
         
         .header-info-group { display: flex; flex-direction: column; min-width: 0; max-width: 120px; }
         .header-username-display { font-family: 'Orbitron', sans-serif; font-size: 0.7rem; color: var(--text-main); font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .header-user-status { font-size: 0.4rem; color: var(--neon-green); font-family: 'Share Tech Mono'; }
+        .header-user-status { font-size: 0.45rem; color: var(--neon-green); font-family: 'Share Tech Mono'; }
 
-        .header-right-group { display: flex; gap: 2px; align-items: center; flex-shrink: 0; }
+        .header-right-group { display: flex; gap: 4px; align-items: center; flex-shrink: 0; }
         .whatsapp-icon-btn {
-            background: none; border: none; color: var(--neon-blue); cursor: pointer; font-size: 0.9rem;
-            display: flex; align-items: center; justify-content: center; padding: 2px; transition: 0.2s;
+            background: none; border: none; color: var(--neon-blue); cursor: pointer; font-size: 1rem;
+            display: flex; align-items: center; justify-content: center; padding: 4px; transition: 0.2s;
         }
         .whatsapp-icon-btn:hover { color: #fff; transform: scale(1.1); }
         
         .shield-quantum-btn {
             background: rgba(0, 240, 255, 0.08); border: 1px solid var(--neon-blue); color: var(--neon-blue);
-            border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center;
-            cursor: pointer; font-size: 0.6rem; transition: 0.2s; flex-shrink: 0;
+            border-radius: 50%; width: 26px; height: 26px; display: flex; align-items: center; justify-content: center;
+            cursor: pointer; font-size: 0.65rem; transition: 0.2s; flex-shrink: 0;
         }
         .shield-quantum-btn.active { background: var(--neon-green); color: #000; border-color: var(--neon-green); box-shadow: 0 0 8px var(--neon-green); }
 
         .logout-action-btn { 
-            background: var(--neon-red); color: #fff; border: none; padding: 3px 5px; 
+            background: var(--neon-red); color: #fff; border: none; padding: 4px 6px; 
             border-radius: 4px; font-family: 'Orbitron'; font-weight: bold; cursor: pointer; 
-            font-size: 0.5rem; flex-shrink: 0; white-space: nowrap;
+            font-size: 0.55rem; flex-shrink: 0; white-space: nowrap;
         }
 
+        /* --- CORRECCIÓN DE MENÚ DESPLEGABLE (SCROLL FLUIDO Y VISIBLE) --- */
         .three-dots-container { position: relative; display: inline-block; }
         .dropdown-menu-tools {
             display: none; 
-            position: fixed; 
-            right: 10px; 
-            top: 60px; 
-            background: rgba(14, 5, 26, 0.99);
+            position: absolute; 
+            right: 0; 
+            top: 40px; 
+            background: rgba(10, 3, 20, 0.98);
             border: 2px solid var(--neon-blue); 
             border-radius: 12px; 
-            padding: 10px; 
-            width: 260px; 
-            max-height: 70vh; 
-            overflow-y: scroll !important; 
-            z-index: 999999; 
+            padding: 8px; 
+            width: 270px; 
+            max-height: 65vh; 
+            overflow-y: auto !important; 
             -webkit-overflow-scrolling: touch;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.95);
+            z-index: 99999; 
+            box-shadow: 0 10px 35px rgba(0,0,0,0.95);
             flex-direction: column; 
-            gap: 8px; 
+            gap: 6px; 
         }
         .dropdown-item {
             background: rgba(0, 240, 255, 0.08); 
             border: 1px solid var(--border-hud); 
             color: var(--text-main);
-            padding: 12px; 
+            padding: 10px 12px; 
             border-radius: 8px; 
             font-family: 'Share Tech Mono', monospace; 
-            font-size: 0.85rem; 
+            font-size: 0.8rem; 
             cursor: pointer; 
             text-align: left; 
             transition: 0.2s;
@@ -183,12 +182,11 @@
         }
         .dropdown-item:hover { background: rgba(0, 240, 255, 0.2); color: var(--neon-blue); border-color: var(--neon-blue); }
         .dropdown-item.danger { border-color: rgba(255,0,85,0.4); color: var(--neon-red); background: rgba(255,0,85,0.05); }
-        .dropdown-item.danger:hover { background: rgba(255,0,85,0.2); color: var(--neon-red); }
 
         .workspace-area { flex: 1; display: flex; flex-direction: column; position: relative; overflow: hidden; background: transparent; height: calc(100vh - 50px); }
         .screen-view { display: flex; flex-direction: column; flex: 1; height: 100%; overflow: hidden; position: relative; }
         
-        .messages-display { flex: 1; padding: 12px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding-bottom: 90px; }
+        .messages-display { flex: 1; padding: 12px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding-bottom: 80px; }
         .quantum-msg { max-width: 85%; padding: 10px 14px; border-radius: 8px; font-size: 0.95rem; line-height: 1.4; position: relative; word-break: break-word; }
         .quantum-msg.incoming { background: rgba(0, 240, 255, 0.05); border-left: 3px solid var(--neon-blue); align-self: flex-start; }
         .quantum-msg.outgoing { background: rgba(189, 0, 255, 0.08); border-right: 3px solid var(--neon-violet); align-self: flex-end; text-align: right; }
@@ -197,10 +195,11 @@
         .dynamic-content-view { display: none; padding: 20px; flex: 1; overflow-y: auto; font-family: 'Share Tech Mono'; }
         .dynamic-card { background: rgba(255,255,255,0.02); border: 1px solid var(--border-hud); padding: 15px; border-radius: 8px; margin-bottom: 12px; }
 
+        /* --- CORRECCIÓN DE TECLADO Y ENTRADA DE TEXTO --- */
         .writing-popup-overlay {
             position: absolute; top: 0; left: 0; right: 0; bottom: 0;
             background: var(--panel-hud);
-            padding: 12px; display: none; flex-direction: column; justify-content: flex-end; gap: 10px;
+            padding: 10px; display: none; flex-direction: column; justify-content: flex-end; gap: 8px;
             z-index: 250; backdrop-filter: blur(20px);
         }
         .writing-popup-overlay.active { display: flex; }
@@ -212,8 +211,8 @@
             border-radius: 25px; padding: 6px 12px; gap: 8px;
         }
         .writing-popup-textarea {
-            flex: 1; height: 50px; background: transparent; border: none;
-            color: var(--text-main); font-family: 'Share Tech Mono', monospace; font-size: 0.95rem;
+            flex: 1; height: 45px; background: transparent; border: none;
+            color: var(--text-main); font-family: 'Share Tech Mono', monospace; font-size: 1rem;
             outline: none; resize: none; padding-top: 6px;
         }
         .capsule-tool-icon {
@@ -236,11 +235,11 @@
         .chat-input-deck {
             padding: 8px 12px; background: rgba(2, 4, 10, 0.95); border-top: 1px solid var(--border-hud);
             display: flex; gap: 8px; align-items: center; flex-shrink: 0; position: absolute; 
-            bottom: env(safe-area-inset-bottom, 12px); left: 0; right: 0; z-index: 100; height: 60px; width: 100%;
+            bottom: 0; left: 0; right: 0; z-index: 100; height: 55px; width: 100%;
         }
         .quantum-input {
             flex: 1; min-width: 0; background: rgba(0, 0, 0, 0.85); border: 1px solid var(--neon-blue); border-radius: 25px;
-            padding: 9px 15px; color: var(--text-main); font-family: 'Share Tech Mono', monospace; font-size: 0.85rem; outline: none; cursor: pointer;
+            padding: 8px 15px; color: var(--text-main); font-family: 'Share Tech Mono', monospace; font-size: 0.9rem; outline: none;
         }
 
         .overlay-screen {
@@ -355,7 +354,7 @@
             <div class="screen-view" id="viewChatSection" style="display: flex; flex-direction: column; flex: 1; height: 100%;">
                 <div class="messages-display" id="messagesContainer">
                     <div class="quantum-msg incoming">
-                        <strong>[SISTEMA]</strong>: Bienvenid@ a VOBIXCHAT. Selector de país y llamadas HD optimizadas listas.
+                        <strong>[SISTEMA]</strong>: Bienvenid@ a VOBIXCHAT. Teclado y herramientas optimizadas.
                         <div class="msg-meta"><span>12:00</span></div>
                     </div>
                 </div>
@@ -372,7 +371,7 @@
                         <button class="capsule-tool-icon" id="popupVoiceBtn" title="Nota de voz" onmousedown="startVoiceRecording()" onmouseup="stopVoiceRecording()" ontouchstart="startVoiceRecording()" ontouchend="stopVoiceRecording()">🎤</button>
                         <button class="capsule-tool-icon" id="popupVideoBtn" title="Vídeo / Cámara" onclick="toggleInstantVideoRecording()">📹</button>
                         <button class="capsule-tool-icon" title="Stickers" onclick="alert('⚡ Panel de Emojis Cuánticos abierto')">😊</button>
-                        <textarea id="popupMessageInput" class="writing-popup-textarea" placeholder="Mensaje..."></textarea>
+                        <textarea id="popupMessageInput" class="writing-popup-textarea" placeholder="Escribe tu mensaje aquí..."></textarea>
                         <button class="capsule-tool-icon" title="Adjuntar" onclick="alert('📎 Módulo de archivos cifrados')">📎</button>
                     </div>
 
@@ -397,7 +396,7 @@
                 </div>
 
                 <div class="chat-input-deck" id="chatInputDeckArea">
-                    <input type="text" id="messageInput" class="quantum-input" placeholder="Mensaje..." readonly autocomplete="off">
+                    <input type="text" id="messageInput" class="quantum-input" placeholder="Toca aquí para escribir..." autocomplete="off">
                 </div>
             </div>
 
@@ -469,10 +468,6 @@
             const sonido = document.getElementById('notificationSound');
             if (sonido) { sonido.currentTime = 0; sonido.play().catch(e => {}); }
         }
-
-        document.addEventListener('touchmove', function(e) {
-            if (e.scale !== 1) { e.preventDefault(); }
-        }, { passive: false });
 
         window.switchTheme = (themeName) => {
             document.body.className = 'theme-' + themeName;
@@ -703,6 +698,7 @@
         const messagesContainer = document.getElementById('messagesContainer');
         const immersiveChatHistory = document.getElementById('immersiveChatHistory');
 
+        // Activación limpia del teclado del móvil al hacer clic
         messageInput.addEventListener('click', () => {
             if(isUserBlocked) return;
             immersiveChatHistory.innerHTML = messagesContainer.innerHTML;
