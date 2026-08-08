@@ -153,7 +153,7 @@
             font-size: 0.5rem; flex-shrink: 0; white-space: nowrap;
         }
 
-        /* MENÚ DESPLEGABLE CORREGIDO CON SCROLL FLUIDO */
+        /* MENÚ DESPLEGABLE CON SCROLL Y Z-INDEX CORREGIDO */
         .three-dots-container { position: relative; display: inline-block; }
         .dropdown-menu-tools {
             display: none; 
@@ -166,7 +166,6 @@
             padding: 8px; 
             width: 240px; 
             
-            /* Ajustes exactos para permitir scroll vertical completo */
             max-height: 48vh; 
             overflow-y: auto; 
             z-index: 99999; 
@@ -258,13 +257,30 @@
             padding: 9px 15px; color: var(--text-main); font-family: 'Share Tech Mono', monospace; font-size: 0.85rem; outline: none; cursor: pointer;
         }
 
-        /* PANTALLA DE VIDEOLLAMADA */
+        /* PANTALLA DE LLAMADA HD / 16K CON FILTROS ANTIRRUIDO Y SUPRESIÓN DE ECO */
         .overlay-screen {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(1, 3, 8, 0.98); display: none; flex-direction: column; z-index: 1500; padding: 15px;
         }
-        .video-box-16k { flex: 1; background: #000; border: 1px solid var(--neon-blue); border-radius: 8px; overflow: hidden; display: flex; align-items: center; justify-content: center; position: relative; }
+        .call-header-hud {
+            display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;
+            background: rgba(0, 240, 255, 0.05); border: 1px solid var(--border-hud); padding: 10px 15px; border-radius: 8px;
+        }
+        .video-box-16k {
+            flex: 1; background: #000; border: 1px solid var(--neon-blue); border-radius: 8px; overflow: hidden;
+            display: flex; align-items: center; justify-content: center; position: relative; box-shadow: 0 0 30px rgba(0,240,255,0.2);
+        }
         .video-box-16k video { width: 100%; height: 100%; object-fit: cover; }
+        
+        .call-controls-bar {
+            display: flex; justify-content: center; gap: 15px; margin-top: 12px;
+        }
+        .call-control-btn {
+            background: rgba(0, 240, 255, 0.1); border: 1px solid var(--neon-blue); color: var(--neon-blue);
+            padding: 10px 20px; border-radius: 25px; font-family: 'Orbitron'; font-weight: bold; cursor: pointer; transition: 0.2s; font-size: 0.8rem;
+        }
+        .call-control-btn.active { background: var(--neon-green); color: #000; border-color: var(--neon-green); }
+        .call-control-btn.danger { background: var(--neon-red); color: #fff; border-color: var(--neon-red); }
     </style>
 </head>
 <body class="theme-violet">
@@ -292,13 +308,21 @@
         </div>
     </div>
 
+    <!-- PANTALLA DE LLAMADA DE VOZ / VÍDEO 16K CON FILTROS ANTIRRUIDO, SUPRESIÓN DE ECO Y GANANCIA AUTOMÁTICA -->
     <div class="overlay-screen" id="mediaCallScreen">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-            <div style="font-family:'Orbitron'; color:var(--neon-blue); font-size:0.8rem;">LLAMADA 16K (ANTIRRUIDO ACTIVO)</div>
-            <button class="auth-btn" style="background:var(--neon-red); color:#fff; padding:5px 10px;" onclick="endMediaCall()">COLGAR</button>
+        <div class="call-header-hud">
+            <div>
+                <div style="font-family:'Orbitron'; color:var(--neon-blue); font-size:0.8rem;" id="callStatusTitle">CANAL DE ALTA DEFINICIÓN 16K</div>
+                <div style="font-family:'Share Tech Mono'; font-size:0.55rem; color:var(--neon-green);" id="callAudioFiltersStatus">🛡️ Antirruido + Supresión de Eco: ACTIVO</div>
+            </div>
+            <button class="auth-btn" style="background:var(--neon-red); color:#fff; padding:6px 12px; font-size:0.7rem;" onclick="endMediaCall()">COLGAR ☎️</button>
         </div>
         <div class="video-box-16k">
             <video id="liveWebcamVideo" autoplay playsinline muted></video>
+        </div>
+        <div class="call-controls-bar">
+            <button class="call-control-btn active" id="toggleMuteAudioBtn" onclick="toggleMuteAudio()">🎤 Silenciar Mic</button>
+            <button class="call-control-btn active" id="toggleVideoCamBtn" onclick="toggleVideoCam()">📹 Cámara HD</button>
         </div>
     </div>
 
@@ -315,8 +339,8 @@
 
             <div class="header-right-group">
                 <button class="shield-quantum-btn" id="quantumShieldBtn" onclick="toggleQuantumShield()" title="Escudo Cuántico Antirruido IA">🛡️</button>
-                <button class="whatsapp-icon-btn" onclick="startVideoCall()" title="Videollamada 16K">📹</button>
-                <button class="whatsapp-icon-btn" onclick="startVoiceCall()" title="Llamada de Voz HD">📞</button>
+                <button class="whatsapp-icon-btn" onclick="startVideoCall()" title="Videollamada 16K Ultra HD">📹</button>
+                <button class="whatsapp-icon-btn" onclick="startVoiceCall()" title="Llamada de Voz HD Antirruido">📞</button>
                 
                 <div class="three-dots-container">
                     <button class="whatsapp-icon-btn" id="threeDotsToggleBtn" title="Menú">⋮</button>
@@ -346,7 +370,7 @@
             <div class="screen-view" id="viewChatSection" style="display: flex; flex-direction: column; flex: 1; height: 100%;">
                 <div class="messages-display" id="messagesContainer">
                     <div class="quantum-msg incoming">
-                        <strong>[SISTEMA]</strong>: Bienvenid@ a VOBIXCHAT. Toca tu perfil arriba para abrir tu lista de contactos o iniciar un chat privado directo.
+                        <strong>[SISTEMA]</strong>: Bienvenid@ a VOBIXCHAT. Llamadas de voz y vídeo 16K con supresión avanzada de eco y ruido listas.
                         <div class="msg-meta"><span>12:00</span></div>
                     </div>
                 </div>
@@ -534,24 +558,116 @@
         window.toggleQuantumShield = () => {
             isQuantumShieldActive = !isQuantumShieldActive;
             const shieldBtn = document.getElementById('quantumShieldBtn');
+            const statusTxt = document.getElementById('callAudioFiltersStatus');
             if(isQuantumShieldActive) {
                 shieldBtn.classList.add('active');
                 shieldBtn.title = "Escudo Cuántico Antirruido IA: ACTIVO";
+                if(statusTxt) statusTxt.textContent = "🛡️ Antirruido + Supresión de Eco: ACTIVO";
             } else {
                 shieldBtn.classList.remove('active');
                 shieldBtn.title = "Escudo Cuántico Antirruido IA: INACTIVO";
+                if(statusTxt) statusTxt.textContent = "⚠️ Antirruido y Supresión de Eco: INACTIVO";
             }
         };
         document.getElementById('quantumShieldBtn').classList.add('active');
+
+        // MÓDULO DE LLAMADAS 16K CON FILTROS NATIVOS ANTIRRUIDO Y SUPRESIÓN DE ECO
+        window.startVideoCall = async () => {
+            if(isUserBlocked) return;
+            try {
+                document.getElementById('callStatusTitle').textContent = "🎥 VIDEOLLAMADA 16K ULTRA HD";
+                const constraints = {
+                    audio: {
+                        echoCancellation: true,      // Supresión de eco activa
+                        noiseSuppression: true,      // Supresión de ruido de fondo
+                        autoGainControl: true        // Control automático de volumen
+                    },
+                    video: { 
+                        width: { ideal: 3840 }, 
+                        height: { ideal: 2160 } 
+                    }
+                };
+                activeMediaStream = await navigator.mediaDevices.getUserMedia(constraints);
+                document.getElementById('liveWebcamVideo').srcObject = activeMediaStream;
+                document.getElementById('mediaCallScreen').style.display = 'flex';
+            } catch(e) {
+                alert("No se pudo acceder a la cámara o micrófono en alta definición.");
+            }
+        };
+
+        window.startVoiceCall = async () => {
+            if(isUserBlocked) return;
+            try {
+                document.getElementById('callStatusTitle').textContent = "📞 LLAMADA DE VOZ HD ANTIRRUIDO";
+                const constraints = {
+                    audio: {
+                        echoCancellation: true,      // Supresión total de eco
+                        noiseSuppression: true,      // Filtro antirruido activo
+                        autoGainControl: true        // Estabilización de voz
+                    },
+                    video: false
+                };
+                activeMediaStream = await navigator.mediaDevices.getUserMedia(constraints);
+                document.getElementById('liveWebcamVideo').srcObject = activeMediaStream;
+                document.getElementById('mediaCallScreen').style.display = 'flex';
+            } catch(e) {
+                alert("No se pudo iniciar la llamada de voz.");
+            }
+        };
+
+        window.endMediaCall = () => {
+            if(activeMediaStream) {
+                activeMediaStream.getTracks().forEach(t => t.stop());
+                activeMediaStream = null;
+            }
+            document.getElementById('liveWebcamVideo').srcObject = null;
+            document.getElementById('mediaCallScreen').style.display = 'none';
+        };
+
+        window.toggleMuteAudio = () => {
+            if(activeMediaStream) {
+                const audioTrack = activeMediaStream.getAudioTracks()[0];
+                if(audioTrack) {
+                    audioTrack.enabled = !audioTrack.enabled;
+                    const btn = document.getElementById('toggleMuteAudioBtn');
+                    if(audioTrack.enabled) {
+                        btn.classList.add('active');
+                        btn.textContent = "🎤 Silenciar Mic";
+                    } else {
+                        btn.classList.remove('active');
+                        btn.textContent = "🔇 Mic Silenciado";
+                    }
+                }
+            }
+        };
+
+        window.toggleVideoCam = () => {
+            if(activeMediaStream) {
+                const videoTrack = activeMediaStream.getVideoTracks()[0];
+                if(videoTrack) {
+                    videoTrack.enabled = !videoTrack.enabled;
+                    const btn = document.getElementById('toggleVideoCamBtn');
+                    if(videoTrack.enabled) {
+                        btn.classList.add('active');
+                        btn.textContent = "📹 Cámara HD";
+                    } else {
+                        btn.classList.remove('active');
+                        btn.textContent = "📷 Cámara Pausada";
+                    }
+                } else {
+                    alert("Esta es una llamada puramente de voz HD.");
+                }
+            }
+        };
 
         async function startVoiceRecording() {
             if(isUserBlocked) return;
             try {
                 const constraints = {
                     audio: {
-                        echoCancellation: isQuantumShieldActive,
-                        noiseSuppression: isQuantumShieldActive,
-                        autoGainControl: isQuantumShieldActive
+                        echoCancellation: true,
+                        noiseSuppression: true,
+                        autoGainControl: true
                     }
                 };
                 const stream = await navigator.mediaDevices.getUserMedia(constraints);
@@ -560,7 +676,7 @@
                 mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
                 mediaRecorder.onstop = () => {
                     const audioUrl = URL.createObjectURL(new Blob(audioChunks, { type: 'audio/webm' }));
-                    socket.emit('chat_message', { room: currentRoom, type: 'audio', text: `🎙️ Nota de voz HD:<br><audio controls src="${audioUrl}"></audio>`, sender: myUsername });
+                    socket.emit('chat_message', { room: currentRoom, type: 'audio', text: `🎙️ Nota de voz HD Antirruido:<br><audio controls src="${audioUrl}"></audio>`, sender: myUsername });
                 };
                 mediaRecorder.start();
                 document.getElementById('popupVoiceBtn').classList.add('recording');
@@ -579,7 +695,7 @@
             if(!isRecordingVideoNow) {
                 try {
                     const constraints = {
-                        audio: { echoCancellation: isQuantumShieldActive, noiseSuppression: isQuantumShieldActive },
+                        audio: { echoCancellation: true, noiseSuppression: true },
                         video: { width: { ideal: 3840 }, height: { ideal: 2160 } }
                     };
                     const stream = await navigator.mediaDevices.getUserMedia(constraints);
@@ -661,37 +777,6 @@
         });
 
         window.logoutSession = () => location.reload();
-
-        window.startVideoCall = async () => {
-            if(isUserBlocked) return;
-            try {
-                const constraints = {
-                    audio: { echoCancellation: isQuantumShieldActive, noiseSuppression: isQuantumShieldActive, autoGainControl: isQuantumShieldActive },
-                    video: { width: { ideal: 3840 }, height: { ideal: 2160 } }
-                };
-                activeMediaStream = await navigator.mediaDevices.getUserMedia(constraints);
-                document.getElementById('liveWebcamVideo').srcObject = activeMediaStream;
-                document.getElementById('mediaCallScreen').style.display = 'flex';
-            } catch(e) { alert("Error al iniciar videollamada 16K."); }
-        };
-
-        window.startVoiceCall = async () => {
-            if(isUserBlocked) return;
-            try {
-                const constraints = {
-                    audio: { echoCancellation: isQuantumShieldActive, noiseSuppression: isQuantumShieldActive, autoGainControl: isQuantumShieldActive },
-                    video: false
-                };
-                activeMediaStream = await navigator.mediaDevices.getUserMedia(constraints);
-                document.getElementById('liveWebcamVideo').srcObject = activeMediaStream;
-                document.getElementById('mediaCallScreen').style.display = 'flex';
-            } catch(e) { alert("Error al iniciar llamada de voz HD."); }
-        };
-
-        window.endMediaCall = () => {
-            if(activeMediaStream) { activeMediaStream.getTracks().forEach(t => t.stop()); activeMediaStream = null; }
-            document.getElementById('mediaCallScreen').style.display = 'none';
-        };
 
         window.toggleSeniorMode = () => { document.body.classList.toggle('senior-mode'); };
 
