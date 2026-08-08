@@ -68,7 +68,7 @@
             top: 0;
             left: 0;
             transition: background 0.5s ease;
-            overscroll-behavior-y: none; /* EVITA EL REFRESCO POR GESTO EN MÓVIL */
+            overscroll-behavior-y: none;
         }
 
         body.senior-mode { font-size: 1.4rem !important; }
@@ -118,6 +118,7 @@
         
         .header-profile-section {
             display: flex; align-items: center; gap: 5px; flex: 1; min-width: 0;
+            cursor: pointer;
         }
         .profile-avatar-container {
             width: 30px; height: 30px; border-radius: 50%; border: 1px solid var(--neon-blue);
@@ -126,7 +127,7 @@
             box-shadow: 0 0 6px rgba(0, 240, 255, 0.4); flex-shrink: 0; overflow: hidden;
         }
         
-        .header-info-group { display: flex; flex-direction: column; min-width: 0; max-width: 95px; }
+        .header-info-group { display: flex; flex-direction: column; min-width: 0; max-width: 120px; }
         .header-username-display { font-family: 'Orbitron', sans-serif; font-size: 0.7rem; color: var(--text-main); font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .header-user-status { font-size: 0.4rem; color: var(--neon-green); font-family: 'Share Tech Mono'; }
 
@@ -161,9 +162,8 @@
             border: 1px solid var(--border-hud); 
             border-radius: 8px; 
             padding: 8px; 
-            width: 220px; 
+            width: 230px; 
             
-            /* Ajustes clave para scroll y evitar atascos */
             max-height: 50vh; 
             overflow-y: auto; 
             z-index: 99999; 
@@ -301,11 +301,11 @@
     <div class="app-container">
         <!-- BARRA SUPERIOR MÓVIL DIRECTA Y LIMPIA ESTILO WHATSAPP -->
         <div class="main-header-bar">
-            <div class="header-profile-section">
+            <div class="header-profile-section" onclick="abrirAgendaContactos()" title="Mis Contactos / Chats Privados">
                 <div class="profile-avatar-container" id="profileAvatarInitial">VC</div>
                 <div class="header-info-group">
                     <div class="header-username-display" id="roomTitleDisplay">@SALA</div>
-                    <div class="header-user-status">🟢 En línea</div>
+                    <div class="header-user-status">🟢 En línea (Toca aquí para contactos)</div>
                 </div>
             </div>
 
@@ -317,7 +317,8 @@
                 <div class="three-dots-container">
                     <button class="whatsapp-icon-btn" id="threeDotsToggleBtn" title="Menú">⋮</button>
                     <div class="dropdown-menu-tools" id="toolsDropdownMenu">
-                        <button class="dropdown-item" onclick="switchActiveChatPrompt(); toggleToolsMenu();">💬 Abrir Nuevo Chat / Sala</button>
+                        <button class="dropdown-item" onclick="abrirAgendaContactos(); toggleToolsMenu();" style="color:var(--neon-green); border-color:var(--neon-green);">👥 Mis Contactos (Estilo WhatsApp)</button>
+                        <button class="dropdown-item" onclick="switchActiveChatPrompt(); toggleToolsMenu();">💬 Cambiar por Nombre de Sala</button>
                         <button class="dropdown-item" onclick="switchTheme('violet'); toggleToolsMenu();">🟪 Tema: Cyber-Vortex (Violeta)</button>
                         <button class="dropdown-item" onclick="switchTheme('blue'); toggleToolsMenu();">🟦 Tema: Quantum Grid (Azul)</button>
                         <button class="dropdown-item" onclick="switchTheme('matrix'); toggleToolsMenu();">🟩 Tema: Cyberpunk Matrix (Verde)</button>
@@ -340,7 +341,7 @@
             <div class="screen-view" id="viewChatSection" style="display: flex; flex-direction: column; flex: 1; height: 100%;">
                 <div class="messages-display" id="messagesContainer">
                     <div class="quantum-msg incoming">
-                        <strong>[SISTEMA]</strong>: Bienvenid@ a VOBIXCHAT. Chat directo y privado activo.
+                        <strong>[SISTEMA]</strong>: Bienvenid@ a VOBIXCHAT. Toca tu perfil arriba para abrir tu lista de contactos o iniciar un chat privado directo.
                         <div class="msg-meta"><span>12:00</span></div>
                     </div>
                 </div>
@@ -438,7 +439,10 @@
         let isBunkerActive = false;
         let isQuantumShieldActive = true;
 
-        // PROTECCIÓN TÁCTIL CONTRA RECARGA ACCIDENTAL
+        // AGENDA DE CONTACTOS PRIVADOS ESTILO WHATSAPP (GUARDADOS LOCALMENTE)
+        let misContactosPrivados = JSON.parse(localStorage.getItem('vobix_contactos') || '[]');
+
+        // PROTECCIÓN TÁCTIL CONTRA RECARGA ACCIDENTAL EN MÓVIL
         document.addEventListener('touchmove', function(e) {
             if (e.scale !== 1) { e.preventDefault(); }
         }, { passive: false });
@@ -469,6 +473,34 @@
             document.getElementById('roomTitleDisplay').textContent = "GENERAL";
             document.getElementById('profileAvatarInitial').textContent = "V";
         }
+
+        // NUEVO SISTEMA DE CONTACTOS PRIVADOS ESTILO WHATSAPP
+        window.abrirAgendaContactos = () => {
+            let listaTexto = misContactosPrivados.length === 0 
+                ? "No tienes contactos guardados todavía.\n\n" 
+                : "Tus Contactos Privados:\n\n" + misContactosPrivados.map((c, idx) => `${idx + 1}. ${c.nombre} (Chat: ${c.sala})`).join("\n") + "\n\n";
+
+            let opcion = prompt(listaTexto + "Escribe el nombre de un amigo para abrir su chat privado o agrégalo escribiendo su ID/Sala directa:");
+            
+            if(opcion && opcion.trim() !== "") {
+                let nombreAmigo = opcion.trim();
+                // Genera un nombre de sala seguro y privado único entre ambos
+                let salaPrivada = "privado_" + nombreAmigo.toLowerCase().replace(/\s+/g, '_');
+                
+                // Guardar en la agenda si no existe
+                if(!misContactosPrivados.some(c => c.sala === salaPrivada)) {
+                    misContactosPrivados.push({ nombre: nombreAmigo, sala: salaPrivada });
+                    localStorage.setItem('vobix_contactos', JSON.stringify(misContactosPrivados));
+                }
+
+                // Conectar al chat privado de forma automática
+                currentRoom = salaPrivada;
+                document.getElementById('roomTitleDisplay').textContent = nombreAmigo.toUpperCase();
+                document.getElementById('profileAvatarInitial').textContent = nombreAmigo.charAt(0).toUpperCase();
+                socket.emit('join_room', { room: currentRoom, name: myUsername });
+                document.getElementById('messagesContainer').innerHTML = `<div class="quantum-msg incoming"><strong>[SISTEMA]</strong>: Chat privado abierto con <strong>${nombreAmigo}</strong>.<div class="msg-meta"><span>${new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span></div></div>`;
+            }
+        };
 
         window.switchActiveChatPrompt = () => {
             const newChat = prompt("Introduce el nombre de la sala o contacto para cambiar de chat:");
