@@ -424,6 +424,11 @@
         </div>
     </div>
 
+    <!-- SCRIPT DE AUDIO PARA LA NOTIFICACIÓN DE MENSAJE -->
+    <audio id="notificationSound" preload="auto">
+        <source src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" type="audio/mpeg">
+    </audio>
+
     <script>
         const socket = io();
         let myUsername = "Usuario";
@@ -439,8 +444,20 @@
         let isBunkerActive = false;
         let isQuantumShieldActive = true;
 
-        // AGENDA DE CONTACTOS PRIVADOS ESTILO WHATSAPP (GUARDADOS LOCALMENTE)
+        // AGENDA DE CONTACTOS PRIVADOS ESTILO WHATSAPP
         let misContactosPrivados = JSON.parse(localStorage.getItem('vobix_contactos') || '[]');
+
+        // FUNCIÓN PARA REPRODUCIR EL SONIDO DE NOTIFICACIÓN DE MENSAJE NUEVO
+        function reproducirSonidoNotificacion() {
+            const sonido = document.getElementById('notificationSound');
+            if (sonido) {
+                sonido.currentTime = 0;
+                sonido.play().catch(e => {
+                    // Los navegadores móviles bloquean el audio si no ha habido interacción previa, esto previene errores
+                    console.log("Audio de notificación silenciado por política del navegador:", e);
+                });
+            }
+        }
 
         // PROTECCIÓN TÁCTIL CONTRA RECARGA ACCIDENTAL EN MÓVIL
         document.addEventListener('touchmove', function(e) {
@@ -474,7 +491,6 @@
             document.getElementById('profileAvatarInitial').textContent = "V";
         }
 
-        // NUEVO SISTEMA DE CONTACTOS PRIVADOS ESTILO WHATSAPP
         window.abrirAgendaContactos = () => {
             let listaTexto = misContactosPrivados.length === 0 
                 ? "No tienes contactos guardados todavía.\n\n" 
@@ -484,16 +500,13 @@
             
             if(opcion && opcion.trim() !== "") {
                 let nombreAmigo = opcion.trim();
-                // Genera un nombre de sala seguro y privado único entre ambos
                 let salaPrivada = "privado_" + nombreAmigo.toLowerCase().replace(/\s+/g, '_');
                 
-                // Guardar en la agenda si no existe
                 if(!misContactosPrivados.some(c => c.sala === salaPrivada)) {
                     misContactosPrivados.push({ nombre: nombreAmigo, sala: salaPrivada });
                     localStorage.setItem('vobix_contactos', JSON.stringify(misContactosPrivados));
                 }
 
-                // Conectar al chat privado de forma automática
                 currentRoom = salaPrivada;
                 document.getElementById('roomTitleDisplay').textContent = nombreAmigo.toUpperCase();
                 document.getElementById('profileAvatarInitial').textContent = nombreAmigo.charAt(0).toUpperCase();
@@ -632,7 +645,7 @@
         });
 
         document.getElementById('verifyRandomPinBtn').addEventListener('click', () => {
-            if(document.getElementById('authPinInput').value.trim() === generatedRandomPin) {
+            if(document.getElementById('authPinInput'].value.trim() === generatedRandomPin) {
                 document.getElementById('authOverlay').style.display = 'none';
                 socket.emit('join_room', { room: currentRoom, name: myUsername });
             } else {
@@ -729,6 +742,12 @@
 
         socket.on('chat_message', (data) => {
             if(isUserBlocked) return;
+            
+            // SI EL MENSAJE ES DE OTRA PERSONA, REPRODUCIR EL SONIDO DE NOTIFICACIÓN
+            if (data.sender !== myUsername) {
+                reproducirSonidoNotificacion();
+            }
+
             const type = data.sender === myUsername ? 'outgoing' : 'incoming';
             const div = document.createElement('div');
             div.className = `quantum-msg ${type}`;
