@@ -73,18 +73,18 @@
             font-family: 'Share Tech Mono'; font-size: 0.75rem; color: var(--neon-blue); text-align: center; margin-bottom: 8px; display: none;
         }
 
-        /* BARRA SUPERIOR PRINCIPAL (MODIFICADA CON NOMBRE DE USUARIO AL MEDIO Y SALIR AJUSTADO) */
+        /* BARRA SUPERIOR SAGRADA: VOBIXCHAT (IZQUIERDA) - USUARIO (CENTRO EXACTO) - ICONOS/LOGO (DERECHA) */
         .main-header-bar {
             padding: 8px 12px; background: rgba(3, 7, 15, 0.98); border-bottom: 1px solid var(--border-hud);
             display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; position: relative; z-index: 100; height: 55px;
         }
-        .app-title-main { font-family: 'Orbitron', sans-serif; font-size: 0.9rem; color: var(--text-main); font-weight: 700; }
+        .app-title-sagrada { font-family: 'Orbitron', sans-serif; font-size: 1rem; color: var(--text-main); font-weight: 900; flex-shrink: 0; letter-spacing: 1px; }
         
         .header-center-user {
-            display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; flex: 1; padding: 0 8px;
+            display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; flex: 1; padding: 0 10px; overflow: hidden;
         }
-        .header-username-display { font-family: 'Orbitron', sans-serif; font-size: 0.85rem; color: var(--neon-blue); font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 140px; }
-        .header-user-status { font-size: 0.5rem; color: var(--neon-green); font-family: 'Share Tech Mono'; }
+        .header-username-display { font-family: 'Orbitron', sans-serif; font-size: 0.9rem; color: var(--neon-blue); font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+        .header-user-status { font-size: 0.55rem; color: var(--neon-green); font-family: 'Share Tech Mono'; }
 
         .header-right-group { display: flex; gap: 6px; align-items: center; flex-shrink: 0; }
         .whatsapp-icon-btn {
@@ -93,6 +93,13 @@
         }
         .whatsapp-icon-btn:hover { color: #fff; transform: scale(1.1); }
         
+        /* LOGOTIPO DE OJOS A LA DERECHA */
+        .header-eye-logo {
+            width: 32px; height: 32px; border-radius: 6px; background: rgba(0,240,255,0.05);
+            border: 1px solid var(--border-hud); display: flex; align-items: center; justify-content: center; overflow: hidden;
+        }
+        .header-eye-logo img { width: 100%; height: 100%; object-fit: cover; }
+
         /* BOTÓN SALIR DENTRO DEL MARGEN */
         .logout-action-btn { 
             background: var(--neon-red); color: #fff; border: none; padding: 5px 8px; 
@@ -144,7 +151,7 @@
         }
         .writing-popup-footer { display: flex; justify-content: flex-end; gap: 8px; }
 
-        /* BARRA INFERIOR DE CHAT (SIN BOTÓN ENVIAR ABAJO) */
+        /* BARRA INFERIOR DE CHAT (LIMPIA, SIN TEXTOS DUPLICADOS) */
         .chat-input-deck {
             padding: 8px 12px; 
             background: rgba(3, 7, 15, 0.99); 
@@ -218,12 +225,12 @@
     </div>
 
     <div class="app-container">
-        <!-- BARRA SUPERIOR PRINCIPAL MODIFICADA -->
+        <!-- BARRA SUPERIOR SAGRADA Y LIMPIA -->
         <div class="main-header-bar">
-            <div class="app-title-main">VOBIXCHAT</div>
+            <div class="app-title-sagrada">VOBIXCHAT</div>
             
             <div class="header-center-user">
-                <div class="header-username-display" id="roomTitleDisplay">SALA PRIVADA</div>
+                <div class="header-username-display" id="roomTitleDisplay">@SALA</div>
                 <div class="header-user-status">🟢 En línea</div>
             </div>
 
@@ -247,6 +254,13 @@
                 </div>
 
                 <button class="logout-action-btn" onclick="logoutSession()">SALIR</button>
+
+                <div class="header-eye-logo" title="Quantum Eye">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="var(--neon-blue)" stroke-width="2">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                        <circle cx="12" cy="12" r="3"></circle>
+                    </svg>
+                </div>
             </div>
         </div>
 
@@ -271,7 +285,7 @@
                     </div>
                 </div>
 
-                <!-- BARRA INFERIOR DE CHAT SIN EL BOTÓN ENVIAR -->
+                <!-- BARRA INFERIOR DE CHAT LIMPIA -->
                 <div class="chat-input-deck" id="chatInputDeckArea">
                     <button class="action-btn" id="voiceRecordBtn" onmousedown="startVoiceRecording()" onmouseup="stopVoiceRecording()" ontouchstart="startVoiceRecording()" ontouchend="stopVoiceRecording()" title="Nota de voz">🎤</button>
                     <button class="action-btn" id="videoRecordBtn" onclick="toggleInstantVideoRecording()" title="Vídeo">📹</button>
@@ -335,6 +349,8 @@
         if(invitedRoom) {
             currentRoom = invitedRoom;
             document.getElementById('roomTitleDisplay').textContent = "@" + invitedRoom.toUpperCase();
+        } else {
+            document.getElementById('roomTitleDisplay').textContent = "@SALA_PRIVADA";
         }
 
         window.executeInstantTranslation = () => {
