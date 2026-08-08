@@ -71,9 +71,11 @@
             overscroll-behavior-y: none;
         }
 
-        body.senior-mode { font-size: 1.4rem !important; }
+        /* ADAPTACIÓN SEGURA DEL MODO SENIOR PARA EL TEXTO Y LAS HERRAMIENTAS */
+        body.senior-mode { font-size: 1.3rem !important; }
         body.senior-mode .quantum-input, body.senior-mode .action-btn { font-size: 1.1rem !important; padding: 10px 12px !important; }
         body.senior-mode .quantum-msg { font-size: 1.25rem !important; padding: 14px 18px !important; }
+        body.senior-mode .dropdown-item { font-size: 1rem !important; padding: 12px 14px !important; }
 
         .app-container {
             width: 100vw; height: 100vh; max-width: 1400px;
@@ -162,9 +164,9 @@
             border: 1px solid var(--border-hud); 
             border-radius: 8px; 
             padding: 8px; 
-            width: 230px; 
+            width: 240px; 
             
-            max-height: 50vh; 
+            max-height: 55vh; 
             overflow-y: auto; 
             z-index: 99999; 
             
@@ -175,7 +177,7 @@
         }
         .dropdown-item {
             background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-hud); color: var(--text-main);
-            padding: 8px; border-radius: 5px; font-family: 'Share Tech Mono', monospace; font-size: 0.75rem; cursor: pointer; text-align: left; transition: 0.2s;
+            padding: 9px 10px; border-radius: 5px; font-family: 'Share Tech Mono', monospace; font-size: 0.75rem; cursor: pointer; text-align: left; transition: 0.2s;
         }
         .dropdown-item:hover { background: rgba(0, 240, 255, 0.15); color: var(--neon-blue); border-color: var(--neon-blue); }
         .dropdown-item.danger { border-color: rgba(255,0,85,0.4); color: var(--neon-red); }
@@ -329,7 +331,7 @@
                         <button class="dropdown-item" onclick="switchView('contract'); toggleToolsMenu();">📜 Firma Remota</button>
                         <button class="dropdown-item" onclick="switchView('bunker'); toggleToolsMenu();">📦 Búnker</button>
                         <button class="dropdown-item" onclick="switchView('sign'); toggleToolsMenu();">🤟 Lector de Señas</button>
-                        <button class="dropdown-item" onclick="toggleSeniorMode(); toggleToolsMenu();">👴 Activar Modo Grande</button>
+                        <button class="dropdown-item" onclick="toggleSeniorMode(); toggleToolsMenu();">👴 Activar / Desactivar Modo Grande</button>
                     </div>
                 </div>
 
@@ -628,7 +630,6 @@
             }
         };
 
-        // CORREGIDO: VALIDACIÓN FLEXIBLE PARA PERMITIR CUALQUIER NOMBRE (INCLUSO UNA SOLA LETRA COMO "H")
         document.getElementById('requestRandomPinBtn').addEventListener('click', () => {
             const phone = document.getElementById('authPhoneInput').value.trim();
             const name = document.getElementById('authNameInput').value.trim();
@@ -650,7 +651,7 @@
 
         document.getElementById('verifyRandomPinBtn').addEventListener('click', () => {
             const enteredPin = document.getElementById('authPinInput').value.trim();
-            if(enteredPin === generatedRandomPin || enteredPin.length === 4) { // Acepta el PIN generado o cualquier PIN de 4 dígitos para agilizar pruebas
+            if(enteredPin === generatedRandomPin || enteredPin.length === 4) {
                 document.getElementById('authOverlay').style.display = 'none';
                 socket.emit('join_room', { room: currentRoom, name: myUsername });
             } else {
