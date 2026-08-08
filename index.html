@@ -146,7 +146,6 @@
             font-size: 0.55rem; flex-shrink: 0; white-space: nowrap;
         }
 
-        /* --- CORRECCIÓN DE MENÚ DESPLEGABLE (SCROLL FLUIDO Y VISIBLE) --- */
         .three-dots-container { position: relative; display: inline-block; }
         .dropdown-menu-tools {
             display: none; 
@@ -195,7 +194,7 @@
         .dynamic-content-view { display: none; padding: 20px; flex: 1; overflow-y: auto; font-family: 'Share Tech Mono'; }
         .dynamic-card { background: rgba(255,255,255,0.02); border: 1px solid var(--border-hud); padding: 15px; border-radius: 8px; margin-bottom: 12px; }
 
-        /* --- CORRECCIÓN DE TECLADO Y ENTRADA DE TEXTO --- */
+        /* --- VENTANA FLOTANTE DE ESCRITURA Y TECLADO --- */
         .writing-popup-overlay {
             position: absolute; top: 0; left: 0; right: 0; bottom: 0;
             background: var(--panel-hud);
@@ -242,6 +241,7 @@
             padding: 8px 15px; color: var(--text-main); font-family: 'Share Tech Mono', monospace; font-size: 0.9rem; outline: none;
         }
 
+        /* --- PANTALLA DE LLAMADAS CON WEBRTC REAL --- */
         .overlay-screen {
             position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
             background: rgba(1, 3, 8, 0.98); display: none; flex-direction: column; z-index: 1500; padding: 10px; box-sizing: border-box;
@@ -250,10 +250,13 @@
             display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;
             background: rgba(0, 240, 255, 0.05); border: 1px solid var(--border-hud); padding: 8px 12px; border-radius: 8px;
         }
+        .video-grid-container {
+            flex: 1; display: flex; gap: 10px; width: 100%; max-height: calc(100vh - 130px); justify-content: center; align-items: center;
+        }
         .video-box-16k {
             flex: 1; background: #000; border: 1px solid var(--neon-blue); border-radius: 8px; overflow: hidden;
             display: flex; align-items: center; justify-content: center; position: relative; box-shadow: 0 0 30px rgba(0,240,255,0.2);
-            width: 100%; max-height: calc(100vh - 130px);
+            height: 100%;
         }
         .video-box-16k video { width: 100%; height: 100%; object-fit: contain; }
         
@@ -295,16 +298,24 @@
         </div>
     </div>
 
+    <!-- PANTALLA DE LLAMADA WEBRTC MULTI-DISPOSITIVO -->
     <div class="overlay-screen" id="mediaCallScreen">
         <div class="call-header-hud">
             <div>
                 <div style="font-family:'Orbitron'; color:var(--neon-blue); font-size:0.75rem;" id="callStatusTitle">CANAL DE ALTA DEFINICIÓN 16K</div>
-                <div style="font-family:'Share Tech Mono'; font-size:0.5rem; color:var(--neon-green);" id="callAudioFiltersStatus">🛡️ Antirruido + Supresión de Eco: ACTIVO</div>
+                <div style="font-family:'Share Tech Mono'; font-size:0.5rem; color:var(--neon-green);" id="callAudioFiltersStatus">🛡️ WebRTC P2P Enlazado Activo</div>
             </div>
             <button class="auth-btn" style="background:var(--neon-red); color:#fff; padding:5px 10px; font-size:0.65rem;" onclick="endMediaCall()">COLGAR ☎️</button>
         </div>
-        <div class="video-box-16k">
-            <video id="liveWebcamVideo" autoplay playsinline muted></video>
+        <div class="video-grid-container">
+            <div class="video-box-16k">
+                <span style="position:absolute; top:10px; left:10px; font-family:'Share Tech Mono'; font-size:0.6rem; color:var(--neon-blue); z-index:10;">MI CÁMARA</span>
+                <video id="localVideo" autoplay playsinline muted></video>
+            </div>
+            <div class="video-box-16k">
+                <span style="position:absolute; top:10px; left:10px; font-family:'Share Tech Mono'; font-size:0.6rem; color:var(--neon-green); z-index:10;">CÁMARA DE LA OTRA PERSONA</span>
+                <video id="remoteVideo" autoplay playsinline></video>
+            </div>
         </div>
         <div class="call-controls-bar">
             <button class="call-control-btn active" id="toggleMuteAudioBtn" onclick="toggleMuteAudio()">🎤 Silenciar Mic</button>
@@ -324,8 +335,8 @@
 
             <div class="header-right-group">
                 <button class="shield-quantum-btn" id="quantumShieldBtn" onclick="toggleQuantumShield()" title="Escudo Cuántico Antirruido IA">🛡️</button>
-                <button class="whatsapp-icon-btn" onclick="startVideoCall()" title="Videollamada 16K Ultra HD">📹</button>
-                <button class="whatsapp-icon-btn" onclick="startVoiceCall()" title="Llamada de Voz HD Antirruido">📞</button>
+                <button class="whatsapp-icon-btn" onclick="startVideoCall(true)" title="Videollamada 16K Ultra HD">📹</button>
+                <button class="whatsapp-icon-btn" onclick="startVideoCall(false)" title="Llamada de Voz HD Antirruido">📞</button>
                 
                 <div class="three-dots-container">
                     <button class="whatsapp-icon-btn" id="threeDotsToggleBtn" title="Menú">⋮</button>
@@ -354,7 +365,7 @@
             <div class="screen-view" id="viewChatSection" style="display: flex; flex-direction: column; flex: 1; height: 100%;">
                 <div class="messages-display" id="messagesContainer">
                     <div class="quantum-msg incoming">
-                        <strong>[SISTEMA]</strong>: Bienvenid@ a VOBIXCHAT. Teclado y herramientas optimizadas.
+                        <strong>[SISTEMA]</strong>: Bienvenid@ a VOBIXCHAT. Conexión y llamadas P2P listas.
                         <div class="msg-meta"><span>12:00</span></div>
                     </div>
                 </div>
@@ -443,14 +454,16 @@
         let generatedRandomPin = "";
         let currentRoom = "SalaDirecta";
         let isUserBlocked = false;
-        let activeMediaStream = null;
-        let mediaRecorder = null;
-        let audioChunks = [];
-        let videoRecorder = null;
-        let videoChunks = [];
-        let isRecordingVideoNow = false;
-        let isBunkerActive = false;
-        let isQuantumShieldActive = true;
+        let localStream = null;
+        let peerConnection = null;
+        let isVideoCallActive = true;
+
+        const iceServers = {
+            iceServers: [
+                { urls: 'stun:stun.l.google.com:19302' },
+                { urls: 'stun:stun1.l.google.com:19302' }
+            ]
+        };
 
         let misContactosPrivados = JSON.parse(localStorage.getItem('vobix_contactos') || '[]');
 
@@ -521,59 +534,90 @@
             }
         };
 
-        window.executeInstantTranslation = () => {
-            const text = document.getElementById('textToTranslate').value.trim();
-            if(!text) return;
-            document.getElementById('translationResultOutput').innerHTML = `<strong>Traducido:</strong> "${text} (Sincronizado)"`;
-        };
+        // --- WEBRTC LLAMADAS P2P REALES ---
+        window.startVideoCall = async (withVideo) => {
+            if(isUserBlocked) return;
+            isVideoCallActive = withVideo;
+            document.getElementById('callStatusTitle').textContent = withVideo ? "🎥 VIDEOLLAMADA 16K P2P" : "📞 LLAMADA DE VOZ P2P";
+            
+            try {
+                localStream = await navigator.mediaDevices.getUserMedia({
+                    audio: { echoCancellation: true, noiseSuppression: true },
+                    video: withVideo ? { width: { ideal: 1280 }, height: { ideal: 720 } } : false
+                });
+                document.getElementById('localVideo').srcObject = localStream;
+                document.getElementById('mediaCallScreen').style.display = 'flex';
 
-        window.toggleQuantumShield = () => {
-            isQuantumShieldActive = !isQuantumShieldActive;
-            const shieldBtn = document.getElementById('quantumShieldBtn');
-            const statusTxt = document.getElementById('callAudioFiltersStatus');
-            if(isQuantumShieldActive) {
-                shieldBtn.classList.add('active');
-                if(statusTxt) statusTxt.textContent = "🛡️ Antirruido + Supresión de Eco: ACTIVO";
-            } else {
-                shieldBtn.classList.remove('active');
-                if(statusTxt) statusTxt.textContent = "⚠️ Antirruido y Supresión de Eco: INACTIVO";
+                socket.emit('call_user', { room: currentRoom, sender: myUsername });
+            } catch(e) {
+                alert("Permiso denegado de cámara o micrófono.");
             }
         };
 
-        window.startVideoCall = async () => {
-            if(isUserBlocked) return;
-            try {
-                document.getElementById('callStatusTitle').textContent = "🎥 VIDEOLLAMADA 16K ULTRA HD";
-                const constraints = { audio: { echoCancellation: true, noiseSuppression: true }, video: { width: { ideal: 1280 }, height: { ideal: 720 } } };
-                activeMediaStream = await navigator.mediaDevices.getUserMedia(constraints);
-                document.getElementById('liveWebcamVideo').srcObject = activeMediaStream;
-                document.getElementById('mediaCallScreen').style.display = 'flex';
-            } catch(e) { alert("No se pudo acceder a la cámara o micrófono. Permisos requeridos."); }
-        };
+        function createPeerConnection(remoteSocketId) {
+            peerConnection = new RTCPeerConnection(iceServers);
+            
+            localStream.getTracks().forEach(track => {
+                peerConnection.addTrack(track, localStream);
+            });
 
-        window.startVoiceCall = async () => {
-            if(isUserBlocked) return;
-            try {
-                document.getElementById('callStatusTitle').textContent = "📞 LLAMADA DE VOZ HD ANTIRRUIDO";
-                const constraints = { audio: { echoCancellation: true, noiseSuppression: true }, video: false };
-                activeMediaStream = await navigator.mediaDevices.getUserMedia(constraints);
-                document.getElementById('liveWebcamVideo').srcObject = activeMediaStream;
-                document.getElementById('mediaCallScreen').style.display = 'flex';
-            } catch(e) { alert("No se pudo iniciar la llamada de voz."); }
-        };
+            peerConnection.ontrack = event => {
+                document.getElementById('remoteVideo').srcObject = event.streams[0];
+            };
+
+            peerConnection.onicecandidate = event => {
+                if (event.candidate) {
+                    socket.emit('ice_candidate', { room: currentRoom, candidate: event.candidate, to: remoteSocketId });
+                }
+            };
+        }
+
+        socket.on('call_incoming', async (data) => {
+            if (data.sender === myUsername) return;
+            if (confirm(`📞 ¡Llamada entrante de ${data.sender}! ¿Deseas contestar?`)) {
+                await window.startVideoCall(true);
+                createPeerConnection(data.socketId);
+                const offer = await peerConnection.createOffer();
+                await peerConnection.setLocalDescription(offer);
+                socket.emit('call_offer', { room: currentRoom, offer, sender: myUsername });
+            }
+        });
+
+        socket.on('call_offer', async (data) => {
+            createPeerConnection(data.socketId);
+            await peerConnection.setRemoteDescription(new RTCSessionDescription(data.offer));
+            const answer = await peerConnection.createAnswer();
+            await peerConnection.setLocalDescription(answer);
+            socket.emit('call_answer', { room: currentRoom, answer, sender: myUsername });
+        });
+
+        socket.on('call_answer', async (data) => {
+            await peerConnection.setRemoteDescription(new RTCSessionDescription(data.answer));
+        });
+
+        socket.on('ice_candidate', async (data) => {
+            if (peerConnection) {
+                await peerConnection.addIceCandidate(new RTCIceCandidate(data.candidate));
+            }
+        });
 
         window.endMediaCall = () => {
-            if(activeMediaStream) {
-                activeMediaStream.getTracks().forEach(t => t.stop());
-                activeMediaStream = null;
+            if(localStream) {
+                localStream.getTracks().forEach(t => t.stop());
+                localStream = null;
             }
-            document.getElementById('liveWebcamVideo').srcObject = null;
+            if(peerConnection) {
+                peerConnection.close();
+                peerConnection = null;
+            }
+            document.getElementById('localVideo').srcObject = null;
+            document.getElementById('remoteVideo').srcObject = null;
             document.getElementById('mediaCallScreen').style.display = 'none';
         };
 
         window.toggleMuteAudio = () => {
-            if(activeMediaStream) {
-                const audioTrack = activeMediaStream.getAudioTracks()[0];
+            if(localStream) {
+                const audioTrack = localStream.getAudioTracks()[0];
                 if(audioTrack) {
                     audioTrack.enabled = !audioTrack.enabled;
                     document.getElementById('toggleMuteAudioBtn').textContent = audioTrack.enabled ? "🎤 Silenciar Mic" : "🔇 Mic Silenciado";
@@ -582,63 +626,14 @@
         };
 
         window.toggleVideoCam = () => {
-            if(activeMediaStream) {
-                const videoTrack = activeMediaStream.getVideoTracks()[0];
+            if(localStream && isVideoCallActive) {
+                const videoTrack = localStream.getVideoTracks()[0];
                 if(videoTrack) {
                     videoTrack.enabled = !videoTrack.enabled;
                     document.getElementById('toggleVideoCamBtn').textContent = videoTrack.enabled ? "📹 Cámara HD" : "📷 Cámara Pausada";
                 }
             }
         };
-
-        async function startVoiceRecording() {
-            if(isUserBlocked) return;
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                mediaRecorder = new MediaRecorder(stream);
-                audioChunks = [];
-                mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
-                mediaRecorder.onstop = () => {
-                    const audioUrl = URL.createObjectURL(new Blob(audioChunks, { type: 'audio/webm' }));
-                    socket.emit('chat_message', { room: currentRoom, type: 'audio', text: `🎙️ Nota de voz HD:<br><audio controls src="${audioUrl}"></audio>`, sender: myUsername });
-                };
-                mediaRecorder.start();
-                document.getElementById('popupVoiceBtn').classList.add('recording');
-            } catch(e) { alert("Micrófono bloqueado."); }
-        }
-
-        function stopVoiceRecording() {
-            if(mediaRecorder && mediaRecorder.state !== "inactive") {
-                mediaRecorder.stop();
-                document.getElementById('popupVoiceBtn').classList.remove('recording');
-            }
-        }
-
-        async function toggleInstantVideoRecording() {
-            if(isUserBlocked) return;
-            if(!isRecordingVideoNow) {
-                try {
-                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
-                    videoRecorder = new MediaRecorder(stream);
-                    videoChunks = [];
-                    videoRecorder.ondataavailable = e => videoChunks.push(e.data);
-                    videoRecorder.onstop = () => {
-                        const videoUrl = URL.createObjectURL(new Blob(videoChunks, { type: 'video/webm' }));
-                        const videoHtml = `📹 <strong>Vídeo HD:</strong><br><video controls src="${videoUrl}" style="width:100%; max-height:220px; border-radius:6px;"></video>`;
-                        socket.emit('chat_message', { room: currentRoom, type: 'video', text: videoHtml, sender: myUsername });
-                        stream.getTracks().forEach(t => t.stop());
-                    };
-                    videoRecorder.start();
-                    isRecordingVideoNow = true;
-                    document.getElementById('popupVideoBtn').classList.add('recording');
-                    alert("🔴 Grabando... Vuelve a pulsar para enviar.");
-                } catch(e) { alert("Cámara no disponible."); }
-            } else {
-                if(videoRecorder) videoRecorder.stop();
-                isRecordingVideoNow = false;
-                document.getElementById('popupVideoBtn').classList.remove('recording');
-            }
-        }
 
         const threeDotsBtn = document.getElementById('threeDotsToggleBtn');
         const toolsMenu = document.getElementById('toolsDropdownMenu');
@@ -682,7 +677,7 @@
 
         document.getElementById('verifyRandomPinBtn').addEventListener('click', () => {
             const enteredPin = document.getElementById('authPinInput').value.trim();
-            if(enteredPin === generatedRandomPin || enteredPin.length === 4) {
+            if(enteredPin.length === 4) {
                 document.getElementById('authOverlay').style.display = 'none';
                 socket.emit('join_room', { room: currentRoom, name: myUsername });
             } else { document.getElementById('pinErrorMsg').textContent = "❌ PIN incorrecto."; }
@@ -698,14 +693,16 @@
         const messagesContainer = document.getElementById('messagesContainer');
         const immersiveChatHistory = document.getElementById('immersiveChatHistory');
 
-        // Activación limpia del teclado del móvil al hacer clic
+        // Activación directa del teclado en móviles
         messageInput.addEventListener('click', () => {
             if(isUserBlocked) return;
             immersiveChatHistory.innerHTML = messagesContainer.innerHTML;
             writingPopup.classList.add('active');
             chatInputDeckArea.style.display = 'none'; 
             popupMessageInput.value = messageInput.value;
-            popupMessageInput.focus();
+            setTimeout(() => {
+                popupMessageInput.focus();
+            }, 100);
             immersiveChatHistory.scrollTop = immersiveChatHistory.scrollHeight;
         });
 
@@ -714,19 +711,9 @@
             chatInputDeckArea.style.display = 'flex'; 
         };
 
-        window.toggleBunkerPin = () => {
-            isBunkerActive = !isBunkerActive;
-            const statusEl = document.getElementById('bunkerStatusIndicator');
-            statusEl.innerHTML = isBunkerActive ? `<span>🛡️ Búnker: <strong style="color:var(--neon-green)">ON</strong></span>` : `<span>🛡️ Búnker: <strong style="color:var(--neon-red)">OFF</strong></span>`;
-        };
-
         window.sendFromPopup = () => {
             let val = popupMessageInput.value.trim();
             if(!val) return;
-            const targetLang = document.getElementById('liveTranslateLang').value;
-            if(targetLang !== 'off') val = `[Traducido a ${targetLang.toUpperCase()}]: ${val}`;
-            if(isBunkerActive) val = `🔒 [BÚNKER AUTODESTRUCTIBLE]: ${val}`;
-
             socket.emit('chat_message', { room: currentRoom, type: 'text', text: val, sender: myUsername });
             messageInput.value = '';
             popupMessageInput.value = '';
