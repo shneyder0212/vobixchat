@@ -10,7 +10,7 @@
         /* TEMAS VISUALES DINÁMICOS */
         :root, body.theme-violet {
             --bg-quantum: #090212;
-            --panel-hud: rgba(14, 5, 26, 0.96);
+            --panel-hud: rgba(14, 5, 26, 0.98);
             --neon-blue: #00f0ff;
             --neon-violet: #bd00ff;
             --neon-green: #00ff66;
@@ -24,7 +24,7 @@
 
         body.theme-blue {
             --bg-quantum: #010814;
-            --panel-hud: rgba(4, 15, 33, 0.96);
+            --panel-hud: rgba(4, 15, 33, 0.98);
             --neon-blue: #00f0ff;
             --neon-violet: #0066ff;
             --neon-green: #00ffcc;
@@ -39,7 +39,7 @@
 
         body.theme-matrix {
             --bg-quantum: #020a05;
-            --panel-hud: rgba(4, 20, 10, 0.96);
+            --panel-hud: rgba(4, 20, 10, 0.98);
             --neon-blue: #00ff66;
             --neon-violet: #00ccff;
             --neon-green: #00ff33;
@@ -109,52 +109,52 @@
             font-family: 'Share Tech Mono'; font-size: 0.75rem; color: var(--neon-blue); text-align: center; margin-bottom: 8px; display: none;
         }
 
-        /* NUEVA BARRA SUPERIOR ESTILO PERFIL WHATSAPP PRO + ESCUDO CUÁNTICO */
+        /* BARRA SUPERIOR ULTRA-COMPACTA Y ADAPTADA A MÓVIL */
         .main-header-bar {
-            padding: 6px 12px; background: rgba(2, 4, 10, 0.92); border-bottom: 1px solid var(--border-hud);
-            display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; position: relative; z-index: 100; height: 60px;
+            padding: 4px 8px; background: rgba(2, 4, 10, 0.95); border-bottom: 1px solid var(--border-hud);
+            display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; position: relative; z-index: 100; height: 55px;
         }
         
         .header-profile-section {
-            display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0;
+            display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;
         }
         .profile-avatar-container {
-            width: 40px; height: 40px; border-radius: 50%; border: 2px solid var(--neon-blue);
+            width: 34px; height: 34px; border-radius: 50%; border: 1.5px solid var(--neon-blue);
             background: linear-gradient(135deg, var(--neon-blue), var(--neon-violet));
-            display: flex; align-items: center; justify-content: center; font-family: 'Orbitron'; font-weight: bold; color: #000; font-size: 0.9rem;
-            box-shadow: 0 0 10px rgba(0, 240, 255, 0.4); flex-shrink: 0; overflow: hidden;
+            display: flex; align-items: center; justify-content: center; font-family: 'Orbitron'; font-weight: bold; color: #000; font-size: 0.8rem;
+            box-shadow: 0 0 8px rgba(0, 240, 255, 0.4); flex-shrink: 0; overflow: hidden;
         }
         
-        .profile-info-group { display: flex; flex-direction: column; min-width: 0; }
-        .header-username-display { font-family: 'Orbitron', sans-serif; font-size: 0.9rem; color: var(--text-main); font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .header-user-status { font-size: 0.55rem; color: var(--neon-green); font-family: 'Share Tech Mono'; }
+        .header-info-group { display: flex; flex-direction: column; min-width: 0; max-width: 110px; }
+        .header-username-display { font-family: 'Orbitron', sans-serif; font-size: 0.75rem; color: var(--text-main); font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .header-user-status { font-size: 0.45rem; color: var(--neon-green); font-family: 'Share Tech Mono'; }
 
-        .header-right-group { display: flex; gap: 6px; align-items: center; flex-shrink: 0; }
+        .header-right-group { display: flex; gap: 3px; align-items: center; flex-shrink: 0; }
         .whatsapp-icon-btn {
-            background: none; border: none; color: var(--neon-blue); cursor: pointer; font-size: 1.1rem;
-            display: flex; align-items: center; justify-content: center; padding: 5px; transition: 0.2s;
+            background: none; border: none; color: var(--neon-blue); cursor: pointer; font-size: 0.95rem;
+            display: flex; align-items: center; justify-content: center; padding: 3px; transition: 0.2s;
         }
         .whatsapp-icon-btn:hover { color: #fff; transform: scale(1.1); }
         
-        /* BOTÓN ESCUDO ANTIRRUIDO CUÁNTICO */
+        /* BOTÓN ESCUDO ANTIRRUIDO CUÁNTICO COMPACTO */
         .shield-quantum-btn {
             background: rgba(0, 240, 255, 0.08); border: 1px solid var(--neon-blue); color: var(--neon-blue);
-            border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;
-            cursor: pointer; font-size: 0.85rem; transition: 0.2s;
+            border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center;
+            cursor: pointer; font-size: 0.7rem; transition: 0.2s; flex-shrink: 0;
         }
-        .shield-quantum-btn.active { background: var(--neon-green); color: #000; border-color: var(--neon-green); box-shadow: 0 0 12px var(--neon-green); }
+        .shield-quantum-btn.active { background: var(--neon-green); color: #000; border-color: var(--neon-green); box-shadow: 0 0 10px var(--neon-green); }
 
         .logout-action-btn { 
-            background: var(--neon-red); color: #fff; border: none; padding: 5px 8px; 
+            background: var(--neon-red); color: #fff; border: none; padding: 4px 6px; 
             border-radius: 4px; font-family: 'Orbitron'; font-weight: bold; cursor: pointer; 
-            font-size: 0.65rem; flex-shrink: 0; white-space: nowrap;
+            font-size: 0.55rem; flex-shrink: 0; white-space: nowrap;
         }
 
         /* MENÚ DESPLEGABLE */
         .three-dots-container { position: relative; display: inline-block; }
         .dropdown-menu-tools {
-            display: none; position: absolute; right: 0; top: 45px; background: var(--panel-hud);
-            border: 1px solid var(--border-hud); border-radius: 8px; padding: 8px; width: 230px; z-index: 1000; box-shadow: 0 4px 25px rgba(0,0,0,0.9);
+            display: none; position: absolute; right: 0; top: 40px; background: var(--panel-hud);
+            border: 1px solid var(--border-hud); border-radius: 8px; padding: 8px; width: 220px; z-index: 1000; box-shadow: 0 4px 25px rgba(0,0,0,0.9);
             flex-direction: column; gap: 6px; backdrop-filter: blur(15px);
         }
         .dropdown-item {
@@ -166,7 +166,7 @@
         .dropdown-item.danger:hover { background: rgba(255,0,85,0.15); color: var(--neon-red); }
 
         /* ÁREA DE TRABAJO */
-        .workspace-area { flex: 1; display: flex; flex-direction: column; position: relative; overflow: hidden; background: transparent; height: calc(100vh - 60px); }
+        .workspace-area { flex: 1; display: flex; flex-direction: column; position: relative; overflow: hidden; background: transparent; height: calc(100vh - 55px); }
         .screen-view { display: flex; flex-direction: column; flex: 1; height: 100%; overflow: hidden; position: relative; }
         
         .messages-display { flex: 1; padding: 12px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding-bottom: 100px; }
@@ -178,41 +178,41 @@
         .dynamic-content-view { display: none; padding: 20px; flex: 1; overflow-y: auto; font-family: 'Share Tech Mono'; }
         .dynamic-card { background: rgba(255,255,255,0.02); border: 1px solid var(--border-hud); padding: 15px; border-radius: 8px; margin-bottom: 12px; }
 
-        /* CÁPSULA FLOTANTE DE ESCRITURA INTELIGENTE */
+        /* CÁPSULA FLOTANTE DE ESCRITURA MÓVIL OPTIMIZADA */
         .writing-popup-overlay {
-            position: absolute; bottom: 70px; left: 8px; right: 8px;
+            position: absolute; bottom: 65px; left: 6px; right: 6px;
             background: var(--panel-hud); border: 1px solid var(--neon-blue);
-            border-radius: 16px; padding: 12px; display: none; flex-direction: column; gap: 10px;
+            border-radius: 14px; padding: 10px; display: none; flex-direction: column; gap: 8px;
             z-index: 250; box-shadow: 0 -8px 35px rgba(0, 0, 0, 0.9); backdrop-filter: blur(20px);
         }
         .writing-popup-overlay.active { display: flex; }
         
         .writing-capsule-bar {
             display: flex; align-items: center; background: #000; border: 1px solid var(--border-hud);
-            border-radius: 25px; padding: 4px 10px; gap: 6px;
+            border-radius: 20px; padding: 3px 8px; gap: 4px;
         }
         .writing-popup-textarea {
-            flex: 1; height: 50px; background: transparent; border: none;
-            color: var(--text-main); font-family: 'Share Tech Mono', monospace; font-size: 0.9rem;
-            outline: none; resize: none; padding-top: 8px;
+            flex: 1; height: 42px; background: transparent; border: none;
+            color: var(--text-main); font-family: 'Share Tech Mono', monospace; font-size: 0.85rem;
+            outline: none; resize: none; padding-top: 6px;
         }
         .capsule-tool-icon {
-            background: none; border: none; color: var(--neon-blue); cursor: pointer; font-size: 1.1rem;
-            display: flex; align-items: center; justify-content: center; padding: 6px; transition: 0.2s;
+            background: none; border: none; color: var(--neon-blue); cursor: pointer; font-size: 1rem;
+            display: flex; align-items: center; justify-content: center; padding: 4px; transition: 0.2s; flex-shrink: 0;
         }
         .capsule-tool-icon:hover { transform: scale(1.15); color: #fff; }
         .capsule-tool-icon.recording { color: var(--neon-red); animation: pulseVoice 1.2s infinite; }
 
         .writing-advanced-controls {
             display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.5);
-            padding: 6px 10px; border-radius: 8px; border: 1px dashed var(--border-hud); font-size: 0.7rem; font-family: 'Share Tech Mono';
+            padding: 5px 8px; border-radius: 6px; border: 1px dashed var(--border-hud); font-size: 0.65rem; font-family: 'Share Tech Mono';
         }
-        .translator-toggle-box { display: flex; align-items: center; gap: 6px; color: var(--neon-green); }
-        .translator-select { background: #000; color: var(--neon-blue); border: 1px solid var(--border-hud); border-radius: 4px; padding: 2px 4px; font-size: 0.65rem; outline: none; }
+        .translator-toggle-box { display: flex; align-items: center; gap: 4px; color: var(--neon-green); }
+        .translator-select { background: #000; color: var(--neon-blue); border: 1px solid var(--border-hud); border-radius: 4px; padding: 2px; font-size: 0.6rem; outline: none; }
         
-        .bunker-mode-box { display: flex; align-items: center; gap: 4px; color: var(--neon-amber); cursor: pointer; }
+        .bunker-mode-box { display: flex; align-items: center; gap: 3px; color: var(--neon-amber); cursor: pointer; }
 
-        .writing-popup-footer { display: flex; justify-content: flex-end; gap: 8px; }
+        .writing-popup-footer { display: flex; justify-content: flex-end; gap: 6px; }
 
         /* BARRA INFERIOR DE CHAT LIMPIA */
         .chat-input-deck {
@@ -272,8 +272,8 @@
 
     <div class="overlay-screen" id="mediaCallScreen">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-            <div style="font-family:'Orbitron'; color:var(--neon-blue); font-size:0.9rem;">LLAMADA 16K ULTRA-HD (ANTIRRUIDO ACTIVO)</div>
-            <button class="auth-btn" style="background:var(--neon-red); color:#fff; padding:6px 14px;" onclick="endMediaCall()">COLGAR</button>
+            <div style="font-family:'Orbitron'; color:var(--neon-blue); font-size:0.8rem;">LLAMADA 16K (ANTIRRUIDO ACTIVO)</div>
+            <button class="auth-btn" style="background:var(--neon-red); color:#fff; padding:5px 10px;" onclick="endMediaCall()">COLGAR</button>
         </div>
         <div class="video-box-16k">
             <video id="liveWebcamVideo" autoplay playsinline muted></video>
@@ -281,7 +281,7 @@
     </div>
 
     <div class="app-container">
-        <!-- BARRA SUPERIOR NUEVA: PERFIL REDONDO + NOMBRE + LLAMADAS 16K + ESCUDO ANTIRRUIDO -->
+        <!-- BARRA SUPERIOR MÓVIL ULTRA-COMPACTA Y DISEÑADA PARA NO SOLAPARSE -->
         <div class="main-header-bar">
             <div class="header-profile-section">
                 <div class="profile-avatar-container" id="profileAvatarInitial">VC</div>
@@ -327,30 +327,29 @@
                     </div>
                 </div>
 
-                <!-- CÁPSULA FLOTANTE DE ESCRITURA INTELIGENTE CON MICRÓFONO Y CÁMARA ARRIBA -->
+                <!-- CÁPSULA FLOTANTE DE ESCRITURA MÓVIL OPTIMIZADA -->
                 <div class="writing-popup-overlay" id="writingPopup">
                     <div class="writing-popup-header">
                         <span>💬 CÁPSULA DE MENSAJE CUÁNTICO</span>
-                        <button class="auth-btn" style="padding: 2px 8px; font-size: 0.65rem; background: var(--neon-red); color: #fff;" onclick="closeWritingPopup()">✖ Cerrar</button>
+                        <button class="auth-btn" style="padding: 2px 6px; font-size: 0.6rem; background: var(--neon-red); color: #fff;" onclick="closeWritingPopup()">✖ Cerrar</button>
                     </div>
                     
                     <div class="writing-capsule-bar">
                         <button class="capsule-tool-icon" id="popupVoiceBtn" title="Nota de voz" onmousedown="startVoiceRecording()" onmouseup="stopVoiceRecording()" ontouchstart="startVoiceRecording()" ontouchend="stopVoiceRecording()">🎤</button>
                         <button class="capsule-tool-icon" id="popupVideoBtn" title="Vídeo / Cámara" onclick="toggleInstantVideoRecording()">📹</button>
-                        <button class="capsule-tool-icon" title="Stickers / Emojis" onclick="alert('⚡ Panel de Emojis Cuánticos abierto')">😊</button>
+                        <button class="capsule-tool-icon" title="Stickers" onclick="alert('⚡ Panel de Emojis Cuánticos abierto')">😊</button>
                         <textarea id="popupMessageInput" class="writing-popup-textarea" placeholder="Escribe tu mensaje..."></textarea>
-                        <button class="capsule-tool-icon" title="Adjuntar Archivo" onclick="alert('📎 Módulo de archivos cifrados')">📎</button>
+                        <button class="capsule-tool-icon" title="Adjuntar" onclick="alert('📎 Módulo de archivos cifrados')">📎</button>
                     </div>
 
-                    <!-- CONTROLES EXCLUSIVOS: TRADUCTOR EN TIEMPO REAL & MODO BÚNKER -->
                     <div class="writing-advanced-controls">
                         <div class="translator-toggle-box">
-                            <span>🌐 Traducir a:</span>
+                            <span>🌐 Traducir:</span>
                             <select id="liveTranslateLang" class="translator-select">
-                                <option value="off">Desactivado</option>
-                                <option value="en">Inglés (EN)</option>
-                                <option value="fr">Francés (FR)</option>
-                                <option value="de">Alemán (DE)</option>
+                                <option value="off">Off</option>
+                                <option value="en">EN</option>
+                                <option value="fr">FR</option>
+                                <option value="de">DE</option>
                             </select>
                         </div>
                         <div class="bunker-mode-box" onclick="toggleBunkerPin()" id="bunkerStatusIndicator">
@@ -359,7 +358,7 @@
                     </div>
 
                     <div class="writing-popup-footer">
-                        <button class="auth-btn" style="padding: 8px 16px; font-size: 0.8rem; background: var(--neon-blue); color: #000;" onclick="sendFromPopup()">ENVIAR MENSAJE 🚀</button>
+                        <button class="auth-btn" style="padding: 6px 12px; font-size: 0.75rem; background: var(--neon-blue); color: #000;" onclick="sendFromPopup()">ENVIAR MENSAJE 🚀</button>
                     </div>
                 </div>
 
@@ -415,9 +414,8 @@
         let videoChunks = [];
         let isRecordingVideoNow = false;
         let isBunkerActive = false;
-        let isQuantumShieldActive = true; // Supresión de ruido y eco activa por defecto
+        let isQuantumShieldActive = true;
 
-        // Función para cambiar los temas visuales en tiempo real
         window.switchTheme = (themeName) => {
             document.body.className = 'theme-' + themeName;
             localStorage.setItem('vobix_theme', themeName);
@@ -450,7 +448,6 @@
             document.getElementById('translationResultOutput').innerHTML = `<strong>Traducido:</strong> "${text} (Sincronizado)"`;
         };
 
-        // ESCUDO ANTIRRUIDO CUÁNTICO INTELIGENTE
         window.toggleQuantumShield = () => {
             isQuantumShieldActive = !isQuantumShieldActive;
             const shieldBtn = document.getElementById('quantumShieldBtn');
@@ -462,13 +459,11 @@
                 shieldBtn.title = "Escudo Cuántico Antirruido IA: INACTIVO";
             }
         };
-        // Inicializar estado activo del escudo
         document.getElementById('quantumShieldBtn').classList.add('active');
 
         async function startVoiceRecording() {
             if(isUserBlocked) return;
             try {
-                // Activación de restricciones avanzadas de audio (supresión de eco y ruido de hardware)
                 const constraints = {
                     audio: {
                         echoCancellation: isQuantumShieldActive,
@@ -502,7 +497,7 @@
                 try {
                     const constraints = {
                         audio: { echoCancellation: isQuantumShieldActive, noiseSuppression: isQuantumShieldActive },
-                        video: { width: { ideal: 3840 }, height: { ideal: 2160 } } // Calidad 16K / Ultra HD máxima
+                        video: { width: { ideal: 3840 }, height: { ideal: 2160 } }
                     };
                     const stream = await navigator.mediaDevices.getUserMedia(constraints);
                     videoRecorder = new MediaRecorder(stream);
@@ -518,7 +513,7 @@
                     isRecordingVideoNow = true;
                     document.getElementById('popupVideoBtn').classList.add('recording');
                     alert("🔴 Grabando vídeo en 16K... Vuelve a pulsar para enviar.");
-                } catch(e) { alert("Cámara no disponible o resolución 16K no soportada por el dispositivo."); }
+                } catch(e) { alert("Cámara no disponible o resolución 16K no soportada."); }
             } else {
                 if(videoRecorder) videoRecorder.stop();
                 isRecordingVideoNow = false;
@@ -585,7 +580,6 @@
             navigator.clipboard.writeText(inviteUrl).then(() => alert("🔗 Enlace copiado. Compártelo con tu familia."));
         };
 
-        // LLAMADAS 16K CON FILTROS DE SUPRESIÓN DE RUIDO Y ECO HARDWARE
         window.startVideoCall = async () => {
             if(isUserBlocked) return;
             try {
@@ -638,7 +632,7 @@
             isBunkerActive = !isBunkerActive;
             const statusEl = document.getElementById('bunkerStatusIndicator');
             if(isBunkerActive) {
-                statusEl.innerHTML = `<span>🛡️ Búnker: <strong style="color:var(--neon-green)">ON (Cifrado)</strong></span>`;
+                statusEl.innerHTML = `<span>🛡️ Búnker: <strong style="color:var(--neon-green)">ON</strong></span>`;
             } else {
                 statusEl.innerHTML = `<span>🛡️ Búnker: <strong style="color:var(--neon-red)">OFF</strong></span>`;
             }
