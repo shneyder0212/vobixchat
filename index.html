@@ -68,6 +68,7 @@
             top: 0;
             left: 0;
             transition: background 0.5s ease;
+            overscroll-behavior-y: none; /* EVITA EL REFRESCO POR GESTO EN MÓVIL */
         }
 
         body.senior-mode { font-size: 1.4rem !important; }
@@ -436,6 +437,11 @@
         let isRecordingVideoNow = false;
         let isBunkerActive = false;
         let isQuantumShieldActive = true;
+
+        // PROTECCIÓN TÁCTIL CONTRA RECARGA ACCIDENTAL
+        document.addEventListener('touchmove', function(e) {
+            if (e.scale !== 1) { e.preventDefault(); }
+        }, { passive: false });
 
         window.switchTheme = (themeName) => {
             document.body.className = 'theme-' + themeName;
