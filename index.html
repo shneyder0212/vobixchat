@@ -5,9 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>VOBIXCHAT // Quantum Mobile Pro</title>
     <link href="https://googleapis.com" rel="stylesheet">
-    <script src="/socket.io/socket.io.js"></script>
+    
+    <!-- CORRECCIÓN CRÍTICA: Carga mediante CDN absoluto con HTTPS para evitar bloqueos de Render -->
+    <script src="https://socket.io"></script>
+
     <style>
-        :root, body.theme-violet {
+        :root {
             --bg-quantum: #090212;
             --panel-hud: rgba(14, 5, 26, 0.98);
             --neon-blue: #00f0ff;
@@ -40,7 +43,7 @@
             overflow: hidden; position: relative; border: 1px solid var(--border-hud);
         }
 
-        /* CAPAS DE OVERLAY GENERALES */
+        /* CAPAS OVERLAY */
         .auth-overlay, .confirm-overlay {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(4, 2, 8, 0.96); backdrop-filter: blur(25px);
@@ -59,8 +62,8 @@
         .confirm-card h3 { font-family: 'Orbitron'; color: var(--neon-amber); font-size: 1.1rem; }
         .confirm-card p { font-family: 'Share Tech Mono'; color: var(--text-main); font-size: 0.9rem; }
 
-        .auth-input { background: #000; border: 1px solid var(--border-hud); color: #fff; padding: 12px; font-family: 'Share Tech Mono'; border-radius: 6px; outline: none; width: 100%; }
-        .auth-btn { background: var(--neon-blue); color: #000; border: none; padding: 12px; font-family: 'Orbitron'; font-weight: bold; border-radius: 6px; cursor: pointer; text-align: center; }
+        .auth-input { background: #000; border: 1px solid var(--border-hud); color: #fff; padding: 12px; font-family: 'Share Tech Mono'; border-radius: 6px; outline: none; width: 100%; font-size: 1rem; }
+        .auth-btn { background: var(--neon-blue); color: #000; border: none; padding: 12px; font-family: 'Orbitron'; font-weight: bold; border-radius: 6px; cursor: pointer; text-align: center; font-size: 1rem; }
 
         .main-header-bar {
             padding: 4px 8px; background: rgba(2, 4, 10, 0.95); border-bottom: 1px solid var(--border-hud);
@@ -119,7 +122,7 @@
             display: flex; gap: 8px; align-items: center;
             padding-bottom: calc(10px + env(safe-area-inset-bottom));
         }
-        .quantum-input { flex: 1; background: #000; border: 1px solid var(--border-hud); padding: 10px; color: #fff; border-radius: 6px; outline: none; font-family: 'Share Tech Mono'; }
+        .quantum-input { flex: 1; background: #000; border: 1px solid var(--border-hud); padding: 10px; color: #fff; border-radius: 6px; outline: none; font-family: 'Share Tech Mono'; font-size: 1rem; }
     </style>
 </head>
 <body>
@@ -130,7 +133,7 @@
             <div class="auth-card">
                 <h2>VOBIXCHAT // ACCESO SECURE</h2>
                 <input type="text" id="username-in" class="auth-input" placeholder="Nombre de Agente..." autocomplete="off">
-                <button class="auth-btn" onclick="loginQuantum()">INICIALIZAR HUD</button>
+                <button class="auth-btn" id="btn-login-trigger">INICIALIZAR HUD</button>
             </div>
         </div>
 
@@ -141,7 +144,7 @@
                 <p id="confirm-msg">¿Desea inicializar este enlace?</p>
                 <div style="display:flex; gap:10px;">
                     <button class="auth-btn" style="background:var(--neon-green); flex:1;" id="confirm-yes-btn">SÍ, ENLAZAR</button>
-                    <button class="auth-btn" style="background:var(--neon-red); color:#fff; flex:1;" onclick="cancelAccidentalCall()">ABORTAR</button>
+                    <button class="auth-btn" style="background:var(--neon-red); color:#fff; flex:1;" id="btn-abort-trigger">ABORTAR</button>
                 </div>
             </div>
         </div>
@@ -152,8 +155,8 @@
                 <div class="header-info-group"><span class="header-username-display" id="user-display">Invitado</span></div>
             </div>
             <div class="header-right-group">
-                <button class="call-icon-btn" onclick="triggerCallConfirmation('voice')">🎙️</button>
-                <button class="call-icon-btn" onclick="triggerCallConfirmation('video')">📹</button>
+                <button class="call-icon-btn" id="btn-voice-trigger">🎙️</button>
+                <button class="call-icon-btn" id="btn-video-trigger">📹</button>
             </div>
         </header>
 
@@ -161,7 +164,7 @@
 
         <div class="chat-input-area">
             <input type="text" id="chat-input" class="quantum-input" placeholder="Escribir mensaje...">
-            <button class="auth-btn" style="padding: 10px 15px;" onclick="sendText()">ENVIAR</button>
+            <button class="auth-btn" style="padding: 10px 15px;" id="btn-send-trigger">ENVIAR</button>
         </div>
 
         <!-- HUD DE PANEL DE LLAMADA -->
@@ -177,12 +180,10 @@
             </div>
 
             <div class="call-controls">
-                <button id="btn-toggle-mic" class="auth-btn" style="background: var(--neon-amber); color: #000; flex: 1;" onclick="toggleMute()">MUTEAR</button>
-                <button id="btn-hangup" class="auth-btn" style="background: var(--neon-red); color: #fff; flex: 1;" onclick="endCall()">COLGAR</button>
+                <button id="btn-toggle-mic" class="auth-btn" style="background: var(--neon-amber); color: #000; flex: 1;">MUTEAR</button>
+                <button id="btn-hangup" class="auth-btn" style="background: var(--neon-red); color: #fff; flex: 1;">COLGAR</button>
             </div>
         </div>
     </div>
 
     <script>
-        const socket = io();
-        let localStream = null;
