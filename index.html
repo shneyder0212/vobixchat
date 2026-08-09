@@ -6,8 +6,8 @@
     <title>VOBIXCHAT // Quantum Mobile Pro</title>
     <link href="https://googleapis.com" rel="stylesheet">
     
-    <!-- CORRECCIÓN CRÍTICA: Carga mediante CDN absoluto con HTTPS para evitar bloqueos de Render -->
-    <script src="https://socket.io"></script>
+    <!-- ENLACE SEGURO GLOBAL: Carga directa e inquebrantable de la librería cliente -->
+    <script src="https://cloudflare.com"></script>
 
     <style>
         :root {
@@ -43,7 +43,6 @@
             overflow: hidden; position: relative; border: 1px solid var(--border-hud);
         }
 
-        /* CAPAS OVERLAY */
         .auth-overlay, .confirm-overlay {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(4, 2, 8, 0.96); backdrop-filter: blur(25px);
@@ -85,7 +84,6 @@
             cursor: pointer; font-size: 0.8rem;
         }
 
-        /* HUD DE LLAMADAS */
         .video-call-overlay {
             position: absolute; top:0; left:0; width:100%; height:100%; 
             background: rgba(5, 2, 10, 0.98); z-index: 1500; 
@@ -128,7 +126,6 @@
 <body>
 
     <div class="app-container">
-        <!-- CAPA DE AUTENTICACIÓN -->
         <div class="auth-overlay" id="auth-layer">
             <div class="auth-card">
                 <h2>VOBIXCHAT // ACCESO SECURE</h2>
@@ -137,7 +134,6 @@
             </div>
         </div>
 
-        <!-- MODAL DE CONFIRMACIÓN ANTI-ACCIDENTES -->
         <div class="confirm-overlay" id="confirm-layer">
             <div class="confirm-card">
                 <h3 id="confirm-title">CONFIRMAR ACCIÓN</h3>
@@ -167,7 +163,6 @@
             <button class="auth-btn" style="padding: 10px 15px;" id="btn-send-trigger">ENVIAR</button>
         </div>
 
-        <!-- HUD DE PANEL DE LLAMADA -->
         <div class="video-call-overlay" id="video-call-hud">
             <div class="video-grid" id="container-video-elements">
                 <video id="remote-video" autoplay playsinline></video>
@@ -187,3 +182,8 @@
     </div>
 
     <script>
+        // Inicialización robusta con fallback absoluto de URL para Render
+        let socket;
+        try {
+            socket = io(window.location.origin, { transports: ['websocket', 'polling'] });
+        } catch(e) {
