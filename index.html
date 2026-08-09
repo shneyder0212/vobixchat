@@ -42,7 +42,10 @@
         .auth-btn:hover { filter: brightness(1.2); }
         
         .phone-group { display: flex; gap: 6px; align-items: center; width: 100%; }
-        .detected-country-badge { background: rgba(0, 240, 255, 0.08); border: 1px solid var(--neon-blue); color: var(--neon-blue); padding: 12px 10px; font-family: 'Share Tech Mono'; font-size: 0.85rem; border-radius: 6px; text-align: center; white-space: nowrap; }
+        
+        /* CORRECCIÓN VISUAL: Select adaptado al HUD para elegir el país si falla la autodetección */
+        .detected-country-select { background: #000; border: 1px solid var(--neon-blue); color: var(--neon-blue); padding: 12px 5px; font-family: 'Share Tech Mono'; font-size: 0.85rem; border-radius: 6px; text-align: center; outline: none; cursor: pointer; }
+        
         .big-pin-display { font-family: 'Orbitron', sans-serif; font-size: 2.2rem; color: var(--neon-green); text-align: center; letter-spacing: 4px; background: rgba(0,255,102,0.05); border: 1px dashed var(--neon-green); padding: 12px; border-radius: 8px; margin: 10px 0; display: none; }
         
         .main-header-bar { padding: 4px 8px; background: rgba(2, 4, 10, 0.95); border-bottom: 1px solid var(--border-hud); display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; z-index: 100; height: 50px; }
@@ -82,9 +85,8 @@
                 <input type="text" id="username-in" class="auth-input" placeholder="Nombre de Usuario Agente..." autocomplete="off">
                 
                 <div class="phone-group">
-                    <span class="detected-country-badge" id="country-badge">...</span>
-                    <input type="tel" id="phone-in" class="auth-input" placeholder="Número de Teléfono Móvil..." autocomplete="off">
-                </div>
-                
-                <button class="auth-btn" style="background: var(--neon-amber);" id="btn-pin-generator">GENERAR PIN CUÁNTICO</button>
-                <div class="big-pin-display" id="pin-display">0000</div>
+                    <!-- CORRECCIÓN CLAVE: Cambiado de span rígido a selector desplegable nativo cyberpunk -->
+                    <select class="detected-country-select" id="country-badge">
+                        <option value="+34">ES +34</option>
+                        <option value="+52">MX +52</option>
+                        <option value="+1" selected>US +1</option>
