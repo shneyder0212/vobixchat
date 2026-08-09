@@ -6,7 +6,7 @@ const path = require('path');
 const app = express();
 const server = http.createServer(app);
 
-// Configuración absoluta de CORS para producción en Render
+// Configuración de WebSockets con CORS abierto para producción
 const io = new Server(server, {
     cors: {
         origin: "*",
@@ -14,34 +14,37 @@ const io = new Server(server, {
     }
 });
 
-// Enrutar automáticamente la raíz al archivo visual index.html
+// Servir tu archivo index.html de forma automática
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// Canal de control para la señalización de llamadas móviles
+// Gestión de conexiones en tiempo real de VOBIXCHAT
 io.on('connection', (socket) => {
-    console.log(`Dispositivo enlazado ID: ${socket.id}`);
+    console.log(`Usuario conectado ID: ${socket.id}`);
 
+    // Reenviar oferta de videollamada al destinatario
     socket.on('webrtc-offer', (data) => {
         socket.broadcast.emit('webrtc-offer', data);
     });
 
+    // Reenviar respuesta de aceptación de videollamada
     socket.on('webrtc-answer', (data) => {
         socket.broadcast.emit('webrtc-answer', data);
     });
 
+    // Intercambiar configuraciones de red (ICE Candidates) entre móviles
     socket.on('webrtc-candidate', (data) => {
         socket.broadcast.emit('webrtc-candidate', data);
     });
 
     socket.on('disconnect', () => {
-        console.log(`Dispositivo desconectado: ${socket.id}`);
+        console.log(`Usuario desconectado ID: ${socket.id}`);
     });
 });
 
-// Render inyecta el puerto de escucha dinámicamente mediante variables de entorno
+// El puerto lo asigna dinámicamente Render mediante variables de entorno
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
-    console.log(`Servidor de VOBIXCHAT corriendo en puerto ${PORT}`);
+    console.log(`Servidor cuántico corriendo en el puerto ${PORT}`);
 });
