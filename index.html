@@ -3,266 +3,237 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>VOBIXCHAT // Clean Mobile Pro</title>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+    <title>VOBIXCHAT // Quantum Mobile Pro</title>
+    <link href="https://googleapis.com" rel="stylesheet">
     <script src="/socket.io/socket.io.js"></script>
     <style>
         :root {
             --bg-quantum: #04010a; --panel-hud: rgba(10, 3, 20, 0.99); --neon-blue: #00f0ff; --neon-violet: #bd00ff; --neon-green: #00ff66; --neon-amber: #ffaa00; --neon-red: #ff0055; --text-main: #f3e8ff; --text-dim: #8b7aa6; --border-hud: rgba(189, 0, 255, 0.35);
+            --bg-pattern: radial-gradient(circle at 50% 50%, rgba(189, 0, 255, 0.05) 0%, rgba(4, 1, 10, 0.98) 100%), repeating-linear-gradient(0deg, transparent, transparent 40px, rgba(189, 0, 255, 0.02) 40px, rgba(189, 0, 255, 0.02) 41px);
         }
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        html, body { background-color: #000; font-family: 'Roboto', sans-serif; color: var(--text-main); width: 100%; height: 100%; height: 100dvh; display: flex; justify-content: center; align-items: center; overflow: hidden; position: fixed; top: 0; left: 0; overscroll-behavior-y: none; }
-        .app-container { width: 100%; height: 100%; height: 100dvh; max-width: 1400px; background: var(--panel-hud); display: flex; flex-direction: column; overflow: hidden; position: relative; border: 1px solid var(--border-hud); box-shadow: 0 0 50px rgba(0,0,0,0.95); }
+        html, body { background-color: var(--bg-quantum); background-image: var(--bg-pattern); font-family: 'Rajdhani', sans-serif; color: var(--text-main); width: 100%; height: 100%; height: 100dvh; display: flex; justify-content: center; align-items: center; overflow: hidden; position: fixed; top: 0; left: 0; overscroll-behavior-y: none; }
+        .app-container { width: 100%; height: 100%; height: 100dvh; max-width: 1400px; background: var(--panel-hud); display: flex; flex-direction: column; overflow: hidden; position: relative; border: 1px solid var(--border-hud); box-shadow: 0 0 50px rgba(0,0,0,0.95); backdrop-filter: blur(15px); }
+        .auth-overlay, .confirm-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(3, 1, 6, 0.97); backdrop-filter: blur(30px); display: flex; justify-content: center; align-items: center; z-index: 2000; padding: 15px; }
+        .confirm-overlay { display: none; z-index: 1800; background: rgba(5,2,12,0.85); }
         
-        .auth-overlay, .confirm-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(11, 20, 26, 0.95); display: flex; justify-content: center; align-items: center; z-index: 2000; padding: 15px; }
-        .confirm-overlay { display: none; z-index: 1800; background: rgba(11,20,26,0.85); }
+        .auth-card { width: 100%; max-width: 430px; background: rgba(14, 5, 26, 0.75); border: 2px solid var(--neon-blue); border-radius: 4px; padding: 30px 24px; display: flex; flex-direction: column; gap: 16px; box-shadow: 0 0 40px rgba(0, 240, 255, 0.15), inset 0 0 20px rgba(0, 240, 255, 0.05); position: relative; overflow: hidden; }
+        .laser-scanner { position: absolute; top: 0; left: 0; width: 100%; height: 2px; background: linear-gradient(90deg, transparent, var(--neon-blue), transparent); box-shadow: 0 0 12px var(--neon-blue); animation: scan 3.5s infinite linear; pointer-events: none; }
+        @keyframes scan { 0% { top: 0%; } 50% { top: 100%; } 100% { top: 0%; } }
         
-        /* Tarjeta de acceso limpia sin escáner */
-        .auth-card { width: 100%; max-width: 400px; background: #222d34; border-radius: 10px; padding: 25px; display: flex; flex-direction: column; gap: 15px; color: #e9edef; box-shadow: 0 4px 20px rgba(0,0,0,0.5); }
-        .confirm-card { width: 100%; max-width: 380px; background: #222d34; border-radius: 10px; padding: 20px; display: flex; flex-direction: column; gap: 15px; text-align: center; color: #e9edef; }
-        .auth-card h2 { font-size: 1.2rem; text-align: center; color: #00a884; }
-        .auth-card p, .confirm-card p { font-size: 0.85rem; color: #8696a0; text-align: center; }
-        .field-container { display: flex; flex-direction: column; gap: 5px; }
-        .field-label { font-size: 0.75rem; color: #00a884; font-weight: 500; }
-        .auth-input { background: #2a3942; border: none; color: #fff; padding: 12px; border-radius: 8px; outline: none; font-size: 1rem; width: 100%; }
-        .auth-btn { background: #00a884; border: none; color: #fff; padding: 12px; font-weight: 500; border-radius: 8px; cursor: pointer; font-size: 1rem; text-align: center; }
-        .auth-btn:hover { background: #01755f; }
+        .confirm-card { width: 100%; max-width: 380px; background: var(--panel-hud); border: 1px solid var(--border-hud); border-radius: 14px; padding: 22px; display: flex; flex-direction: column; gap: 12px; box-shadow: 0 0 25px rgba(0,0,0,0.8); border-color: var(--neon-amber); text-align: center; gap: 15px; }
+        .confirm-card h3 { font-family: 'Orbitron'; color: var(--neon-amber); }
+        .auth-card h2 { font-family: 'Orbitron', sans-serif; color: #fff; font-size: 1.3rem; text-align: center; letter-spacing: 2px; font-weight: 900; text-shadow: 0 0 10px var(--neon-blue); }
+        .auth-card p, .confirm-card p { font-family: 'Share Tech Mono', monospace; font-size: 0.8rem; color: var(--text-dim); text-align: center; }
+        
+        .field-container { display: flex; flex-direction: column; gap: 6px; }
+        .field-label { font-family: 'Orbitron'; font-size: 0.65rem; color: var(--neon-blue); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 2px; }
+        .auth-input { background: rgba(0,0,0,0.6); border: 1px solid var(--border-hud); color: #fff; padding: 14px; font-family: 'Share Tech Mono'; border-radius: 4px; outline: none; font-size: 1rem; width: 100%; }
+        .auth-input:focus { border-color: var(--neon-blue); box-shadow: 0 0 10px rgba(0, 240, 255, 0.2); }
+        .auth-btn { background: transparent; border: 1px solid var(--neon-blue); color: var(--neon-blue); padding: 14px; font-family: 'Orbitron'; font-weight: bold; border-radius: 4px; cursor: pointer; font-size: 0.95rem; text-align: center; letter-spacing: 1px; transition: 0.2s; box-shadow: 0 0 8px rgba(0, 240, 255, 0.1); }
+        .auth-btn:hover { background: var(--neon-blue); color: #000; box-shadow: 0 0 15px var(--neon-blue); }
+        
         .phone-group { display: flex; gap: 8px; align-items: center; width: 100%; }
-        .detected-country-select { background: #2a3942; border: none; color: #00a884; padding: 12px 8px; font-size: 0.95rem; border-radius: 8px; outline: none; cursor: pointer; }
-        .phone-input-style { flex: 1; background: #2a3942; border: none; color: #fff; padding: 12px; border-radius: 8px; outline: none; font-size: 1rem; width: 100%; }
-        .big-pin-display { font-size: 2rem; color: #00ff88; text-align: center; letter-spacing: 5px; background: #111b21; padding: 12px; border-radius: 8px; display: none; }
-        .hud-logger { width: 100%; background: #111b21; padding: 8px; font-size: 0.7rem; color: #8696a0; border-radius: 6px; }
-
-        .main-header-bar { padding: 4px 8px; background: rgba(2, 4, 10, 0.95); border-bottom: 1px solid var(--border-hud); display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; z-index: 100; height: 50px; }
-        .header-profile-section { display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0; }
-        .profile-avatar-container { width: 32px; height: 32px; border-radius: 50%; border: 1px solid var(--neon-blue); background: linear-gradient(135deg, var(--neon-blue), var(--neon-violet)); display: flex; align-items: center; justify-content: center; font-weight: bold; color: #000; font-size: 0.75rem; flex-shrink: 0; }
+        .detected-country-select { background: rgba(0,0,0,0.6); border: 1px solid var(--border-hud); color: var(--neon-blue); padding: 14px 10px; font-family: 'Share Tech Mono'; font-size: 0.95rem; border-radius: 4px; outline: none; cursor: pointer; min-width: 95px; }
+        .phone-input-style { flex: 1; background: rgba(0,0,0,0.6); border: 1px solid var(--border-hud); color: #fff; padding: 14px; font-family: 'Share Tech Mono'; border-radius: 4px; outline: none; font-size: 1rem; width: 100%; }
+        .big-pin-display { font-family: 'Orbitron', sans-serif; font-size: 2.4rem; color: var(--neon-green); text-align: center; letter-spacing: 6px; background: rgba(0,255,102,0.03); border: 1px dashed var(--neon-green); padding: 16px; border-radius: 4px; margin: 5px 0; display: none; text-shadow: 0 0 12px var(--neon-green); position: relative; }
+        .big-pin-display::before { content: 'CIFRADO ENCRIPTADO AES-256'; position: absolute; bottom: 2px; left: 50%; transform: translateX(-50%); font-family: 'Share Tech Mono'; font-size: 0.45rem; color: rgba(0,255,102,0.5); letter-spacing: 1px; }
+        .hud-logger { width: 100%; background: rgba(0,0,0,0.4); border: 1px solid rgba(0, 240, 255, 0.1); padding: 6px; font-family: 'Share Tech Mono'; font-size: 0.6rem; color: var(--text-dim); display: flex; flex-direction: column; gap: 2px; max-height: 40px; overflow: hidden; }
+        
+        /* CABECERA ESTILO WHATSAPP EN LÍNEA DIRECTA */
+        .main-header-bar { padding: 4px 12px; background: #0b141a; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; z-index: 100; height: 55px; }
+        .header-profile-section { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; }
+        .profile-avatar-container { width: 34px; height: 34px; border-radius: 50%; border: none; background: #222; display: flex; align-items: center; justify-content: center; font-family: 'Orbitron'; font-weight: bold; color: var(--neon-blue); font-size: 0.85rem; flex-shrink: 0; overflow: hidden; }
         .header-info-group { display: flex; flex-direction: column; min-width: 0; }
-        .header-username-display { font-size: 0.7rem; font-weight: bold; }
-        .header-user-status { font-size: 0.45rem; color: var(--neon-green); font-family: 'Roboto', sans-serif; }
-        .header-right-group { display: flex; gap: 6px; align-items: center; flex-shrink: 0; }
-        .whatsapp-icon-btn, .shield-quantum-btn { background: rgba(0, 240, 255, 0.08); border: 1px solid var(--neon-blue); color: var(--neon-blue); border-radius: 50%; width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 0.65rem; }
-        .logout-action-btn { background: var(--neon-red); color: #fff; border: none; padding: 4px 6px; border-radius: 4px; font-size: 0.7rem; cursor: pointer; }
-        .call-icon-btn { background: rgba(0, 255, 102, 0.1); border: 1px solid var(--neon-green); color: var(--neon-green); border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 0.8rem; }
+        .header-username-display { font-family: 'Rajdhani', sans-serif; font-size: 1.05rem; font-weight: 600; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .header-user-status { font-size: 0.7rem; color: #8696a0; font-family: 'Rajdhani', sans-serif; font-weight: 500; }
+        .header-right-group { display: flex; gap: 16px; align-items: center; flex-shrink: 0; position: relative; }
         
-        .video-call-overlay { position: absolute; top:0; left:0; width:100%; height:100%; background: rgba(5, 2, 10, 0.98); z-index: 1500; display: none; flex-direction: column; justify-content: space-between; padding: 20px; box-sizing: border-box; padding-bottom: calc(20px + env(safe-area-inset-bottom)); }
+        .dots-menu-btn { background: none; border: none; color: #aebac1; font-size: 1.3rem; cursor: pointer; padding: 4px; display: flex; align-items: center; justify-content: center; }
+        .config-dropdown-panel { display: none; position: absolute; top: 42px; right: 0; background: #233138; border-radius: 4px; width: 195px; box-shadow: 0 4px 12px rgba(0,0,0,0.4); z-index: 500; padding: 6px 0; }
+        .dropdown-panel-item { padding: 12px 16px; font-family: 'Rajdhani', sans-serif; font-size: 0.95rem; color: #e9edef; cursor: pointer; display: flex; align-items: center; gap: 10px; }
+        .dropdown-panel-item:hover { background: #182229; }
+        
+        .whatsapp-icon-btn, .shield-quantum-btn { background: none; border: none; color: #aebac1; cursor: pointer; font-size: 1rem; }
+        .logout-action-btn { background: rgba(255,0,85,0.15); color: var(--neon-red); border: 1px solid rgba(255,0,85,0.3); padding: 5px 8px; border-radius: 4px; font-family: 'Orbitron'; font-size: 0.65rem; font-weight: bold; cursor: pointer; }
+        .call-icon-btn { background: none; border: none; color: #aebac1; cursor: pointer; font-size: 1.1rem; display: flex; align-items: center; justify-content: center; }
+        
+        .video-call-overlay { position: absolute; top:0; left:0; width:100%; height:100%; background: #0b141a; z-index: 1500; display: none; flex-direction: column; justify-content: space-between; padding: 20px; box-sizing: border-box; padding-bottom: calc(20px + env(safe-area-inset-bottom)); }
         .video-grid { display: flex; flex-direction: column; gap: 15px; width: 100%; height: 75%; }
-        video { width: 100%; height: 48%; object-fit: cover; border: 1px solid var(--border-hud); border-radius: 12px; background: #000; }
-        #local-video { border-color: var(--neon-violet); } #remote-video { border-color: var(--neon-blue); }
-        .voice-only-status { display: none; flex-direction: column; align-items: center; justify-content: center; flex: 1; color: var(--neon-green); gap: 10px; }
-        .voice-avatar { width: 90px; height: 90px; border-radius: 50%; border: 2px dashed var(--neon-green); display: flex; align-items: center; justify-content: center; font-size: 2rem; }
+        video { width: 100%; height: 48%; object-fit: cover; border-radius: 8px; background: #000; }
+        #local-video { border: 1px solid var(--neon-violet); } #remote-video { border: 1px solid var(--neon-blue); }
+        .voice-only-status { display: none; flex-direction: column; align-items: center; justify-content: center; flex: 1; font-family: 'Orbitron'; color: var(--neon-green); gap: 10px; }
+        .voice-avatar { width: 90px; height: 90px; border-radius: 50%; border: 2px dashed var(--neon-green); display: flex; align-items: center; justify-content: center; font-size: 2rem; animation: pulse 2s infinite linear; }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
         
-        .chat-area { flex: 1; display: flex; flex-direction: column; background: rgba(0,0,0,0.2); overflow-y: auto; padding: 15px; }
+        .chat-area { flex: 1; display: flex; flex-direction: column; background: #0b141a; overflow-y: auto; padding: 15px; gap: 8px; }
         
-        /* Barra inferior de WhatsApp exacta */
-        .chat-input-area { padding: 8px 10px; background: rgba(2, 4, 10, 0.95); border-top: 1px solid var(--border-hud); display: flex; gap: 8px; align-items: center; padding-bottom: calc(10px + env(safe-area-inset-bottom)); }
-        .input-capsule-wrapper { flex: 1; background: #ffffff; border-radius: 25px; display: flex; align-items: center; padding: 0 12px; height: 48px; gap: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
-        .quantum-input { flex: 1; background: transparent; border: none; color: #3b4a54; outline: none; font-family: 'Roboto', sans-serif; font-size: 1rem; min-width: 0; }
-        .quantum-input::placeholder { color: #8696a0; }
-        .capsule-icon-btn { background: none; border: none; color: #54656f; font-size: 1.3rem; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-        .mic-fab-btn { width: 48px; height: 48px; border-radius: 50%; background: #00a884; border: none; color: #fff; font-size: 1.3rem; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
-        .mic-fab-btn:hover { background: #01755f; }
-    </style>
-</head>
+        /* BARRA DE ESCRITURA ENBURBUJADA INTEGRAL WHATSAPP */
 <body>
     <div class="app-container">
-        <!-- VENTANA CENTRAL DE CONTROL DE REGISTRO E IDENTIDAD (SIN ESCANER) -->
+        <!-- PANTALLA MILITAR DE ACCESO REGISTRO -->
         <div class="auth-overlay" id="auth-layer">
             <div class="auth-card">
-                <h2>VOBIXCHAT // ACCESO</h2>
-                <p id="device-detect-label" style="color: #00a884; font-weight: 500; font-size: 0.8rem;"></p>
-                
+                <div class="laser-scanner"></div>
+                <h2>VOBIXCHAT // MAIN TERMINAL</h2>
+                <p id="device-detect-label" style="color: var(--neon-blue); font-weight: bold; font-size: 0.75rem; letter-spacing: 1px;"></p>
+                <div class="field-container"><span class="field-label">Identidad Agente:</span><input type="text" id="username-in" class="auth-input" placeholder="Nombre de Código..." autocomplete="off"></div>
                 <div class="field-container">
-                    <span class="field-label">Nombre o Alias:</span>
-                    <input type="text" id="username-in" class="auth-input" placeholder="Tu nombre..." autocomplete="off">
-                </div>
-                
-                <div class="field-container">
-                    <span class="field-label">Número de Teléfono:</span>
+                    <span class="field-label">Línea de Enlace Móvil:</span>
                     <div class="phone-group">
                         <select class="detected-country-select" id="country-badge">
-                            <option value="+1">US +1</option>
-                            <option value="+34" selected>ES +34</option>
-                            <option value="+52">MX +52</option>
-                            <option value="+54">AR +54</option>
-                            <option value="+57">CO +57</option>
-                            <option value="+58">VE +58</option>
-                            <option value="+51">PE +51</option>
-                            <option value="+1">DO +1</option>
+                            <option value="+1">US +1</option><option value="+34">ES +34</option><option value="+52">MX +52</option><option value="+54">AR +54</option><option value="+57">CO +57</option><option value="+58">VE +58</option><option value="+51">PE +51</option><option value="+1">DO +1</option>
                         </select>
-                        <input type="tel" id="phone-in" class="phone-input-style" placeholder="Teléfono..." autocomplete="off">
+                        <input type="tel" id="phone-in" class="phone-input-style" placeholder="Frecuencia Telefónica..." autocomplete="off">
                     </div>
                 </div>
-                
-                <button class="auth-btn" id="btn-pin-generator">ENVIAR PIN</button>
+                <button class="auth-btn" style="border-color: var(--neon-amber); color: var(--neon-amber);" id="btn-pin-generator">ENLAZAR Y GENERAR PIN</button>
                 <div class="big-pin-display" id="pin-display">0000</div>
-                <button class="auth-btn" id="btn-login-trigger" style="display:none;">ENTRAR AL CHAT</button>
-
-                <div class="hud-logger">
-                    <div id="log-dynamic">Esperando credenciales...</div>
-                </div>
+                <button class="auth-btn" id="btn-login-trigger" style="display:none; border-color: var(--neon-green); color: var(--neon-green);">INICIALIZAR INTERFAZ HUD</button>
+                <div class="hud-logger"><div>[SYS]: CANAL CUÁNTICO INICIALIZADO...</div><div id="log-dynamic">[SYS]: ESPERANDO CREDENCIALES DE AGENTE...</div></div>
             </div>
         </div>
 
         <!-- CAPA INTERMEDIA DE BLOQUEO ANTI ACCIDENTES -->
         <div class="confirm-overlay" id="confirm-layer">
             <div class="confirm-card">
-                <h3 id="confirm-title" style="color:#00a884;">CONFIRMAR ENLACE</h3>
-                <p id="confirm-msg">¿Desea inicializar este enlace seguro?</p>
-                <div style="display:flex; gap:10px;">
-                    <button class="auth-btn" style="flex:1;" id="confirm-yes-btn">SÍ</button>
-                    <button class="auth-btn" style="flex:1; background:#8696a0;" id="btn-abort-trigger">ABORTAR</button>
-                </div>
+                <h3 id="confirm-title">CONFIRMAR ENLACE</h3><p id="confirm-msg">¿Desea inicializar este enlace seguro?</p>
+                <div style="display:flex; gap:10px;"><button class="auth-btn" style="border-color:var(--neon-green); color:var(--neon-green); flex:1;" id="confirm-yes-btn">SÍ, ENLAZAR</button><button class="auth-btn" style="border-color:var(--neon-red); color:var(--neon-red); flex:1;" id="btn-abort-trigger">ABORTAR</button></div>
             </div>
         </div>
 
-        <!-- BARRA SUPERIOR -->
+        <!-- CABECERA DE PERFIL ESTILO WHATSAPP -->
         <header class="main-header-bar">
             <div class="header-profile-section">
+                <!-- Botón Atrás y Círculo de Perfil -->
+                <span style="color:#aebac1; font-size:1.3rem; margin-right:4px; cursor:pointer;">←</span>
                 <div class="profile-avatar-container" id="avatar-char">VX</div>
                 <div class="header-info-group">
                     <span class="header-username-display" id="user-display">Invitado</span>
-                    <span class="header-user-status">● ONLINE</span>
+                    <span class="header-user-status" id="room-status-indicator">● ENLACE PRIVADO: BUSCANDO AGENTE...</span>
                 </div>
             </div>
             <div class="header-right-group">
-                <button class="call-icon-btn" id="btn-voice-trigger">🎙️</button>
+                <!-- Iconos multimedia horizontales tipo WhatsApp -->
                 <button class="call-icon-btn" id="btn-video-trigger">📹</button>
-                <button class="whatsapp-icon-btn">💬</button>
-                <button class="shield-quantum-btn">🛡️</button>
-                <button class="logout-action-btn" onclick="location.reload()">LOGOUT</button>
+                <button class="call-icon-btn" id="btn-voice-trigger">📞</button>
+                <button class="dots-menu-btn" id="btn-dropdown-trigger">⋮</button>
+                
+                <!-- MENÚ PERSISTENTE SUBE Y BAJA -->
+                <div class="config-dropdown-panel" id="dropdown-menu-panel" style="transition: all 0.3s ease-in-out; transform: translateY(-10px); opacity: 0; display: none;">
+                    <div class="dropdown-panel-item" id="btn-invite-agent" style="color:var(--neon-green); font-weight:bold;"><span>➕</span> Invitar Agente Privado</div>
+                    <div class="dropdown-panel-item"><span>🚫</span> Bloquear / Desbloquear</div>
+                    <div class="dropdown-panel-item"><span>🌐</span> Traductor AI</div>
+                    <div class="dropdown-panel-item"><span>☁️</span> Nube Ilimitada</div>
+                    <div class="dropdown-panel-item"><span>📅</span> Reuniones / Citas</div>
+                    <div class="dropdown-panel-item"><span>📝</span> Firma Remota</div>
+                    <div class="dropdown-panel-item"><span>📦</span> Búnker</div>
+                    <div class="dropdown-panel-item"><span>🤘</span> Lector de Señas</div>
+                </div>
             </div>
         </header>
         
-        <!-- ÁREA CENTRAL DE COMUNICACIÓN DE TEXTO -->
+        <!-- PANTALLA PRINCIPAL DE TEXTOS -->
         <div class="chat-area" id="chat-box"></div>
         
-        <!-- BARRA INFERIOR DE ESCRITURA ESTILO WHATSAPP -->
-        <div class="chat-input-area">
-            <div class="input-capsule-wrapper">
-                <button class="capsule-icon-btn" title="Emojis">😊</button>
-                <input type="text" id="chat-input" class="quantum-input" placeholder="Mensaje" autocomplete="off">
-                <button class="capsule-icon-btn" title="Adjuntar archivo">📎</button>
-                <button class="capsule-icon-btn" title="Cámara">📷</button>
+        <!-- BARRA DE ESCRITURA REDONDEADA CONFIGURADA COMO WHATSAPP -->
+        <div class="chat-input-container">
+            <div class="whatsapp-input-wrapper">
+                <button class="input-icon-btn">😃</button>
+                <input type="text" id="chat-input" class="whatsapp-text-input" placeholder="Mensaje">
+                <button class="input-icon-btn" id="btn-attach-trigger">📎</button>
+                <button class="input-icon-btn">📷</button>
+                
+                <!-- BURBUJA DE ADJUNTOS INTERNA -->
+                <div class="whatsapp-attach-bubble" id="attach-menu-bubble">
+                    <div class="attach-bubble-item"><span>🎙️</span> Nota de Voz</div>
+                    <div class="attach-bubble-item"><span>📹</span> Enviar Video</div>
+                    <div class="attach-bubble-item"><span>📄</span> Documento</div>
+                </div>
             </div>
-            <button class="mic-fab-btn" id="btn-send-trigger" title="Enviar / Micrófono">🎤</button>
+            <!-- Botón externo dinámico (Micrófono o Enviar) -->
+            <button class="whatsapp-mic-round-btn" id="btn-send-trigger">🎙️</button>
         </div>
 
-        <!-- PANTALLA FLOTANTE DE VIDEO / AUDIO -->
+        <!-- REPRODUCTOR DE COMUNICACIÓN HD -->
         <div class="video-call-overlay" id="video-call-hud">
-            <div class="video-grid" id="container-video-elements">
-                <video id="remote-video" autoplay playsinline></video>
-                <video id="local-video" autoplay playsinline muted></video>
-            </div>
-            <div class="voice-only-status" id="container-voice-elements">
-                <div class="voice-avatar">🎙️</div>
-                <div id="voice-call-label">TRANSMISIÓN DE VOZ ACTIVA...</div>
-            </div>
-            <div class="call-controls" style="display:flex; justify-content:center; gap:15px; width:100%;">
-                <button id="btn-toggle-mic" class="auth-btn" style="background:rgba(255,255,255,0.15); flex:1;">MUTEAR</button>
-                <button id="btn-hangup" class="auth-btn" style="background:#ff3b30; flex:1;">COLGAR ☎</button>
-            </div>
+            <div class="video-grid" id="container-video-elements"><video id="remote-video" autoplay playsinline></video><video id="local-video" autoplay playsinline muted></video></div>
+            <div class="voice-only-status" id="container-voice-elements"><div class="voice-avatar">🎙️</div><div id="voice-call-label">TRANSMISIÓN DE VOZ ACTIVA...</div></div>
+            <div class="call-controls"><button id="btn-toggle-mic" class="auth-btn" style="border-color:var(--neon-amber); color:var(--neon-amber); flex:1;">MUTEAR CANAL</button><button id="btn-hangup" class="auth-btn" style="border-color:var(--neon-red); color:var(--neon-red); flex:1;">CERRAR ENLACE</button></div>
         </div>
     </div>
     <script>
-        let socket=null;try{if(typeof io!=="undefined"){socket=io();}}catch(e){console.error(e);}
-        let localStream=null,peerConnection=null,isMuted=false,currentCallMode='video',pendingCallMode=null;
-        const iceConfiguration={iceServers:[{urls:'stun:stun.l.google.com:19302'}]};
+        let socket = null; try { if (typeof io !== "undefined") { socket = io(); } } catch(e) { console.error(e); }
+        let localStream = null, peerConnection = null, isMuted = false, currentCallMode = 'video', pendingCallMode = null;
+        const iceConfiguration = { iceServers: [{ urls: 'stun:://google.com' }] };
+        const urlParams = new URLSearchParams(window.location.search);
+        let privateRoomId = urlParams.get('room');
+        if (!privateRoomId) { privateRoomId = 'crypto-' + Math.floor(100000 + Math.random() * 900000); }
         
-        document.addEventListener("DOMContentLoaded",()=>{
-            const isMobile=/Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-            document.getElementById('device-detect-label').innerText=isMobile?"[SISTEMA]: ACCESO MÓVIL DETECTADO":"[SISTEMA]: ACCESO PC DETECTADO";
-            document.getElementById('btn-pin-generator').addEventListener('click',generateQuantumPIN);
-            document.getElementById('btn-login-trigger').addEventListener('click',loginQuantum);
-            document.getElementById('btn-send-trigger').addEventListener('click',sendText);
-            document.getElementById('btn-abort-trigger').addEventListener('click',cancelAccidentalCall);
-            document.getElementById('btn-toggle-mic').addEventListener('click',toggleMute);
-            document.getElementById('btn-hangup').addEventListener('click',endCall);
-            document.getElementById('btn-voice-trigger').addEventListener('click',()=>triggerCallConfirmation('voice'));
-            document.getElementById('btn-video-trigger').addEventListener('click',()=>triggerCallConfirmation('video'));
-            document.getElementById('chat-input').addEventListener('keydown',(e)=>{if(e.key==='Enter')sendText();});
-        });
-
-        function generateQuantumPIN(){
-            const name=document.getElementById('username-in').value.trim();
-            const phone=document.getElementById('phone-in').value.trim();
-            if(!name||!phone)return alert("Por favor, rellene el Usuario y el Teléfono.");
+        document.addEventListener("DOMContentLoaded", () => {
+            const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+            document.getElementById('device-detect-label').innerText = isMobile ? "[SISTEMA]: ACCESO MÓVIL DETECTADO" : "[SISTEMA]: ACCESO PC DETECTADO";
+            if(socket) { socket.emit('join-private-room', { room: privateRoomId }); document.getElementById('room-status-indicator').innerText = "● EN LÍNEA"; }
             
-            const pin=Math.floor(1000+Math.random()*9000);
-            const display=document.getElementById('pin-display');
-            display.innerText=pin;
-            display.style.display='block';
-            
-            document.getElementById('log-dynamic').innerText="PIN generado correctamente.";
-            document.getElementById('btn-pin-generator').style.display='none';
-            document.getElementById('btn-login-trigger').style.display='block';
-        }
-        
-        function loginQuantum(){
-            const name=document.getElementById('username-in').value.trim();
-            document.getElementById('user-display').innerText=name.toUpperCase();
-            document.getElementById('avatar-char').innerText=name.substring(0,2).toUpperCase();
-            document.getElementById('auth-layer').style.display='none';
-        }
-        
-        function sendText(){
-            const input=document.getElementById('chat-input');if(!input.value.trim())return;
-            const chatBox=document.getElementById('chat-box'),p=document.createElement('p');
-            p.style.margin="5px 0";p.style.fontFamily="'Roboto', sans-serif";
-            p.innerHTML=`<b style="color:#00a884">Tú:</b> ${input.value}`;
-            chatBox.appendChild(p);input.value="";chatBox.scrollTop=chatBox.scrollHeight;
-        }
-        
-        function triggerCallConfirmation(mode){
-            pendingCallMode=mode;const title=document.getElementById('confirm-title'),msg=document.getElementById('confirm-msg');
-            if(mode==='voice'){title.innerText="LLAMADA DE VOZ";msg.innerText="¿Iniciar llamada de voz?";}
-            else{title.innerText="VIDEOLLAMADA";msg.innerText="¿Iniciar videollamada?";}
-            document.getElementById('confirm-layer').style.display='flex';
-            document.getElementById('confirm-yes-btn').onclick=function(){document.getElementById('confirm-layer').style.display='none';initiateCall(pendingCallMode);};
-        }
-        
-        function cancelAccidentalCall(){document.getElementById('confirm-layer').style.display='none';pendingCallMode=null;}
-        
-        function setupCallUI(mode) {
-            currentCallMode=mode;document.getElementById('video-call-hud').style.display='flex';
-            if(mode==='voice'){document.getElementById('container-video-elements').style.display='none';document.getElementById('container-voice-elements').style.display='flex';}
-            else{document.getElementById('container-video-elements').style.flex='1';document.getElementById('container-video-elements').style.display='flex';document.getElementById('container-voice-elements').style.display='none';}
-        }
-        
-        async function initiateCall(mode) {
-            try{
-                setupCallUI(mode);
-                localStream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true},video:mode==='video'?{facingMode:"user"}:false});
-                if(mode==='video'){document.getElementById('local-video').srcObject=localStream;}
-                peerConnection=new RTCPeerConnection(iceConfiguration);localStream.getTracks().forEach(track=>peerConnection.addTrack(track,localStream));
-                peerConnection.ontrack=(event)=>{const rv=document.getElementById('remote-video');if(rv&&!rv.srcObject&&event.streams){rv.srcObject=event.streams[0];}};
-                peerConnection.onicecandidate=(event)=>{if(event.candidate&&socket){socket.emit('webrtc-candidate',event.candidate);}};
-                const offer=await peerConnection.createOffer();await peerConnection.setLocalDescription(offer);if(socket)socket.emit('webrtc-offer',{offer:offer,mode:mode});
-            }catch(err){console.error(err);executeLocalClose();alert("Verifique permisos de cámara y micrófono.");}
-        }
-        
-        if(socket){
-            socket.on('webrtc-offer', async(data)=>{
-                const incomingMode=data.mode;setupCallUI(incomingMode);
-                if(!peerConnection){
-                    peerConnection=new RTCPeerConnection(iceConfiguration);
-                    peerConnection.ontrack=(event)=>{const rv=document.getElementById('remote-video');if(rv&&!rv.srcObject&&event.streams){rv.srcObject=event.streams[0];}};
-                    peerConnection.onicecandidate=(event)=>{if(event.candidate){socket.emit('webrtc-candidate',event.candidate);}};
-                }
-                await peerConnection.setRemoteDescription(new RTCSessionDescription(data.offer));
-                try{
-                    localStream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true},video:incomingMode==='video'?{facingMode:"user"}:false});
-                    if(incomingMode==='video'){document.getElementById('local-video').srcObject=localStream;}
-                    localStream.getTracks().forEach(track=>peerConnection.addTrack(track,localStream));
-                    const answer=await peerConnection.createAnswer();await peerConnection.setLocalDescription(answer);socket.emit('webrtc-answer',answer);
-                }catch(err){console.error(err);}
+            const dotsBtn = document.getElementById('btn-dropdown-trigger'); const menuPanel = document.getElementById('dropdown-menu-panel');
+            dotsBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (menuPanel.style.display === 'none' || menuPanel.style.opacity === '0') {
+                    menuPanel.style.display = 'block'; setTimeout(() => { menuPanel.style.transform = 'translateY(0)'; menuPanel.style.opacity = '1'; }, 10);
+                } else { menuPanel.style.transform = 'translateY(-10px)'; menuPanel.style.opacity = '0'; setTimeout(() => { menuPanel.style.display = 'none'; }, 300); }
             });
-            socket.on('webrtc-answer',async(answer)=>{if(peerConnection&&peerConnection.signalingState!=="stable"){await peerConnection.setRemoteDescription(new RTCSessionDescription(answer));}});
-            socket.on('webrtc-candidate',async(candidate)=>{if(peerConnection&&peerConnection.remoteDescription){try{await peerConnection.addIceCandidate(new RTCIceCandidate(candidate));}catch(e){}}});
-            socket.on('webrtc-hangup',()=> {executeLocalClose();});
+            
+            const attachBtn = document.getElementById('btn-attach-trigger'); const attachBubble = document.getElementById('attach-menu-bubble');
+            attachBtn.addEventListener('click', (e) => { e.stopPropagation(); attachBubble.style.display = attachBubble.style.display === 'flex' ? 'none' : 'flex'; });
+            document.addEventListener('click', () => { menuPanel.style.transform = 'translateY(-10px)'; menuPanel.style.opacity = '0'; setTimeout(() => { menuPanel.style.display = 'none'; }, 300); attachBubble.style.display = 'none'; });
+            
+            document.getElementById('btn-invite-agent').addEventListener('click', () => {
+                const inviteUrl = window.location.origin + window.location.pathname + '?room=' + privateRoomId;
+                navigator.clipboard.writeText(inviteUrl).then(() => { alert("¡Enlace privado copiado!"); }).catch(() => { alert("Enlace: " + inviteUrl); });
+            });
+            
+            const chatInput = document.getElementById('chat-input'); const sendBtn = document.getElementById('btn-send-trigger');
+            chatInput.addEventListener('input', () => { if (chatInput.value.trim().length > 0) { sendBtn.innerText = "➤"; sendBtn.style.fontSize = "1.2rem"; } else { sendBtn.innerText = "🎙️"; sendBtn.style.fontSize = "1.1rem"; } });
+            
+            document.getElementById('btn-pin-generator').addEventListener('click', generateQuantumPIN);
+            document.getElementById('btn-login-trigger').addEventListener('click', loginQuantum);
+            document.getElementById('btn-send-trigger').addEventListener('click', sendText);
+            document.getElementById('btn-abort-trigger').addEventListener('click', cancelAccidentalCall);
+            document.getElementById('btn-toggle-mic').addEventListener('click', toggleMute);
+            document.getElementById('btn-hangup').addEventListener('click', endCall);
+            document.getElementById('btn-voice-trigger').addEventListener('click', () => triggerCallConfirmation('voice'));
+            document.getElementById('btn-video-trigger').addEventListener('click', () => triggerCallConfirmation('video'));
+            document.getElementById('chat-input').addEventListener('keydown', (e) => { if(e.key === 'Enter') sendText(); });
+        });
+        
+        function generateQuantumPIN(){
+            const name = document.getElementById('username-in').value.trim(); const phone = document.getElementById('phone-in').value.trim();
+            if(!name || !phone) return alert("Por favor, rellene el Usuario y el Teléfono.");
+            const pin = Math.floor(1000 + Math.random() * 9000); const display = document.getElementById('pin-display');
+            display.innerText = pin; display.style.display = 'block';
+            document.getElementById('log-dynamic').innerText = "[SYS]: PIN ASIGNADO CON ÉXITO."; document.getElementById('log-dynamic').style.color = "var(--neon-green)";
+            document.getElementById('btn-pin-generator').style.display = 'none'; document.getElementById('btn-login-trigger').style.display = 'block';
         }
-        function toggleMute(){if(localStream){isMuted=!isMuted;localStream.getAudioTracks().forEach(track=>track.enabled=!isMuted);document.getElementById('btn-toggle-mic').innerText=isMuted?"ACTIVADO":"MUTEAR";}}
-        function endCall(){if(socket)socket.emit('webrtc-hangup');executeLocalClose();}
-        function executeLocalClose(){if(localStream){localStream.getTracks().forEach(track=>track.stop());localStream=null;}if(peerConnection){peerConnection.close();peerConnection=null;}document.getElementById('video-call-hud').style.display='none';document.getElementById('local-video').srcObject=null;document.getElementById('remote-video').srcObject=null;}
-    </script>
-</body>
-</html>
+        function loginQuantum(){ const name = document.getElementById('username-in').value.trim(); document.getElementById('user-display').innerText = name.toUpperCase(); document.getElementById('avatar-char').innerText = name.substring(0,2).toUpperCase(); document.getElementById('auth-layer').style.display = 'none'; }
+        function sendText(){
+            const input = document.getElementById('chat-input'); if(!input.value.trim()) return;
+            const chatBox = document.getElementById('chat-box'), p = document.createElement('p');
+            p.style.margin = "5px 0"; p.style.fontFamily = "'Rajdhani', sans-serif"; p.innerHTML = `<b style="color:var(--neon-blue)">Tú:</b> ${input.value}`;
+            chatBox.appendChild(p); if(socket) socket.emit('private-chat-message', { room: privateRoomId, msg: input.value, user: document.getElementById('user-display').innerText });
+            input.value = ""; const sendBtn = document.getElementById('btn-send-trigger'); sendBtn.innerText = "🎙️"; sendBtn.style.fontSize = "1.1rem"; chatBox.scrollTop = chatBox.scrollHeight;
+        }
+        if(socket) {
+            socket.on('private-chat-message', (data) => { const chatBox = document.getElementById('chat-box'), p = document.createElement('p'); p.style.margin = "5px 0"; p.style.fontFamily = "'Rajdhani', sans-serif"; p.innerHTML = `<b style="color:var(--neon-violet)">${data.user}:</b> ${data.msg}`; chatBox.appendChild(p); chatBox.scrollTop = chatBox.scrollHeight; });
+            socket.on('webrtc-offer', async(data) => {
+                const incomingMode = data.mode; setupCallUI(incomingMode);
+                if (!peerConnection) { peerConnection = new RTCPeerConnection(iceConfiguration); peerConnection.ontrack = (event) => { const rv = document.getElementById('remote-video'); if (rv && !rv.srcObject && event.streams) { rv.srcObject = event.streams; } }; peerConnection.onicecandidate = (event) => { if (event.candidate) { socket.emit('webrtc-candidate', { room: privateRoomId, candidate: event.candidate }); } }; }
+                await peerConnection.setRemoteDescription(new RTCSessionDescription(data.offer));
+                try { localStream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true, sampleRate: 48000 }, video: incomingMode === 'video' ? { facingMode: "user" } : false }); if (incomingMode === 'video') { document.getElementById('local-video').srcObject = localStream; } localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream)); const answer = await peerConnection.createAnswer(); await peerConnection.setLocalDescription(answer); socket.emit('webrtc-answer', { room: privateRoomId, answer: answer }); } catch (err) { console.error(err); }
+            });
+            socket.on('webrtc-answer', async(data) => { if (peerConnection && peerConnection.signalingState !== "stable") { await peerConnection.setRemoteDescription(new RTCSessionDescription(data.answer)); } });
+            socket.on('webrtc-candidate', async(data) => { if (peerConnection && peerConnection.remoteDescription) { try { await peerConnection.addIceCandidate(new RTCIceCandidate(data.candidate)); } catch(e){} } });
+            socket.on('webrtc-hangup', () => { executeLocalClose(); });
+        }
+        function triggerCallConfirmation(mode){ pendingCallMode = mode; const title = document.getElementById('confirm-title'), msg = document.getElementById('confirm-msg'); if(mode === 'voice') { title.innerText = "LLAMADA DE VOZ"; msg.innerText = "¿Iniciar transmisión de audio?"; } else { title.innerText = "VIDEOLLAMADA"; msg.innerText = "¿Abrir canales de video y audio?"; } document.getElementById('confirm-layer').style.display = 'flex'; document.getElementById('confirm-yes-btn').onclick = function() { document.getElementById('confirm-layer').style.display = 'none'; initiateCall(pendingCallMode); }; }
+        function cancelAccidentalCall(){ document.getElementById('confirm-layer').style.display = 'none'; pendingCallMode = null; }
+        function setupCallUI(mode){ currentCallMode = mode; document.getElementById('video-call-hud').style.display = 'flex'; if(mode === 'voice'){ document.getElementById('container-video-elements').style.display = 'none'; document.getElementById('container-voice-elements').style.display = 'flex'; } else { document.getElementById('container-video-elements').style.flex = '1'; document.getElementById('container-video-elements').style.display = 'flex'; document.getElementById('container-voice-elements').style.display = 'none'; } }
