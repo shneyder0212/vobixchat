@@ -5,7 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>VOBIXCHAT // Quantum Mobile Pro</title>
     <link href="https://googleapis.com" rel="stylesheet">
-    <script src="/socket.io/socket.io.js"></script>
+    
+    <!-- 🚨 AJUSTE TÉCNICO: CDN GLOBAL DIRECTA PARA ELIMINAR LA PANTALLA NEGRA EN RENDER -->
+    <script src="https://socket.io"></script>
+    
     <style>
         :root {
             --bg-quantum: #04010a; --panel-hud: rgba(10, 3, 20, 0.99); --neon-blue: #00f0ff; --neon-violet: #bd00ff; --neon-green: #00ff66; --neon-amber: #ffaa00; --neon-red: #ff0055; --text-main: #f3e8ff; --text-dim: #8b7aa6; --border-hud: rgba(189, 0, 255, 0.35);
@@ -13,10 +16,9 @@
         }
         * { box-sizing: border-box; margin: 0; padding: 0; }
         
-        /* SOLUCIÓN ELÁSTICA DE TECLADO DINÁMICO MÓVIL */
+        /* CORRECCIÓN ADAPTACIÓN ELÁSTICA DE TECLADO MÓVIL */
         html, body { background-color: var(--bg-quantum); background-image: var(--bg-pattern); font-family: 'Rajdhani', sans-serif; color: var(--text-main); width: 100%; height: 100%; height: 100dvh; display: flex; justify-content: center; align-items: center; overflow: hidden; position: fixed; top: 0; left: 0; overscroll-behavior-y: none; }
         
-        /* MODULACIÓN DE TAMAÑO CLASE GENERAL SENIOR */
         body.senior-mode { font-size: 1.2rem !important; }
         body.senior-mode .whatsapp-text-input, body.senior-mode .auth-btn { font-size: 1.1rem !important; }
         body.senior-mode .quantum-msg { font-size: 1.15rem !important; }
@@ -48,7 +50,7 @@
         .big-pin-display::before { content: 'CIFRADO ENCRIPTADO AES-256'; position: absolute; bottom: 2px; left: 50%; transform: translateX(-50%); font-family: 'Share Tech Mono'; font-size: 0.45rem; color: rgba(0,255,102,0.5); letter-spacing: 1px; }
         .hud-logger { width: 100%; background: rgba(0,0,0,0.4); border: 1px solid rgba(0, 240, 255, 0.1); padding: 6px; font-family: 'Share Tech Mono'; font-size: 0.6rem; color: var(--text-dim); display: flex; flex-direction: column; gap: 2px; max-height: 40px; overflow: hidden; }
         
-        /* CABECERA LINEAL DE CONTACTO ESTILO WHATSAPP */
+        /* CABECERA ESTILO WHATSAPP HORIZONTAL */
         .main-header-bar { padding: 4px 12px; background: #0b141a; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; z-index: 100; height: 55px; }
         .header-profile-section { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; }
         .profile-avatar-container { width: 34px; height: 34px; border-radius: 50%; border: none; background: #222; display: flex; align-items: center; justify-content: center; font-family: 'Orbitron'; font-weight: bold; color: var(--neon-blue); font-size: 0.85rem; flex-shrink: 0; overflow: hidden; }
@@ -312,7 +314,7 @@
             document.getElementById('btnTriggerCloudUpload').addEventListener('click', () => {
                 const fileInput = document.getElementById('bunkerCloudUploader');
                 if(!fileInput.files || fileInput.files.length === 0) return alert("Seleccione un archivo multimedia o de Office primero.");
-                alert(`🚀 Transmitiendo [${fileInput.files[0].name}] hacia la nube ilimitada...\n\n[PROCESO COSTE CERO PROTEGIDO]`);
+                alert(`🚀 Transmitiendo [${fileInput.files.name}] hacia la nube ilimitada...\n\n[PROCESO COSTE CERO PROTEGIDO]`);
                 setTimeout(() => { alert("✅ Archivo almacenado a perpetuidad en tu bóveda privada."); fileInput.value = ""; }, 1500);
             });
 
