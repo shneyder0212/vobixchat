@@ -22,18 +22,18 @@ app.get('/', (req, res) => {
 io.on('connection', (socket) => {
     console.log(`Dispositivo enlazado ID: ${socket.id}`);
 
-    // LOGICA PRINCIPAL: Crear búnkeres cerrados de extremo a extremo
+    // LOGICA CENTRAL: Enlazar agentes en búnkeres cerrados tipo WhatsApp
     socket.on('join-private-room', (data) => {
         socket.join(data.room);
         console.log(`Agente ${socket.id} ha ingresado de forma privada al búnker: ${data.room}`);
     });
 
-    // Envío de mensajes de chat solo a la pareja del búnker
+    // Envío de mensajes de texto en canal aislado
     socket.on('private-chat-message', (data) => {
         socket.to(data.room).emit('private-chat-message', data);
     });
 
-    // Retransmisión multimedia HD segura y aislada
+    // Retransmisión multimedia WebRTC HD asíncrona y segura
     socket.on('webrtc-offer', (data) => {
         socket.to(data.room).emit('webrtc-offer', data);
     });
