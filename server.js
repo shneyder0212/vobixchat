@@ -6,18 +6,25 @@ const path = require('path');
 const app = express();
 const server = http.createServer(app);
 
+// Configuración reforzada de CORS para producción en Render
 const io = new Server(server, {
-    cors: { origin: "*", methods: ["GET", "POST"] }
+    cors: {
+        origin: "*",
+        methods: ["GET", "POST"],
+        credentials: true
+    },
+    allowEIO3: true
 });
 
+// Servir la interfaz web
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
+// Canal de sockets cuánticos
 io.on('connection', (socket) => {
-    console.log(`Usuario conectado ID: ${socket.id}`);
+    console.log(`Dispositivo enlazado con ID: ${socket.id}`);
 
-    // Ahora enviamos también si la llamada es de voz o video
     socket.on('webrtc-offer', (data) => {
         socket.broadcast.emit('webrtc-offer', data);
     });
@@ -31,11 +38,11 @@ io.on('connection', (socket) => {
     });
 
     socket.on('disconnect', () => {
-        console.log(`Usuario desconectado ID: ${socket.id}`);
+        console.log(`Dispositivo desconectado: ${socket.id}`);
     });
 });
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
-    console.log(`Servidor cuántico corriendo en el puerto ${PORT}`);
+    console.log(`Servidor activo en el puerto seguro ${PORT}`);
 });
