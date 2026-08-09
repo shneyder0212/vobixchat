@@ -40,15 +40,25 @@
             overflow: hidden; position: relative; border: 1px solid var(--border-hud);
         }
 
-        .auth-overlay {
+        /* CAPAS DE OVERLAY GENERALES */
+        .auth-overlay, .confirm-overlay {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(4, 2, 8, 0.96); backdrop-filter: blur(25px);
             display: flex; justify-content: center; align-items: center; z-index: 2000; padding: 15px;
         }
-        .auth-card {
+        
+        .confirm-overlay { display: none; z-index: 1800; background: rgba(5,2,12,0.85); }
+
+        .auth-card, .confirm-card {
             width: 100%; max-width: 380px; background: var(--panel-hud);
-            border: 1px solid var(--border-hud); border-radius: 14px; padding: 22px; display: flex; flex-direction: column; gap: 12px;
+            border: 1px solid var(--border-hud); border-radius: 14px; padding: 22px; display: flex; flex-direction: column; gap: 14px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.6);
         }
+
+        .confirm-card { border-color: var(--neon-amber); text-align: center; }
+        .confirm-card h3 { font-family: 'Orbitron'; color: var(--neon-amber); font-size: 1.1rem; }
+        .confirm-card p { font-family: 'Share Tech Mono'; color: var(--text-main); font-size: 0.9rem; }
+
         .auth-input { background: #000; border: 1px solid var(--border-hud); color: #fff; padding: 12px; font-family: 'Share Tech Mono'; border-radius: 6px; outline: none; width: 100%; }
         .auth-btn { background: var(--neon-blue); color: #000; border: none; padding: 12px; font-family: 'Orbitron'; font-weight: bold; border-radius: 6px; cursor: pointer; text-align: center; }
 
@@ -72,6 +82,7 @@
             cursor: pointer; font-size: 0.8rem;
         }
 
+        /* HUD DE LLAMADAS */
         .video-call-overlay {
             position: absolute; top:0; left:0; width:100%; height:100%; 
             background: rgba(5, 2, 10, 0.98); z-index: 1500; 
@@ -96,13 +107,8 @@
             100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(0, 255, 102, 0); }
         }
 
-        .video-grid {
-            display: flex; flex-direction: column; gap: 15px; width: 100%; height: 75%;
-        }
-        video {
-            width: 100%; height: 48%; object-fit: cover; 
-            border: 1px solid var(--border-hud); border-radius: 12px; background: #000;
-        }
+        .video-grid { display: flex; flex-direction: column; gap: 15px; width: 100%; height: 75%; }
+        video { width: 100%; height: 48%; object-fit: cover; border: 1px solid var(--border-hud); border-radius: 12px; background: #000; }
         #local-video { border-color: var(--neon-violet); }
         #remote-video { border-color: var(--neon-blue); }
         .call-controls { display: flex; justify-content: center; gap: 15px; width: 100%; }
@@ -119,12 +125,24 @@
 <body>
 
     <div class="app-container">
-        <!-- AUTENTICACIÓN -->
+        <!-- CAPA DE AUTENTICACIÓN -->
         <div class="auth-overlay" id="auth-layer">
             <div class="auth-card">
                 <h2>VOBIXCHAT // ACCESO SECURE</h2>
                 <input type="text" id="username-in" class="auth-input" placeholder="Nombre de Agente..." autocomplete="off">
                 <button class="auth-btn" onclick="loginQuantum()">INICIALIZAR HUD</button>
+            </div>
+        </div>
+
+        <!-- MODAL DE CONFIRMACIÓN ANTI-ACCIDENTES -->
+        <div class="confirm-overlay" id="confirm-layer">
+            <div class="confirm-card">
+                <h3 id="confirm-title">CONFIRMAR ACCIÓN</h3>
+                <p id="confirm-msg">¿Desea inicializar este enlace?</p>
+                <div style="display:flex; gap:10px;">
+                    <button class="auth-btn" style="background:var(--neon-green); flex:1;" id="confirm-yes-btn">SÍ, ENLAZAR</button>
+                    <button class="auth-btn" style="background:var(--neon-red); color:#fff; flex:1;" onclick="cancelAccidentalCall()">ABORTAR</button>
+                </div>
             </div>
         </div>
 
@@ -134,8 +152,8 @@
                 <div class="header-info-group"><span class="header-username-display" id="user-display">Invitado</span></div>
             </div>
             <div class="header-right-group">
-                <button class="call-icon-btn" onclick="initiateCall('voice')">🎙️</button>
-                <button class="call-icon-btn" onclick="initiateCall('video')">📹</button>
+                <button class="call-icon-btn" onclick="triggerCallConfirmation('voice')">🎙️</button>
+                <button class="call-icon-btn" onclick="triggerCallConfirmation('video')">📹</button>
             </div>
         </header>
 
@@ -155,7 +173,7 @@
 
             <div class="voice-only-status" id="container-voice-elements">
                 <div class="voice-avatar">🎙️</div>
-                <div id="voice-call-label">LLAMADA EN TRANSMISIÓN DE VOZ...</div>
+                <div id="voice-call-label">TRANSMISIÓN DE VOZ EN CURSO...</div>
             </div>
 
             <div class="call-controls">
@@ -168,30 +186,3 @@
     <script>
         const socket = io();
         let localStream = null;
-        let peerConnection = null;
-        let isMuted = false;
-        let currentCallMode = 'video'; 
-
-        const iceConfiguration = { iceServers: [{ urls: 'stun:://google.com' }] };
-
-        function loginQuantum() {
-            const name = document.getElementById('username-in').value.trim();
-            if(!name) return alert("Ingrese su nombre.");
-            document.getElementById('user-display').innerText = name.toUpperCase();
-            document.getElementById('avatar-char').innerText = name.substring(0,2).toUpperCase();
-            document.getElementById('auth-layer').style.display = 'none';
-        }
-
-        function sendText() {
-            const input = document.getElementById('chat-input');
-            if(!input.value.trim()) return;
-            const chatBox = document.getElementById('chat-box');
-            const p = document.createElement('p');
-            p.innerHTML = `<b style="color: var(--neon-blue)">Tú:</b> ${input.value}`;
-            chatBox.appendChild(p);
-            input.value = "";
-            chatBox.scrollTop = chatBox.scrollHeight;
-        }
-
-        function setupCallUI(mode) {
-            currentCallMode = mode;
