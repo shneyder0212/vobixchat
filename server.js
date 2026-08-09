@@ -22,18 +22,23 @@ app.get('/', (req, res) => {
 io.on('connection', (socket) => {
     console.log(`Dispositivo enlazado ID: ${socket.id}`);
 
-    // LOGICA CENTRAL: Enlazar agentes en búnkeres cerrados tipo WhatsApp
+    // LOGICA CENTRAL: Crear búnkeres privados aislados tipo WhatsApp
     socket.on('join-private-room', (data) => {
         socket.join(data.room);
-        console.log(`Agente ${socket.id} ha ingresado de forma privada al búnker: ${data.room}`);
+        console.log(`Agente ${socket.id} ha ingresado al búnker privado: ${data.room}`);
     });
 
-    // Envío de mensajes de texto en canal aislado
+    // Retransmisión de mensajes de texto privados
     socket.on('private-chat-message', (data) => {
         socket.to(data.room).emit('private-chat-message', data);
     });
 
-    // Retransmisión multimedia WebRTC HD asíncrona y segura
+    // Sincronización en tiempo real de firmas de contratos Barcelona - Madrid
+    socket.on('contract-signed-broadcast', (data) => {
+        socket.to(data.room).emit('contract-signed-broadcast', data);
+    });
+
+    // Retransmisión multimedia WebRTC 16K Cifrada
     socket.on('webrtc-offer', (data) => {
         socket.to(data.room).emit('webrtc-offer', data);
     });
@@ -51,7 +56,7 @@ io.on('connection', (socket) => {
     });
 
     socket.on('disconnect', () => {
-        console.log(`Dispositivo retirado de la red: ${socket.id}`);
+        console.log(`Dispositivo desconectado de la red: ${socket.id}`);
     });
 });
 
