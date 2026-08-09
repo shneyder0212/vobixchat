@@ -72,7 +72,6 @@
             cursor: pointer; font-size: 0.8rem;
         }
 
-        /* HUD DE LLAMADAS MODIFICADO */
         .video-call-overlay {
             position: absolute; top:0; left:0; width:100%; height:100%; 
             background: rgba(5, 2, 10, 0.98); z-index: 1500; 
@@ -81,7 +80,6 @@
             padding-bottom: calc(20px + env(safe-area-inset-bottom));
         }
         
-        /* Contenedor alternativo para cuando es llamada de voz pura */
         .voice-only-status {
             display: none; flex-direction: column; align-items: center; justify-content: center;
             flex: 1; font-family: 'Orbitron'; color: var(--neon-green); gap: 10px; text-shadow: 0 0 8px var(--neon-green);
@@ -150,14 +148,11 @@
 
         <!-- HUD DE PANEL DE LLAMADA -->
         <div class="video-call-overlay" id="video-call-hud">
-            
-            <!-- Vista si es de Video -->
             <div class="video-grid" id="container-video-elements">
                 <video id="remote-video" autoplay playsinline></video>
                 <video id="local-video" autoplay playsinline muted></video>
             </div>
 
-            <!-- Vista Limpia si es de Voz -->
             <div class="voice-only-status" id="container-voice-elements">
                 <div class="voice-avatar">🎙️</div>
                 <div id="voice-call-label">LLAMADA EN TRANSMISIÓN DE VOZ...</div>
@@ -195,3 +190,8 @@
             p.innerHTML = `<b style="color: var(--neon-blue)">Tú:</b> ${input.value}`;
             chatBox.appendChild(p);
             input.value = "";
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        function setupCallUI(mode) {
+            currentCallMode = mode;
