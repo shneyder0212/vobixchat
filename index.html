@@ -3,58 +3,94 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>VOBIXCHAT // Quantum Mobile Pro</title>
-    <link href="https://googleapis.com" rel="stylesheet">
+    <title>VOBIXCHAT // WhatsApp Style + Scroll Menu</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
     <script src="/socket.io/socket.io.js"></script>
     <style>
         :root {
-            --bg-quantum: #04010a; --panel-hud: rgba(10, 3, 20, 0.99); --neon-blue: #00f0ff; --neon-violet: #bd00ff; --neon-green: #00ff66; --neon-amber: #ffaa00; --neon-red: #ff0055; --text-main: #f3e8ff; --text-dim: #8b7aa6; --border-hud: rgba(189, 0, 255, 0.35);
-            --bg-pattern: radial-gradient(circle at 50% 50%, rgba(189, 0, 255, 0.05) 0%, rgba(4, 1, 10, 0.98) 100%), repeating-linear-gradient(0deg, transparent, transparent 40px, rgba(189, 0, 255, 0.02) 40px, rgba(189, 0, 255, 0.02) 41px);
+            --wa-bg: #efeae2;
+            --wa-header: #00a884;
+            --wa-panel: #f0f2f5;
+            --wa-input-bg: #ffffff;
+            --wa-green: #00a884;
+            --wa-text: #111b21;
+            --wa-gray: #54656f;
         }
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        html, body { background-color: var(--bg-quantum); background-image: var(--bg-pattern); font-family: 'Rajdhani', sans-serif; color: var(--text-main); width: 100%; height: 100%; height: 100dvh; display: flex; justify-content: center; align-items: center; overflow: hidden; position: fixed; top: 0; left: 0; overscroll-behavior-y: none; }
-        .app-container { width: 100%; height: 100%; height: 100dvh; max-width: 1400px; background: var(--panel-hud); display: flex; flex-direction: column; overflow: hidden; position: relative; border: 1px solid var(--border-hud); box-shadow: 0 0 50px rgba(0,0,0,0.95); backdrop-filter: blur(15px); }
-        .auth-overlay, .confirm-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(3, 1, 6, 0.97); backdrop-filter: blur(30px); display: flex; justify-content: center; align-items: center; z-index: 2000; padding: 15px; }
-        .confirm-overlay { display: none; z-index: 1800; background: rgba(5,2,12,0.85); }
-        .auth-card { width: 100%; max-width: 430px; background: rgba(14, 5, 26, 0.75); border: 2px solid var(--neon-blue); border-radius: 4px; padding: 30px 24px; display: flex; flex-direction: column; gap: 16px; box-shadow: 0 0 40px rgba(0, 240, 255, 0.15); position: relative; overflow: hidden; }
-        .laser-scanner { position: absolute; top: 0; left: 0; width: 100%; height: 2px; background: linear-gradient(90deg, transparent, var(--neon-blue), transparent); box-shadow: 0 0 12px var(--neon-blue); animation: scan 3.5s infinite linear; pointer-events: none; }
-        @keyframes scan { 0% { top: 0%; } 50% { top: 100%; } 100% { top: 0%; } }
-        .confirm-card { width: 100%; max-width: 380px; background: var(--panel-hud); border: 1px solid var(--border-hud); border-radius: 14px; padding: 22px; display: flex; flex-direction: column; gap: 12px; border-color: var(--neon-amber); text-align: center; gap: 15px; }
-        .confirm-card h3 { font-family: 'Orbitron'; color: var(--neon-amber); }
-        .auth-card h2 { font-family: 'Orbitron', sans-serif; color: #fff; font-size: 1.3rem; text-align: center; letter-spacing: 2px; font-weight: 900; text-shadow: 0 0 10px var(--neon-blue); }
-        .auth-card p, .confirm-card p { font-family: 'Share Tech Mono', monospace; font-size: 0.8rem; color: var(--text-dim); text-align: center; }
-        .field-container { display: flex; flex-direction: column; gap: 6px; }
-        .field-label { font-family: 'Orbitron'; font-size: 0.65rem; color: var(--neon-blue); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 2px; }
-        .auth-input { background: rgba(0,0,0,0.6); border: 1px solid var(--border-hud); color: #fff; padding: 14px; font-family: 'Share Tech Mono'; border-radius: 4px; outline: none; font-size: 1rem; width: 100%; }
-        .auth-input:focus { border-color: var(--neon-blue); box-shadow: 0 0 10px rgba(0, 240, 255, 0.2); }
-        .auth-btn { background: transparent; border: 1px solid var(--neon-blue); color: var(--neon-blue); padding: 14px; font-family: 'Orbitron'; font-weight: bold; border-radius: 4px; cursor: pointer; font-size: 0.95rem; text-align: center; letter-spacing: 1px; transition: 0.2s; }
-        .auth-btn:hover { background: var(--neon-blue); color: #000; box-shadow: 0 0 15px var(--neon-blue); }
+        html, body { background-color: #000; font-family: 'Roboto', sans-serif; color: var(--wa-text); width: 100%; height: 100%; height: 100dvh; display: flex; justify-content: center; align-items: center; overflow: hidden; position: fixed; top: 0; left: 0; overscroll-behavior-y: none; }
+        .app-container { width: 100%; height: 100%; height: 100dvh; max-width: 1400px; background: var(--wa-bg); display: flex; flex-direction: column; overflow: hidden; position: relative; }
+        
+        .auth-overlay, .confirm-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(11, 20, 26, 0.95); display: flex; justify-content: center; align-items: center; z-index: 2000; padding: 15px; }
+        .confirm-overlay { display: none; z-index: 1800; background: rgba(11,20,26,0.85); }
+        .auth-card { width: 100%; max-width: 400px; background: #222d34; border-radius: 10px; padding: 25px; display: flex; flex-direction: column; gap: 15px; color: #e9edef; box-shadow: 0 4px 20px rgba(0,0,0,0.5); }
+        .confirm-card { width: 100%; max-width: 380px; background: #222d34; border-radius: 10px; padding: 20px; display: flex; flex-direction: column; gap: 15px; text-align: center; color: #e9edef; }
+        .auth-card h2 { font-size: 1.2rem; text-align: center; color: #00a884; }
+        .auth-card p, .confirm-card p { font-size: 0.85rem; color: #8696a0; text-align: center; }
+        .field-container { display: flex; flex-direction: column; gap: 5px; }
+        .field-label { font-size: 0.75rem; color: #00a884; font-weight: 500; }
+        .auth-input { background: #2a3942; border: none; color: #fff; padding: 12px; border-radius: 8px; outline: none; font-size: 1rem; width: 100%; }
+        .auth-btn { background: #00a884; border: none; color: #fff; padding: 12px; font-weight: 500; border-radius: 8px; cursor: pointer; font-size: 1rem; text-align: center; }
+        .auth-btn:hover { background: #01755f; }
         .phone-group { display: flex; gap: 8px; align-items: center; width: 100%; }
-        .detected-country-select { background: rgba(0,0,0,0.6); border: 1px solid var(--border-hud); color: var(--neon-blue); padding: 14px 10px; font-family: 'Share Tech Mono'; font-size: 0.95rem; border-radius: 4px; outline: none; cursor: pointer; min-width: 95px; }
-        .phone-input-style { flex: 1; background: rgba(0,0,0,0.6); border: 1px solid var(--border-hud); color: #fff; padding: 14px; font-family: 'Share Tech Mono'; border-radius: 4px; outline: none; font-size: 1rem; width: 100%; }
-        .big-pin-display { font-family: 'Orbitron', sans-serif; font-size: 2.4rem; color: var(--neon-green); text-align: center; letter-spacing: 6px; background: rgba(0,255,102,0.03); border: 1px dashed var(--neon-green); padding: 16px; border-radius: 4px; margin: 5px 0; display: none; text-shadow: 0 0 12px var(--neon-green); position: relative; }
-        .big-pin-display::before { content: 'CIFRADO ENCRIPTADO AES-256'; position: absolute; bottom: 2px; left: 50%; transform: translateX(-50%); font-family: 'Share Tech Mono'; font-size: 0.45rem; color: rgba(0,255,102,0.5); letter-spacing: 1px; }
-        .hud-logger { width: 100%; background: rgba(0,0,0,0.4); border: 1px solid rgba(0, 240, 255, 0.1); padding: 6px; font-family: 'Share Tech Mono'; font-size: 0.6rem; color: var(--text-dim); display: flex; flex-direction: column; gap: 2px; max-height: 40px; overflow: hidden; }
-        .main-header-bar { padding: 4px 8px; background: rgba(2, 4, 10, 0.95); border-bottom: 1px solid var(--border-hud); display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; z-index: 100; height: 50px; }
-        .header-profile-section { display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0; }
-        .profile-avatar-container { width: 32px; height: 32px; border-radius: 50%; border: 1px solid var(--neon-blue); background: linear-gradient(135deg, var(--neon-blue), var(--neon-violet)); display: flex; align-items: center; justify-content: center; font-family: 'Orbitron'; font-weight: bold; color: #000; font-size: 0.75rem; flex-shrink: 0; }
+        .detected-country-select { background: #2a3942; border: none; color: #00a884; padding: 12px 8px; font-size: 0.95rem; border-radius: 8px; outline: none; cursor: pointer; }
+        .phone-input-style { flex: 1; background: #2a3942; border: none; color: #fff; padding: 12px; border-radius: 8px; outline: none; font-size: 1rem; width: 100%; }
+        .big-pin-display { font-size: 2rem; color: #00ff88; text-align: center; letter-spacing: 5px; background: #111b21; padding: 12px; border-radius: 8px; display: none; }
+        .hud-logger { width: 100%; background: #111b21; padding: 8px; font-size: 0.7rem; color: #8696a0; border-radius: 6px; }
+
+        /* Estilo Cabecera WhatsApp */
+        .main-header-bar { padding: 8px 12px; background: #00a884; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; z-index: 100; height: 60px; color: #fff; position: relative; }
+        .header-profile-section { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; cursor: pointer; }
+        .profile-avatar-container { width: 40px; height: 40px; border-radius: 50%; background: #dfe5e7; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #54656f; font-size: 0.9rem; flex-shrink: 0; overflow: hidden; }
+        .profile-avatar-container img { width: 100%; height: 100%; object-fit: cover; }
         .header-info-group { display: flex; flex-direction: column; min-width: 0; }
-        .header-username-display { font-family: 'Orbitron', sans-serif; font-size: 0.7rem; font-weight: bold; }
-        .header-user-status { font-size: 0.45rem; color: var(--neon-green); font-family: 'Share Tech Mono'; }
-        .header-right-group { display: flex; gap: 6px; align-items: center; flex-shrink: 0; }
-        .whatsapp-icon-btn, .shield-quantum-btn { background: rgba(0, 240, 255, 0.08); border: 1px solid var(--neon-blue); color: var(--neon-blue); border-radius: 50%; width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 0.65rem; }
-        .logout-action-btn { background: var(--neon-red); color: #fff; border: none; padding: 4px 6px; border-radius: 4px; font-family: 'Share Tech Mono'; font-size: 0.7rem; cursor: pointer; }
-        .call-icon-btn { background: rgba(0, 255, 102, 0.1); border: 1px solid var(--neon-green); color: var(--neon-green); border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 0.8rem; }
-        .video-call-overlay { position: absolute; top:0; left:0; width:100%; height:100%; background: rgba(5, 2, 10, 0.98); z-index: 1500; display: none; flex-direction: column; justify-content: space-between; padding: 20px; box-sizing: border-box; padding-bottom: calc(20px + env(safe-area-inset-bottom)); }
-        .video-grid { display: flex; flex-direction: column; gap: 15px; width: 100%; height: 75%; }
-        video { width: 100%; height: 48%; object-fit: cover; border: 1px solid var(--border-hud); border-radius: 12px; background: #000; }
-        #local-video { border-color: var(--neon-violet); } #remote-video { border-color: var(--neon-blue); }
-        .voice-only-status { display: none; flex-direction: column; align-items: center; justify-content: center; flex: 1; font-family: 'Orbitron'; color: var(--neon-green); gap: 10px; }
-        .voice-avatar { width: 90px; height: 90px; border-radius: 50%; border: 2px dashed var(--neon-green); display: flex; align-items: center; justify-content: center; font-size: 2rem; animation: pulse 2s infinite linear; }
-        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
-        .chat-area { flex: 1; display: flex; flex-direction: column; background: rgba(0,0,0,0.2); overflow-y: auto; padding: 15px; }
-        .chat-input-area { padding: 10px; background: rgba(2, 4, 10, 0.95); border-top: 1px solid var(--border-hud); display: flex; gap: 8px; align-items: center; padding-bottom: calc(10px + env(safe-area-inset-bottom)); }
-        .quantum-input { flex: 1; background: #000; border: 1px solid var(--border-hud); padding: 10px; color: #fff; border-radius: 6px; outline: none; font-family: 'Share Tech Mono'; }
+        .header-username-display { font-size: 1rem; font-weight: 500; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .header-user-status { font-size: 0.75rem; color: #e9edef; }
+        .header-right-group { display: flex; gap: 18px; align-items: center; flex-shrink: 0; position: relative; }
+        .wa-action-icon { background: none; border: none; color: #fff; font-size: 1.2rem; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+
+        /* Menú de Tres Puntitos con Scroll Vertical Permitido */
+        .three-dots-container { position: relative; display: inline-block; }
+        .dropdown-menu-tools {
+            display: none; position: absolute; right: 0; top: 45px; 
+            background: #233138; border-radius: 6px; padding: 8px 0; width: 230px; 
+            max-height: 50vh; overflow-y: scroll !important; -webkit-overflow-scrolling: touch;
+            z-index: 99999; box-shadow: 0 4px 15px rgba(0,0,0,0.4); flex-direction: column; 
+            overscroll-behavior: contain;
+        }
+        .dropdown-item {
+            background: transparent; border: none; color: #e9edef;
+            padding: 12px 16px; font-family: 'Roboto', sans-serif; font-size: 0.9rem; 
+            cursor: pointer; text-align: left; transition: 0.2s; display: block; width: 100%;
+        }
+        .dropdown-item:hover { background: rgba(255,255,255,0.05); }
+        .dropdown-item.danger { color: #ff5c5c; }
+
+        /* Estilo Pantalla de Llamadas WhatsApp */
+        .video-call-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #0b141a; z-index: 2500; display: none; flex-direction: column; justify-content: space-between; padding: 20px; box-sizing: border-box; }
+        #remote-video { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: 1; background: #000; }
+        #local-video { position: absolute; top: 20px; right: 20px; width: 110px; height: 160px; object-fit: cover; border-radius: 12px; border: 2px solid #00a884; background: #000; z-index: 10; display: none; }
+        .voice-only-status { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle, #1f2c34 0%, #0b141a 100%); display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 5; gap: 15px; }
+        .voice-avatar { width: 110px; height: 110px; border-radius: 50%; background: #00a884; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 45px; font-weight: bold; box-shadow: 0 0 25px rgba(0,168,132,0.4); }
+        .call-controls { position: relative; z-index: 20; display: flex; justify-content: center; gap: 20px; margin-bottom: 25px; width: 100%; }
+
+        /* Estilo de Chat y Barra de Escritura WhatsApp */
+        .workspace-area { flex: 1; display: flex; flex-direction: column; position: relative; overflow: hidden; background: var(--wa-bg); height: calc(100vh - 60px); }
+        .screen-view { display: flex; flex-direction: column; flex: 1; height: 100%; overflow: hidden; position: relative; }
+        
+        .chat-area { flex: 1; display: flex; flex-direction: column; background: var(--wa-bg); overflow-y: auto; padding: 15px; padding-bottom: 80px; gap: 8px; }
+        .chat-msg-bubble { max-width: 80%; padding: 8px 12px; border-radius: 8px; font-size: 0.95rem; line-height: 1.4; word-break: break-word; box-shadow: 0 1px 0.5px rgba(0,0,0,0.13); }
+        .chat-msg-bubble.incoming { background: #ffffff; align-self: flex-start; }
+        .chat-msg-bubble.outgoing { background: #d9fdd3; align-self: flex-end; }
+        
+        .chat-input-area { padding: 8px 10px; background: transparent; display: flex; gap: 8px; align-items: center; position: absolute; bottom: 0; left: 0; right: 0; z-index: 100; height: 65px; width: 100%; }
+        .input-capsule-wrapper { flex: 1; background: #ffffff; border-radius: 25px; display: flex; align-items: center; padding: 0 12px; height: 50px; gap: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+        .quantum-input { flex: 1; background: transparent; border: none; color: var(--wa-text); outline: none; font-family: 'Roboto', sans-serif; font-size: 1rem; min-width: 0; }
+        .capsule-icon-btn { background: none; border: none; color: var(--wa-gray); font-size: 1.3rem; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .mic-fab-btn { width: 50px; height: 50px; border-radius: 50%; background: #00a884; border: none; color: #fff; font-size: 1.3rem; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
+        .mic-fab-btn:hover { background: #01755f; }
+
+        .dynamic-content-view { display: none; padding: 20px; flex: 1; overflow-y: auto; background: #fff; color: #111; }
+        .dynamic-card { background: #f0f2f5; border: 1px solid #ccc; padding: 15px; border-radius: 8px; margin-bottom: 12px; }
     </style>
 </head>
 <body>
@@ -63,20 +99,20 @@
         <div class="auth-overlay" id="auth-layer">
             <div class="auth-card">
                 <div class="laser-scanner"></div>
-                <h2>VOBIXCHAT // MAIN TERMINAL</h2>
-                <p id="device-detect-label" style="color: var(--neon-blue); font-weight: bold; font-size: 0.75rem; letter-spacing: 1px;"></p>
+                <h2>VOBIXCHAT // ACCESO</h2>
+                <p id="device-detect-label" style="color: #00a884; font-weight: 500; font-size: 0.8rem;"></p>
                 
                 <div class="field-container">
-                    <span class="field-label">Identidad Agente:</span>
-                    <input type="text" id="username-in" class="auth-input" placeholder="Nombre de Código..." autocomplete="off">
+                    <span class="field-label">Nombre o Alias:</span>
+                    <input type="text" id="username-in" class="auth-input" placeholder="Tu nombre..." autocomplete="off">
                 </div>
                 
                 <div class="field-container">
-                    <span class="field-label">Línea de Enlace Móvil:</span>
+                    <span class="field-label">Número de Teléfono:</span>
                     <div class="phone-group">
                         <select class="detected-country-select" id="country-badge">
                             <option value="+1">US +1</option>
-                            <option value="+34">ES +34</option>
+                            <option value="+34" selected>ES +34</option>
                             <option value="+52">MX +52</option>
                             <option value="+54">AR +54</option>
                             <option value="+57">CO +57</option>
@@ -84,85 +120,138 @@
                             <option value="+51">PE +51</option>
                             <option value="+1">DO +1</option>
                         </select>
-                        <input type="tel" id="phone-in" class="phone-input-style" placeholder="Frecuencia Telefónica..." autocomplete="off">
+                        <input type="tel" id="phone-in" class="phone-input-style" placeholder="Teléfono..." autocomplete="off">
                     </div>
                 </div>
                 
-                <button class="auth-btn" style="border-color: var(--neon-amber); color: var(--neon-amber);" id="btn-pin-generator">ENLAZAR Y GENERAR PIN</button>
+                <button class="auth-btn" id="btn-pin-generator">ENVIAR PIN</button>
                 <div class="big-pin-display" id="pin-display">0000</div>
-                <button class="auth-btn" id="btn-login-trigger" style="display:none; border-color: var(--neon-green); color: var(--neon-green);">INICIALIZAR INTERFAZ HUD</button>
+                <button class="auth-btn" id="btn-login-trigger" style="display:none;">ENTRAR AL CHAT</button>
 
                 <div class="hud-logger">
-                    <div>[SYS]: CANAL CUÁNTICO INICIALIZADO...</div>
-                    <div id="log-dynamic">[SYS]: ESPERANDO CREDENCIALES DE AGENTE...</div>
+                    <div id="log-dynamic">Esperando credenciales...</div>
                 </div>
             </div>
         </div>
 
-        <!-- CAPA INTERMEDIA DE BLOQUEO ANTI ACCIDENTES -->
+        <!-- CAPA DE CONFIRMACIÓN DE LLAMADA -->
         <div class="confirm-overlay" id="confirm-layer">
             <div class="confirm-card">
-                <h3 id="confirm-title">CONFIRMAR ENLACE</h3>
-                <p id="confirm-msg">¿Desea inicializar este enlace seguro?</p>
+                <h3 id="confirm-title" style="color:#00a884;">LLAMADA</h3>
+                <p id="confirm-msg">¿Deseas iniciar la llamada?</p>
                 <div style="display:flex; gap:10px;">
-                    <button class="auth-btn" style="border-color:var(--neon-green); color:var(--neon-green); flex:1;" id="confirm-yes-btn">SÍ, ENLAZAR</button>
-                    <button class="auth-btn" style="border-color:var(--neon-red); color:var(--neon-red); flex:1;" id="btn-abort-trigger">ABORTAR</button>
+                    <button class="auth-btn" style="flex:1;" id="confirm-yes-btn">ACEPTAR</button>
+                    <button class="auth-btn" style="flex:1; background:#8696a0;" id="btn-abort-trigger">CANCELAR</button>
                 </div>
             </div>
         </div>
 
-        <!-- BARRA SUPERIOR DE HERRAMIENTAS ORIGINALES PROTEGIDAS -->
+        <!-- BARRA SUPERIOR ESTILO WHATSAPP -->
         <header class="main-header-bar">
-            <div class="header-profile-section">
-                <div class="profile-avatar-container" id="avatar-char">VX</div>
+            <div class="header-profile-section" id="profile-click-area">
+                <div class="profile-avatar-container" id="avatar-char">W</div>
                 <div class="header-info-group">
-                    <span class="header-username-display" id="user-display">Invitado</span>
-                    <span class="header-user-status">● ONLINE</span>
+                    <span class="header-username-display" id="user-display">William</span>
+                    <span class="header-user-status" id="header-status-text">en línea</span>
                 </div>
             </div>
             <div class="header-right-group">
-                <!-- ACCESOS INTEGRALES MULTIMEDIA ESTILO WHATSAPP -->
-                <button class="call-icon-btn" id="btn-voice-trigger">🎙️</button>
-                <button class="call-icon-btn" id="btn-video-trigger">📹</button>
+                <button class="wa-action-icon" id="btn-video-trigger" title="Videollamada">📹</button>
+                <button class="wa-action-icon" id="btn-voice-trigger" title="Llamada de voz">📞</button>
                 
-                <!-- TUS BOTONES ORIGINALES INTACTOS -->
-                <button class="whatsapp-icon-btn">💬</button>
-                <button class="shield-quantum-btn">🛡️</button>
-                <button class="logout-action-btn">LOGOUT</button>
+                <!-- Menú de tres puntitos con scroll vertical fluido y táctil -->
+                <div class="three-dots-container">
+                    <button class="wa-action-icon" id="threeDotsToggleBtn" title="Menú">⋮</button>
+                    <div class="dropdown-menu-tools" id="toolsDropdownMenu">
+                        <button class="dropdown-item danger" onclick="toggleBlockUserStatus(); toggleToolsMenu();">Bloquear / Desbloquear</button>
+                        <button class="dropdown-item" onclick="switchView('translator'); toggleToolsMenu();">Traductor AI</button>
+                        <button class="dropdown-item" onclick="switchView('cloud'); toggleToolsMenu();">Nube Ilimitada</button>
+                        <button class="dropdown-item" onclick="switchView('zoom'); toggleToolsMenu();">Reuniones / Citas</button>
+                        <button class="dropdown-item" onclick="switchView('contract'); toggleToolsMenu();">Firma Remota</button>
+                        <button class="dropdown-item" onclick="switchView('bunker'); toggleToolsMenu();">Búnker</button>
+                        <button class="dropdown-item" onclick="switchView('sign'); toggleToolsMenu();">Lector de Señas</button>
+                    </div>
+                </div>
             </div>
         </header>
         
-        <!-- ÁREA CENTRAL DE COMUNICACIÓN DE TEXTO -->
-        <div class="chat-area" id="chat-box"></div>
-        <div class="chat-input-area">
-            <input type="text" id="chat-input" class="quantum-input" placeholder="Escribir mensaje cifrado...">
-            <button class="auth-btn" style="padding: 10px 15px;" id="btn-send-trigger">ENVIAR</button>
+        <!-- ÁREA DE TRABAJO Y VISTAS DINÁMICAS -->
+        <div class="workspace-area">
+            <div class="screen-view" id="viewChatSection" style="display: flex; flex-direction: column; flex: 1; height: 100%;">
+                <div class="chat-area" id="chat-box">
+                    <div class="chat-msg-bubble incoming">¡Hola! Canal seguro enlazado correctamente.</div>
+                </div>
+                
+                <!-- BARRA INFERIOR DE ESCRITURA ESTILO WHATSAPP EXACTO -->
+                <div class="chat-input-area" id="chatInputDeckArea">
+                    <div class="input-capsule-wrapper">
+                        <button class="capsule-icon-btn" title="Emojis">😊</button>
+                        <input type="text" id="chat-input" class="quantum-input" placeholder="Mensaje" autocomplete="off">
+                        <button class="capsule-icon-btn" title="Adjuntar archivo">📎</button>
+                        <button class="capsule-icon-btn" title="Cámara">📷</button>
+                    </div>
+                    <button class="mic-fab-btn" id="btn-send-trigger" title="Enviar / Micrófono">🎤</button>
+                </div>
+            </div>
+
+            <!-- Secciones dinámicas de herramientas -->
+            <div class="dynamic-content-view" id="viewTranslatorSection">
+                <div class="dynamic-card">
+                    <h3 style="color:#00a884; font-size:0.95rem; margin-bottom:8px;">Traductor AI</h3>
+                    <textarea id="textToTranslate" rows="3" class="auth-input" placeholder="Pega el texto aquí..." style="margin-bottom:6px; color:#111; background:#fff; border:1px solid #ccc;"></textarea>
+                    <button class="auth-btn" onclick="executeInstantTranslation()">Traducir</button>
+                    <div id="translationResultOutput" style="background:#f0f2f5; padding:10px; border-radius:6px; margin-top:10px; color:#00a884;">Resultado...</div>
+                </div>
+                <button class="auth-btn" style="background:#8696a0; margin-top:10px;" onclick="switchView('chat')">Volver</button>
+            </div>
+            <div class="dynamic-content-view" id="viewCloudSection">
+                <div class="dynamic-card"><h3>Nube Ilimitada</h3><input type="file" style="margin-top:10px;"></div>
+                <button class="auth-btn" style="background:#8696a0; margin-top:10px;" onclick="switchView('chat')">Volver</button>
+            </div>
+            <div class="dynamic-content-view" id="viewZoomSection">
+                <div class="dynamic-card"><h3>Reuniones / Citas</h3><input type="text" class="auth-input" placeholder="Título de reunión" style="margin-top:10px; color:#111; background:#fff; border:1px solid #ccc;"></div>
+                <button class="auth-btn" style="background:#8696a0; margin-top:10px;" onclick="switchView('chat')">Volver</button>
+            </div>
+            <div class="dynamic-content-view" id="viewBunkerSection">
+                <div class="dynamic-card"><h3>Búnker</h3><textarea class="auth-input" placeholder="Mensaje seguro..." style="margin-top:10px; color:#111; background:#fff; border:1px solid #ccc;"></textarea></div>
+                <button class="auth-btn" style="background:#8696a0; margin-top:10px;" onclick="switchView('chat')">Volver</button>
+            </div>
+            <div class="dynamic-content-view" id="viewSignSection">
+                <div class="dynamic-card"><h3>Lector de Señas</h3><p>Módulo activado.</p></div>
+                <button class="auth-btn" style="background:#8696a0; margin-top:10px;" onclick="switchView('chat')">Volver</button>
+            </div>
+            <div class="dynamic-content-view" id="viewContractSection">
+                <div class="dynamic-card"><h3>Firma Remota</h3><input type="text" class="auth-input" placeholder="Nombre firmante" style="margin-top:10px; color:#111; background:#fff; border:1px solid #ccc;"></div>
+                <button class="auth-btn" style="background:#8696a0; margin-top:10px;" onclick="switchView('chat')">Volver</button>
+            </div>
         </div>
 
-        <!-- PANTALLA FLOTANTE DE VIDEO / AUDIO DE ALTA FIDELIDAD -->
+        <!-- PANTALLA DE VIDEO / AUDIO ESTILO WHATSAPP -->
         <div class="video-call-overlay" id="video-call-hud">
-            <div class="video-grid" id="container-video-elements">
-                <video id="remote-video" autoplay playsinline></video>
-                <video id="local-video" autoplay playsinline muted></video>
-            </div>
+            <video id="remote-video" autoplay playsinline></video>
             <div class="voice-only-status" id="container-voice-elements">
-                <div class="voice-avatar">🎙️</div>
-                <div id="voice-call-label">TRANSMISIÓN DE VOZ ACTIVA...</div>
+                <div class="voice-avatar" id="call-avatar-letter">W</div>
+                <div id="voice-call-label" style="font-family:'Roboto'; font-size:22px; font-weight:500; color:#fff;">Llamando...</div>
+                <div style="font-size:14px; color:#8696a0;">Llamada de voz de WhatsApp</div>
             </div>
+            <video id="local-video" autoplay playsinline muted></video>
             <div class="call-controls">
-                <button id="btn-toggle-mic" class="auth-btn" style="border-color:var(--neon-amber); color:var(--neon-amber); flex:1;">MUTEAR CANAL</button>
-                <button id="btn-hangup" class="auth-btn" style="border-color:var(--neon-red); color:var(--neon-red); flex:1;">CERRAR ENLACE</button>
+                <button id="btn-toggle-mic" class="auth-btn" style="background:rgba(255,255,255,0.15); border-radius:30px; padding:15px 25px;">Silenciar</button>
+                <button id="btn-hangup" class="auth-btn" style="background:#ff3b30; border-radius:30px; padding:15px 25px;">Colgar ☎</button>
             </div>
         </div>
     </div>
+
     <script>
-        let socket=null;try{if(typeof io!=="undefined"){socket=io();}}catch(e){console.error(e);}
-        let localStream=null,peerConnection=null,isMuted=false,currentCallMode='video',pendingCallMode=null;
-        const iceConfiguration={iceServers:[{urls:'stun:://google.com'}]};
+        let socket=null;
+        try{if(typeof io!=="undefined"){socket=io();}}catch(e){console.error(e);}
+        
+        let localStream=null, peerConnection=null, isMuted=false, currentCallMode='video', pendingCallMode=null, isUserBlocked=false;
+        const iceConfiguration={iceServers:[{urls:'stun:stun.l.google.com:19302'}]};
         
         document.addEventListener("DOMContentLoaded",()=>{
             const isMobile=/Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-            document.getElementById('device-detect-label').innerText=isMobile?"[SISTEMA]: ACCESO MÓVIL DETECTADO":"[SISTEMA]: ACCESO PC DETECTADO";
+            document.getElementById('device-detect-label').innerText=isMobile?"[SISTEMA]: DISPOSITIVO MÓVIL DETECTADO":"[SISTEMA]: DISPOSITIVO ESCRITORIO DETECTADO";
             document.getElementById('btn-pin-generator').addEventListener('click',generateQuantumPIN);
             document.getElementById('btn-login-trigger').addEventListener('click',loginQuantum);
             document.getElementById('btn-send-trigger').addEventListener('click',sendText);
@@ -174,6 +263,33 @@
             document.getElementById('chat-input').addEventListener('keydown',(e)=>{if(e.key==='Enter')sendText();});
         });
 
+        const threeDotsBtn = document.getElementById('threeDotsToggleBtn');
+        const toolsMenu = document.getElementById('toolsDropdownMenu');
+        window.toggleToolsMenu = () => { toolsMenu.style.display = toolsMenu.style.display === 'flex' ? 'none' : 'flex'; };
+        threeDotsBtn.addEventListener('click', (e) => { e.stopPropagation(); toggleToolsMenu(); });
+        document.addEventListener('click', () => { toolsMenu.style.display = 'none'; });
+
+        window.toggleBlockUserStatus = () => {
+            isUserBlocked = !isUserBlocked;
+            alert(isUserBlocked ? "Usuario bloqueado." : "Usuario desbloqueado.");
+        };
+
+        window.switchView = (viewName) => {
+            ['chat', 'translator', 'cloud', 'zoom', 'bunker', 'sign', 'contract'].forEach(v => {
+                const el = document.getElementById('view' + v.charAt(0).toUpperCase() + v.slice(1) + 'Section');
+                if(el) el.style.display = 'none';
+            });
+            document.getElementById('chatInputDeckArea').style.display = 'none';
+
+            if(viewName === 'chat') {
+                document.getElementById('viewChatSection').style.display = 'flex';
+                document.getElementById('chatInputDeckArea').style.display = 'flex';
+            } else {
+                const target = document.getElementById('view' + viewName.charAt(0).toUpperCase() + viewName.slice(1) + 'Section');
+                if(target) target.style.display = 'block';
+            }
+        };
+
         function generateQuantumPIN(){
             const name=document.getElementById('username-in').value.trim();
             const phone=document.getElementById('phone-in').value.trim();
@@ -184,79 +300,127 @@
             display.innerText=pin;
             display.style.display='block';
             
-            document.getElementById('log-dynamic').innerText="[SYS]: PIN GENERADO ACCESO AUTORIZADO.";
-            document.getElementById('log-dynamic').style.color="var(--neon-green)";
-            
+            document.getElementById('log-dynamic').innerText="PIN generado correctamente.";
             document.getElementById('btn-pin-generator').style.display='none';
             document.getElementById('btn-login-trigger').style.display='block';
         }
         
         function loginQuantum(){
             const name=document.getElementById('username-in').value.trim();
-            document.getElementById('user-display').innerText=name.toUpperCase();
+            document.getElementById('user-display').innerText=name;
             document.getElementById('avatar-char').innerText=name.substring(0,2).toUpperCase();
             document.getElementById('auth-layer').style.display='none';
         }
         
         function sendText(){
-            const input=document.getElementById('chat-input');if(!input.value.trim())return;
-            const chatBox=document.getElementById('chat-box'),p=document.createElement('p');
-            p.style.margin="5px 0";p.style.fontFamily="'Share Tech Mono'";
-            p.innerHTML=`<b style="color:var(--neon-blue)">Tú:</b> ${input.value}`;
-            chatBox.appendChild(p);input.value="";chatBox.scrollTop=chatBox.scrollHeight;
+            if(isUserBlocked) return;
+            const input=document.getElementById('chat-input');
+            if(!input.value.trim())return;
+            const chatBox=document.getElementById('chat-box'),bubble=document.createElement('div');
+            bubble.className="chat-msg-bubble outgoing";
+            bubble.innerText=input.value;
+            chatBox.appendChild(bubble);
+            input.value="";
+            chatBox.scrollTop=chatBox.scrollHeight;
         }
         
         function triggerCallConfirmation(mode){
-            pendingCallMode=mode;const title=document.getElementById('confirm-title'),msg=document.getElementById('confirm-msg');
-            if(mode==='voice'){title.innerText="LLAMADA DE VOZ";msg.innerText="¿Iniciar transmisión de audio HD?";}
-            else{title.innerText="VIDEOLLAMADA";msg.innerText="¿Abrir canales de video y audio HD?";}
+            if(isUserBlocked) return;
+            pendingCallMode=mode;
+            const title=document.getElementById('confirm-title'),msg=document.getElementById('confirm-msg');
+            if(mode==='voice'){title.innerText="Llamada de voz";msg.innerText="¿Quieres llamar por voz?";}
+            else{title.innerText="Videollamada";msg.innerText="¿Quieres iniciar una videollamada?";}
             document.getElementById('confirm-layer').style.display='flex';
-            document.getElementById('confirm-yes-btn').onclick=function(){document.getElementById('confirm-layer').style.display='none';initiateCall(pendingCallMode);};
+            document.getElementById('confirm-yes-btn').onclick=function(){
+                document.getElementById('confirm-layer').style.display='none';
+                initiateCall(pendingCallMode);
+            };
         }
         
-        function cancelAccidentalCall(){document.getElementById('confirm-layer').style.display='none';pendingCallMode=null;}
+        function cancelAccidentalCall(){
+            document.getElementById('confirm-layer').style.display='none';
+            pendingCallMode=null;
+        }
         
         function setupCallUI(mode) {
-            currentCallMode=mode;document.getElementById('video-call-hud').style.display='flex';
-            if(mode==='voice'){document.getElementById('container-video-elements').style.display='none';document.getElementById('container-voice-elements').style.display='flex';}
-            else{document.getElementById('container-video-elements').style.flex='1';document.getElementById('container-video-elements').style.display='flex';document.getElementById('container-voice-elements').style.display='none';}
+            currentCallMode=mode;
+            document.getElementById('video-call-hud').style.display='flex';
+            if(mode==='voice'){
+                document.getElementById('container-voice-elements').style.display='flex';
+                document.getElementById('remote-video').style.display='none';
+                document.getElementById('local-video').style.display='none';
+            } else {
+                document.getElementById('container-voice-elements').style.display='none';
+                document.getElementById('remote-video').style.display='block';
+                document.getElementById('local-video').style.display='block';
+            }
         }
         
         async function initiateCall(mode) {
             try{
                 setupCallUI(mode);
-                localStream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true,sampleRate:48000},video:mode==='video'?{facingMode:"user"}:false});
+                localStream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true},video:mode==='video'?{facingMode:"user"}:false});
                 if(mode==='video'){document.getElementById('local-video').srcObject=localStream;}
-                peerConnection=new RTCPeerConnection(iceConfiguration);localStream.getTracks().forEach(track=>peerConnection.addTrack(track,localStream));
-                peerConnection.ontrack=(event)=>{const rv=document.getElementById('remote-video');if(rv&&!rv.srcObject&&event.streams){rv.srcObject=event.streams;}};
+                
+                peerConnection=new RTCPeerConnection(iceConfiguration);
+                localStream.getTracks().forEach(track=>peerConnection.addTrack(track,localStream));
+                
+                peerConnection.ontrack=(event)=>{
+                    const rv=document.getElementById('remote-video');
+                    if(rv&&event.streams){rv.srcObject=event.streams[0];}
+                };
                 peerConnection.onicecandidate=(event)=>{if(event.candidate&&socket){socket.emit('webrtc-candidate',event.candidate);}};
-                const offer=await peerConnection.createOffer();await peerConnection.setLocalDescription(offer);if(socket)socket.emit('webrtc-offer',{offer:offer,mode:mode});
+                
+                const offer=await peerConnection.createOffer();
+                await peerConnection.setLocalDescription(offer);
+                if(socket)socket.emit('webrtc-offer',{offer:offer,mode:mode});
             }catch(err){console.error(err);executeLocalClose();alert("Verifique permisos de cámara y micrófono.");}
         }
         
         if(socket){
             socket.on('webrtc-offer', async(data)=>{
-                const incomingMode=data.mode;setupCallUI(incomingMode);
+                const incomingMode=data.mode;
+                setupCallUI(incomingMode);
                 if(!peerConnection){
                     peerConnection=new RTCPeerConnection(iceConfiguration);
-                    peerConnection.ontrack=(event)=>{const rv=document.getElementById('remote-video');if(rv&&!rv.srcObject&&event.streams){rv.srcObject=event.streams;}};
+                    peerConnection.ontrack=(event)=>{
+                        const rv=document.getElementById('remote-video');
+                        if(rv&&event.streams){rv.srcObject=event.streams[0];}
+                    };
                     peerConnection.onicecandidate=(event)=>{if(event.candidate){socket.emit('webrtc-candidate',event.candidate);}};
                 }
                 await peerConnection.setRemoteDescription(new RTCSessionDescription(data.offer));
                 try{
-                    localStream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true,sampleRate:48000},video:incomingMode==='video'?{facingMode:"user"}:false});
+                    localStream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true},video:incomingMode==='video'?{facingMode:"user"}:false});
                     if(incomingMode==='video'){document.getElementById('local-video').srcObject=localStream;}
                     localStream.getTracks().forEach(track=>peerConnection.addTrack(track,localStream));
-                    const answer=await peerConnection.createAnswer();await peerConnection.setLocalDescription(answer);socket.emit('webrtc-answer',answer);
+                    const answer=await peerConnection.createAnswer();
+                    await peerConnection.setLocalDescription(answer);
+                    socket.emit('webrtc-answer',answer);
                 }catch(err){console.error(err);}
             });
             socket.on('webrtc-answer',async(answer)=>{if(peerConnection&&peerConnection.signalingState!=="stable"){await peerConnection.setRemoteDescription(new RTCSessionDescription(answer));}});
             socket.on('webrtc-candidate',async(candidate)=>{if(peerConnection&&peerConnection.remoteDescription){try{await peerConnection.addIceCandidate(new RTCIceCandidate(candidate));}catch(e){}}});
             socket.on('webrtc-hangup',()=> {executeLocalClose();});
         }
-        function toggleMute(){if(localStream){isMuted=!isMuted;localStream.getAudioTracks().forEach(track=>track.enabled=!isMuted);document.getElementById('btn-toggle-mic').innerText=isMuted?"DESMUTEAR CANAL":"MUTEAR CANAL";}}
+        
+        function toggleMute(){
+            if(localStream){
+                isMuted=!isMuted;
+                localStream.getAudioTracks().forEach(track=>track.enabled=!isMuted);
+                document.getElementById('btn-toggle-mic').innerText=isMuted?"Activado":"Silenciar";
+            }
+        }
+        
         function endCall(){if(socket)socket.emit('webrtc-hangup');executeLocalClose();}
-        function executeLocalClose(){if(localStream){localStream.getTracks().forEach(track=>track.stop());localStream=null;}if(peerConnection){peerConnection.close();peerConnection=null;}document.getElementById('video-call-hud').style.display='none';document.getElementById('local-video').srcObject=null;document.getElementById('remote-video').srcObject=null;}
+        
+        function executeLocalClose(){
+            if(localStream){localStream.getTracks().forEach(track=>track.stop());localStream=null;}
+            if(peerConnection){peerConnection.close();peerConnection=null;}
+            document.getElementById('video-call-hud').style.display='none';
+            document.getElementById('local-video').srcObject=null;
+            document.getElementById('remote-video').srcObject=null;
+        }
     </script>
 </body>
 </html>
