@@ -12,15 +12,20 @@ const io = new Server(server, {
     }
 });
 
-// SOLUCIÓN AL CANNOT GET: Escucha la raíz y busca el archivo de forma directa en la carpeta principal
+// MAPA CRIPTOGRÁFICO DE AGENTES ACTIVOS (AL ESTILO WHATSAPP)
+// Guarda la relación entre identidades y su ID de socket en tiempo real
+const activeAgents = {
+    byName: {},  // Ejemplo: { '@shneyder': 'socket_id_123' }
+    byPhone: {}  // Ejemplo: { '+5255123456': 'socket_id_123' }
+};
+
+// Escucha la raíz y busca el archivo de forma directa en la carpeta principal
 app.get('/', (req, res) => {
-    // Intenta buscar si tu archivo de interfaz se llama index.html
     res.sendFile(path.join(__dirname, 'index.html'), (err) => {
         if (err) {
-            // Si no lo encuentra, busca automáticamente si lo renombraste como vobixchat.html
             res.sendFile(path.join(__dirname, 'vobixchat.html'), (err2) => {
                 if (err2) {
-                    res.status(404).send("<h1>[SYS ERROR]: No se encontró el archivo HTML de VobixChat en la raíz del proyecto. Renómbralo a index.html o vobixchat.html</h1>");
+                    res.status(404).send("<h1>[SYS ERROR]: No se encontró el archivo HTML de VobixChat. Renómbralo a index.html o vobixchat.html</h1>");
                 }
             });
         }
@@ -28,57 +33,96 @@ app.get('/', (req, res) => {
 });
 
 io.on('connection', (socket) => {
-    console.log(`[SYS]: Agente conectado al canal cuántico -> ID: ${socket.id}`);
+    console.log(`[SYS]: Canal cuántico abierto -> ID Temporal: ${socket.id}`);
+    let registeredName = null;
+    let registeredPhone = null;
 
-    // 1. TRANSMISIÓN DE MENSAJES DE TEXTO CIFRADOS
+    // 1. REGISTRO DE IDENTIDAD PRIVADA (AL ESTILO WHATSAPP)
+    socket.on('register-agent', (data) => {
+        registeredName = data.name.toLowerCase();
+        registeredPhone = data.phone.trim();
+
+        // Guardar en el directorio activo del servidor
+        activeAgents.byName[registeredName] = socket.id;
+        activeAgents.byPhone[registeredPhone] = socket.id;
+
+        console.log(`[SYS]: Agente Registrado -> Alias: ${registeredName} | Línea: ${registeredPhone} | Socket: ${socket.id}`);
+    });
+
+    // 2. BÚSQUEDA Y ENRUTAMIENTO DE INVITACIÓN DIRECTA PRIVADA
+    socket.on('send-private-invite', (data) => {
+        const mode = data.mode; // 'name' o 'phone'
+        const target = data.target.toLowerCase().trim();
+        let targetSocketId = null;
+
+        // Buscar el ID de socket del destinatario sin exponerlo en salas públicas
+        if (mode === 'name') {
+            targetSocketId = activeAgents.byName[target];
+        } else if (mode === 'phone') {
+            targetSocketId = activeAgents.byPhone[target];
+        }
+
+        if (targetSocketId) {
+            console.log(`[SYS]: Enlace privado encontrado. Conectando a ${socket.id} con ${target}`);
+            // Envía la señal multimedia UNICAMENTE al agente encontrado
+            io.to(targetSocketId).emit('private-invite-received', {
+                from: registeredName || 'Agente Anónimo'
+            });
+        } else {
+            console.log(`[SYS]: Intento de enlace fallido. Destinatario no encontrado: ${target}`);
+            // Informa de vuelta al emisor que el usuario está desconectado o no existe
+            socket.emit('invite-error', {
+                message: `El agente "${target}" no se encuentra activo en la red cuántica.`
+            });
+        }
+    });
+
+    // 3. RETRANSMISIÓN DE MENSAJES DE TEXTO EN TIEMPO REAL
     socket.on('chat-message', (data) => {
-        // Retransmite el mensaje de texto a todos los demás agentes conectados
+        // Envía el texto cifrado a todos los agentes de la red
         socket.broadcast.emit('chat-message', data);
     });
 
-    // 2. SEÑALIZACIÓN WEBRTC: TRANSMISIÓN DE OFERTA DE LLAMADA/VIDEO HD
+    // 4. SEÑALIZACIÓN WEBRTC (OFERTAS MULTIMEDIA)
     socket.on('webrtc-offer', (data) => {
-        console.log(`[SYS]: Oferta WebRTC recibida de ${socket.id} (Modo: ${data.mode})`);
-        // Reenvía la oferta a los demás dispositivos enlazados
-        socket.broadcast.emit('webrtc-offer', {
-            offer: data.offer,
-            mode: data.mode
-        });
+        socket.broadcast.emit('webrtc-offer', data);
     });
 
-    // 3. SEÑALIZACIÓN WEBRTC: RESPUESTA DE CONEXIÓN MULTIMEDIA
+    // 5. SEÑALIZACIÓN WEBRTC (RESPUESTAS MULTIMEDIA)
     socket.on('webrtc-answer', (answer) => {
-        console.log(`[SYS]: Respuesta WebRTC recibida de ${socket.id}. Enlazando canales...`);
-        // Envía la respuesta de vuelta para consolidar la llamada peer-to-peer sin eco
         socket.broadcast.emit('webrtc-answer', answer);
     });
 
-    // 4. INTERCAMBIO DE CANDIDATOS ICE (CONECTIVIDAD ULTRA HD DE RED)
+    // 6. INTERCAMBIO DE CANDIDATOS ICE (CONECTIVIDAD MÓVIL)
     socket.on('webrtc-candidate', (candidate) => {
-        // Intercambia las rutas de red mapeadas por el servidor STUN para saltar firewalls
         socket.broadcast.emit('webrtc-candidate', candidate);
     });
 
-    // 5. FINALIZACIÓN Y FINAL DE ENLACE MULTIMEDIA (HANGUP)
+    // 7. CIERRE DE ENLACE (HANGUP)
     socket.on('webrtc-hangup', () => {
-        console.log(`[SYS]: Enlace multimedia cerrado por orden de ${socket.id}`);
-        // Ordena de manera remota limpiar el hardware de cámara y audio del otro agente
         socket.broadcast.emit('webrtc-hangup');
     });
 
-    // 6. GESTIÓN DE DESCONEXIÓN INVOLUNTARIA
+    // 8. LIMPIEZA DE DIRECTORIO POR DESCONEXIÓN
     socket.on('disconnect', () => {
-        console.log(`[SYS]: Canal caído. Agente desconectado -> ID: ${socket.id}`);
-        // Notificación de seguridad para cerrar cualquier llamada activa si se pierde la red
+        console.log(`[SYS]: Canal caído -> ID: ${socket.id}`);
+        
+        // Remover de los mapas activos para evitar llamadas a fantasmas
+        if (registeredName && activeAgents.byName[registeredName] === socket.id) {
+            delete activeAgents.byName[registeredName];
+        }
+        if (registeredPhone && activeAgents.byPhone[registeredPhone] === socket.id) {
+            delete activeAgents.byPhone[registeredPhone];
+        }
+
         socket.broadcast.emit('webrtc-hangup');
     });
 });
 
-// Puerto táctico de escucha para levantar el canal
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
     console.log(`==================================================`);
-    console.log(`[VOBIXCHAT] SERVIDOR TÁCTICO DE ALTA FIDELIDAD ACTIVO`);
+    console.log(`[VOBIXCHAT] BACKEND PRIVADO ESTILO WHATSAPP ACTIVO`);
     console.log(`[URL EN LÍNEA]: http://localhost:${PORT}`);
     console.log(`==================================================`);
 });
