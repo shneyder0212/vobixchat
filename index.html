@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <!-- Bloquea el zoom automático molesto al abrir teclados en móviles -->
+    <!-- BLINDAJE DE VIEWPORT CONTRA DEFORMACIONES DE TECLADO MÓVIL -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>VOBIXCHAT // Quantum Mobile Pro</title>
     <link href="https://googleapis.com" rel="stylesheet">
@@ -20,6 +20,7 @@
             --text-dim: #8b7aa6; 
             --border-hud: rgba(189, 0, 255, 0.35);
             --bg-pattern: radial-gradient(circle at 50% 50%, rgba(189, 0, 255, 0.05) 0%, rgba(4, 1, 10, 0.98) 100%), repeating-linear-gradient(0deg, transparent, transparent 40px, rgba(189, 0, 255, 0.02) 40px, rgba(189, 0, 255, 0.02) 41px);
+        }
         * { box-sizing: border-box; margin: 0; padding: 0; }
         html, body { background-color: var(--bg-quantum); background-image: var(--bg-pattern); font-family: 'Rajdhani', sans-serif; color: var(--text-main); width: 100%; height: 100%; height: 100dvh; display: flex; justify-content: center; align-items: center; overflow: hidden; position: fixed; top: 0; left: 0; overscroll-behavior-y: none; }
         .app-container { width: 100%; height: 100%; height: 100dvh; max-width: 1400px; background: var(--panel-hud); display: flex; flex-direction: column; overflow: hidden; position: relative; border: 1px solid var(--border-hud); box-shadow: 0 0 50px rgba(0,0,0,0.95); backdrop-filter: blur(15px); transition: height 0.1s ease-out; }
@@ -28,8 +29,7 @@
         .auth-card { width: 100%; max-width: 430px; background: rgba(14, 5, 26, 0.75); border: 2px solid var(--neon-blue); border-radius: 4px; padding: 30px 24px; display: flex; flex-direction: column; gap: 16px; box-shadow: 0 0 40px rgba(0, 240, 255, 0.15); position: relative; overflow: hidden; }
         .laser-scanner { position: absolute; top: 0; left: 0; width: 100%; height: 2px; background: linear-gradient(90deg, transparent, var(--neon-blue), transparent); box-shadow: 0 0 12px var(--neon-blue); animation: scan 3.5s infinite linear; pointer-events: none; }
         @keyframes scan { 0% { top: 0%; } 50% { top: 100%; } 100% { top: 0%; } }
-        }
-        .confirm-card { width: 100%; max-width: 380px; background: var(--panel-hud); border: 1px solid var(--border-hud); border-radius: 14px; padding: 22px; display: flex; flex-direction: column; gap: 12px; border-color: var(--neon-amber); text-align: center; gap: 15px; }
+        .confirm-card { width: 100%; max-width: 380px; background: var(--panel-hud); border: 1px solid var(--border-hud); border-radius: 14px; padding: 22px; display: flex; flex-direction: column; border-color: var(--neon-amber); text-align: center; gap: 15px; }
         .confirm-card h3 { font-family: 'Orbitron'; color: var(--neon-amber); }
         .auth-card h2 { font-family: 'Orbitron', sans-serif; color: #fff; font-size: 1.3rem; text-align: center; letter-spacing: 2px; font-weight: 900; text-shadow: 0 0 10px var(--neon-blue); }
         .auth-card p, .confirm-card p { font-family: 'Share Tech Mono', monospace; font-size: 0.8rem; color: var(--text-dim); text-align: center; }
@@ -63,8 +63,18 @@
         .voice-avatar { width: 90px; height: 90px; border-radius: 50%; border: 2px dashed var(--neon-green); display: flex; align-items: center; justify-content: center; font-size: 2rem; animation: pulse 2s infinite linear; }
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
         .chat-area { flex: 1; display: flex; flex-direction: column; background: rgba(0,0,0,0.2); overflow-y: auto; padding: 15px; transition: opacity 0.3s ease, max-height 0.3s ease; }
-        .chat-input-area { padding: 10px; background: rgba(2, 4, 10, 0.95); border-top: 1px solid var(--border-hud); display: flex; gap: 8px; align-items: center; padding-bottom: calc(10px + env(safe-area-inset-bottom)); transition: opacity 0.3s ease, max-height 0.3s ease; }
+        .chat-input-area { padding: 10px; background: rgba(2, 4, 10, 0.95); border-top: 1px solid var(--border-hud); display: flex; gap: 8px; align-items: center; padding-bottom: calc(10px + env(safe-area-inset-bottom)); transition: opacity 0.3s ease, max-height 0.3s ease; position: relative; }
         .quantum-input { flex: 1; background: #000; border: 1px solid var(--border-hud); padding: 10px; color: #fff; border-radius: 6px; outline: none; font-family: 'Share Tech Mono'; }
+        /* ESTILOS: BOTÓN TÁCTICO DE ADJUNTOS '+' Y MICRO-MENÚ */
+        .attach-btn-plus { background: rgba(0, 240, 255, 0.1); border: 1px solid var(--neon-blue); color: var(--neon-blue); border-radius: 50%; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 1.2rem; font-weight: bold; flex-shrink: 0; transition: 0.2s; }
+        .attach-btn-plus:hover { background: var(--neon-blue); color: #000; box-shadow: 0 0 10px var(--neon-blue); }
+        .hud-attach-menu { position: absolute; bottom: 60px; left: 10px; background: var(--panel-hud); border: 1px solid var(--border-hud); border-radius: 6px; width: 160px; display: none; flex-direction: column; box-shadow: 0 0 20px rgba(0, 240, 255, 0.2); z-index: 1200; backdrop-filter: blur(10px); overflow: hidden; animation: menuFadeIn 0.2s ease-out; }
+        
+        /* ESTILOS: PANEL INTERNO PARA GRABACIÓN DE AUDIO HUD */
+        .voice-record-bar { display: none; align-items: center; justify-content: space-between; flex: 1; background: rgba(255, 0, 85, 0.05); border: 1px dashed var(--neon-red); padding: 6px 12px; border-radius: 6px; gap: 10px; font-family: 'Share Tech Mono'; }
+        .voice-timer-display { color: var(--neon-red); animation: blinker 1s linear infinite; font-size: 0.9rem; font-weight: bold; letter-spacing: 1px; }
+        @keyframes blinker { 50% { opacity: 0.4; } }
+
         /* ESTILOS: MENÚ TRES PUNTITOS VERTICALES */
         .dots-menu-btn { background: rgba(0, 240, 255, 0.08); border: 1px solid var(--neon-blue); color: var(--neon-blue); border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 1.1rem; font-weight: bold; transition: 0.2s; position: relative; }
         .dots-menu-btn:hover { background: var(--neon-blue); color: #000; box-shadow: 0 0 10px var(--neon-blue); }
@@ -82,12 +92,13 @@
         .invite-tab-btn { flex: 1; padding: 8px; background: rgba(0,0,0,0.5); border: 1px solid rgba(0, 240, 255, 0.2); color: var(--text-dim); font-family: 'Orbitron'; font-size: 0.65rem; cursor: pointer; text-transform: uppercase; border-radius: 4px; }
         .invite-tab-btn.active { border-color: var(--neon-blue); color: var(--neon-blue); background: rgba(0, 240, 255, 0.05); text-shadow: 0 0 5px var(--neon-blue); }
 
-        /* ESTILOS: ALMACENAMIENTO MASIVO FLOTANTE */
+        /* ESTILOS: VENTANA FLOTANTE DE ALMACENAMIENTO DE ARCHIVOS LOCALES */
         .storage-hud-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(4, 1, 10, 0.9); backdrop-filter: blur(20px); display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 1750; padding: 15px; }
-        .storage-hud-card { width: 100%; max-width: 600px; height: 80%; background: var(--panel-hud); border: 2px solid var(--neon-violet); border-radius: 8px; padding: 15px; display: flex; flex-direction: column; gap: 12px; box-shadow: 0 0 30px rgba(189, 0, 255, 0.2); }
-        .storage-hud-card h3 { font-family: 'Orbitron'; font-size: 0.95rem; color: var(--neon-violet); letter-spacing: 2px; text-shadow: 0 0 8px var(--neon-violet); text-align: center; margin-bottom: 5px; }
-        .storage-frame-wrapper { flex: 1; width: 100%; background: #000; border: 1px dashed var(--border-hud); border-radius: 6px; overflow: hidden; position: relative; }
-        .storage-frame-wrapper iframe { width: 100%; height: 100%; border: none; }
+        .storage-hud-card { width: 100%; max-width: 500px; height: 75%; background: var(--panel-hud); border: 2px solid var(--neon-violet); border-radius: 8px; padding: 20px; display: flex; flex-direction: column; gap: 15px; box-shadow: 0 0 30px rgba(189, 0, 255, 0.2); }
+        .storage-hud-card h3 { font-family: 'Orbitron'; font-size: 0.95rem; color: var(--neon-violet); letter-spacing: 2px; text-shadow: 0 0 8px var(--neon-violet); text-align: center; }
+        .storage-upload-zone { flex: 1; border: 2px dashed rgba(189, 0, 255, 0.4); border-radius: 6px; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; text-align: center; gap: 12px; background: rgba(0,0,0,0.4); cursor: pointer; }
+        .storage-upload-zone p { font-family: 'Share Tech Mono'; font-size: 0.85rem; color: var(--text-dim); }
+        .storage-files-list { max-height: 120px; overflow-y: auto; background: rgba(0,0,0,0.6); padding: 8px; border-radius: 4px; border: 1px solid rgba(189, 0, 255, 0.1); font-family: 'Share Tech Mono'; font-size: 0.75rem; color: var(--neon-blue); display: flex; flex-direction: column; gap: 4px; }
 
         /* CLASES DE INTERACTIVIDAD INDEPENDIENTES */
         .chat-hud-transition { transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out, max-height 0.3s ease-in-out; }
@@ -163,7 +174,7 @@
                 <button class="call-icon-btn" id="btn-voice-trigger">🎙️</button>
                 <button class="call-icon-btn" id="btn-video-trigger">📹</button>
                 
-                <!-- NUEVO BOTÓN DE TRES PUNTITOS VERTICALES -->
+                <!-- BOTÓN DE TRES PUNTITOS VERTICALES -->
                 <button class="dots-menu-btn" id="btn-dots-trigger">⋮</button>
                 
                 <!-- TUS BOTONES ORIGINALES AHORA CON OPERACIÓN AISLADA -->
@@ -183,10 +194,30 @@
         <!-- ÁREA CENTRAL DE COMUNICACIÓN DE TEXTO -->
         <div class="chat-area" id="chat-box"></div>
         <div class="chat-input-area" id="chat-input-hud-bar">
+            <!-- NUEVO: BOTÓN DE ADJUNTOS '+' ESTILO WHATSAPP -->
+            <button class="attach-btn-plus" id="btn-attach-trigger">+</button>
+            
+            <!-- CONTENEDOR INTERNO PARA GRABACIÓN DE AUDIO (TEMPORIZADOR) -->
+            <div class="voice-record-bar" id="voice-record-hud-bar">
+                <span style="color: var(--neon-red)">🔴 GRABANDO AUDIO:</span>
+                <span class="voice-timer-display" id="voice-rec-timer">00:00</span>
+                <button class="auth-btn" style="padding: 4px 10px; font-size: 0.65rem; border-color: var(--neon-red); color: var(--neon-red);" id="btn-cancel-voice">BORRAR</button>
+            </div>
+
             <input type="text" id="chat-input" class="quantum-input" placeholder="Escribir mensaje cifrado...">
             <button class="auth-btn" style="padding: 10px 15px;" id="btn-send-trigger">ENVIAR</button>
-        </div>
 
+            <!-- MICRO-MENÚ VERTICAL DE ADJUNTOS FLOTANTE -->
+            <div class="hud-attach-menu" id="attach-menu-box">
+                <button class="dropdown-item" id="attach-opt-doc">📄 Documento</button>
+                <button class="dropdown-item" id="attach-opt-voice">🎙️ Nota de Voz</button>
+                <button class="dropdown-item" id="attach-opt-cam">📷 Cámara / Video</button>
+            </div>
+
+            <!-- ENTRADAS NATIVAS INVISIBLES PARA LEER EL HARDWARE DEL MÓVIL O PC -->
+            <input type="file" id="hidden-file-input" style="display: none;" multiple>
+            <input type="file" id="hidden-cam-input" style="display: none;" accept="image/*,video/*" capture="user">
+        </div>
         <!-- PANTALLA FLOTANTE DE VIDEO / AUDIO DE ALTA FIDELIDAD -->
         <div class="video-call-overlay" id="video-call-hud">
             <div class="video-grid" id="container-video-elements">
@@ -222,12 +253,17 @@
             </div>
         </div>
 
-        <!-- VENTANA FLOTANTE AISLADA PARA GESTIÓN DE ARCHIVOS ILIMITADOS -->
+        <!-- NUEVA: VENTANA FLOTANTE DÓCIL DE ALMACENAMIENTO LOCAL EN ESPAÑOL -->
         <div class="storage-hud-overlay" id="storage-quantum-layer">
             <div class="storage-hud-card">
-                <h3>[SISTEMA]: CANAL DE ALMACENAMIENTO MASIVO ACTIVO</h3>
-                <div class="storage-frame-wrapper">
-                    <iframe src="https://vis.ee" allow="clipboard-read; clipboard-write"></iframe>
+                <h3>[SISTEMA]: ALMACENAMIENTO MÓVIL Y PC LOCAL</h3>
+                <div class="storage-upload-zone" id="drop-upload-zone">
+                    <span style="font-size: 2.5rem;">📁</span>
+                    <p style="color: var(--neon-blue); font-weight: bold;">SELECCIONAR ARCHIVOS DEL DISPOSITIVO</p>
+                    <p>PDF, Música, Películas, Office e Imágenes</p>
+                </div>
+                <div class="storage-files-list" id="uploaded-files-hud-list">
+                    <div style="color: var(--text-dim); text-align: center;">[Ningún archivo cargado en el canal]</div>
                 </div>
                 <button class="auth-btn" style="border-color:var(--neon-red); color:var(--neon-red); padding: 10px;" id="btn-close-storage">CERRAR CANAL DE DATOS</button>
             </div>
@@ -236,7 +272,8 @@
     <script>
         let socket=null;try{if(typeof io!=="undefined"){socket=io();}}catch(e){console.error(e);}
         let localStream=null,peerConnection=null,isMuted=false,currentCallMode='video',pendingCallMode=null;
-        let activeInviteMode='name'; // Mapeo de pestaña activa: 'name' o 'phone'
+        let activeInviteMode='name'; 
+        let mediaRecorder=null, audioChunks=[], voiceTimerInterval=null, voiceDuration=0; 
         
         // CORRECCIÓN CRÍTICA DE SINTAXIS STUN SERVERS DE GOOGLE
         const iceConfiguration={iceServers:[
@@ -248,7 +285,7 @@
             const isMobile=/Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
             document.getElementById('device-detect-label').innerText=isMobile?"[SISTEMA]: ACCESO MÓVIL DETECTADO":"[SISTEMA]: ACCESO PC DETECTADO";
             
-            // Inyección de disparadores operacionales base
+            // Registro de los disparadores táctiles operacionales base
             document.getElementById('btn-pin-generator').addEventListener('click',generateQuantumPIN);
             document.getElementById('btn-login-trigger').addEventListener('click',loginQuantum);
             document.getElementById('btn-send-trigger').addEventListener('click',sendText);
@@ -259,9 +296,10 @@
             document.getElementById('btn-video-trigger').addEventListener('click',()=>triggerCallConfirmation('video'));
             document.getElementById('chat-input').addEventListener('keydown',(e)=>{if(e.key==='Enter')sendText();});
             
-            // Inicialización de submódulos aislados
+            // Inicialización obligatoria de submódulos aislados e independientes
             setupMenuAndInviteEvents();
             setupVirtualKeyboardFix();
+            setupNewAttachAndStorageEvents();
         });
         // AJUSTE DINÁMICO PARA TECLADOS DE IPHONE Y ANDROID (EVITA DEFORMACIONES)
         function setupVirtualKeyboardFix() {
@@ -269,12 +307,12 @@
                 window.visualViewport.addEventListener('resize', () => {
                     const container = document.getElementById('main-app-container');
                     if (container) {
-                        // Recalcula el alto exacto de la pantalla restando el espacio ocupado por el teclado
+                        // Recorta el alto de la app al espacio real libre que deja el teclado en pantalla
                         container.style.height = `${window.visualViewport.height}px`;
                     }
                     const chatBox = document.getElementById('chat-box');
                     if (chatBox) {
-                        // Auto-scrola los mensajes al fondo para no perder el foco de la conversación
+                        // Desplaza automáticamente el buzón de mensajes al fondo al emerger el teclado
                         chatBox.scrollTop = chatBox.scrollHeight;
                     }
                 });
@@ -327,9 +365,7 @@
 
             // Disparador del botón de invitación privada
             const sendInviteBtn = document.getElementById('btn-send-invite-trigger');
-            if (sendInviteBtn) {
-                sendInviteBtn.addEventListener('click', sendPrivateInvite);
-            }
+            if (sendInviteBtn) { sendInviteBtn.addEventListener('click', sendPrivateInvite); }
         }
         // REEMPLAZO DE ALERT POR LOGS INTEGRADOS EN TERMINAL HUD
         function printHudLog(text, isError=false) {
@@ -400,12 +436,12 @@
             
             const chatBox=document.getElementById('chat-box'),p=document.createElement('p');
             p.style.margin="5px 0";p.style.fontFamily="'Share Tech Mono'";
-            p.innerHTML=`<b style="color:var(--neon-blue)">Tú:</b> ${message}`;
+            p.innerHTML = `<b style="color:var(--neon-blue)">Tú:</b> ${message}`;
             chatBox.appendChild(p);
             
             // EMISIÓN DE TEXTO POR SOCKET AL BACKEND
             if(socket) {
-                socket.emit('chat-message', { text: message, sender: document.getElementById('user-display').innerText });
+                socket.emit('chat-message', { type: 'text', text: message, sender: document.getElementById('user-display').innerText });
             }
             
             input.value="";
@@ -424,7 +460,7 @@
         
         function setupCallUI(mode) {
             currentCallMode=mode;document.getElementById('video-call-hud').style.display='flex';
-            if(mode==='voice'){document.getElementById('container-video-elements').style.display='none';document.getElementById('container-voice-elements').style.display='flex';}
+            if(mode==='voice'){document.getElementById('container-video-elements').style.display='none';document.getElementById('container-voice-elements').style.flex='1';document.getElementById('container-voice-elements').style.display='flex';}
             else{document.getElementById('container-video-elements').style.flex='1';document.getElementById('container-video-elements').style.display='flex';document.getElementById('container-voice-elements').style.display='none';}
         }
 
@@ -459,8 +495,8 @@
                 // VINCULACIÓN CORRECTA DEL STREAM COMPLETO REMOTO
                 peerConnection.ontrack=(event)=>{
                     const rv=document.getElementById('remote-video');
-                    if(rv && !rv.srcObject && event.streams && event.streams[0]){
-                        rv.srcObject=event.streams[0]; 
+                    if(rv && !rv.srcObject && event.streams && event.streams){
+                        rv.srcObject=event.streams; 
                     }
                 };
                 peerConnection.onicecandidate=(event)=>{if(event.candidate&&socket){socket.emit('webrtc-candidate',event.candidate);}};
@@ -472,12 +508,21 @@
             }
         }
         if(socket){
-            // RECEPCIÓN DE MENSAJES DE TEXTO EN TIEMPO REAL
+            // RECEPCIÓN MULTIMEDIA EN TIEMPO REAL (TEXTO, AUDIO, FOTOS O DOCUMENTOS)
             socket.on('chat-message', (data) => {
                 const chatBox = document.getElementById('chat-box');
                 const p = document.createElement('p');
                 p.style.margin = "5px 0"; p.style.fontFamily = "'Share Tech Mono'";
-                p.innerHTML = `<b style="color:var(--neon-violet)">${data.sender}:</b> ${data.text}`;
+                
+                // Distribuye dinámicamente cómo se renderiza la información en tu HUD
+                if (data.type === 'text') {
+                    p.innerHTML = `<b style="color:var(--neon-violet)">${data.sender}:</b> ${data.text}`;
+                } else if (data.type === 'file') {
+                    p.innerHTML = `<b style="color:var(--neon-violet)">${data.sender}:</b> 📦 Recibido: <a href="${data.fileData}" download="${data.fileName}" style="color:var(--neon-blue); text-decoration:underline;">${data.fileName}</a>`;
+                } else if (data.type === 'voice') {
+                    p.innerHTML = `<b style="color:var(--neon-violet)">${data.sender}:</b> 🎙️ Nota de voz <audio src="${data.fileData}" controls style="display:block; margin-top:4px; max-width:200px; height:30px;"></audio>`;
+                }
+                
                 chatBox.appendChild(p);
                 chatBox.scrollTop = chatBox.scrollHeight;
             });
@@ -488,9 +533,7 @@
                 triggerCallConfirmation('video');
             });
 
-            socket.on('invite-error', (data) => {
-                printHudLog(`[ERROR]: ${data.message}`, true);
-            });
+            socket.on('invite-error', (data) => { printHudLog(`[ERROR]: ${data.message}`, true); });
 
             // GESTIÓN WEBRTC DE ENTRADA CON RESTRICCIONES DE AUDIO DE ESTUDIO
             socket.on('webrtc-offer', async(data)=>{
@@ -524,55 +567,190 @@
         function toggleMute(){if(localStream){isMuted=!isMuted;localStream.getAudioTracks().forEach(track=>track.enabled=!isMuted);document.getElementById('btn-toggle-mic').innerText=isMuted?"DESMUTEAR CANAL":"MUTEAR CANAL";}}
         function endCall(){if(socket)socket.emit('webrtc-hangup');executeLocalClose();}
         function executeLocalClose(){if(localStream){localStream.getTracks().forEach(track=>track.stop());localStream=null;}if(peerConnection){peerConnection.close();peerConnection=null;}document.getElementById('video-call-hud').style.display='none';document.getElementById('local-video').srcObject=null;document.getElementById('remote-video').srcObject=null;}
+        // EXTENSIÓN DE CONTROL: ADJUNTOS, TECLADO MÓVIL SEGURO Y TRANSFERS REALES
+        function setupNewAttachAndStorageEvents() {
+            const attachBtn = document.getElementById('btn-attach-trigger');
+            const attachMenu = document.getElementById('attach-menu-box');
+            const chatInput = document.getElementById('chat-input');
+            const optDoc = document.getElementById('attach-opt-doc');
+            const optVoice = document.getElementById('attach-opt-voice');
+            const optCam = document.getElementById('attach-opt-cam');
+            const fileIn = document.getElementById('hidden-file-input');
+            const camIn = document.getElementById('hidden-cam-input');
 
-        // EXTENSIÓN DE FUNCIONES INDEPENDIENTES PARA BOTONES ADICIONALES Y MENÚS
-        document.addEventListener("DOMContentLoaded", () => {
+            // Abrir micro-menú "+"
+            if (attachBtn && attachMenu && chatInput) {
+                attachBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    // BLINDAJE CONTRA TECLADOS: Oculta el teclado para evitar colisiones en pantalla
+                    chatInput.blur();
+                    attachMenu.style.display = attachMenu.style.display === 'flex' ? 'none' : 'flex';
+                });
+                document.addEventListener('click', () => { attachMenu.style.display = 'none'; });
+            }
+
+            // ENVIAR DOCUMENTOS / GALERÍA REAL DE FORMA GRATUITA
+            if (optDoc && fileIn) {
+                optDoc.addEventListener('click', () => fileIn.click());
+                fileIn.addEventListener('change', () => {
+                    if (fileIn.files.length > 0) {
+                        const selectedFile = fileIn.files[0];
+                        printHudLog(`[ADJUNTO]: Leyendo de forma segura: ${selectedFile.name}...`);
+                        
+                        const reader = new FileReader();
+                        reader.onload = function(e) {
+                            if (socket) {
+                                socket.emit('chat-message', {
+                                    type: 'file',
+                                    sender: document.getElementById('user-display').innerText,
+                                    fileData: e.target.result,
+                                    fileName: selectedFile.name
+                                });
+                            }
+                            // Lo renderiza de forma local en tu propia pantalla táctica
+                            const chatBox = document.getElementById('chat-box');
+                            const p = document.createElement('p'); p.style.margin = "5px 0"; p.style.fontFamily = "'Share Tech Mono'";
+                            p.innerHTML = `<b style="color:var(--neon-blue)">Tú:</b> 📦 Enviaste archivo: ${selectedFile.name}`;
+                            chatBox.appendChild(p); chatBox.scrollTop = chatBox.scrollHeight;
+                        };
+                        reader.readAsDataURL(selectedFile);
+                    }
+                });
+            }
+
+            // ENVIAR FOTOS / CAPTURAS MULTIMEDIA REALES DE LA CÁMARA NATIVA
+            if (optCam && camIn) {
+                optCam.addEventListener('click', () => camIn.click());
+                camIn.addEventListener('change', () => {
+                    if (camIn.files.length > 0) {
+                        const capturedFile = camIn.files[0];
+                        printHudLog(`[CÁMARA]: Procesando captura multimedia...`);
+                        
+                        const reader = new FileReader();
+                        reader.onload = function(e) {
+                            if (socket) {
+                                socket.emit('chat-message', {
+                                    type: 'file',
+                                    sender: document.getElementById('user-display').innerText,
+                                    fileData: e.target.result,
+                                    fileName: capturedFile.name || 'Captura_Camara.jpg'
+                                });
+                            }
+                            const chatBox = document.getElementById('chat-box');
+                            const p = document.createElement('p'); p.style.margin = "5px 0"; p.style.fontFamily = "'Share Tech Mono'";
+                            p.innerHTML = `<b style="color:var(--neon-blue)">Tú:</b> 📷 Enviaste multimedia capturado.`;
+                            chatBox.appendChild(p); chatBox.scrollTop = chatBox.scrollHeight;
+                        };
+                        reader.readAsDataURL(capturedFile);
+                    }
+                });
+            }
+
+            // LÓNICA DE GRABACIÓN REAL DE NOTAS DE VOZ (HARDWARE NATIVO)
+            const voiceBar = document.getElementById('voice-record-hud-bar');
+            const timerText = document.getElementById('voice-rec-timer');
+            const cancelVoiceBtn = document.getElementById('btn-cancel-voice');
+
+            if (optVoice && voiceBar && timerText && cancelVoiceBtn && chatInput) {
+                optVoice.addEventListener('click', async () => {
+                    try {
+                        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                        mediaRecorder = new MediaRecorder(stream);
+                        audioChunks = [];
+                        
+                        mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+                        mediaRecorder.onstop = () => {
+                            const audioBlob = new Blob(audioChunks, { type: 'audio/ogg; codecs=opus' });
+                            const reader = new FileReader();
+                            reader.onload = function(e) {
+                                if (socket && voiceDuration > 1) { // Evita enviar audios de 0 segundos
+                                    socket.emit('chat-message', {
+                                        type: 'voice',
+                                        sender: document.getElementById('user-display').innerText,
+                                        fileData: e.target.result
+                                    });
+                                    const chatBox = document.getElementById('chat-box');
+                                    const p = document.createElement('p'); p.style.margin = "5px 0"; p.style.fontFamily = "'Share Tech Mono'";
+                                    p.innerHTML = `<b style="color:var(--neon-blue)">Tú:</b> 🎙️ Enviaste nota de voz.`;
+                                    chatBox.appendChild(p); chatBox.scrollTop = chatBox.scrollHeight;
+                                }
+                            };
+                            reader.readAsDataURL(audioBlob);
+                            stream.getTracks().forEach(track => track.stop()); // Apaga el micrófono de inmediato
+                        };
+
+                        chatInput.style.display = 'none';
+                        voiceBar.style.display = 'flex';
+                        voiceDuration = 0; timerText.innerText = "00:00";
+                        printHudLog("Canal de audio abierto. Grabando nota de voz...");
+                        
+                        mediaRecorder.start();
+                        voiceTimerInterval = setInterval(() => {
+                            voiceDuration++;
+                            const mins = String(Math.floor(voiceDuration / 60)).padStart(2, '0');
+                            const secs = String(voiceDuration % 60).padStart(2, '0');
+                            timerText.innerText = `${mins}:${secs}`;
+                        }, 1000);
+                    } catch (err) {
+                        printHudLog("Error al abrir canal de grabación.", true);
+                    }
+                });
+
+                cancelVoiceBtn.addEventListener('click', () => {
+                    clearInterval(voiceTimerInterval);
+                    if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                        mediaRecorder.stop();
+                    }
+                    voiceBar.style.display = 'none';
+                    chatInput.style.display = 'flex';
+                    printHudLog("Nota de voz finalizada.");
+                });
+            }
+
+            // GESTOR DE ALMACENAMIENTO LOCAL EN ESPAÑOL DÓCIL
             const storageBtn = document.getElementById('btn-menu-storage');
             const storageLayer = document.getElementById('storage-quantum-layer');
             const closeStorageBtn = document.getElementById('btn-close-storage');
+            const uploadZone = document.getElementById('drop-upload-zone');
 
-            if (storageBtn && storageLayer && closeStorageBtn) {
+            if (storageBtn && storageLayer && closeStorageBtn && uploadZone) {
                 storageBtn.addEventListener('click', (e) => {
                     e.stopPropagation();
                     storageLayer.style.display = 'flex';
-                    printHudLog("Abriendo canal de almacenamiento masivo...");
                 });
                 closeStorageBtn.addEventListener('click', () => {
                     storageLayer.style.display = 'none';
-                    printHudLog("Canal de almacenamiento masivo cerrado.");
+                });
+                uploadZone.addEventListener('click', () => {
+                    if (fileIn) fileIn.click();
                 });
             }
 
+            // CONTROLES DE CABECERA ORIGINALES RESTAURADOS (MINIMIZAR CHAT)
             const chatToggleBtn = document.querySelector('.whatsapp-icon-btn');
-            const chatBox = document.getElementById('chat-box');
-            const chatInputBar = document.getElementById('chat-input-hud-bar');
-
-            if (chatToggleBtn && chatBox && chatInputBar) {
-                chatBox.classList.add('chat-hud-transition');
-                chatInputBar.classList.add('chat-hud-transition');
+            const chatBoxContainer = document.getElementById('chat-box');
+            if (chatToggleBtn && chatBoxContainer) {
+                chatBoxContainer.classList.add('chat-hud-transition');
+                document.getElementById('chat-input-hud-bar').classList.add('chat-hud-transition');
                 chatToggleBtn.addEventListener('click', () => {
-                    const isHidden = chatBox.classList.toggle('chat-hud-hidden');
-                    chatInputBar.classList.toggle('chat-hud-hidden', isHidden);
-                    chatToggleBtn.classList.toggle('btn-tactical-active', !isHidden);
-                    if (isHidden) printHudLog("Interfaz de chat minimizada. Pantalla completa activa.");
-                    else { printHudLog("Interfaz de chat restaurada."); chatBox.scrollTop = chatBox.scrollHeight; }
+                    const isHidden = chatBoxContainer.classList.toggle('chat-hud-hidden');
+                    document.getElementById('chat-input-hud-bar').classList.toggle('chat-hud-hidden', isHidden);
                 });
             }
 
+            // ESCÁNER DEL ESCUDO CUÁNTICO
             const shieldBtn = document.querySelector('.shield-quantum-btn');
             if (shieldBtn) {
                 shieldBtn.addEventListener('click', () => {
                     shieldBtn.classList.add('btn-shield-active');
                     printHudLog("INICIANDO ESCANEO DE SEGURIDAD CRIPTOGRÁFICA...");
                     setTimeout(() => {
-                        printHudLog("[SEGURIDAD]: PROTOCOLO PEER-TO-PEER VERIFICADO.");
                         printHudLog("[SEGURIDAD]: CANAL CIFRADO ENCRIPTADO AES-256.");
                         shieldBtn.classList.remove('btn-shield-active');
                     }, 1200);
                 });
             }
-        });
+        }
     </script>
 </body>
 </html>
-
