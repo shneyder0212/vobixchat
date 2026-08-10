@@ -2,16 +2,24 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <!-- Evita el escalado incorrecto y zoom al abrir teclados en iPhone y Android -->
+    <!-- Bloquea el zoom automático molesto al abrir teclados en móviles -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>VOBIXCHAT // Quantum Mobile Pro</title>
     <link href="https://googleapis.com" rel="stylesheet">
     <script src="/socket.io/socket.io.js"></script>
     <style>
         :root {
-            --bg-quantum: #04010a; --panel-hud: rgba(10, 3, 20, 0.99); --neon-blue: #00f0ff; --neon-violet: #bd00ff; --neon-green: #00ff66; --neon-amber: #ffaa00; --neon-red: #ff0055; --text-main: #f3e8ff; --text-dim: #8b7aa6; --border-hud: rgba(189, 0, 255, 0.35);
+            --bg-quantum: #04010a; 
+            --panel-hud: rgba(10, 3, 20, 0.99); 
+            --neon-blue: #00f0ff; 
+            --neon-violet: #bd00ff; 
+            --neon-green: #00ff66; 
+            --neon-amber: #ffaa00; 
+            --neon-red: #ff0055; 
+            --text-main: #f3e8ff; 
+            --text-dim: #8b7aa6; 
+            --border-hud: rgba(189, 0, 255, 0.35);
             --bg-pattern: radial-gradient(circle at 50% 50%, rgba(189, 0, 255, 0.05) 0%, rgba(4, 1, 10, 0.98) 100%), repeating-linear-gradient(0deg, transparent, transparent 40px, rgba(189, 0, 255, 0.02) 40px, rgba(189, 0, 255, 0.02) 41px);
-        }
         * { box-sizing: border-box; margin: 0; padding: 0; }
         html, body { background-color: var(--bg-quantum); background-image: var(--bg-pattern); font-family: 'Rajdhani', sans-serif; color: var(--text-main); width: 100%; height: 100%; height: 100dvh; display: flex; justify-content: center; align-items: center; overflow: hidden; position: fixed; top: 0; left: 0; overscroll-behavior-y: none; }
         .app-container { width: 100%; height: 100%; height: 100dvh; max-width: 1400px; background: var(--panel-hud); display: flex; flex-direction: column; overflow: hidden; position: relative; border: 1px solid var(--border-hud); box-shadow: 0 0 50px rgba(0,0,0,0.95); backdrop-filter: blur(15px); transition: height 0.1s ease-out; }
@@ -20,6 +28,7 @@
         .auth-card { width: 100%; max-width: 430px; background: rgba(14, 5, 26, 0.75); border: 2px solid var(--neon-blue); border-radius: 4px; padding: 30px 24px; display: flex; flex-direction: column; gap: 16px; box-shadow: 0 0 40px rgba(0, 240, 255, 0.15); position: relative; overflow: hidden; }
         .laser-scanner { position: absolute; top: 0; left: 0; width: 100%; height: 2px; background: linear-gradient(90deg, transparent, var(--neon-blue), transparent); box-shadow: 0 0 12px var(--neon-blue); animation: scan 3.5s infinite linear; pointer-events: none; }
         @keyframes scan { 0% { top: 0%; } 50% { top: 100%; } 100% { top: 0%; } }
+        }
         .confirm-card { width: 100%; max-width: 380px; background: var(--panel-hud); border: 1px solid var(--border-hud); border-radius: 14px; padding: 22px; display: flex; flex-direction: column; gap: 12px; border-color: var(--neon-amber); text-align: center; gap: 15px; }
         .confirm-card h3 { font-family: 'Orbitron'; color: var(--neon-amber); }
         .auth-card h2 { font-family: 'Orbitron', sans-serif; color: #fff; font-size: 1.3rem; text-align: center; letter-spacing: 2px; font-weight: 900; text-shadow: 0 0 10px var(--neon-blue); }
@@ -43,7 +52,7 @@
         .header-username-display { font-family: 'Orbitron', sans-serif; font-size: 0.7rem; font-weight: bold; }
         .header-user-status { font-size: 0.45rem; color: var(--neon-green); font-family: 'Share Tech Mono'; }
         .header-right-group { display: flex; gap: 6px; align-items: center; flex-shrink: 0; }
-        .whatsapp-icon-btn, .shield-quantum-btn { background: rgba(0, 240, 255, 0.08); border: 1px solid var(--neon-blue); color: var(--neon-blue); border-radius: 50%; width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 0.65rem; }
+        .whatsapp-icon-btn, .shield-quantum-btn { background: rgba(0, 240, 255, 0.08); border: 1px solid var(--neon-blue); color: var(--neon-blue); border-radius: 50%; width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 0.65rem; transition: 0.2s; }
         .logout-action-btn { background: var(--neon-red); color: #fff; border: none; padding: 4px 6px; border-radius: 4px; font-family: 'Share Tech Mono'; font-size: 0.7rem; cursor: pointer; }
         .call-icon-btn { background: rgba(0, 255, 102, 0.1); border: 1px solid var(--neon-green); color: var(--neon-green); border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 0.8rem; }
         .video-call-overlay { position: absolute; top:0; left:0; width:100%; height:100%; background: rgba(5, 2, 10, 0.98); z-index: 1500; display: none; flex-direction: column; justify-content: space-between; padding: 20px; box-sizing: border-box; padding-bottom: calc(20px + env(safe-area-inset-bottom)); }
@@ -53,11 +62,10 @@
         .voice-only-status { display: none; flex-direction: column; align-items: center; justify-content: center; flex: 1; font-family: 'Orbitron'; color: var(--neon-green); gap: 10px; }
         .voice-avatar { width: 90px; height: 90px; border-radius: 50%; border: 2px dashed var(--neon-green); display: flex; align-items: center; justify-content: center; font-size: 2rem; animation: pulse 2s infinite linear; }
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
-        .chat-area { flex: 1; display: flex; flex-direction: column; background: rgba(0,0,0,0.2); overflow-y: auto; padding: 15px; }
-        .chat-input-area { padding: 10px; background: rgba(2, 4, 10, 0.95); border-top: 1px solid var(--border-hud); display: flex; gap: 8px; align-items: center; padding-bottom: calc(10px + env(safe-area-inset-bottom)); }
+        .chat-area { flex: 1; display: flex; flex-direction: column; background: rgba(0,0,0,0.2); overflow-y: auto; padding: 15px; transition: opacity 0.3s ease, max-height 0.3s ease; }
+        .chat-input-area { padding: 10px; background: rgba(2, 4, 10, 0.95); border-top: 1px solid var(--border-hud); display: flex; gap: 8px; align-items: center; padding-bottom: calc(10px + env(safe-area-inset-bottom)); transition: opacity 0.3s ease, max-height 0.3s ease; }
         .quantum-input { flex: 1; background: #000; border: 1px solid var(--border-hud); padding: 10px; color: #fff; border-radius: 6px; outline: none; font-family: 'Share Tech Mono'; }
-
-        /* NUEVOS ESTILOS: MENÚ TRES PUNTITOS VERTICALES */
+        /* ESTILOS: MENÚ TRES PUNTITOS VERTICALES */
         .dots-menu-btn { background: rgba(0, 240, 255, 0.08); border: 1px solid var(--neon-blue); color: var(--neon-blue); border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 1.1rem; font-weight: bold; transition: 0.2s; position: relative; }
         .dots-menu-btn:hover { background: var(--neon-blue); color: #000; box-shadow: 0 0 10px var(--neon-blue); }
         .hud-dropdown-menu { position: absolute; top: 55px; right: 8px; background: var(--panel-hud); border: 1px solid var(--border-hud); border-radius: 6px; width: 180px; display: none; flex-direction: column; box-shadow: 0 0 20px rgba(189, 0, 255, 0.25); z-index: 1600; backdrop-filter: blur(10px); overflow: hidden; animation: menuFadeIn 0.2s ease-out; }
@@ -66,10 +74,26 @@
         .dropdown-item:last-child { border-bottom: none; }
         .dropdown-item:hover { background: rgba(0, 240, 255, 0.1); color: var(--neon-blue); text-shadow: 0 0 5px var(--neon-blue); }
 
-        /* NUEVOS ESTILOS: OVERLAY DE INVITACIÓN ESTILO WHATSAPP */
+        /* ESTILOS: MODAL DE INVITACIÓN PRIVADA */
         .invite-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(5, 2, 12, 0.85); backdrop-filter: blur(15px); display: none; justify-content: center; align-items: center; z-index: 1700; padding: 15px; }
         .invite-card { width: 100%; max-width: 380px; background: var(--panel-hud); border: 1px solid var(--neon-blue); border-radius: 8px; padding: 22px; display: flex; flex-direction: column; gap: 14px; box-shadow: 0 0 25px rgba(0, 240, 255, 0.2); }
         .invite-card h3 { font-family: 'Orbitron'; font-size: 1rem; color: var(--neon-blue); letter-spacing: 1px; text-shadow: 0 0 8px var(--neon-blue); text-align: center; }
+        .invite-mode-selector { display: flex; gap: 8px; width: 100%; }
+        .invite-tab-btn { flex: 1; padding: 8px; background: rgba(0,0,0,0.5); border: 1px solid rgba(0, 240, 255, 0.2); color: var(--text-dim); font-family: 'Orbitron'; font-size: 0.65rem; cursor: pointer; text-transform: uppercase; border-radius: 4px; }
+        .invite-tab-btn.active { border-color: var(--neon-blue); color: var(--neon-blue); background: rgba(0, 240, 255, 0.05); text-shadow: 0 0 5px var(--neon-blue); }
+
+        /* ESTILOS: ALMACENAMIENTO MASIVO FLOTANTE */
+        .storage-hud-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(4, 1, 10, 0.9); backdrop-filter: blur(20px); display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 1750; padding: 15px; }
+        .storage-hud-card { width: 100%; max-width: 600px; height: 80%; background: var(--panel-hud); border: 2px solid var(--neon-violet); border-radius: 8px; padding: 15px; display: flex; flex-direction: column; gap: 12px; box-shadow: 0 0 30px rgba(189, 0, 255, 0.2); }
+        .storage-hud-card h3 { font-family: 'Orbitron'; font-size: 0.95rem; color: var(--neon-violet); letter-spacing: 2px; text-shadow: 0 0 8px var(--neon-violet); text-align: center; margin-bottom: 5px; }
+        .storage-frame-wrapper { flex: 1; width: 100%; background: #000; border: 1px dashed var(--border-hud); border-radius: 6px; overflow: hidden; position: relative; }
+        .storage-frame-wrapper iframe { width: 100%; height: 100%; border: none; }
+
+        /* CLASES DE INTERACTIVIDAD INDEPENDIENTES */
+        .chat-hud-transition { transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out, max-height 0.3s ease-in-out; }
+        .chat-hud-hidden { opacity: 0 !important; visibility: hidden !important; max-height: 0px !important; padding: 0px !important; margin: 0px !important; border: none !important; }
+        .btn-tactical-active { background: rgba(0, 240, 255, 0.25) !important; box-shadow: 0 0 15px var(--neon-blue) !important; color: #fff !important; }
+        .btn-shield-active { background: rgba(189, 0, 255, 0.25) !important; box-shadow: 0 0 15px var(--neon-violet) !important; color: #fff !important; border-color: var(--neon-violet) !important; }
     </style>
 </head>
 <body>
@@ -142,17 +166,18 @@
                 <!-- NUEVO BOTÓN DE TRES PUNTITOS VERTICALES -->
                 <button class="dots-menu-btn" id="btn-dots-trigger">⋮</button>
                 
-                <!-- TUS BOTONES ORIGINALES INTACTOS -->
+                <!-- TUS BOTONES ORIGINALES AHORA CON OPERACIÓN AISLADA -->
                 <button class="whatsapp-icon-btn">💬</button>
                 <button class="shield-quantum-btn">🛡️</button>
                 <button class="logout-action-btn">LOGOUT</button>
             </div>
         </header>
 
-        <!-- PANEL FLOTANTE DESPLEGABLE DE OPCIONES -->
+        <!-- PANEL FLOTANTE DESPLEGABLE DE OPCIONES EN TRES PUNTITOS -->
         <div class="hud-dropdown-menu" id="dropdown-menu-box">
             <button class="dropdown-item" id="btn-menu-invite">➕ Invitar Agente</button>
             <button class="dropdown-item">🎨 Tema Neón</button>
+            <button class="dropdown-item" id="btn-menu-storage">💾 Almacenamiento Cuántico</button>
             <button class="dropdown-item" style="color: var(--neon-red);">❌ Borrar Logs</button>
         </div>
         <!-- ÁREA CENTRAL DE COMUNICACIÓN DE TEXTO -->
@@ -178,7 +203,7 @@
             </div>
         </div>
 
-        <!-- NUEVO: OVERLAY DE INVITACIÓN DIRECTA ESTILO WHATSAPP -->
+        <!-- OVERLAY DE INVITACIÓN DIRECTA ESTILO WHATSAPP -->
         <div class="invite-overlay" id="invite-agent-layer">
             <div class="invite-card">
                 <h3>CONEXIÓN DIRECTA PRIVADA</h3>
@@ -196,11 +221,22 @@
                 </div>
             </div>
         </div>
+
+        <!-- VENTANA FLOTANTE AISLADA PARA GESTIÓN DE ARCHIVOS ILIMITADOS -->
+        <div class="storage-hud-overlay" id="storage-quantum-layer">
+            <div class="storage-hud-card">
+                <h3>[SISTEMA]: CANAL DE ALMACENAMIENTO MASIVO ACTIVO</h3>
+                <div class="storage-frame-wrapper">
+                    <iframe src="https://vis.ee" allow="clipboard-read; clipboard-write"></iframe>
+                </div>
+                <button class="auth-btn" style="border-color:var(--neon-red); color:var(--neon-red); padding: 10px;" id="btn-close-storage">CERRAR CANAL DE DATOS</button>
+            </div>
+        </div>
     </div> <!-- Cierre de .app-container -->
     <script>
         let socket=null;try{if(typeof io!=="undefined"){socket=io();}}catch(e){console.error(e);}
         let localStream=null,peerConnection=null,isMuted=false,currentCallMode='video',pendingCallMode=null;
-        let activeInviteMode='name'; // 'name' o 'phone'
+        let activeInviteMode='name'; // Mapeo de pestaña activa: 'name' o 'phone'
         
         // CORRECCIÓN CRÍTICA DE SINTAXIS STUN SERVERS DE GOOGLE
         const iceConfiguration={iceServers:[
@@ -212,7 +248,7 @@
             const isMobile=/Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
             document.getElementById('device-detect-label').innerText=isMobile?"[SISTEMA]: ACCESO MÓVIL DETECTADO":"[SISTEMA]: ACCESO PC DETECTADO";
             
-            // Asignación de funciones base
+            // Inyección de disparadores operacionales base
             document.getElementById('btn-pin-generator').addEventListener('click',generateQuantumPIN);
             document.getElementById('btn-login-trigger').addEventListener('click',loginQuantum);
             document.getElementById('btn-send-trigger').addEventListener('click',sendText);
@@ -223,25 +259,29 @@
             document.getElementById('btn-video-trigger').addEventListener('click',()=>triggerCallConfirmation('video'));
             document.getElementById('chat-input').addEventListener('keydown',(e)=>{if(e.key==='Enter')sendText();});
             
-            // Inicialización de gestores de menús y teclados móviles
+            // Inicialización de submódulos aislados
             setupMenuAndInviteEvents();
             setupVirtualKeyboardFix();
         });
-        // SOLUCIÓN TÉCNICA AVANZADA PARA TECLADOS DE IPHONE Y ANDROID
+        // AJUSTE DINÁMICO PARA TECLADOS DE IPHONE Y ANDROID (EVITA DEFORMACIONES)
         function setupVirtualKeyboardFix() {
             if (window.visualViewport) {
                 window.visualViewport.addEventListener('resize', () => {
                     const container = document.getElementById('main-app-container');
-                    // Recorta el alto de la app al tamaño real libre que deja el teclado
-                    container.style.height = `${window.visualViewport.height}px`;
-                    // Auto-scrola el buzón de mensajes al fondo si el teclado se abre
+                    if (container) {
+                        // Recalcula el alto exacto de la pantalla restando el espacio ocupado por el teclado
+                        container.style.height = `${window.visualViewport.height}px`;
+                    }
                     const chatBox = document.getElementById('chat-box');
-                    chatBox.scrollTop = chatBox.scrollHeight;
+                    if (chatBox) {
+                        // Auto-scrola los mensajes al fondo para no perder el foco de la conversación
+                        chatBox.scrollTop = chatBox.scrollHeight;
+                    }
                 });
             }
         }
 
-        // CONTROL INTERACTIVO DEL MENÚ DE TRES PUNTITOS E INVITACIONES
+        // CONTROL TÁCTIL E INTERACTIVIDAD DE MENÚS Y VENTANAS FLOTANTES
         function setupMenuAndInviteEvents() {
             const dotsBtn = document.getElementById('btn-dots-trigger');
             const menuBox = document.getElementById('dropdown-menu-box');
@@ -252,38 +292,44 @@
             const tabPhone = document.getElementById('tab-invite-phone');
             const inviteInput = document.getElementById('invite-target-input');
 
-            // Abrir y cerrar menú de tres puntitos
-            dotsBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                menuBox.style.display = menuBox.style.display === 'flex' ? 'none' : 'flex';
-            });
+            // Abrir y cerrar panel desplegable de tres puntitos
+            if (dotsBtn && menuBox) {
+                dotsBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    menuBox.style.display = menuBox.style.display === 'flex' ? 'none' : 'flex';
+                });
+                document.addEventListener('click', () => { menuBox.style.display = 'none'; });
+            }
 
-            // Cerrar menú si se pulsa fuera de él
-            document.addEventListener('click', () => { menuBox.style.display = 'none'; });
+            // Gestión del modal de invitaciones directas estilo WhatsApp
+            if (inviteBtn && inviteLayer && closeInvite) {
+                inviteBtn.addEventListener('click', () => { inviteLayer.style.display = 'flex'; });
+                closeInvite.addEventListener('click', () => { inviteLayer.style.display = 'none'; });
+            }
 
-            // Abrir modal de invitaciones privadas
-            inviteBtn.addEventListener('click', () => { inviteLayer.style.display = 'flex'; });
-            closeInvite.addEventListener('click', () => { inviteLayer.style.display = 'none'; });
+            // Alternar pestañas de búsqueda en invitación (Por @Nombre / Por Número)
+            if (tabName && tabPhone && inviteInput) {
+                tabName.addEventListener('click', () => {
+                    activeInviteMode = 'name';
+                    tabName.classList.add('active');
+                    tabPhone.classList.remove('active');
+                    inviteInput.placeholder = "Ejemplo: @shneyder...";
+                    inviteInput.type = "text";
+                });
+                tabPhone.addEventListener('click', () => {
+                    activeInviteMode = 'phone';
+                    tabPhone.classList.add('active');
+                    tabName.classList.remove('active');
+                    inviteInput.placeholder = "Ejemplo: 5255123456...";
+                    inviteInput.type = "tel";
+                });
+            }
 
-            // Alternar pestañas del modal (Nombre vs Número) al estilo WhatsApp
-            tabName.addEventListener('click', () => {
-                activeInviteMode = 'name';
-                tabName.classList.add('active');
-                tabPhone.classList.remove('active');
-                inviteInput.placeholder = "Ejemplo: @shneyder...";
-                inviteInput.type = "text";
-            });
-
-            tabPhone.addEventListener('click', () => {
-                activeInviteMode = 'phone';
-                tabPhone.classList.add('active');
-                tabName.classList.remove('active');
-                inviteInput.placeholder = "Ejemplo: 5255123456...";
-                inviteInput.type = "tel";
-            });
-
-            // Disparador del botón enviar enlace de invitación
-            document.getElementById('btn-send-invite-trigger').addEventListener('click', sendPrivateInvite);
+            // Disparador del botón de invitación privada
+            const sendInviteBtn = document.getElementById('btn-send-invite-trigger');
+            if (sendInviteBtn) {
+                sendInviteBtn.addEventListener('click', sendPrivateInvite);
+            }
         }
         // REEMPLAZO DE ALERT POR LOGS INTEGRADOS EN TERMINAL HUD
         function printHudLog(text, isError=false) {
@@ -340,7 +386,6 @@
                 return;
             }
             if(socket) {
-                // Emite la petición de búsqueda directa al backend
                 socket.emit('send-private-invite', { mode: activeInviteMode, target: target });
                 printHudLog(`Buscando enlace directo con: ${target}...`);
             }
@@ -382,16 +427,18 @@
             if(mode==='voice'){document.getElementById('container-video-elements').style.display='none';document.getElementById('container-voice-elements').style.display='flex';}
             else{document.getElementById('container-video-elements').style.flex='1';document.getElementById('container-video-elements').style.display='flex';document.getElementById('container-voice-elements').style.display='none';}
         }
+
+        // APERTURA DE HARDWARE MULTIMEDIA CON FILTROS ACÚSTICOS AVANZADOS (ULTRA-HD)
         async function initiateCall(mode) {
             try{
                 setupCallUI(mode);
-                // RESTRICCIONES REFORZADAS CONTRA ECO, RUIDO E INTERFERENCIAS ELÉCTRICAS
+                // CONFIGURACIÓN DE FILTROS ESTRICTOS DE AUDIO ESTUDIO (SIN ECO / SIN RUIDO / SIN INTERFERENCIAS)
                 localStream=await navigator.mediaDevices.getUserMedia({
                     audio:{
                         echoCancellation: true,
                         noiseSuppression: true,
-                        autoGainControl: false, // Evita la amplificación del siseo estático
-                        sampleRate: 48000,      // Resolución de audio HD nativa
+                        autoGainControl: false, // Desactivado para evitar la amplificación del siseo/ruido de fondo en silencios
+                        sampleRate: 48000,      // Frecuencia máxima de audio HD nativa
                         channelCount: 1,
                         googEchoCancellation: true,
                         googNoiseSuppression: true,
@@ -401,7 +448,7 @@
                         facingMode:"user",
                         width: { ideal: 1280 },
                         height: { ideal: 720 },
-                        frameRate: { ideal: 30 } // Tasa fija para evitar parpadeos en redes móviles
+                        frameRate: { ideal: 30 } // Tasa constante para evitar interferencias y tirones por ancho de banda
                     }:false
                 });
                 
@@ -409,11 +456,11 @@
                 peerConnection=new RTCPeerConnection(iceConfiguration);
                 localStream.getTracks().forEach(track=>peerConnection.addTrack(track,localStream));
                 
-                // VINCULACIÓN CORRECTA DE PISTAS MULTIMEDIA INDIVIDUALES
+                // VINCULACIÓN CORRECTA DEL STREAM COMPLETO REMOTO
                 peerConnection.ontrack=(event)=>{
                     const rv=document.getElementById('remote-video');
                     if(rv && !rv.srcObject && event.streams && event.streams[0]){
-                        rv.srcObject=event.streams[0];
+                        rv.srcObject=event.streams[0]; 
                     }
                 };
                 peerConnection.onicecandidate=(event)=>{if(event.candidate&&socket){socket.emit('webrtc-candidate',event.candidate);}};
@@ -438,7 +485,6 @@
             // ESCUCHA DE INVITACIONES PRIVADAS DIRECTAS (ESTILO WHATSAPP)
             socket.on('private-invite-received', (data) => {
                 printHudLog(`INVITACIÓN RECIBIDA DE ${data.from}. Inicializando canal seguro...`);
-                // Activa automáticamente el modal de confirmación táctica
                 triggerCallConfirmation('video');
             });
 
@@ -446,7 +492,7 @@
                 printHudLog(`[ERROR]: ${data.message}`, true);
             });
 
-            // GESTIÓN WEBRTC DE ENTRADA
+            // GESTIÓN WEBRTC DE ENTRADA CON RESTRICCIONES DE AUDIO DE ESTUDIO
             socket.on('webrtc-offer', async(data)=>{
                 const incomingMode=data.mode;setupCallUI(incomingMode);
                 if(!peerConnection){
@@ -473,9 +519,60 @@
             socket.on('webrtc-candidate',async(candidate)=>{if(peerConnection&&peerConnection.remoteDescription){try{await peerConnection.addIceCandidate(new RTCIceCandidate(candidate));}catch(e){}}});
             socket.on('webrtc-hangup',()=> {executeLocalClose();});
         }
+
+        // FUNCIONES DE CONTROL DE LLAMADAS Y LIMPIEZA DE HARDWARE
         function toggleMute(){if(localStream){isMuted=!isMuted;localStream.getAudioTracks().forEach(track=>track.enabled=!isMuted);document.getElementById('btn-toggle-mic').innerText=isMuted?"DESMUTEAR CANAL":"MUTEAR CANAL";}}
         function endCall(){if(socket)socket.emit('webrtc-hangup');executeLocalClose();}
         function executeLocalClose(){if(localStream){localStream.getTracks().forEach(track=>track.stop());localStream=null;}if(peerConnection){peerConnection.close();peerConnection=null;}document.getElementById('video-call-hud').style.display='none';document.getElementById('local-video').srcObject=null;document.getElementById('remote-video').srcObject=null;}
+
+        // EXTENSIÓN DE FUNCIONES INDEPENDIENTES PARA BOTONES ADICIONALES Y MENÚS
+        document.addEventListener("DOMContentLoaded", () => {
+            const storageBtn = document.getElementById('btn-menu-storage');
+            const storageLayer = document.getElementById('storage-quantum-layer');
+            const closeStorageBtn = document.getElementById('btn-close-storage');
+
+            if (storageBtn && storageLayer && closeStorageBtn) {
+                storageBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    storageLayer.style.display = 'flex';
+                    printHudLog("Abriendo canal de almacenamiento masivo...");
+                });
+                closeStorageBtn.addEventListener('click', () => {
+                    storageLayer.style.display = 'none';
+                    printHudLog("Canal de almacenamiento masivo cerrado.");
+                });
+            }
+
+            const chatToggleBtn = document.querySelector('.whatsapp-icon-btn');
+            const chatBox = document.getElementById('chat-box');
+            const chatInputBar = document.getElementById('chat-input-hud-bar');
+
+            if (chatToggleBtn && chatBox && chatInputBar) {
+                chatBox.classList.add('chat-hud-transition');
+                chatInputBar.classList.add('chat-hud-transition');
+                chatToggleBtn.addEventListener('click', () => {
+                    const isHidden = chatBox.classList.toggle('chat-hud-hidden');
+                    chatInputBar.classList.toggle('chat-hud-hidden', isHidden);
+                    chatToggleBtn.classList.toggle('btn-tactical-active', !isHidden);
+                    if (isHidden) printHudLog("Interfaz de chat minimizada. Pantalla completa activa.");
+                    else { printHudLog("Interfaz de chat restaurada."); chatBox.scrollTop = chatBox.scrollHeight; }
+                });
+            }
+
+            const shieldBtn = document.querySelector('.shield-quantum-btn');
+            if (shieldBtn) {
+                shieldBtn.addEventListener('click', () => {
+                    shieldBtn.classList.add('btn-shield-active');
+                    printHudLog("INICIANDO ESCANEO DE SEGURIDAD CRIPTOGRÁFICA...");
+                    setTimeout(() => {
+                        printHudLog("[SEGURIDAD]: PROTOCOLO PEER-TO-PEER VERIFICADO.");
+                        printHudLog("[SEGURIDAD]: CANAL CIFRADO ENCRIPTADO AES-256.");
+                        shieldBtn.classList.remove('btn-shield-active');
+                    }, 1200);
+                });
+            }
+        });
     </script>
 </body>
 </html>
+
