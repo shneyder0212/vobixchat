@@ -8,7 +8,16 @@
     <script src="/socket.io/socket.io.js"></script>
     <style>
         :root {
-            --bg-quantum: #04010a; --panel-hud: rgba(10, 3, 20, 0.99); --neon-blue: #00f0ff; --neon-violet: #bd00ff; --neon-green: #00ff66; --neon-amber: #ffaa00; --neon-red: #ff0055; --text-main: #f3e8ff; --text-dim: #8b7aa6; --border-hud: rgba(189, 0, 255, 0.35);
+            --bg-quantum: #04010a; 
+            --panel-hud: rgba(10, 3, 20, 0.99); 
+            --neon-blue: #00f0ff; 
+            --neon-violet: #bd00ff; 
+            --neon-green: #00ff66; 
+            --neon-amber: #ffaa00; 
+            --neon-red: #ff0055; 
+            --text-main: #f3e8ff; 
+            --text-dim: #8b7aa6; 
+            --border-hud: rgba(189, 0, 255, 0.35);
             --bg-pattern: radial-gradient(circle at 50% 50%, rgba(189, 0, 255, 0.05) 0%, rgba(4, 1, 10, 0.98) 100%), repeating-linear-gradient(0deg, transparent, transparent 40px, rgba(189, 0, 255, 0.02) 40px, rgba(189, 0, 255, 0.02) 41px);
         }
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -34,7 +43,7 @@
         .phone-input-style { flex: 1; background: rgba(0,0,0,0.6); border: 1px solid var(--border-hud); color: #fff; padding: 14px; font-family: 'Share Tech Mono'; border-radius: 4px; outline: none; font-size: 1rem; width: 100%; }
         .big-pin-display { font-family: 'Orbitron', sans-serif; font-size: 2.4rem; color: var(--neon-green); text-align: center; letter-spacing: 6px; background: rgba(0,255,102,0.03); border: 1px dashed var(--neon-green); padding: 16px; border-radius: 4px; margin: 5px 0; display: none; text-shadow: 0 0 12px var(--neon-green); position: relative; }
         .big-pin-display::before { content: 'CIFRADO ENCRIPTADO AES-256'; position: absolute; bottom: 2px; left: 50%; transform: translateX(-50%); font-family: 'Share Tech Mono'; font-size: 0.45rem; color: rgba(0,255,102,0.5); letter-spacing: 1px; }
-        .hud-logger { width: 100%; background: rgba(0,0,0,0.4); border: 1px solid rgba(0, 240, 255, 0.1); padding: 6px; font-family: 'Share Tech Mono'; font-size: 0.6rem; color: var(--text-dim); display: flex; flex-direction: column; gap: 2px; max-height: 40px; overflow: hidden; }
+        .hud-logger { width: 100%; background: rgba(0,0,0,0.4); border: 1px solid rgba(0, 240, 255, 0.1); padding: 6px; font-family: 'Share Tech Mono'; font-size: 0.6rem; color: var(--text-dim); display: flex; flex-direction: column; gap: 2px; max-height: 40px; overflow-y: auto; }
         .main-header-bar { padding: 4px 8px; background: rgba(2, 4, 10, 0.95); border-bottom: 1px solid var(--border-hud); display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; z-index: 100; height: 50px; }
         .header-profile-section { display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0; }
         .profile-avatar-container { width: 32px; height: 32px; border-radius: 50%; border: 1px solid var(--neon-blue); background: linear-gradient(135deg, var(--neon-blue), var(--neon-violet)); display: flex; align-items: center; justify-content: center; font-family: 'Orbitron'; font-weight: bold; color: #000; font-size: 0.75rem; flex-shrink: 0; }
@@ -92,7 +101,7 @@
                 <div class="big-pin-display" id="pin-display">0000</div>
                 <button class="auth-btn" id="btn-login-trigger" style="display:none; border-color: var(--neon-green); color: var(--neon-green);">INICIALIZAR INTERFAZ HUD</button>
 
-                <div class="hud-logger">
+                <div class="hud-logger" id="system-logger">
                     <div>[SYS]: CANAL CUÁNTICO INICIALIZADO...</div>
                     <div id="log-dynamic">[SYS]: ESPERANDO CREDENCIALES DE AGENTE...</div>
                 </div>
@@ -131,7 +140,6 @@
                 <button class="logout-action-btn">LOGOUT</button>
             </div>
         </header>
-        
         <!-- ÁREA CENTRAL DE COMUNICACIÓN DE TEXTO -->
         <div class="chat-area" id="chat-box"></div>
         <div class="chat-input-area">
@@ -149,16 +157,21 @@
                 <div class="voice-avatar">🎙️</div>
                 <div id="voice-call-label">TRANSMISIÓN DE VOZ ACTIVA...</div>
             </div>
-            <div class="call-controls">
+            <div class="call-controls" style="display:flex; gap:10px; width:100%;">
                 <button id="btn-toggle-mic" class="auth-btn" style="border-color:var(--neon-amber); color:var(--neon-amber); flex:1;">MUTEAR CANAL</button>
                 <button id="btn-hangup" class="auth-btn" style="border-color:var(--neon-red); color:var(--neon-red); flex:1;">CERRAR ENLACE</button>
             </div>
         </div>
-    </div>
+    </div> <!-- Cierre de .app-container -->
     <script>
         let socket=null;try{if(typeof io!=="undefined"){socket=io();}}catch(e){console.error(e);}
         let localStream=null,peerConnection=null,isMuted=false,currentCallMode='video',pendingCallMode=null;
-        const iceConfiguration={iceServers:[{urls:'stun:://google.com'}]};
+        
+        // CORRECCIÓN CRÍTICA DE SINTAXIS STUN SERVERS DE GOOGLE
+        const iceConfiguration={iceServers:[
+            {urls:'stun:://google.com'},
+            {urls:'stun:://google.com'}
+        ]};
         
         document.addEventListener("DOMContentLoaded",()=>{
             const isMobile=/Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
@@ -173,18 +186,31 @@
             document.getElementById('btn-video-trigger').addEventListener('click',()=>triggerCallConfirmation('video'));
             document.getElementById('chat-input').addEventListener('keydown',(e)=>{if(e.key==='Enter')sendText();});
         });
+        // REEMPLAZO DE ALERT POR LOGS INTEGRADOS EN TERMINAL HUD
+        function printHudLog(text, isError=false) {
+            const logger = document.getElementById('system-logger');
+            const logLine = document.createElement('div');
+            logLine.innerText = `[SYS]: ${text}`;
+            if(isError) logLine.style.color = "var(--neon-red)";
+            else logLine.style.color = "var(--neon-green)";
+            logger.appendChild(logLine);
+            logger.scrollTop = logger.scrollHeight;
+        }
 
         function generateQuantumPIN(){
             const name=document.getElementById('username-in').value.trim();
             const phone=document.getElementById('phone-in').value.trim();
-            if(!name||!phone)return alert("Por favor, rellene el Usuario y el Teléfono.");
+            if(!name||!phone) {
+                printHudLog("ERROR: Faltan ingresar credenciales de Agente.", true);
+                return;
+            }
             
             const pin=Math.floor(1000+Math.random()*9000);
             const display=document.getElementById('pin-display');
             display.innerText=pin;
             display.style.display='block';
             
-            document.getElementById('log-dynamic').innerText="[SYS]: PIN GENERADO ACCESO AUTORIZADO.";
+            document.getElementById('log-dynamic').innerText="[SYS]: PIN GENERADO. ACCESO AUTORIZADO.";
             document.getElementById('log-dynamic').style.color="var(--neon-green)";
             
             document.getElementById('btn-pin-generator').style.display='none';
@@ -197,7 +223,6 @@
             document.getElementById('avatar-char').innerText=name.substring(0,2).toUpperCase();
             document.getElementById('auth-layer').style.display='none';
         }
-        
         function sendText(){
             const input=document.getElementById('chat-input');if(!input.value.trim())return;
             const chatBox=document.getElementById('chat-box'),p=document.createElement('p');
@@ -221,7 +246,6 @@
             if(mode==='voice'){document.getElementById('container-video-elements').style.display='none';document.getElementById('container-voice-elements').style.display='flex';}
             else{document.getElementById('container-video-elements').style.flex='1';document.getElementById('container-video-elements').style.display='flex';document.getElementById('container-voice-elements').style.display='none';}
         }
-        
         async function initiateCall(mode) {
             try{
                 setupCallUI(mode);
@@ -231,9 +255,12 @@
                 peerConnection.ontrack=(event)=>{const rv=document.getElementById('remote-video');if(rv&&!rv.srcObject&&event.streams){rv.srcObject=event.streams;}};
                 peerConnection.onicecandidate=(event)=>{if(event.candidate&&socket){socket.emit('webrtc-candidate',event.candidate);}};
                 const offer=await peerConnection.createOffer();await peerConnection.setLocalDescription(offer);if(socket)socket.emit('webrtc-offer',{offer:offer,mode:mode});
-            }catch(err){console.error(err);executeLocalClose();alert("Verifique permisos de cámara y micrófono.");}
+            }catch(err){
+                console.error(err);
+                executeLocalClose();
+                printHudLog("Fallo de hardware: Denegado el acceso a Multimedia.", true);
+            }
         }
-        
         if(socket){
             socket.on('webrtc-offer', async(data)=>{
                 const incomingMode=data.mode;setupCallUI(incomingMode);
