@@ -64,6 +64,8 @@
         .voice-avatar { width: 90px; height: 90px; border-radius: 50%; border: 2px dashed var(--neon-green); display: flex; align-items: center; justify-content: center; font-size: 2rem; animation: pulse 2s infinite linear; }
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
         .chat-area { flex: 1; display: flex; flex-direction: column; background: rgba(0,0,0,0.2); overflow-y: auto; padding: 15px; transition: opacity 0.3s ease, max-height 0.3s ease; }
+        .chat-input-area { padding: 10px; background: rgba(2, 4, 10, 0.95); border-top: 1px solid var(--border-hud); display: flex; gap: 8px; align-items: center; padding-bottom: calc(10px + env(safe-area-inset-bottom)); transition: opacity 0.3s ease, max-height 0.3s ease; position: relative; }
+        .quantum-input { flex: 1; background: #000; border: 1px solid var(--border-hud); padding: 10px; color: #fff; border-radius: 6px; outline: none; font-family: 'Share Tech Mono'; }
         /* NUEVO ESTILO WHATSAPP: BARRA DE ENTRADA INFERIOR COMPLETA (IMAGEN 1) */
         .chat-input-area { padding: 8px; background: transparent; display: flex; gap: 8px; align-items: center; padding-bottom: calc(8px + env(safe-area-inset-bottom)); transition: opacity 0.3s ease, max-height 0.3s ease; position: relative; width: 100%; box-sizing: border-box; }
         
@@ -96,7 +98,7 @@
 
         /* ESTILOS: MODALES Y ALMACENAMIENTO LOCAL */
         .invite-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(5, 2, 12, 0.85); backdrop-filter: blur(15px); display: none; justify-content: center; align-items: center; z-index: 1700; padding: 15px; }
-        .invite-card { width: 100%; max-width: 380px; background: var(--panel-hud); border: 1px solid var(--neon-blue); border-radius: 8px; padding: 22px; display: flex; flex-direction: column; gap: 14px; box-shadow: 0 0 25px rgba(0, 240, 255, 0.2); }
+        .invite-card { width: 100%; max-width: 380px; background: var(--panel-hud); border: 1px solid var(--border-hud); border-radius: 8px; padding: 22px; display: flex; flex-direction: column; gap: 14px; box-shadow: 0 0 25px rgba(0, 240, 255, 0.2); }
         .invite-card h3 { font-family: 'Orbitron'; font-size: 1rem; color: var(--neon-blue); letter-spacing: 1px; text-shadow: 0 0 8px var(--neon-blue); text-align: center; }
         .invite-mode-selector { display: flex; gap: 8px; width: 100%; }
         .invite-tab-btn { flex: 1; padding: 8px; background: rgba(0,0,0,0.5); border: 1px solid rgba(0, 240, 255, 0.2); color: var(--text-dim); font-family: 'Orbitron'; font-size: 0.65rem; cursor: pointer; text-transform: uppercase; border-radius: 4px; }
@@ -166,11 +168,11 @@
             </div>
         </div>
 
-        <!-- BARRA SUPERIOR RECONFIGURADA ESTILO WHATSAPP (IMAGEN 2) -->
+        <!-- BARRA SUPERIOR RECONFIGURADA ESTILO WHATSAPP CON ID EN FLECHA DE VOLVER -->
         <header class="main-header-bar">
             <div class="header-profile-section">
-                <!-- Flecha de volver nativa -->
-                <span class="header-back-arrow">←</span>
+                <!-- SE ASIGNA EL ID ÚNICO PARA CAPTURAR LA ACCIÓN DE SALIDA DE LA APP -->
+                <span class="header-back-arrow" id="btn-back-logout">←</span>
                 <div class="profile-avatar-container" id="avatar-char">VX</div>
                 <div class="header-info-group">
                     <span class="header-username-display" id="user-display">Invitado</span>
@@ -178,14 +180,11 @@
                 </div>
             </div>
             <div class="header-right-group">
-                <!-- ICONOS DIRECTOS LIMPIOS SIN SIGNOS EXTRAÑOS -->
                 <button class="call-icon-btn" id="btn-video-trigger">📹</button>
                 <button class="call-icon-btn" id="btn-voice-trigger">📞</button>
                 
-                <!-- BOTÓN VERTICAL DE TRES PUNTITOS DE WHATSAPP -->
                 <button class="dots-menu-btn" id="btn-dots-trigger">⋮</button>
                 
-                <!-- HERRAMIENTAS ADICIONALES OCULTAS O REDUCIDAS A ACCESOS MINIMALISTAS -->
                 <button class="whatsapp-icon-btn" style="display: none;">💬</button>
                 <button class="shield-quantum-btn" style="display: none;">🛡️</button>
                 <button class="logout-action-btn" style="padding: 2px 5px; font-size: 0.6rem;">LOGOUT</button>
@@ -309,6 +308,10 @@
             document.getElementById('btn-voice-trigger').addEventListener('click',()=>triggerCallConfirmation('voice'));
             document.getElementById('btn-video-trigger').addEventListener('click',()=>triggerCallConfirmation('video'));
             document.getElementById('chat-input').addEventListener('keydown',(e)=>{if(e.key==='Enter')handleMainActionTrigger();});
+            
+            // ENLAZAR LA ACCIÓN DE SALIDA DE LA APP DIRECTAMENTE A LA FLECHA DE VOLVER ATRÁS
+            const backBtn = document.getElementById('btn-back-logout');
+            if (backBtn) { backBtn.addEventListener('click', () => { window.location.reload(); }); }
             
             // Alternancia dinámica del botón verde (Micrófono o Enviar) al escribir al estilo WhatsApp
             document.getElementById('chat-input').addEventListener('input',toggleInputIconHUD);
