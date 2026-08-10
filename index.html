@@ -2,27 +2,19 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <!-- Evita el escalado incorrecto y zoom al abrir teclados en iPhone y Android -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>VOBIXCHAT // Quantum Mobile Pro</title>
     <link href="https://googleapis.com" rel="stylesheet">
     <script src="/socket.io/socket.io.js"></script>
     <style>
         :root {
-            --bg-quantum: #04010a; 
-            --panel-hud: rgba(10, 3, 20, 0.99); 
-            --neon-blue: #00f0ff; 
-            --neon-violet: #bd00ff; 
-            --neon-green: #00ff66; 
-            --neon-amber: #ffaa00; 
-            --neon-red: #ff0055; 
-            --text-main: #f3e8ff; 
-            --text-dim: #8b7aa6; 
-            --border-hud: rgba(189, 0, 255, 0.35);
+            --bg-quantum: #04010a; --panel-hud: rgba(10, 3, 20, 0.99); --neon-blue: #00f0ff; --neon-violet: #bd00ff; --neon-green: #00ff66; --neon-amber: #ffaa00; --neon-red: #ff0055; --text-main: #f3e8ff; --text-dim: #8b7aa6; --border-hud: rgba(189, 0, 255, 0.35);
             --bg-pattern: radial-gradient(circle at 50% 50%, rgba(189, 0, 255, 0.05) 0%, rgba(4, 1, 10, 0.98) 100%), repeating-linear-gradient(0deg, transparent, transparent 40px, rgba(189, 0, 255, 0.02) 40px, rgba(189, 0, 255, 0.02) 41px);
         }
         * { box-sizing: border-box; margin: 0; padding: 0; }
         html, body { background-color: var(--bg-quantum); background-image: var(--bg-pattern); font-family: 'Rajdhani', sans-serif; color: var(--text-main); width: 100%; height: 100%; height: 100dvh; display: flex; justify-content: center; align-items: center; overflow: hidden; position: fixed; top: 0; left: 0; overscroll-behavior-y: none; }
-        .app-container { width: 100%; height: 100%; height: 100dvh; max-width: 1400px; background: var(--panel-hud); display: flex; flex-direction: column; overflow: hidden; position: relative; border: 1px solid var(--border-hud); box-shadow: 0 0 50px rgba(0,0,0,0.95); backdrop-filter: blur(15px); }
+        .app-container { width: 100%; height: 100%; height: 100dvh; max-width: 1400px; background: var(--panel-hud); display: flex; flex-direction: column; overflow: hidden; position: relative; border: 1px solid var(--border-hud); box-shadow: 0 0 50px rgba(0,0,0,0.95); backdrop-filter: blur(15px); transition: height 0.1s ease-out; }
         .auth-overlay, .confirm-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(3, 1, 6, 0.97); backdrop-filter: blur(30px); display: flex; justify-content: center; align-items: center; z-index: 2000; padding: 15px; }
         .confirm-overlay { display: none; z-index: 1800; background: rgba(5,2,12,0.85); }
         .auth-card { width: 100%; max-width: 430px; background: rgba(14, 5, 26, 0.75); border: 2px solid var(--neon-blue); border-radius: 4px; padding: 30px 24px; display: flex; flex-direction: column; gap: 16px; box-shadow: 0 0 40px rgba(0, 240, 255, 0.15); position: relative; overflow: hidden; }
@@ -64,10 +56,24 @@
         .chat-area { flex: 1; display: flex; flex-direction: column; background: rgba(0,0,0,0.2); overflow-y: auto; padding: 15px; }
         .chat-input-area { padding: 10px; background: rgba(2, 4, 10, 0.95); border-top: 1px solid var(--border-hud); display: flex; gap: 8px; align-items: center; padding-bottom: calc(10px + env(safe-area-inset-bottom)); }
         .quantum-input { flex: 1; background: #000; border: 1px solid var(--border-hud); padding: 10px; color: #fff; border-radius: 6px; outline: none; font-family: 'Share Tech Mono'; }
+
+        /* NUEVOS ESTILOS: MENÚ TRES PUNTITOS VERTICALES */
+        .dots-menu-btn { background: rgba(0, 240, 255, 0.08); border: 1px solid var(--neon-blue); color: var(--neon-blue); border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 1.1rem; font-weight: bold; transition: 0.2s; position: relative; }
+        .dots-menu-btn:hover { background: var(--neon-blue); color: #000; box-shadow: 0 0 10px var(--neon-blue); }
+        .hud-dropdown-menu { position: absolute; top: 55px; right: 8px; background: var(--panel-hud); border: 1px solid var(--border-hud); border-radius: 6px; width: 180px; display: none; flex-direction: column; box-shadow: 0 0 20px rgba(189, 0, 255, 0.25); z-index: 1600; backdrop-filter: blur(10px); overflow: hidden; animation: menuFadeIn 0.2s ease-out; }
+        @keyframes menuFadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+        .dropdown-item { padding: 12px 14px; font-family: 'Share Tech Mono', monospace; font-size: 0.75rem; color: var(--text-main); text-align: left; background: transparent; border: none; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: 0.2s; border-bottom: 1px solid rgba(189, 0, 255, 0.1); width: 100%; }
+        .dropdown-item:last-child { border-bottom: none; }
+        .dropdown-item:hover { background: rgba(0, 240, 255, 0.1); color: var(--neon-blue); text-shadow: 0 0 5px var(--neon-blue); }
+
+        /* NUEVOS ESTILOS: OVERLAY DE INVITACIÓN ESTILO WHATSAPP */
+        .invite-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(5, 2, 12, 0.85); backdrop-filter: blur(15px); display: none; justify-content: center; align-items: center; z-index: 1700; padding: 15px; }
+        .invite-card { width: 100%; max-width: 380px; background: var(--panel-hud); border: 1px solid var(--neon-blue); border-radius: 8px; padding: 22px; display: flex; flex-direction: column; gap: 14px; box-shadow: 0 0 25px rgba(0, 240, 255, 0.2); }
+        .invite-card h3 { font-family: 'Orbitron'; font-size: 1rem; color: var(--neon-blue); letter-spacing: 1px; text-shadow: 0 0 8px var(--neon-blue); text-align: center; }
     </style>
 </head>
 <body>
-    <div class="app-container">
+    <div class="app-container" id="main-app-container">
         <!-- VENTANA CENTRAL DE CONTROL DE REGISTRO E IDENTIDAD -->
         <div class="auth-overlay" id="auth-layer">
             <div class="auth-card">
@@ -133,15 +139,25 @@
                 <button class="call-icon-btn" id="btn-voice-trigger">🎙️</button>
                 <button class="call-icon-btn" id="btn-video-trigger">📹</button>
                 
+                <!-- NUEVO BOTÓN DE TRES PUNTITOS VERTICALES -->
+                <button class="dots-menu-btn" id="btn-dots-trigger">⋮</button>
+                
                 <!-- TUS BOTONES ORIGINALES INTACTOS -->
                 <button class="whatsapp-icon-btn">💬</button>
                 <button class="shield-quantum-btn">🛡️</button>
                 <button class="logout-action-btn">LOGOUT</button>
             </div>
         </header>
+
+        <!-- PANEL FLOTANTE DESPLEGABLE DE OPCIONES -->
+        <div class="hud-dropdown-menu" id="dropdown-menu-box">
+            <button class="dropdown-item" id="btn-menu-invite">➕ Invitar Agente</button>
+            <button class="dropdown-item">🎨 Tema Neón</button>
+            <button class="dropdown-item" style="color: var(--neon-red);">❌ Borrar Logs</button>
+        </div>
         <!-- ÁREA CENTRAL DE COMUNICACIÓN DE TEXTO -->
         <div class="chat-area" id="chat-box"></div>
-        <div class="chat-input-area">
+        <div class="chat-input-area" id="chat-input-hud-bar">
             <input type="text" id="chat-input" class="quantum-input" placeholder="Escribir mensaje cifrado...">
             <button class="auth-btn" style="padding: 10px 15px;" id="btn-send-trigger">ENVIAR</button>
         </div>
@@ -161,10 +177,30 @@
                 <button id="btn-hangup" class="auth-btn" style="border-color:var(--neon-red); color:var(--neon-red); flex:1;">CERRAR ENLACE</button>
             </div>
         </div>
+
+        <!-- NUEVO: OVERLAY DE INVITACIÓN DIRECTA ESTILO WHATSAPP -->
+        <div class="invite-overlay" id="invite-agent-layer">
+            <div class="invite-card">
+                <h3>CONEXIÓN DIRECTA PRIVADA</h3>
+                <p>Busca e invita a un agente sin salas públicas</p>
+                <div class="invite-mode-selector">
+                    <button class="invite-tab-btn active" id="tab-invite-name">Por Nombre</button>
+                    <button class="invite-tab-btn" id="tab-invite-phone">Por Número</button>
+                </div>
+                <div id="container-invite-input">
+                    <input type="text" id="invite-target-input" class="auth-input" placeholder="Ejemplo: @shneyder..." autocomplete="off">
+                </div>
+                <div style="display:flex; gap:10px; margin-top:5px;">
+                    <button class="auth-btn" style="border-color:var(--neon-green); color:var(--neon-green); flex:1;" id="btn-send-invite-trigger">ENVIAR ENLACE</button>
+                    <button class="auth-btn" style="border-color:var(--neon-red); color:var(--neon-red); flex:1;" id="btn-close-invite">CERRAR</button>
+                </div>
+            </div>
+        </div>
     </div> <!-- Cierre de .app-container -->
     <script>
         let socket=null;try{if(typeof io!=="undefined"){socket=io();}}catch(e){console.error(e);}
         let localStream=null,peerConnection=null,isMuted=false,currentCallMode='video',pendingCallMode=null;
+        let activeInviteMode='name'; // 'name' o 'phone'
         
         // CORRECCIÓN CRÍTICA DE SINTAXIS STUN SERVERS DE GOOGLE
         const iceConfiguration={iceServers:[
@@ -175,6 +211,8 @@
         document.addEventListener("DOMContentLoaded",()=>{
             const isMobile=/Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
             document.getElementById('device-detect-label').innerText=isMobile?"[SISTEMA]: ACCESO MÓVIL DETECTADO":"[SISTEMA]: ACCESO PC DETECTADO";
+            
+            // Asignación de funciones base
             document.getElementById('btn-pin-generator').addEventListener('click',generateQuantumPIN);
             document.getElementById('btn-login-trigger').addEventListener('click',loginQuantum);
             document.getElementById('btn-send-trigger').addEventListener('click',sendText);
@@ -184,10 +222,73 @@
             document.getElementById('btn-voice-trigger').addEventListener('click',()=>triggerCallConfirmation('voice'));
             document.getElementById('btn-video-trigger').addEventListener('click',()=>triggerCallConfirmation('video'));
             document.getElementById('chat-input').addEventListener('keydown',(e)=>{if(e.key==='Enter')sendText();});
+            
+            // Inicialización de gestores de menús y teclados móviles
+            setupMenuAndInviteEvents();
+            setupVirtualKeyboardFix();
         });
+        // SOLUCIÓN TÉCNICA AVANZADA PARA TECLADOS DE IPHONE Y ANDROID
+        function setupVirtualKeyboardFix() {
+            if (window.visualViewport) {
+                window.visualViewport.addEventListener('resize', () => {
+                    const container = document.getElementById('main-app-container');
+                    // Recorta el alto de la app al tamaño real libre que deja el teclado
+                    container.style.height = `${window.visualViewport.height}px`;
+                    // Auto-scrola el buzón de mensajes al fondo si el teclado se abre
+                    const chatBox = document.getElementById('chat-box');
+                    chatBox.scrollTop = chatBox.scrollHeight;
+                });
+            }
+        }
+
+        // CONTROL INTERACTIVO DEL MENÚ DE TRES PUNTITOS E INVITACIONES
+        function setupMenuAndInviteEvents() {
+            const dotsBtn = document.getElementById('btn-dots-trigger');
+            const menuBox = document.getElementById('dropdown-menu-box');
+            const inviteBtn = document.getElementById('btn-menu-invite');
+            const inviteLayer = document.getElementById('invite-agent-layer');
+            const closeInvite = document.getElementById('btn-close-invite');
+            const tabName = document.getElementById('tab-invite-name');
+            const tabPhone = document.getElementById('tab-invite-phone');
+            const inviteInput = document.getElementById('invite-target-input');
+
+            // Abrir y cerrar menú de tres puntitos
+            dotsBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                menuBox.style.display = menuBox.style.display === 'flex' ? 'none' : 'flex';
+            });
+
+            // Cerrar menú si se pulsa fuera de él
+            document.addEventListener('click', () => { menuBox.style.display = 'none'; });
+
+            // Abrir modal de invitaciones privadas
+            inviteBtn.addEventListener('click', () => { inviteLayer.style.display = 'flex'; });
+            closeInvite.addEventListener('click', () => { inviteLayer.style.display = 'none'; });
+
+            // Alternar pestañas del modal (Nombre vs Número) al estilo WhatsApp
+            tabName.addEventListener('click', () => {
+                activeInviteMode = 'name';
+                tabName.classList.add('active');
+                tabPhone.classList.remove('active');
+                inviteInput.placeholder = "Ejemplo: @shneyder...";
+                inviteInput.type = "text";
+            });
+
+            tabPhone.addEventListener('click', () => {
+                activeInviteMode = 'phone';
+                tabPhone.classList.add('active');
+                tabName.classList.remove('active');
+                inviteInput.placeholder = "Ejemplo: 5255123456...";
+                inviteInput.type = "tel";
+            });
+
+            // Disparador del botón enviar enlace de invitación
+            document.getElementById('btn-send-invite-trigger').addEventListener('click', sendPrivateInvite);
+        }
         // REEMPLAZO DE ALERT POR LOGS INTEGRADOS EN TERMINAL HUD
         function printHudLog(text, isError=false) {
             const logger = document.getElementById('system-logger');
+            if(!logger) return;
             const logLine = document.createElement('div');
             logLine.innerText = `[SYS]: ${text}`;
             if(isError) logLine.style.color = "var(--neon-red)";
@@ -221,13 +322,49 @@
             document.getElementById('user-display').innerText=name.toUpperCase();
             document.getElementById('avatar-char').innerText=name.substring(0,2).toUpperCase();
             document.getElementById('auth-layer').style.display='none';
+            
+            // REGISTRO DE ALIAS EN EL SERVIDOR AL INICIAR SESIÓN (AL ESTILO WHATSAPP)
+            if(socket) {
+                const phone = document.getElementById('phone-in').value.trim();
+                const badge = document.getElementById('country-badge').value;
+                const fullPhone = badge + phone;
+                socket.emit('register-agent', { name: `@${name.toLowerCase()}`, phone: fullPhone });
+            }
         }
+
+        // ENVÍO DE INVITACIÓN DE CONEXIÓN PRIVADA DIRECTA
+        function sendPrivateInvite() {
+            const target = document.getElementById('invite-target-input').value.trim();
+            if(!target) {
+                printHudLog("ERROR: Debe ingresar un alias o número válido.", true);
+                return;
+            }
+            if(socket) {
+                // Emite la petición de búsqueda directa al backend
+                socket.emit('send-private-invite', { mode: activeInviteMode, target: target });
+                printHudLog(`Buscando enlace directo con: ${target}...`);
+            }
+            document.getElementById('invite-agent-layer').style.display = 'none';
+            document.getElementById('invite-target-input').value = '';
+        }
+        // ENVÍO DE MENSAJES CONECTADO AL SERVIDOR EN TIEMPO REAL
         function sendText(){
-            const input=document.getElementById('chat-input');if(!input.value.trim())return;
+            const input=document.getElementById('chat-input');
+            const message = input.value.trim();
+            if(!message) return;
+            
             const chatBox=document.getElementById('chat-box'),p=document.createElement('p');
             p.style.margin="5px 0";p.style.fontFamily="'Share Tech Mono'";
-            p.innerHTML=`<b style="color:var(--neon-blue)">Tú:</b> ${input.value}`;
-            chatBox.appendChild(p);input.value="";chatBox.scrollTop=chatBox.scrollHeight;
+            p.innerHTML=`<b style="color:var(--neon-blue)">Tú:</b> ${message}`;
+            chatBox.appendChild(p);
+            
+            // EMISIÓN DE TEXTO POR SOCKET AL BACKEND
+            if(socket) {
+                socket.emit('chat-message', { text: message, sender: document.getElementById('user-display').innerText });
+            }
+            
+            input.value="";
+            chatBox.scrollTop=chatBox.scrollHeight;
         }
         
         function triggerCallConfirmation(mode){
@@ -248,13 +385,13 @@
         async function initiateCall(mode) {
             try{
                 setupCallUI(mode);
-                // CONFIGURACIÓN DE FILTROS ESTRICTOS DE AUDIO ESTUDIO (SIN ECO / SIN RUIDO / SIN INTERFERENCIAS)
+                // RESTRICCIONES REFORZADAS CONTRA ECO, RUIDO E INTERFERENCIAS ELÉCTRICAS
                 localStream=await navigator.mediaDevices.getUserMedia({
                     audio:{
                         echoCancellation: true,
                         noiseSuppression: true,
-                        autoGainControl: false, // Desactivado para evitar la amplificación del siseo/ruido de fondo en silencios
-                        sampleRate: 48000,      // Frecuencia máxima de audio HD nativa
+                        autoGainControl: false, // Evita la amplificación del siseo estático
+                        sampleRate: 48000,      // Resolución de audio HD nativa
                         channelCount: 1,
                         googEchoCancellation: true,
                         googNoiseSuppression: true,
@@ -264,7 +401,7 @@
                         facingMode:"user",
                         width: { ideal: 1280 },
                         height: { ideal: 720 },
-                        frameRate: { ideal: 30 } // Tasa constante para evitar interferencias y tirones por ancho de banda
+                        frameRate: { ideal: 30 } // Tasa fija para evitar parpadeos en redes móviles
                     }:false
                 });
                 
@@ -272,11 +409,11 @@
                 peerConnection=new RTCPeerConnection(iceConfiguration);
                 localStream.getTracks().forEach(track=>peerConnection.addTrack(track,localStream));
                 
-                // CORRECCIÓN CRÍTICA DE TRAZAS MULTIMEDIA (EXTRACCIÓN DIRECTA DE PISTAS INDIVIDUALES)
+                // VINCULACIÓN CORRECTA DE PISTAS MULTIMEDIA INDIVIDUALES
                 peerConnection.ontrack=(event)=>{
                     const rv=document.getElementById('remote-video');
                     if(rv && !rv.srcObject && event.streams && event.streams[0]){
-                        rv.srcObject=event.streams[0]; // Vinculación limpia del stream completo remoto
+                        rv.srcObject=event.streams[0];
                     }
                 };
                 peerConnection.onicecandidate=(event)=>{if(event.candidate&&socket){socket.emit('webrtc-candidate',event.candidate);}};
@@ -288,6 +425,28 @@
             }
         }
         if(socket){
+            // RECEPCIÓN DE MENSAJES DE TEXTO EN TIEMPO REAL
+            socket.on('chat-message', (data) => {
+                const chatBox = document.getElementById('chat-box');
+                const p = document.createElement('p');
+                p.style.margin = "5px 0"; p.style.fontFamily = "'Share Tech Mono'";
+                p.innerHTML = `<b style="color:var(--neon-violet)">${data.sender}:</b> ${data.text}`;
+                chatBox.appendChild(p);
+                chatBox.scrollTop = chatBox.scrollHeight;
+            });
+
+            // ESCUCHA DE INVITACIONES PRIVADAS DIRECTAS (ESTILO WHATSAPP)
+            socket.on('private-invite-received', (data) => {
+                printHudLog(`INVITACIÓN RECIBIDA DE ${data.from}. Inicializando canal seguro...`);
+                // Activa automáticamente el modal de confirmación táctica
+                triggerCallConfirmation('video');
+            });
+
+            socket.on('invite-error', (data) => {
+                printHudLog(`[ERROR]: ${data.message}`, true);
+            });
+
+            // GESTIÓN WEBRTC DE ENTRADA
             socket.on('webrtc-offer', async(data)=>{
                 const incomingMode=data.mode;setupCallUI(incomingMode);
                 if(!peerConnection){
@@ -300,17 +459,8 @@
                 }
                 await peerConnection.setRemoteDescription(new RTCSessionDescription(data.offer));
                 try{
-                    // FILTROS ESTRICTOS DE AUDIO EN RECEPCIÓN (EVITA RETROALIMENTACIÓN DE ECO)
                     localStream=await navigator.mediaDevices.getUserMedia({
-                        audio:{
-                            echoCancellation: true,
-                            noiseSuppression: true,
-                            autoGainControl: false,
-                            sampleRate: 48000,
-                            googEchoCancellation: true,
-                            googNoiseSuppression: true,
-                            googAutoGainControl: false
-                        },
+                        audio:{ echoCancellation: true, noiseSuppression: true, autoGainControl: false, sampleRate: 48000, googEchoCancellation: true, googNoiseSuppression: true, googAutoGainControl: false },
                         video:incomingMode==='video'?{facingMode:"user",width:{ideal:1280},height:{ideal:720},frameRate:{ideal:30}}:false
                     });
                     if(incomingMode==='video'){document.getElementById('local-video').srcObject=localStream;}
@@ -318,6 +468,7 @@
                     const answer=await peerConnection.createAnswer();await peerConnection.setLocalDescription(answer);socket.emit('webrtc-answer',answer);
                 }catch(err){console.error(err);}
             });
+
             socket.on('webrtc-answer',async(answer)=>{if(peerConnection&&peerConnection.signalingState!=="stable"){await peerConnection.setRemoteDescription(new RTCSessionDescription(answer));}});
             socket.on('webrtc-candidate',async(candidate)=>{if(peerConnection&&peerConnection.remoteDescription){try{await peerConnection.addIceCandidate(new RTCIceCandidate(candidate));}catch(e){}}});
             socket.on('webrtc-hangup',()=> {executeLocalClose();});
