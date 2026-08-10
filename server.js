@@ -5,62 +5,69 @@ const path = require('path');
 
 const app = express();
 const server = http.createServer(app);
-
 const io = new Server(server, {
     cors: {
-        origin: "*", 
-        methods: ["GET", "POST"],
-        credentials: true
-    },
-    transports: ['websocket', 'polling']
+        origin: "*",
+        methods: ["GET", "POST"]
+    }
 });
 
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
-});
+// Servir los archivos estáticos de tu interfaz HUD de VOBIXCHAT
+// Asegúrate de que tu archivo HTML se llame 'index.html' y esté dentro de una carpeta llamada 'public'
+app.use(express.static(path.join(__dirname, 'public')));
 
 io.on('connection', (socket) => {
-    console.log(`Dispositivo enlazado ID: ${socket.id}`);
+    console.log(`[SYS]: Agente conectado al canal cuántico -> ID: ${socket.id}`);
 
-    // LOGICA CENTRAL: Enlazar agentes en búnkeres cerrados tipo WhatsApp
-    socket.on('join-private-room', (data) => {
-        socket.join(data.room);
-        console.log(`Agente ${socket.id} ha ingresado de forma privada al búnker: ${data.room}`);
+    // 1. TRANSMISIÓN DE MENSAJES DE TEXTO CIFRADOS
+    socket.on('chat-message', (data) => {
+        // Retransmite el mensaje de texto a todos los demás agentes conectados
+        socket.broadcast.emit('chat-message', data);
     });
 
-    // Retransmisión de mensajes de texto privados con soporte de traducción simultánea
-    socket.on('private-chat-message', (data) => {
-        socket.to(data.room).emit('private-chat-message', data);
-    });
-
-    // Sincronización en tiempo real de firmas de contratos Barcelona - Madrid
-    socket.on('contract-signed-broadcast', (data) => {
-        socket.to(data.room).emit('contract-signed-broadcast', data);
-    });
-
-    // Retransmisión multimedia WebRTC 16K Cifrada (Llamadas de Voz y Video)
+    // 2. SEÑALIZACIÓN WEBRTC: TRANSMISIÓN DE OFERTA DE LLAMADA/VIDEO
     socket.on('webrtc-offer', (data) => {
-        socket.to(data.room).emit('webrtc-offer', data);
+        console.log(`[SYS]: Oferta WebRTC recibida de ${socket.id} (Modo: ${data.mode})`);
+        // Reenvía la oferta a los demás dispositivos enlazados
+        socket.broadcast.emit('webrtc-offer', {
+            offer: data.offer,
+            mode: data.mode
+        });
     });
 
-    socket.on('webrtc-answer', (data) => {
-        socket.to(data.room).emit('webrtc-answer', data);
+    // 3. SEÑALIZACIÓN WEBRTC: TRANSMISIÓN DE RESPUESTA DE CONEXIÓN
+    socket.on('webrtc-answer', (answer) => {
+        console.log(`[SYS]: Respuesta WebRTC recibida de ${socket.id}. Enlazando canales...`);
+        // Envía la respuesta de vuelta para consolidar la llamada peer-to-peer
+        socket.broadcast.emit('webrtc-answer', answer);
     });
 
-    socket.on('webrtc-candidate', (data) => {
-        socket.to(data.room).emit('webrtc-candidate', data);
+    // 4. INTERCAMBIO DE CANDIDATOS ICE (CONECTIVIDAD DE RED)
+    socket.on('webrtc-candidate', (candidate) => {
+        // Intercambia las rutas de red mapeadas por el servidor STUN para saltar firewalls
+        socket.broadcast.emit('webrtc-candidate', candidate);
     });
 
-    socket.on('webrtc-hangup', (data) => {
-        socket.to(data.room).emit('webrtc-hangup');
+    // 5. FINALIZACIÓN Y FINAL DE ENLACE MULTIMEDIA (HANGUP)
+    socket.on('webrtc-hangup', () => {
+        console.log(`[SYS]: Enlace multimedia cerrado por orden de ${socket.id}`);
+        // Ordena de manera remota limpiar el hardware de cámara y audio del otro agente
+        socket.broadcast.emit('webrtc-hangup');
     });
 
+    // 6. GESTIÓN DE DESCONEXIÓN INVOLUNTARIA
     socket.on('disconnect', () => {
-        console.log(`Dispositivo retirado de la red: ${socket.id}`);
+        console.log(`[SYS]: Canal caído. Agente desconectado -> ID: ${socket.id}`);
+        // Notificación de seguridad para cerrar cualquier llamada activa si se pierde la red
+        socket.broadcast.emit('webrtc-hangup');
     });
 });
 
+// Configuración del puerto de escucha de la terminal
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
-    console.log(`Servidor de búnkeres privados activo en puerto: ${PORT}`);
+    console.log(`==================================================`);
+    console.log(`[VOBIXCHAT] SERVIDOR TÁCTICO INICIALIZADO`);
+    console.log(`[URL EN LÍNEA]: http://localhost:${PORT}`);
+    console.log(`==================================================`);
 });
