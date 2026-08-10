@@ -64,8 +64,6 @@
         .voice-avatar { width: 90px; height: 90px; border-radius: 50%; border: 2px dashed var(--neon-green); display: flex; align-items: center; justify-content: center; font-size: 2rem; animation: pulse 2s infinite linear; }
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
         .chat-area { flex: 1; display: flex; flex-direction: column; background: rgba(0,0,0,0.2); overflow-y: auto; padding: 15px; transition: opacity 0.3s ease, max-height 0.3s ease; }
-        .chat-input-area { padding: 10px; background: rgba(2, 4, 10, 0.95); border-top: 1px solid var(--border-hud); display: flex; gap: 8px; align-items: center; padding-bottom: calc(10px + env(safe-area-inset-bottom)); transition: opacity 0.3s ease, max-height 0.3s ease; position: relative; }
-        .quantum-input { flex: 1; background: #000; border: 1px solid var(--border-hud); padding: 10px; color: #fff; border-radius: 6px; outline: none; font-family: 'Share Tech Mono'; }
         /* NUEVO ESTILO WHATSAPP: BARRA DE ENTRADA INFERIOR COMPLETA (IMAGEN 1) */
         .chat-input-area { padding: 8px; background: transparent; display: flex; gap: 8px; align-items: center; padding-bottom: calc(8px + env(safe-area-inset-bottom)); transition: opacity 0.3s ease, max-height 0.3s ease; position: relative; width: 100%; box-sizing: border-box; }
         
@@ -187,7 +185,7 @@
                 
                 <button class="whatsapp-icon-btn" style="display: none;">💬</button>
                 <button class="shield-quantum-btn" style="display: none;">🛡️</button>
-                <button class="logout-action-btn" style="padding: 2px 5px; font-size: 0.6rem;">LOGOUT</button>
+                <logout class="logout-action-btn" style="display: none;">LOGOUT</logout>
             </div>
         </header>
 
@@ -309,9 +307,26 @@
             document.getElementById('btn-video-trigger').addEventListener('click',()=>triggerCallConfirmation('video'));
             document.getElementById('chat-input').addEventListener('keydown',(e)=>{if(e.key==='Enter')handleMainActionTrigger();});
             
-            // ENLAZAR LA ACCIÓN DE SALIDA DE LA APP DIRECTAMENTE A LA FLECHA DE VOLVER ATRÁS
+            // CORRECCIÓN DEFINTIVA: PROTOCOLO DE CIERRE CUÁNTICO FORZADO PARA LA FLECHA DE VOLVER
             const backBtn = document.getElementById('btn-back-logout');
-            if (backBtn) { backBtn.addEventListener('click', () => { window.location.reload(); }); }
+            if (backBtn) { 
+                backBtn.addEventListener('click', () => { 
+                    printHudLog("CERRANDO ENLACES SEGUROS Y REINICIANDO TERMINAL...");
+                    
+                    // 1. Apaga la cámara o micrófono si quedaron encendidos en segundo plano
+                    if(localStream) {
+                        localStream.getTracks().forEach(track => track.stop());
+                    }
+                    // 2. Destruye la conexión del socket para avisar de inmediato al servidor
+                    if (socket) {
+                        socket.disconnect();
+                    }
+                    // 3. Forzar el redireccionamiento limpio a la pantalla de login original
+                    setTimeout(() => {
+                        window.location.href = window.location.origin + '/';
+                    }, 200);
+                }); 
+            }
             
             // Alternancia dinámica del botón verde (Micrófono o Enviar) al escribir al estilo WhatsApp
             document.getElementById('chat-input').addEventListener('input',toggleInputIconHUD);
@@ -606,7 +621,7 @@
                 
                 fileIn.addEventListener('change', () => {
                     if (fileIn.files.length > 0) {
-                        const selectedFile = fileIn.files[0];
+                        const selectedFile = fileIn.files;
                         printHudLog(`[ADJUNTO]: Leyendo de forma segura: ${selectedFile.name}...`);
                         
                         const reader = new FileReader();
@@ -639,7 +654,7 @@
                 
                 camIn.addEventListener('change', () => {
                     if (camIn.files.length > 0) {
-                        const capturedFile = camIn.files[0];
+                        const capturedFile = camIn.files;
                         printHudLog(`[CÁMARA]: Procesando captura multimedia...`);
                         
                         const reader = new FileReader();
