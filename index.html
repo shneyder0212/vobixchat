@@ -107,7 +107,6 @@
                 </div>
             </div>
         </div>
-
         <!-- CAPA INTERMEDIA DE BLOQUEO ANTI ACCIDENTES -->
         <div class="confirm-overlay" id="confirm-layer">
             <div class="confirm-card">
@@ -249,10 +248,37 @@
         async function initiateCall(mode) {
             try{
                 setupCallUI(mode);
-                localStream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true,sampleRate:48000},video:mode==='video'?{facingMode:"user"}:false});
+                // CONFIGURACIÓN DE FILTROS ESTRICTOS DE AUDIO ESTUDIO (SIN ECO / SIN RUIDO / SIN INTERFERENCIAS)
+                localStream=await navigator.mediaDevices.getUserMedia({
+                    audio:{
+                        echoCancellation: true,
+                        noiseSuppression: true,
+                        autoGainControl: false, // Desactivado para evitar la amplificación del siseo/ruido de fondo en silencios
+                        sampleRate: 48000,      // Frecuencia máxima de audio HD nativa
+                        channelCount: 1,
+                        googEchoCancellation: true,
+                        googNoiseSuppression: true,
+                        googAutoGainControl: false
+                    },
+                    video:mode==='video'?{
+                        facingMode:"user",
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 },
+                        frameRate: { ideal: 30 } // Tasa constante para evitar interferencias y tirones por ancho de banda
+                    }:false
+                });
+                
                 if(mode==='video'){document.getElementById('local-video').srcObject=localStream;}
-                peerConnection=new RTCPeerConnection(iceConfiguration);localStream.getTracks().forEach(track=>peerConnection.addTrack(track,localStream));
-                peerConnection.ontrack=(event)=>{const rv=document.getElementById('remote-video');if(rv&&!rv.srcObject&&event.streams){rv.srcObject=event.streams;}};
+                peerConnection=new RTCPeerConnection(iceConfiguration);
+                localStream.getTracks().forEach(track=>peerConnection.addTrack(track,localStream));
+                
+                // CORRECCIÓN CRÍTICA DE TRAZAS MULTIMEDIA (EXTRACCIÓN DIRECTA DE PISTAS INDIVIDUALES)
+                peerConnection.ontrack=(event)=>{
+                    const rv=document.getElementById('remote-video');
+                    if(rv && !rv.srcObject && event.streams && event.streams[0]){
+                        rv.srcObject=event.streams[0]; // Vinculación limpia del stream completo remoto
+                    }
+                };
                 peerConnection.onicecandidate=(event)=>{if(event.candidate&&socket){socket.emit('webrtc-candidate',event.candidate);}};
                 const offer=await peerConnection.createOffer();await peerConnection.setLocalDescription(offer);if(socket)socket.emit('webrtc-offer',{offer:offer,mode:mode});
             }catch(err){
@@ -266,12 +292,27 @@
                 const incomingMode=data.mode;setupCallUI(incomingMode);
                 if(!peerConnection){
                     peerConnection=new RTCPeerConnection(iceConfiguration);
-                    peerConnection.ontrack=(event)=>{const rv=document.getElementById('remote-video');if(rv&&!rv.srcObject&&event.streams){rv.srcObject=event.streams;}};
+                    peerConnection.ontrack=(event)=>{
+                        const rv=document.getElementById('remote-video');
+                        if(rv&&!rv.srcObject&&event.streams&&event.streams){rv.srcObject=event.streams;}
+                    };
                     peerConnection.onicecandidate=(event)=>{if(event.candidate){socket.emit('webrtc-candidate',event.candidate);}};
                 }
                 await peerConnection.setRemoteDescription(new RTCSessionDescription(data.offer));
                 try{
-                    localStream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true,sampleRate:48000},video:incomingMode==='video'?{facingMode:"user"}:false});
+                    // FILTROS ESTRICTOS DE AUDIO EN RECEPCIÓN (EVITA RETROALIMENTACIÓN DE ECO)
+                    localStream=await navigator.mediaDevices.getUserMedia({
+                        audio:{
+                            echoCancellation: true,
+                            noiseSuppression: true,
+                            autoGainControl: false,
+                            sampleRate: 48000,
+                            googEchoCancellation: true,
+                            googNoiseSuppression: true,
+                            googAutoGainControl: false
+                        },
+                        video:incomingMode==='video'?{facingMode:"user",width:{ideal:1280},height:{ideal:720},frameRate:{ideal:30}}:false
+                    });
                     if(incomingMode==='video'){document.getElementById('local-video').srcObject=localStream;}
                     localStream.getTracks().forEach(track=>peerConnection.addTrack(track,localStream));
                     const answer=await peerConnection.createAnswer();await peerConnection.setLocalDescription(answer);socket.emit('webrtc-answer',answer);
