@@ -13,13 +13,13 @@ const io = new Server(server, {
 });
 
 // MAPA CRIPTOGRÁFICO DE AGENTES ACTIVOS (AL ESTILO WHATSAPP)
-// Guarda la relación entre identidades y su ID de socket en tiempo real
+// Asocia de forma única los alias/números con su ID de conexión de red
 const activeAgents = {
-    byName: {},  // Ejemplo: { '@shneyder': 'socket_id_123' }
-    byPhone: {}  // Ejemplo: { '+5255123456': 'socket_id_123' }
+    byName: {},  // Almacena { '@shneyder': 'socket_id_abc' }
+    byPhone: {}  // Almacena { '+5255123456': 'socket_id_abc' }
 };
 
-// Escucha la raíz y busca el archivo de forma directa en la carpeta principal
+// Escucha la raíz y busca el archivo visual index.html de forma directa en la carpeta principal
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'), (err) => {
         if (err) {
@@ -42,7 +42,7 @@ io.on('connection', (socket) => {
         registeredName = data.name.toLowerCase();
         registeredPhone = data.phone.trim();
 
-        // Guardar en el directorio activo del servidor
+        // Registrar al agente en las tablas de enrutamiento directo
         activeAgents.byName[registeredName] = socket.id;
         activeAgents.byPhone[registeredPhone] = socket.id;
 
@@ -55,7 +55,7 @@ io.on('connection', (socket) => {
         const target = data.target.toLowerCase().trim();
         let targetSocketId = null;
 
-        // Buscar el ID de socket del destinatario sin exponerlo en salas públicas
+        // Busca el ID del destinatario sin exponer la señal a nadie más
         if (mode === 'name') {
             targetSocketId = activeAgents.byName[target];
         } else if (mode === 'phone') {
@@ -64,13 +64,13 @@ io.on('connection', (socket) => {
 
         if (targetSocketId) {
             console.log(`[SYS]: Enlace privado encontrado. Conectando a ${socket.id} con ${target}`);
-            // Envía la señal multimedia UNICAMENTE al agente encontrado
+            // Envía la alerta de llamada ÚNICAMENTE al dispositivo objetivo
             io.to(targetSocketId).emit('private-invite-received', {
                 from: registeredName || 'Agente Anónimo'
             });
         } else {
             console.log(`[SYS]: Intento de enlace fallido. Destinatario no encontrado: ${target}`);
-            // Informa de vuelta al emisor que el usuario está desconectado o no existe
+            // Devuelve un error al emisor informando que el agente no está disponible
             socket.emit('invite-error', {
                 message: `El agente "${target}" no se encuentra activo en la red cuántica.`
             });
@@ -79,11 +79,10 @@ io.on('connection', (socket) => {
 
     // 3. RETRANSMISIÓN DE MENSAJES DE TEXTO EN TIEMPO REAL
     socket.on('chat-message', (data) => {
-        // Envía el texto cifrado a todos los agentes de la red
         socket.broadcast.emit('chat-message', data);
     });
 
-    // 4. SEÑALIZACIÓN WEBRTC (OFERTAS MULTIMEDIA)
+    // 4. SEÑALIZACIÓN WEBRTC (OFERTAS MULTIMEDIA AUDIO / VIDEO)
     socket.on('webrtc-offer', (data) => {
         socket.broadcast.emit('webrtc-offer', data);
     });
@@ -93,21 +92,21 @@ io.on('connection', (socket) => {
         socket.broadcast.emit('webrtc-answer', answer);
     });
 
-    // 6. INTERCAMBIO DE CANDIDATOS ICE (CONECTIVIDAD MÓVIL)
+    // 6. INTERCAMBIO DE CANDIDATOS ICE (CONECTIVIDAD MÓVIL Y PC)
     socket.on('webrtc-candidate', (candidate) => {
         socket.broadcast.emit('webrtc-candidate', candidate);
     });
 
-    // 7. CIERRE DE ENLACE (HANGUP)
+    // 7. CIERRE DE ENLACE MULTIMEDIA (HANGUP)
     socket.on('webrtc-hangup', () => {
         socket.broadcast.emit('webrtc-hangup');
     });
 
-    // 8. LIMPIEZA DE DIRECTORIO POR DESCONEXIÓN
+    // 8. LIMPIEZA DE DIRECTORIO POR DESCONEXIÓN INVOLUNTARIA
     socket.on('disconnect', () => {
         console.log(`[SYS]: Canal caído -> ID: ${socket.id}`);
         
-        // Remover de los mapas activos para evitar llamadas a fantasmas
+        // Remueve al agente del mapa para no dejar enlaces fantasmas
         if (registeredName && activeAgents.byName[registeredName] === socket.id) {
             delete activeAgents.byName[registeredName];
         }
@@ -119,6 +118,7 @@ io.on('connection', (socket) => {
     });
 });
 
+// Levantar el puerto de escucha táctico
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
     console.log(`==================================================`);
