@@ -6,6 +6,7 @@ const path = require('path');
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
+    maxHttpBufferSize: 1e8, // Aumenta el límite a 100MB para permitir el envío de películas, música y Office pesados
     cors: {
         origin: "*",
         methods: ["GET", "POST"]
@@ -13,19 +14,18 @@ const io = new Server(server, {
 });
 
 // MAPA CRIPTOGRÁFICO DE AGENTES ACTIVOS (AL ESTILO WHATSAPP)
-// Asocia de forma única los alias/números con su ID de conexión de red
 const activeAgents = {
-    byName: {},  // Almacena { '@shneyder': 'socket_id_abc' }
-    byPhone: {}  // Almacena { '+5255123456': 'socket_id_abc' }
+    byName: {},  // Guarda la relación { '@shneyder': 'socket_id_abc' }
+    byPhone: {}  // Guarda la relación { '+5255123456': 'socket_id_abc' }
 };
 
-// Escucha la raíz y busca el archivo visual index.html de forma directa en la carpeta principal
+// Servir de forma automática el archivo index.html en la raíz del navegador
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'), (err) => {
         if (err) {
             res.sendFile(path.join(__dirname, 'vobixchat.html'), (err2) => {
                 if (err2) {
-                    res.status(404).send("<h1>[SYS ERROR]: No se encontró el archivo HTML de VobixChat. Renómbralo a index.html o vobixchat.html</h1>");
+                    res.status(404).send("<h1>[SYS ERROR]: No se encontró el archivo HTML de VobixChat. Renómbralo a index.html</h1>");
                 }
             });
         }
@@ -42,7 +42,6 @@ io.on('connection', (socket) => {
         registeredName = data.name.toLowerCase();
         registeredPhone = data.phone.trim();
 
-        // Registrar al agente en las tablas de enrutamiento directo
         activeAgents.byName[registeredName] = socket.id;
         activeAgents.byPhone[registeredPhone] = socket.id;
 
@@ -51,11 +50,10 @@ io.on('connection', (socket) => {
 
     // 2. BÚSQUEDA Y ENRUTAMIENTO DE INVITACIÓN DIRECTA PRIVADA
     socket.on('send-private-invite', (data) => {
-        const mode = data.mode; // 'name' o 'phone'
+        const mode = data.mode; 
         const target = data.target.toLowerCase().trim();
         let targetSocketId = null;
 
-        // Busca el ID del destinatario sin exponer la señal a nadie más
         if (mode === 'name') {
             targetSocketId = activeAgents.byName[target];
         } else if (mode === 'phone') {
@@ -64,25 +62,24 @@ io.on('connection', (socket) => {
 
         if (targetSocketId) {
             console.log(`[SYS]: Enlace privado encontrado. Conectando a ${socket.id} con ${target}`);
-            // Envía la alerta de llamada ÚNICAMENTE al dispositivo objetivo
             io.to(targetSocketId).emit('private-invite-received', {
                 from: registeredName || 'Agente Anónimo'
             });
         } else {
             console.log(`[SYS]: Intento de enlace fallido. Destinatario no encontrado: ${target}`);
-            // Devuelve un error al emisor informando que el agente no está disponible
             socket.emit('invite-error', {
                 message: `El agente "${target}" no se encuentra activo en la red cuántica.`
             });
         }
     });
 
-    // 3. RETRANSMISIÓN DE MENSAJES DE TEXTO EN TIEMPO REAL
+    // 3. RETRANSMISIÓN MULTIMEDIA EN TIEMPO REAL (TEXTO, NOTAS DE VOZ, AUDIOS, ARCHIVOS)
     socket.on('chat-message', (data) => {
+        // Retransmite de forma íntegra los buffers de texto o datos binarios a los demás nodos conectados
         socket.broadcast.emit('chat-message', data);
     });
 
-    // 4. SEÑALIZACIÓN WEBRTC (OFERTAS MULTIMEDIA AUDIO / VIDEO)
+    // 4. SEÑALIZACIÓN WEBRTC (OFERTAS MULTIMEDIA)
     socket.on('webrtc-offer', (data) => {
         socket.broadcast.emit('webrtc-offer', data);
     });
@@ -102,11 +99,10 @@ io.on('connection', (socket) => {
         socket.broadcast.emit('webrtc-hangup');
     });
 
-    // 8. LIMPIEZA DE DIRECTORIO POR DESCONEXIÓN INVOLUNTARIA
+    // 8. LIMPIEZA DE DIRECTORIO POR DESCONEXIÓN DE RED
     socket.on('disconnect', () => {
         console.log(`[SYS]: Canal caído -> ID: ${socket.id}`);
         
-        // Remueve al agente del mapa para no dejar enlaces fantasmas
         if (registeredName && activeAgents.byName[registeredName] === socket.id) {
             delete activeAgents.byName[registeredName];
         }
@@ -118,7 +114,7 @@ io.on('connection', (socket) => {
     });
 });
 
-// Levantar el puerto de escucha táctico
+// Inicialización del puerto de producción táctico
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
     console.log(`==================================================`);
