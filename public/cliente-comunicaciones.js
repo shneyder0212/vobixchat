@@ -1,5 +1,5 @@
 // =================================================================
-// ARCHIVO: cliente-comunicaciones.js (SECCIÓN 1 - VERIFICADO)
+// ARCHIVO: cliente-comunicaciones.js (MAESTRO COMPLETO POR PARTES)
 // =================================================================
 
 // Función para enviar el número de teléfono móvil al servidor backend
@@ -71,6 +71,7 @@ async function confirmarEnlaceSeguro() {
         statusText.innerText = "[SYS]: ERROR AL PROCESAR EL ENLACE SEGURO.";
     }
 }
+
 // Función para mostrar los paneles ocultos una vez validado el PIN físico
 function desbloquearFuncionesMultimedia() {
     console.log("[SYS]: Inicializando todas las capas de hardware multimedia...");
@@ -115,7 +116,7 @@ window.iniciarEnlaceLlamadaUsuario = async function(numeroDestinatario) {
 
         // Evento que recibe y renderiza el video de la otra persona en pantalla
         window.conexionPeerCuantica.ontrack = (e) => {
-            document.getElementById('remote-video-display').srcObject = e.streams[0];
+            document.getElementById('remote-video-display').srcObject = e.streams;
         };
 
         // Evento para recopilar y despachar las coordenadas de red locales (ICE)
@@ -199,28 +200,24 @@ window.escucharRespuestaLlamadaEmisor = function() {
         }
     });
 };
+
 // Función para abrir la conexión en tiempo real del usuario con el servidor
 window.conectarClienteSignaling = function(numeroUsuarioAutenticado) {
-    // Abrir el túnel de sockets hacia el dominio base del servidor
     window.socketLlamadas = io(window.location.origin);
 
-    // Registrar de inmediato nuestra identidad para pasar el control anti-VoIP
     window.socketLlamadas.emit("registrar-canal-llamada", { 
         identificador_usuario: numeroUsuarioAutenticado 
     });
 
-    // Escuchar si el servidor rechaza nuestra línea por falta de SIM física
     window.socketLlamadas.on("error-canal", (error) => {
         alert(`Error de comunicación: ${error.mensaje}`);
         window.interrumpirYApagarCanales();
     });
 
-    // Escuchar si entra una oferta de videollamada desde el exterior
     window.socketLlamadas.on("recibir-oferta-webrtc", async (datos) => {
         await window.procesarLlamadaEntrante(datos.emisor, datos.sdp);
     });
 
-    // Escuchar y añadir las coordenadas de red ICE del otro usuario
     window.socketLlamadas.on("recibir-candidato-ice", async (datos) => {
         if (window.conexionPeerCuantica) {
             await window.conexionPeerCuantica.addIceCandidate(new RTCIceCandidate(datos.candidato));
@@ -230,119 +227,98 @@ window.conectarClienteSignaling = function(numeroUsuarioAutenticado) {
 // Función que se activa cuando el usuario toma una foto con la cámara
 function detectarSeleccionArchivo() {
     const inputArchivo = document.getElementById('input-archivo-cuantico');
-    const statusText = document.getElementById('sys-status');
-
-    // Si el usuario cancela la cámara o no elige nada, nos detenemos
-    if (!inputArchivo.files || inputArchivo.files.length === 0) {
-        return;
-    }
+    if (!inputArchivo.files || inputArchivo.files.length === 0) return;
 
     const archivoFotoCapturado = inputArchivo.files[0];
-    statusText.style.color = "#00ffcc";
-    statusText.innerText = "[SYS]: PROCESANDO TRANSMISIÓN BINARIA DE IMAGEN...";
-    
-    // Invocar el motor de envío seguro enviando el archivo real
+    document.getElementById('sys-status').style.color = "#00ffcc";
+    document.getElementById('sys-status').innerText = "[SYS]: PROCESANDO TRANSMISIÓN BINARIA DE IMAGEN...";
     window.procesarCapturaCamaraYEnviar(archivoFotoCapturado);
 }
 
-// Función maestra para empaquetar la foto y despacharla al servidor
 window.procesarCapturaCamaraYEnviar = async function(archivoFotoBlob) {
     const formData = new FormData();
-    // Adjuntar el archivo binario real de la imagen y la identidad del usuario
     formData.append("archivo_multimedia", archivoFotoBlob);
     formData.append("identificador_usuario", document.getElementById('phone-number').value.trim());
 
     try {
-        const respuesta = await fetch('/api/multimedia/subir-archivo', {
-            method: 'POST',
-            body: formData
-        });
+        const respuesta = await fetch('/api/multimedia/subir-archivo', { method: 'POST', body: formData });
         const data = await respuesta.json();
-        const statusText = document.getElementById('sys-status');
-
         if (data.success) {
-            statusText.style.color = "#00ffcc";
-            statusText.innerText = "[SYS]: ARCHIVO MULTIMEDIA TRANSMITIDO CON ÉXITO.";
+            document.getElementById('sys-status').innerText = "[SYS]: ARCHIVO MULTIMEDIA TRANSMITIDO CON ÉXITO.";
             alert("Foto enviada correctamente.");
         } else {
-            statusText.style.color = "#ff3366";
-            statusText.innerText = `[SYS]: RECHAZO DE RED - ${data.error}`;
+            document.getElementById('sys-status').style.color = "#ff3366";
+            document.getElementById('sys-status').innerText = `[SYS]: RECHAZO DE RED - ${data.error}`;
+            if (data.error.includes("revocado")) window.interrumpirYApagarCanales();
         }
     } catch (err) {
-        console.error("[SYS]: Falla en la subida binaria de la imagen.");
+        console.error(err);
     }
 };
 
-// Función auxiliar para limpiar la consola visual de la interfaz
-function limpiarConsolaLogsLocal() {
-    document.getElementById('sys-status').style.color = "#00ffcc";
-    document.getElementById('sys-status').innerText = "[SISTEMA]: LOGS LOCALES DEPURADOS.";
-    console.clear();
-}
-// VARIABLES GLOBALES PARA CONTROL DEL MICRÓFONO FISICO
+// VARIABLES GLOBALES PARA CONTROL DEL MICRÓFONO FÍSICO
 let grabadorAudio = null;
 let fragmentosAudio = [];
 let temporizadorVoz = null;
 let segundosGrabados = 0;
 
-// Función para activar o desactivar el micrófono al pulsar el icono
 window.alternarEstadoNotaVoz = async function() {
     if (!grabadorAudio || grabadorAudio.state === "inactive") {
-        // ACCIÓN: INICIAR GRABACIÓN DE AUDIO
         try {
             const streamMic = await navigator.mediaDevices.getUserMedia({ audio: true });
             fragmentosAudio = [];
             grabadorAudio = new MediaRecorder(streamMic);
 
-            // Guardar las ráfagas de sonido a medida que entran por el hardware
             grabadorAudio.ondataavailable = (evento) => {
                 if (evento.data.size > 0) fragmentosAudio.push(evento.data);
             };
 
-            // Evento que se ejecuta al detener el micrófono
             grabadorAudio.onstop = async () => {
-                // Si el usuario pulsó BORRAR, el arreglo estará vacío y no enviará nada
                 if (fragmentosAudio.length === 0) return;
-
                 const blobAudioFinal = new Blob(fragmentosAudio, { type: 'audio/webm' });
                 await window.enviarNotaVozServidor(blobAudioFinal);
             };
 
             grabadorAudio.start();
-            
-            // Ajustar visualmente la barra inferior tal como se ve en tu foto
             segundosGrabados = 0;
             document.getElementById('contador-tiempo-voz').innerText = "00:00";
             document.getElementById('contenedor-grabando-status').style.display = 'flex';
             document.getElementById('btn-borrar-nota').style.display = 'inline-block';
             document.getElementById('btn-microfono-disparador').style.backgroundColor = '#ff3366';
 
-            // Actualizar el segundero en tiempo real
+            // Reloj en vivo con Límite Estricto de 3 Minutos (180 segundos)
             temporizadorVoz = setInterval(() => {
                 segundosGrabados++;
+                
+                if (segundosGrabados >= 180) {
+                    // CORTAR AUTOMÁTICAMENTE AL LLEGAR A LOS 3 MINUTOS
+                    window.detenerTemporizadorVoz();
+                    grabadorAudio.stop();
+                    window.restablecerInterfazVoz();
+                    console.log("[SYS]: Límite de 3 minutos alcanzado. Grabación guardada.");
+                    return;
+                }
+
                 const mins = String(Math.floor(segundosGrabados / 60)).padStart(2, '0');
                 const segs = String(segundosGrabados % 60).padStart(2, '0');
                 document.getElementById('contador-tiempo-voz').innerText = `${mins}:${segs}`;
             }, 1000);
 
-            console.log("[SYS]: Micrófono abierto. Grabación en curso...");
         } catch (err) {
             alert("Error: No se pudo abrir el micrófono físico. Compruebe los permisos.");
         }
     } else {
-        // ACCIÓN: DETENER MICRÓFONO Y DESPACHAR AUDIO
         window.detenerTemporizadorVoz();
         grabadorAudio.stop();
         window.restablecerInterfazVoz();
     }
 };
-
-// Función para el botón BORRAR que cancela y destruye la grabación de inmediato
+// Botón BORRAR que cancela, apaga el micrófono y vacía los datos sin colgar la interfaz
 window.cancelarYBorrarNotaVoz = function() {
     if (grabadorAudio && grabadorAudio.state !== "inactive") {
         window.detenerTemporizadorVoz();
-        fragmentosAudio = []; // Vaciamos los datos para abortar el guardado
-        grabadorAudio.stream.getTracks().forEach(track => track.stop()); // Apagar micrófono
+        fragmentosAudio = []; // Vaciar los fragmentos para que onstop no mande nada
+        grabadorAudio.stream.getTracks().forEach(track => track.stop()); // Apagar micrófono físico
         grabadorAudio.stop();
         window.restablecerInterfazVoz();
         document.getElementById('sys-status').style.color = "#ff3366";
@@ -350,7 +326,6 @@ window.cancelarYBorrarNotaVoz = function() {
     }
 };
 
-// Detener el conteo numérico de la pantalla
 window.detenerTemporizadorVoz = function() {
     if (temporizadorVoz) {
         clearInterval(temporizadorVoz);
@@ -358,7 +333,6 @@ window.detenerTemporizadorVoz = function() {
     }
 };
 
-// Ocultar la alerta roja de grabación y regresar el icono a verde cian
 window.restablecerInterfazVoz = function() {
     document.getElementById('contenedor-grabando-status').style.display = 'none';
     document.getElementById('btn-borrar-nota').style.display = 'none';
@@ -366,7 +340,6 @@ window.restablecerInterfazVoz = function() {
     document.getElementById('contador-tiempo-voz').innerText = "00:00";
 };
 
-// Despachar el archivo de audio real capturado hacia tu servidor API
 window.enviarNotaVozServidor = async function(blobAudio) {
     const statusText = document.getElementById('sys-status');
     const formData = new FormData();
@@ -377,10 +350,7 @@ window.enviarNotaVozServidor = async function(blobAudio) {
         statusText.style.color = "#00ffcc";
         statusText.innerText = "[SYS]: TRANSMITIENDO MENSAJE DE AUDIO AL CANAL...";
         
-        const respuesta = await fetch('/api/multimedia/subir-archivo', {
-            method: 'POST',
-            body: formData
-        });
+        const respuesta = await fetch('/api/multimedia/subir-archivo', { method: 'POST', body: formData });
         const data = await respuesta.json();
 
         if (data.success) {
@@ -388,34 +358,30 @@ window.enviarNotaVozServidor = async function(blobAudio) {
         } else {
             statusText.style.color = "#ff3366";
             statusText.innerText = `[SYS]: RECHAZO AUDIO - ${data.error}`;
+            // Si el servidor lo baneó automáticamente por ráfagas de "meneos", colgamos la interfaz
+            if (data.error.includes("revocado")) window.interrumpirYApagarCanales();
         }
     } catch (err) {
-        console.error("[SYS]: Error crítico en el canal de datos de voz.");
+        console.error(err);
     }
 };
-// Función maestra para apagar todos los canales físicos y resetear la pantalla
-window.interrumpirYApagarCanales = function() {
-    console.log("[SYS]: Protocolo de apagado general en ejecucion...");
 
-    // 1. Detener los relojes y limpiar la barra de notas de voz
+// Protocolo de apagado completo de hardware para colgar llamadas y reiniciar la pantalla
+window.interrumpirYApagarCanales = function() {
     window.detenerTemporizadorVoz();
     window.restablecerInterfazVoz();
-    document.getElementById('barra-mensajeria-inferior').style.display = 'none';
 
-    // 2. Cortar la conexión del Socket de Red
     if (window.socketLlamadas) {
         window.socketLlamadas.disconnect();
         window.socketLlamadas = null;
     }
 
-    // 3. Apagar físicamente los sensores de tu propia cámara
     const videoLocal = document.getElementById('local-video-preview');
     if (videoLocal && videoLocal.srcObject) {
         videoLocal.srcObject.getTracks().forEach(track => track.stop());
         videoLocal.srcObject = null;
     }
 
-    // 4. Apagar los sensores del video de la otra persona y cerrar WebRTC
     const videoRemoto = document.getElementById('remote-video-display');
     if (videoRemoto && videoRemoto.srcObject) {
         videoRemoto.srcObject.getTracks().forEach(track => track.stop());
@@ -427,13 +393,43 @@ window.interrumpirYApagarCanales = function() {
         window.conexionPeerCuantica = null;
     }
 
-    // 5. Ocultar los módulos y restaurar los mensajes a modo de espera
     document.getElementById('seccion-confirmacion').style.display = 'none';
     document.getElementById('modulo-marcado-cuantico').style.display = 'none';
     document.getElementById('modulo-captura-multimedia').style.display = 'none';
+    document.getElementById('barra-mensajeria-inferior').style.display = 'none';
     document.getElementById('sms-pin-input').value = "";
     
-    const statusText = document.getElementById('sys-status');
-    statusText.style.color = "#ff3366";
-    statusText.innerText = "[SYS]: ENLACE TERMINADO. ESPERANDO CREDENCIALES DE USUARIO...";
+    document.getElementById('sys-status').style.color = "#ff3366";
+    document.getElementById('sys-status').innerText = "[SYS]: ENLACE TERMINADO. ESPERANDO CREDENCIALES DE USUARIO...";
+};
+
+function limpiarConsolaLogsLocal() {
+    console.clear();
+}
+// SISTEMA DE REPORTE EN VIVO SECO Y DIRECTO (Última línea del archivo, cierra el script)
+window.ejecutarReporteCiudadanoFraude = function() {
+    const numeroSospechoso = document.getElementById('numero-destino-input').value.trim();
+    
+    if (!numeroSospechoso) {
+        alert("No hay ningún número digitado en el marcador para reportar.");
+        return;
+    }
+
+    const confirmar = confirm(`¿Está seguro de que desea reportar el número ${numeroSospechoso} por actividad fraudulenta o uso indebido?`);
+    
+    if (confirmar) {
+        if (window.socketLlamadas) {
+            // Despachar la señal de expulsión inmediata al servidor mediante el WebSocket
+            window.socketLlamadas.emit("reportar-usuario-fraude", {
+                numeroSospechoso: numeroSospechoso
+            });
+            
+            document.getElementById('sys-status').style.color = "#ff3366";
+            document.getElementById('sys-status').innerText = `[SYS]: REPORTE ENVIADO. LÍNEA ${numeroSospechoso} EXPULSADA DE LA RED.`;
+            
+            // Colgar nuestra propia llamada de inmediato por seguridad
+            window.interrumpirYApagarCanales();
+            alert("El número ha sido reportado y bloqueado del sistema.");
+        }
+    }
 };
