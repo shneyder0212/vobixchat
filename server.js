@@ -1,3 +1,33 @@
+// =================================================================
+// ARCHIVO: server.js (PARTE 15 - IMPORTACIONES Y ENTORNO CONTROLADO)
+// =================================================================
+const express = require('express');
+const http = require('http');
+const path = require('path');
+const fs = require('fs');
+const multer = require('multer');
+const { Server } = require("socket.io");
+const { parsePhoneNumberFromString } = require('libphonenumber-js');
+
+// Configuración de entorno controlado por seguridad si faltan llaves en producción
+if (!process.env.TWILIO_ACCOUNT_SID || !process.env.TWILIO_AUTH_TOKEN) {
+    process.env.TWILIO_ACCOUNT_SID = "AC_SIMULADO_PRO_VOBIXCHAT";
+    process.env.TWILIO_AUTH_TOKEN = "TOKEN_SIMULADO_PRO_VOBIXCHAT";
+    process.env.TWILIO_PHONE_NUMBER = "+15005550006";
+}
+
+const app = express();
+const servidorHTTP = http.createServer(app);
+const io = new Server(servidorHTTP, { cors: { origin: "*" } });
+
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// Creación automática del directorio seguro para fotos y notas de voz
+const rutaMedia = path.join(__dirname, 'uploads', 'quantum_media');
+if (!fs.existsSync(rutaMedia)){
+    fs.mkdirSync(rutaMedia, { recursive: true });
+}
 // Base de datos volátil en memoria para almacenar los códigos PIN temporales (Expira en 5 minutos)
 const pinesTemporales = new Map();
 
@@ -42,7 +72,7 @@ app.post('/api/seguridad/verificar-usuario', async (req, res) => {
     const pinDinamico = Math.floor(1000 + Math.random() * 9000);
     pinesTemporales.set(numeroE164, pinDinamico.toString());
 
-    // Imprime el código de verificación en la consola de tu servidor local
+    // Imprime el código de verificación en la consola de tu servidor local o Render
     console.log(`[SMS SATELLITE]: PIN ${pinDinamico} despachado con éxito a línea física: ${numeroE164}`);
     return res.status(200).json({ success: true, message: "Código PIN de operadora física despachado por SMS." });
 });
@@ -133,8 +163,8 @@ io.on("connection", (socket) => {
         console.log(`[SYS]: Socket liberado de la red de datos: ${socket.id}`);
     });
 });
-// Indicar al servidor que sirva de forma automática la nueva carpeta de interfaces
-app.use(express.express.static(path.join(__dirname, 'public')));
+// CORREGIDO: Mapeo limpio a la carpeta de la interfaz pública sin palabras duplicadas
+app.use(express.static(path.join(__dirname, 'public')));
 
 // Establecer el puerto de escucha dinámico para compatibilidad con producción
 const PUERTO = process.env.PORT || 3000;
