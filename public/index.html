@@ -19,7 +19,7 @@
       gap: 10px;
       margin-top: 5px;
     }
-    #country-code, #phone-number, #sms-pin-input, #numero-destino-input {
+    #country-code, #phone-number, #sms-pin-input, #historial-pin-input, #numero-destino-input {
       background: #111;
       color: #00ffcc;
       border: 1px solid #00ffcc;
@@ -101,16 +101,22 @@
       <p id="sys-status" class="log-line-alert">[SYS]: ESPERANDO CREDENCIALES DE USUARIO...</p>
     </div>
 
+    <!-- SECCIÓN DE CONFIRMACIÓN CON CANDADO DE CONTRASEÑA OBLIGATORIO -->
     <div id="seccion-confirmacion" style="display: none; margin-top: 15px; border-top: 1px dashed #00ffcc; padding-top: 10px;">
-      <h3>CONFIRMAR ENLACE</h3>
-      <p>¿Desea inicializar este enlace seguro con el código enviado por SMS?</p>
-      <input type="text" id="sms-pin-input" placeholder="Introduce el PIN de 4 dígitos" maxlength="4">
-      <div class="botones-accion" style="margin-top: 10px;">
-        <button class="btn-confirmar" onclick="confirmarEnlaceSeguro()">SÍ, ENLAZAR</button>
+      <h3>CONFIRMAR ENLACE SEGURO</h3>
+      <p>Introduzca el PIN recibido por SMS y su contraseña personal de desbloqueo de Historial:</p>
+      
+      <div style="display: flex; flex-direction: column; gap: 10px; max-width: 300px; margin-bottom: 10px;">
+        <input type="text" id="sms-pin-input" placeholder="PIN de SMS (4 dígitos)" maxlength="4">
+        <input type="password" id="historial-pin-input" placeholder="Contraseña de Historial (4-6 dígitos)">
+      </div>
+
+      <div class="botones-accion">
+        <button class="btn-confirmar" onclick="confirmarEnlaceSeguro()">SÍ, ENLAZAR CANAL</button>
         <button class="btn-abortar" onclick="window.interrumpirYApagarCanales()">ABORTAR</button>
       </div>
     </div>
-    <!-- PANELES OCULTOS MULTIMEDIA (DESBLOQUEADOS POST-PIN) -->
+    <!-- PANELES OCULTOS MULTIMEDIA (DESBLOQUEADOS POST-PIN Y POST-CONTRASEÑA) -->
     <div id="modulo-marcado-cuantico" style="display: none; margin-top: 15px; border-top: 1px solid #00ffcc; padding-top: 10px;">
       <label for="numero-destino-input">Establecer Conexión Directa Privada:</label>
       <div class="input-container">
