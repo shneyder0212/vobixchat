@@ -1,5 +1,5 @@
 // =================================================================
-// SERVIDOR MAESTRO COMPLETO: server.js
+// SERVIDOR MAESTRO COMPLETO: server.js (CON CANDADO DE HISTORIAL)
 // =================================================================
 const express = require('express');
 const http = require('http');
@@ -28,11 +28,14 @@ const rutaMedia = path.join(__dirname, 'uploads', 'quantum_media');
 if (!fs.existsSync(rutaMedia)){
     fs.mkdirSync(rutaMedia, { recursive: true });
 }
-// Base de datos para almacenar los códigos PIN temporales
+// Base de datos para almacenar los códigos PIN temporales de SMS
 const pinesTemporales = new Map();
 
 // Registro global de líneas físicas legítimas (SIM reales) autorizadas
 const lineasFisicasAutorizadas = new Set();
+
+// EXCLUSIVO: Base de datos secreta para almacenar las contraseñas personales de Historial de cada número
+const baseContrasenasHistorial = new Map();
 
 // Lista Negra Permanente para almacenar números expulsados por fraude
 const listaNegraEstafadores = new Set();
@@ -103,9 +106,9 @@ app.post('/api/seguridad/verificar-usuario', verificarLimitePeticionesIP, async 
     return res.status(200).json({ success: true, message: "Código PIN de operadora física despachado por SMS." });
 });
 
-// Endpoint para validar el PIN e inicializar la Lupa de Observación en secreto
+// Endpoint para validar el PIN SMS, verificar el Candado de Contraseña Oculta o registrar una nueva si es primerizo
 app.post('/api/seguridad/confirmar-pin', (req, res) => {
-    const { numeroCrudo, codigoPais, pinIngresado } = req.body;
+    const { numeroCrudo, codigoPais, pinIngresado, contrasenaHistorial } = req.body;
     const parseo = parsePhoneNumberFromString(numeroCrudo, codigoPais);
     
     if (!parseo) return res.status(400).json({ success: false, error: "Identidad corrupta." });
@@ -114,9 +117,31 @@ app.post('/api/seguridad/confirmar-pin', (req, res) => {
     const pinCorrecto = pinesTemporales.get(numeroE164);
 
     if (pinIngresado === pinCorrecto || process.env.TWILIO_ACCOUNT_SID.includes("SIMULADO")) {
+        
+        // REGLA OBLIGATORIA DEL CANDADO: Verificar si el número ya tiene una contraseña registrada en el sistema
+        if (baseContrasenasHistorial.has(numeroE164)) {
+            const contrasenaCorrecta = baseContrasenasHistorial.get(numeroE164);
+            
+            // Si la SIM robada ingresa el PIN SMS pero no se sabe la contraseña secreta, el historial se bloquea de golpe
+            if (contrasenaHistorial !== contrasenaCorrecta) {
+                console.log(`[ALERTA INTRUSO]: SIM legítima ingresó PIN pero falló la contraseña de Historial en: ${numeroE164}`);
+                return res.status(401).json({ 
+                    success: false, 
+                    error: "CANDADO DE SEGURIDAD INTERNO ACUMULADO. Contraseña de Historial inválida." 
+                });
+            }
+        } else {
+            // Si el usuario es completamente nuevo, se guarda la contraseña que elija por primera vez sin costo de SMS
+            if (!contrasenaHistorial || contrasenaHistorial.trim().length < 4) {
+                return res.status(400).json({ success: false, error: "Debe asignar una contraseña segura de Historial para cerrar el candado." });
+            }
+            baseContrasenasHistorial.set(numeroE164, contrasenaHistorial);
+            console.log(`[CANDADO REGISTRO]: Nueva contraseña secreta enlazada al número: ${numeroE164}`);
+        }
+
         lineasFisicasAutorizadas.add(numeroE164);
 
-        // EN SECRETO: Inicializar al usuario nuevo con estado de "Observación" y 0 Puntos de Lealtad
+        // Inicializar al usuario en la Lupa de Comportamiento de ráfagas en silencio
         if (!registroComportamientoUsuarios.has(numeroE164)) {
             registroComportamientoUsuarios.set(numeroE164, {
                 estado: "observado",
@@ -126,39 +151,37 @@ app.post('/api/seguridad/confirmar-pin', (req, res) => {
             });
         }
 
-        return res.status(200).json({ success: true, statusSYS: "CANAL ENLAZADO. Línea física validada." });
+        return res.status(200).json({ success: true, statusSYS: "CANAL ENLAZADO. Acceso al Historial e Interfaz AUTORIZADO." });
     }
-    return res.status(401).json({ success: false, error: "PIN incorrecto." });
+    return res.status(401).json({ success: false, error: "PIN de SMS incorrecto." });
 });
-// Endpoint para recibir fotos y notas de voz (Vigila de cerca los límites de tiempo)
+// Endpoint para recibir fotos y notas de voz (Vigila de cerca los límites de tiempo y ráfagas)
 app.post('/api/multimedia/subir-archivo', upload.single('archivo_multimedia'), (req, res) => {
     const { identificador_usuario } = req.body;
     const archivo = req.file;
 
     if (!archivo) return res.status(400).json({ success: false, error: "Carga vacía." });
 
-    // Control cruzado de SIM física
+    // Control cruzado de SIM física autorizada post-candado
     const esValido = lineasFisicasAutorizadas.has(identificador_usuario);
     if (!esValido && !process.env.TWILIO_ACCOUNT_SID.includes("SIMULADO")) {
         if (fs.existsSync(archivo.path)) fs.unlinkSync(archivo.path);
-        return res.status(403).json({ success: false, error: "Transmisión denegada. Falta SIM física." });
+        return res.status(403).json({ success: false, error: "Transmisión denegada. Canal bloqueado o falta contraseña de Historial." });
     }
 
-    // LUPA EN TIEMPO REAL: Analizar si el usuario está haciendo "meneos raros" (ráfagas) o si es teléfono prestado
+    // LUPA EN TIEMPO REAL: Analizar si el usuario está haciendo "meneos raros" (ráfagas masivas)
     const perfilComportamiento = registroComportamientoUsuarios.get(identificador_usuario);
     if (perfilComportamiento) {
         const tiempoActual = Date.now();
         
-        // Resetear el contador cada minuto de uso normal
         if (tiempoActual - perfilComportamiento.ultimoReseteoAcciones > 60000) {
             perfilComportamiento.conteoAccionesMinuto = 0;
             perfilComportamiento.ultimoReseteoAcciones = tiempoActual;
             
-            // Premiar al usuario honesto: Si habla normal, le otorgamos un Punto de Lealtad
             if (perfilComportamiento.estado === "observado") {
                 perfilComportamiento.puntosLealtad++;
                 if (perfilComportamiento.puntosLealtad >= 15) {
-                    perfilComportamiento.estado = "limpio"; // Sube a nivel seguro de confianza
+                    perfilComportamiento.estado = "limpio"; // Validado como leal de total confianza
                     console.log(`[SYS]: Usuario ${identificador_usuario} comprobó su lealtad de forma exitosa.`);
                 }
             }
@@ -168,14 +191,14 @@ app.post('/api/multimedia/subir-archivo', upload.single('archivo_multimedia'), (
 
         // DETECCIÓN DE FRAUDE: Si envía más de 3 archivos en un minuto, el servidor actúa de inmediato
         if (perfilComportamiento.conteoAccionesMinuto > 3) {
-            if (fs.existsSync(archivo.path)) fs.unlinkSync(archivo.path); // Destruir el archivo
+            if (fs.existsSync(archivo.path)) fs.unlinkSync(archivo.path); 
             
-            // BANEO FULMINANTE AUTOMÁTICO: Bloqueo inmediato del estafador o teléfono prestado
+            // BANEO FULMINANTE AUTOMÁTICO: Bloqueo inmediato del estafador o teléfono prestado sospechoso
             lineasFisicasAutorizadas.delete(identificador_usuario);
             listaNegraEstafadores.add(identificador_usuario);
             registroComportamientoUsuarios.delete(identificador_usuario);
             
-            console.log(`[SISTEMA BAN]: Expulsión ejecutada automáticamente para el número: ${identificador_usuario}`);
+            console.log(`[SISTEMA BAN]: Expulsión ejecutada automáticamente por ráfagas sospechosas: ${identificador_usuario}`);
             return res.status(429).json({ success: false, error: "Actividad maliciosa detectada. Acceso revocado definitivamente." });
         }
     }
@@ -187,7 +210,6 @@ app.post('/api/multimedia/subir-archivo', upload.single('archivo_multimedia'), (
 io.on("connection", (socket) => {
     
     socket.on("registrar-canal-llamada", (datos) => {
-        // Bloquear acceso del socket si el número cayó en la Lista Negra
         if (listaNegraEstafadores.has(datos.identificador_usuario)) {
             socket.emit("error-canal", { mensaje: "Acceso denegado por violación de seguridad." });
             return;
@@ -218,35 +240,35 @@ io.on("connection", (socket) => {
         io.to(sospechosoId).emit("error-canal", { mensaje: "Su cuenta ha sido bloqueada por reportes de fraude." });
     });
 });
-// Conexión obligatoria y limpia a la carpeta estática de tus interfaces
+// Conexión obligatoria y limpia a la carpeta estática de tus interfaces públicas
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Motor automático para la limpieza periódica del servidor (Borrados automáticos de 2 semanas)
+// Motor automático para la limpieza de disco (Borrados automáticos de archivos a las 2 semanas)
 setInterval(() => {
-    console.log("[SYS]: Ejecutando limpieza automática de archivos multimedia antiguos de 14 días...");
+    console.log("[SYS]: Ejecutando limpieza automática de archivos antiguos de 14 días...");
     fs.readdir(rutaMedia, (err, archivos) => {
         if (err) return;
         archivos.forEach(archivo => {
             const rutaArchivoCompleta = path.join(rutaMedia, archivo);
             fs.stat(rutaArchivoCompleta, (err, datosArchivo) => {
                 if (err) return;
-                // Si el archivo en el disco lleva más de 2 semanas guardado, se destruye solo
+                // Si el archivo en el disco lleva más de 2 semanas guardado, se destruye de forma silenciosa
                 if (Date.now() - datosArchivo.mtime.getTime() > 14 * 24 * 60 * 60 * 1000) {
                     fs.unlinkSync(rutaArchivoCompleta);
-                    console.log(`[LIMPIEZA DE DISCO]: Archivo purgado con éxito: ${archivo}`);
+                    console.log(`[LIMPIEZA DE DISCO]: Archivo antiguo purgado con éxito: ${archivo}`);
                 }
             });
         });
     });
-}, 24 * 60 * 60 * 1000); // Se ejecuta en silencio una vez al día automáticamente
+}, 24 * 60 * 60 * 1000); // Se ejecuta de fondo una vez al día automáticamente
 
-// Establecer el puerto de escucha dinámico para compatibilidad total con Render
+// Establecer el puerto de esuclta dinámico para compatibilidad total con Render
 const PUERTO = process.env.PORT || 3000;
 
 servidorHTTP.listen(PUERTO, () => {
     console.log(`================================================================`);
     console.log(`[SYS]: ENLACE VOBIXCHAT // Quantum Mobile Pro TOTALMENTE ACTIVO`);
     console.log(`[SYS]: Servidor web operativo con éxito en el puerto ${PUERTO}`);
-    console.log(`[SYS]: Sistema Anti-Saturación y Lupa de Lealtad activos en silencio.`);
+    console.log(`[SYS]: Candado de Historial por Contraseña y Lupa de Lealtad activos.`);
     console.log(`================================================================`);
 });
