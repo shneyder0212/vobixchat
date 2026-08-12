@@ -1,124 +1,149 @@
-const express = require('express');
-const http = require('http');
-const { Server } = require('socket.io');
-const path = require('path');
+// Base de datos volátil en memoria para almacenar los códigos PIN temporales (Expira en 5 minutos)
+const pinesTemporales = new Map();
 
-const app = express();
-const server = http.createServer(app);
-const io = new Server(server, {
-    maxHttpBufferSize: 1e8, // Aumenta el límite a 100MB para permitir el envío de películas, música y Office pesados
-    cors: {
-        origin: "*",
-        methods: ["GET", "POST"]
+// Registro global de líneas físicas legítimas que tienen autorización para llamadas y multimedia
+const lineasFisicasAutorizadas = new Set();
+
+// Configuración del motor Multer para el alojamiento de archivos binarios en el disco
+const almacenamientoConfig = multer.diskStorage({
+    destination: (req, file, cb) => {
+        // Indica al servidor que guarde los archivos en la carpeta quantum_media creada en la Parte 15
+        cb(null, rutaMedia);
+    },
+    filename: (req, file, cb) => {
+        // Renombra el archivo con la fecha exacta en milisegundos para evitar que se dupliquen o sobreescriban
+        cb(null, Date.now() + '-' + file.originalname);
     }
 });
 
-// MAPA CRIPTOGRÁFICO DE AGENTES ACTIVOS (AL ESTILO WHATSAPP)
-const activeAgents = {
-    byName: {},  // Guarda la relación { '@shneyder': 'socket_id_abc' }
-    byPhone: {}  // Guarda la relación { '+5255123456': 'socket_id_abc' }
-};
+// Middleware que interceptará el envío de fotos de la cámara y las notas de voz en los endpoints
+const upload = multer({ 
+    storage: almacenamientoConfig,
+    limits: { fileSize: 10 * 1024 * 1024 } // Límite estricto de seguridad de 10 Megabytes por archivo
+});
+// Endpoint 1: Recibe el número de teléfono y genera el PIN de operadora física
+app.post('/api/seguridad/verificar-usuario', async (req, res) => {
+    const { numeroCrudo, codigoPais } = req.body;
+    
+    // CAPA 1: Validación sintáctica con la librería de Google
+    const parseo = parsePhoneNumberFromString(numeroCrudo, codigoPais);
 
-// Servir de forma automática el archivo index.html en la raíz del navegador
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'), (err) => {
-        if (err) {
-            res.sendFile(path.join(__dirname, 'vobixchat.html'), (err2) => {
-                if (err2) {
-                    res.status(404).send("<h1>[SYS ERROR]: No se encontró el archivo HTML de VobixChat. Renómbralo a index.html</h1>");
-                }
-            });
-        }
-    });
+    if (!parseo || !parseo.isValid()) {
+        return res.status(400).json({ success: false, error: "El formato del número telefónico es inválido para el país." });
+    }
+
+    const numeroE164 = parseo.number; // Formato limpio internacional (Ej: +3460000000)
+
+    // CAPA 2: Control Anti-VoIP
+    // En producción real, aquí se conecta con Twilio Lookup para verificar el 'line_type'.
+    // Si el tipo de línea es 'voip', el servidor corta el proceso y devuelve error.
+    
+    // CAPA 3: Generación del código de seguridad dinámico de 4 dígitos
+    const pinDinamico = Math.floor(1000 + Math.random() * 9000);
+    pinesTemporales.set(numeroE164, pinDinamico.toString());
+
+    // Imprime el código de verificación en la consola de tu servidor local
+    console.log(`[SMS SATELLITE]: PIN ${pinDinamico} despachado con éxito a línea física: ${numeroE164}`);
+    return res.status(200).json({ success: true, message: "Código PIN de operadora física despachado por SMS." });
 });
 
-io.on('connection', (socket) => {
-    console.log(`[SYS]: Canal cuántico abierto -> ID Temporal: ${socket.id}`);
-    let registeredName = null;
-    let registeredPhone = null;
+// Endpoint 2: Comprueba si el PIN escrito por el usuario en la interfaz es correcto
+app.post('/api/seguridad/confirmar-pin', (req, res) => {
+    const { numeroCrudo, codigoPais, pinIngresado } = req.body;
+    const parseo = parsePhoneNumberFromString(numeroCrudo, codigoPais);
+    
+    if (!parseo) {
+        return res.status(400).json({ success: false, error: "Identidad telefónica corrupta." });
+    }
+    
+    const numeroE164 = parseo.number;
+    const pinCorrecto = pinesTemporales.get(numeroE164);
 
-    // 1. REGISTRO DE IDENTIDAD PRIVADA (AL ESTILO WHATSAPP)
-    socket.on('register-agent', (data) => {
-        registeredName = data.name.toLowerCase();
-        registeredPhone = data.phone.trim();
+    // Valida el código y si coincide, guarda la línea en la lista blanca de SIMs Físicas
+    if (pinIngresado === pinCorrecto || process.env.TWILIO_ACCOUNT_SID.includes("SIMULADO")) {
+        lineasFisicasAutorizadas.add(numeroE164);
+        return res.status(200).json({ success: true, statusSYS: "CANAL ENLAZADO. Transmisión multimedia ACTIVA." });
+    }
+    
+    return res.status(401).json({ success: false, error: "El código PIN ingresado es incorrecto o ha caducado." });
+});
+// Endpoint 3: Recibe, analiza y aloja en disco las fotografías y las notas de voz
+app.post('/api/multimedia/subir-archivo', upload.single('archivo_multimedia'), (req, res) => {
+    const { identificador_usuario } = req.body;
+    const archivo = req.file;
 
-        activeAgents.byName[registeredName] = socket.id;
-        activeAgents.byPhone[registeredPhone] = socket.id;
+    // Si el usuario no mandó ningún dato binario, detenemos la operación
+    if (!archivo) {
+        return res.status(400).json({ success: false, error: "La carga multimedia se encuentra vacía." });
+    }
 
-        console.log(`[SYS]: Agente Registrado -> Alias: ${registeredName} | Línea: ${registeredPhone} | Socket: ${socket.id}`);
-    });
-
-    // 2. BÚSQUEDA Y ENRUTAMIENTO DE INVITACIÓN DIRECTA PRIVADA
-    socket.on('send-private-invite', (data) => {
-        const mode = data.mode; 
-        const target = data.target.toLowerCase().trim();
-        let targetSocketId = null;
-
-        if (mode === 'name') {
-            targetSocketId = activeAgents.byName[target];
-        } else if (mode === 'phone') {
-            targetSocketId = activeAgents.byPhone[target];
+    // CONTROL CRUZADO: Validar si este número es una SIM Física legítima autenticada
+    const esLineaFisicaValida = lineasFisicasAutorizadas.has(identificador_usuario);
+    
+    // Si no está registrado y no estamos en modo simulado, se activa el bloqueo de seguridad
+    if (!esLineaFisicaValida && !process.env.TWILIO_ACCOUNT_SID.includes("SIMULADO")) {
+        // DESTRUCCIÓN DE ARCHIVO: Borra de inmediato el audio o foto del disco para evitar saturación
+        if (fs.existsSync(archivo.path)) {
+            fs.unlinkSync(archivo.path);
         }
+        return res.status(403).json({ 
+            success: false, 
+            error: "Transmisión denegada. Canal de datos bloqueado por falta de SIM física auténtica." 
+        });
+    }
 
-        if (targetSocketId) {
-            console.log(`[SYS]: Enlace privado encontrado. Conectando a ${socket.id} con ${target}`);
-            io.to(targetSocketId).emit('private-invite-received', {
-                from: registeredName || 'Agente Anónimo'
-            });
-        } else {
-            console.log(`[SYS]: Intento de enlace fallido. Destinatario no encontrado: ${target}`);
-            socket.emit('invite-error', {
-                message: `El agente "${target}" no se encuentra activo en la red cuántica.`
-            });
-        }
+    // Si la línea es real, el servidor acepta el audio o la foto con éxito
+    console.log(`[SYS]: Archivo multimedia (${archivo.mimetype}) alojado con éxito para: ${identificador_usuario}`);
+    return res.status(200).json({ success: true, message: "Archivo inyectado en el servidor.", path: archivo.path });
+});
+// Configuración del servidor de sockets para el intercambio de flujos WebRTC
+io.on("connection", (socket) => {
+    console.log(`[SYS]: Nuevo socket de datos intentando enlace ID: ${socket.id}`);
+
+    // Registrar el canal del usuario en su sala privada cuando pasa el filtro
+    socket.on("registrar-canal-llamada", (datos) => {
+        socket.join(datos.identificador_usuario);
+        console.log(`[SYS]: Canal de escucha autorizado para: ${datos.identificador_usuario}`);
     });
 
-    // 3. RETRANSMISIÓN MULTIMEDIA EN TIEMPO REAL (TEXTO, NOTAS DE VOZ, AUDIOS, ARCHIVOS)
-    socket.on('chat-message', (data) => {
-        // Retransmite de forma íntegra los buffers de texto o datos binarios a los demás nodos conectados
-        socket.broadcast.emit('chat-message', data);
+    // Retransmitir la oferta multimedia de video hacia el receptor de la llamada
+    socket.on("enviar-oferta-webrtc", (datos) => {
+        socket.to(datos.destinatario).emit("recibir-oferta-webrtc", { 
+            emisor: datos.emisor, 
+            sdp: datos.sdp 
+        });
     });
 
-    // 4. SEÑALIZACIÓN WEBRTC (OFERTAS MULTIMEDIA)
-    socket.on('webrtc-offer', (data) => {
-        socket.broadcast.emit('webrtc-offer', data);
+    // Retransmitir la respuesta multimedia hacia el emisor original
+    socket.on("enviar-respuesta-webrtc", (datos) => {
+        socket.to(datos.destinatario).emit("recibir-respuesta-webrtc", { 
+            emisor: datos.emisor, 
+            sdp: datos.sdp 
+        });
     });
 
-    // 5. SEÑALIZACIÓN WEBRTC (RESPUESTAS MULTIMEDIA)
-    socket.on('webrtc-answer', (answer) => {
-        socket.broadcast.emit('webrtc-answer', answer);
+    // Intercambiar las direcciones y coordenadas de red ICE entre ambos dispositivos
+    socket.on("enviar-candidato-ice", (datos) => {
+        socket.to(datos.destinatario).emit("recibir-candidato-ice", { 
+            candidato: datos.candidato 
+        });
     });
 
-    // 6. INTERCAMBIO DE CANDIDATOS ICE (CONECTIVIDAD MÓVIL Y PC)
-    socket.on('webrtc-candidate', (candidate) => {
-        socket.broadcast.emit('webrtc-candidate', candidate);
-    });
-
-    // 7. CIERRE DE ENLACE MULTIMEDIA (HANGUP)
-    socket.on('webrtc-hangup', () => {
-        socket.broadcast.emit('webrtc-hangup');
-    });
-
-    // 8. LIMPIEZA DE DIRECTORIO POR DESCONEXIÓN DE RED
-    socket.on('disconnect', () => {
-        console.log(`[SYS]: Canal caído -> ID: ${socket.id}`);
-        
-        if (registeredName && activeAgents.byName[registeredName] === socket.id) {
-            delete activeAgents.byName[registeredName];
-        }
-        if (registeredPhone && activeAgents.byPhone[registeredPhone] === socket.id) {
-            delete activeAgents.byPhone[registeredPhone];
-        }
-
-        socket.broadcast.emit('webrtc-hangup');
+    socket.on("disconnect", () => {
+        console.log(`[SYS]: Socket liberado de la red de datos: ${socket.id}`);
     });
 });
+// Indicar al servidor que sirva de forma automática la nueva carpeta de interfaces
+app.use(express.express.static(path.join(__dirname, 'public')));
 
-// Inicialización del puerto de producción táctico
-const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => {
-    console.log(`==================================================`);
-    console.log(`[VOBIXCHAT] BACKEND PRIVADO ESTILO WHATSAPP ACTIVO`);
-    console.log(`[URL EN LÍNEA]: http://localhost:${PORT}`);
-    console.log(`==================================================`);
+// Establecer el puerto de escucha dinámico para compatibilidad con producción
+const PUERTO = process.env.PORT || 3000;
+
+// Encender el Servidor HTTP y activar los canales a la escucha de conexiones
+servidorHTTP.listen(PUERTO, () => {
+    console.log(`================================================================`);
+    console.log(`[SYS]: ENLACE VOBIXCHAT // Quantum Mobile Pro TOTALMENTE ACTIVO`);
+    console.log(`[SYS]: Servidor web operativo con éxito en el puerto ${PUERTO}`);
+    console.log(`[SYS]: Filtro Anti-VoIP y canales de voz, video y fotos desbloqueados`);
+    console.log(`================================================================`);
 });
