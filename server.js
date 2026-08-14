@@ -177,44 +177,22 @@ app.get('/', (req, res) => {
                 .input-group { text-align: left; margin-bottom: 35px; }
                 label { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: 2px; color: #a0a6c0; margin-bottom: 12px; font-weight: 700; }
                 
-                .phone-box {
-                    display: flex;
+                input { 
                     width: 100%;
-                    background: rgba(8, 10, 16, 0.6);
+                    padding: 18px 20px; 
                     border: 1px solid rgba(255, 255, 255, 0.08);
                     border-radius: 16px;
-                    overflow: hidden;
-                    transition: all 0.3s ease;
-                }
-                .phone-box:focus-within {
-                    border-color: #00ffcc;
-                    box-shadow: 0 0 25px rgba(0, 255, 204, 0.25);
-                    background: rgba(0, 0, 0, 0.7);
-                }
-                select {
-                    background: transparent;
-                    color: #00ffcc;
-                    border: none;
-                    padding: 18px;
-                    font-size: 16px;
-                    font-weight: bold;
-                    outline: none;
-                    cursor: pointer;
-                    border-right: 1px solid rgba(255, 255, 255, 0.08);
-                }
-                select option {
-                    background: #121623;
-                    color: #ffffff;
-                }
-                input { 
-                    flex: 1;
-                    padding: 18px 20px; 
-                    border: none;
-                    background: transparent;
+                    background: rgba(8, 10, 16, 0.6);
                     color: #ffffff; 
                     font-size: 17px; 
                     outline: none; 
                     letter-spacing: 1px;
+                    transition: all 0.3s ease;
+                }
+                input:focus {
+                    border-color: #00ffcc;
+                    box-shadow: 0 0 25px rgba(0, 255, 204, 0.25);
+                    background: rgba(0, 0, 0, 0.7);
                 }
                 
                 button { 
@@ -227,7 +205,7 @@ app.get('/', (req, res) => {
                     font-size: 16px; 
                     font-weight: 800; 
                     cursor: pointer; 
-                    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                    transition: all 0.3s ease;
                     box-shadow: 0 5px 30px rgba(0, 255, 204, 0.3);
                     letter-spacing: 1.5px;
                 }
@@ -245,27 +223,16 @@ app.get('/', (req, res) => {
             <div class="card">
                 <h1>VOBIXCHAT</h1>
                 <div class="subtitle">SECURITY GATEWAY</div>
-                <p>Módulo de autenticación cuántica automatizada. Ingrese su terminal telefónico para validar los candados de identidad móvil.</p>
+                <p>Módulo de autenticación cuántica automatizada. Ingrese su terminal telefónico internacional con el signo + y código de país adelante.</p>
                 <div class="input-group">
-                    <label>Terminal Físico Legítimo</label>
-                    <div class="phone-box">
-                        <select id="countryPrefix">
-                            <option value="+34">🇪🇸 +34</option>
-                            <option value="+1">🇩🇴 +1</option>
-                            <option value="+1">🇺🇸 +1</option>
-                            <option value="+52">🇲🇽 +52</option>
-                            <option value="+54">🇦🇷 +54</option>
-                            <option value="+57">🇨🇴 +57</option>
-                        </select>
-                        <input type="tel" id="phoneNumber" placeholder="600 000 000" autocomplete="off">
-                    </div>
+                    <label>Línea Móvil Internacional</label>
+                    <input type="tel" id="phoneNumber" placeholder="+34655766134 o +1809XXXXXXX" autocomplete="off">
                 </div>
                 <button onclick="procesarVerificacion()" id="btnAction">EJECUTAR DESPACHO SMS</button>
                 <div class="status-display" id="statusMessage"></div>
             </div>
             <script>
                 async function procesarVerificacion() {
-                    const prefijo = document.getElementById('countryPrefix').value;
                     const campoNumero = document.getElementById('phoneNumber');
                     const visualMensaje = document.getElementById('statusMessage');
                     const btn = document.getElementById('btnAction');
@@ -277,7 +244,6 @@ app.get('/', (req, res) => {
                         return;
                     }
 
-                    const numeroE164Global = prefijo + valorNumero;
                     visualMensaje.innerText = "ESTADO: Enlazando con antenas Infobip...";
                     visualMensaje.style.color = "#00ffcc";
                     btn.style.opacity = "0.7";
@@ -287,7 +253,7 @@ app.get('/', (req, res) => {
                         const respuesta = await fetch('/api/seguridad/verificar-usuario', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ numeroCrudo: numeroE164Global })
+                            body: JSON.stringify({ numeroCrudo: valorNumero })
                         });
                         const datos = await respuesta.json();
                         if (datos.success) {
@@ -298,6 +264,18 @@ app.get('/', (req, res) => {
                             visualMensaje.style.color = "#ff4d4d";
                         }
                     } catch (error) {
+                        visualMensaje.innerText = "CRÍTICO: Fallo en el cortafuegos de red.";
+                        visualMensaje.style.color = "#ff4d4d";
+                    } finally {
+                        btn.style.opacity = "1";
+                        btn.disabled = false;
+                    }
+                }
+            </script>
+        </body>
+        </html>
+    `);
+});
 // =================================================================
 // PARTE 4: USER INTEGRITY VALIDATION & INFOBIP CORE SMS PIPELINE
 // =================================================================
