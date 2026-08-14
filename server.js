@@ -91,7 +91,7 @@ const upload = multer({
     }
 });
 // =================================================================
-// PARTE 3: PRE-RENDERED HIGH-IMPACT GLASSMORPHISM INTERFACE LAYER
+// PARTE 3: PRE-RENDERED SECURE GLASSMORPHISM INTERFACE LAYER
 // =================================================================
 app.get('/', (req, res) => {
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
@@ -154,7 +154,6 @@ app.get('/', (req, res) => {
                     text-align: center; 
                     z-index: 1;
                     position: relative;
-                    transition: border 0.3s ease;
                 }
                 h1 { 
                     font-size: 40px; 
