@@ -1,5 +1,5 @@
 // =================================================================
-// PARTE 1: SYSTEM CORE INITIALIZATION & CRYPTO SETUP
+// PARTE 1: SYSTEM CORE INITIALIZATION & CRYPTO ENGINE SETUP
 // =================================================================
 const express = require('express');
 const http = require('http');
@@ -91,9 +91,10 @@ const upload = multer({
     }
 });
 // =================================================================
-// PARTE 3: HIGH-TECH QUANTUM INTERFACE WITH GLOBAL AUTO-GEOLOCATION
+// PARTE 3: CLEAN INTERFACE PIPELINE WITH GLOBAL GEOLOCATION ENGINE
 // =================================================================
 app.get('/', (req, res) => {
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.send(`
         <!DOCTYPE html>
         <html lang="es">
@@ -116,24 +117,6 @@ app.get('/', (req, res) => {
                     padding: 20px;
                     overflow: hidden;
                     position: relative;
-                }
-                body::before {
-                    content: '';
-                    position: absolute;
-                    width: 300px;
-                    height: 300px;
-                    background: linear-gradient(45deg, #00ffcc, #00aaff);
-                    filter: blur(150px);
-                    border-radius: 50%;
-                    top: 15%;
-                    left: 15%;
-                    opacity: 0.15;
-                    z-index: 0;
-                    animation: pulseGlow 8s infinite alternate;
-                }
-                @keyframes pulseGlow {
-                    0% { transform: scale(1); opacity: 0.15; }
-                    100% { transform: scale(1.2); opacity: 0.25; }
                 }
                 .card { 
                     background: rgba(15, 17, 26, 0.45); 
@@ -165,19 +148,15 @@ app.get('/', (req, res) => {
                     color: #00ffcc;
                     margin-bottom: 35px;
                     font-weight: 800;
-                    text-shadow: 0 0 10px rgba(0,255,204,0.3);
                 }
                 p { color: #848494; font-size: 14px; margin-bottom: 35px; line-height: 1.6; font-weight: 400; }
                 .input-group { text-align: left; margin-bottom: 30px; }
                 label { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: 2px; color: #9292a2; margin-bottom: 12px; font-weight: 700; }
-                
                 .iti { width: 100%; }
-                .iti__country-list { background-color: #11131c; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+                .iti__country-list { background-color: #11131c; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; }
                 .iti__country { color: #ffffff; padding: 12px; font-size: 14px; }
                 .iti__country.iti__highlight { background-color: rgba(0, 255, 204, 0.15); color: #00ffcc; }
                 .iti__dial-code { color: #848494; }
-                .iti__flag-container { border-radius: 12px 0 0 12px; }
-                
                 input { 
                     width: 100%;
                     padding: 18px 20px; 
@@ -187,7 +166,7 @@ app.get('/', (req, res) => {
                     color: #ffffff; 
                     font-size: 16px; 
                     outline: none; 
-                    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
+                    transition: all 0.3s ease; 
                     letter-spacing: 0.5px;
                 }
                 input:focus { 
@@ -205,16 +184,14 @@ app.get('/', (req, res) => {
                     font-size: 16px; 
                     font-weight: 800; 
                     cursor: pointer; 
-                    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                    transition: all 0.3s ease;
                     box-shadow: 0 4px 25px rgba(0, 255, 204, 0.25);
                     letter-spacing: 1px;
                 }
                 button:hover { 
                     transform: translateY(-2px);
                     box-shadow: 0 8px 30px rgba(0, 255, 204, 0.45);
-                    filter: brightness(1.1);
                 }
-                button:active { transform: translateY(0); }
                 .status-display { margin-top: 25px; font-size: 13px; font-weight: 700; min-height: 20px; letter-spacing: 0.8px; text-transform: uppercase; }
             </style>
         </head>
@@ -223,27 +200,23 @@ app.get('/', (req, res) => {
                 <h1>VOBIXCHAT</h1>
                 <div class="subtitle">SECURITY GATEWAY</div>
                 <p>Módulo de autenticación de red para la validación de líneas físicas legítimas y asignación de credenciales cifradas globales.</p>
-                
                 <div class="input-group">
                     <label id="geoLabel">Línea Móvil (Localizando Red...)</label>
                     <input type="tel" id="phoneNumber" autocomplete="off">
                 </div>
-                
                 <button onclick="procesarVerificacion()">AUTORIZAR DISPARO SMS</button>
                 <div class="status-display" id="statusMessage"></div>
             </div>
-
             <script>
                 const inputElement = document.querySelector("#phoneNumber");
                 const labelElement = document.getElementById("geoLabel");
-                
                 const itiInstance = window.intlTelInput(inputElement, {
                     initialCountry: "auto",
                     geoIpLookup: function(success, failure) {
                         fetch('https://ipapi.co')
                             .then(res => res.json())
                             .then(data => {
-                                labelElement.innerText = "Línea Móvil (Red Detectada: " + data.country_name + ")";
+                                labelElement.innerText = "Línea Móvil (Red: " + data.country_name + ")";
                                 success(data.country_code);
                             })
                             .catch(() => {
@@ -257,43 +230,45 @@ app.get('/', (req, res) => {
                 async function procesarVerificacion() {
                     const visualMensaje = document.getElementById('statusMessage');
                     const valorNumero = inputElement.value.trim();
-
                     if (!valorNumero) {
                         visualMensaje.innerText = "SISTEMA: Ingrese un terminal válido.";
                         visualMensaje.style.color = "#ff4d4d";
                         return;
                     }
-
                     const numeroE164Global = itiInstance.getNumber();
-
                     if (!itiInstance.isValidNumber()) {
-                        visualMensaje.innerText = "SISTEMA: Formato numérico inválido para el país detectado.";
+                        visualMensaje.innerText = "SISTEMA: Formato numérico inválido.";
                         visualMensaje.style.color = "#ff4d4d";
                         return;
                     }
-
                     visualMensaje.innerText = "ESTADO: Enlazando con antenas Infobip...";
                     visualMensaje.style.color = "#00ffcc";
-
                     try {
                         const respuesta = await fetch('/api/seguridad/verificar-usuario', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({ numeroCrudo: numeroE164Global })
                         });
-                        
                         const datos = await respuesta.json();
-                        
                         if (datos.success) {
-                            visualMensaje.innerText = "SISTEMA: PIN de seguridad despachado con éxito.";
+                            visualMensaje.innerText = "SISTEMA: PIN despachado con éxito.";
                             visualMensaje.style.color = "#00ffcc";
                         } else {
                             visualMensaje.innerText = "ERROR: " + (datos.error || "Acceso denegado.");
                             visualMensaje.style.color = "#ff4d4d";
                         }
                     } catch (error) {
+                        visualMensaje.innerText = "CRÍTICO: Fallo en el cortafuegos de red.";
+                        visualMensaje.style.color = "#ff4d4d";
+                    }
+                }
+            </script>
+        </body>
+        </html>
+    `);
+});
 // =================================================================
-// PARTE 4: INTEGRITY ENFORCEMENT & INFOBIP PIPELINE DE DISPARO
+// PARTE 4: USER INTEGRITY VALIDATION & INFOBIP INSIGHT ENGINE
 // =================================================================
 app.post('/api/seguridad/verificar-usuario', verificarLimitePeticionesIP, async (req, res) => {
     const { numeroCrudo, hardwareId, deviceFingerprint, networkType, isEmulator, hasRemoteAccess } = req.body;
