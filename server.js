@@ -10,7 +10,7 @@ const { Server } = require("socket.io");
 
 // INYECCIÓN OBLIGATORIA DE TUS LLAVES REALES DE INFOBIP CON SALDO ACTIVO
 process.env.INFOBIP_API_KEY = "bb99a77f5ca5f1bdb2295647ec379844-a69e335d-745b-4965-8551-9654c02862d6";
-process.env.INFOBIP_BASE_URL = "AQUÍ_PEGA_TU_URL_DE_INFOBIP"; // <-- BORRA ESTO Y PEGA TU URL DE INFOBIP (EJEMPLO: https://infobip.com)
+process.env.INFOBIP_BASE_URL = "https://infobip.com"; 
 
 const app = express();
 const servidorHTTP = http.createServer(app);
