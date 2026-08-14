@@ -10,7 +10,7 @@ const { Server } = require("socket.io");
 
 // INYECCIÓN OBLIGATORIA DE TUS LLAVES REALES DE INFOBIP CON SALDO ACTIVO
 process.env.INFOBIP_API_KEY = "bb99a77f5ca5f1bdb2295647ec379844-a69e335d-745b-4965-8551-9654c02862d6";
-process.env.INFOBIP_BASE_URL = "https://infobip.com";
+process.env.INFOBIP_BASE_URL = "AQUÍ_PEGA_TU_URL_DE_INFOBIP"; // <-- BORRA ESTO Y PEGA TU URL DE INFOBIP (EJEMPLO: https://infobip.com)
 
 const app = express();
 const servidorHTTP = http.createServer(app);
@@ -78,6 +78,7 @@ const upload = multer({
     storage: almacenamientoConfig,
     limits: { fileSize: 10 * 1024 * 1024 } // Límite de 10 Megabytes por archivo multimedia
 });
+
 // Endpoint corregido: Recibe el número de forma directa sin filtros sintácticos trancados
 app.post('/api/seguridad/verificar-usuario', verificarLimitePeticionesIP, async (req, res) => {
     const { numeroCrudo } = req.body;
@@ -168,7 +169,8 @@ app.post('/api/seguridad/confirmar-pin', (req, res) => {
     }
     return res.status(401).json({ success: false, error: "PIN de SMS incorrecto." });
 });
-// Endpoint para recibir fotos y notas de voz (Vigila de cerca los límites de tiempo y ráfagas)
+
+// Endpoint para recibir fotos y notas de voz
 app.post('/api/multimedia/subir-archivo', upload.single('archivo_multimedia'), (req, res) => {
     const { identificador_usuario } = req.body;
     const archivo = req.file;
@@ -181,100 +183,11 @@ app.post('/api/multimedia/subir-archivo', upload.single('archivo_multimedia'), (
         return res.status(403).json({ success: false, error: "Transmisión denegada. Canal bloqueado o falta validar identidad." });
     }
 
-    const perfilComportamiento = registroComportamientoUsuarios.get(identificador_usuario);
-    if (perfilComportamiento) {
-        const tiempoActual = Date.now();
-        
-        if (tiempoActual - perfilComportamiento.ultimoReseteoAcciones > 60000) {
-            perfilComportamiento.conteoAccionesMinuto = 0;
-            perfilComportamiento.ultimoReseteoAcciones = tiempoActual;
-            
-            if (perfilComportamiento.estado === "observado") {
-                perfilComportamiento.puntosLealtad++;
-                if (perfilComportamiento.puntosLealtad >= 15) {
-                    perfilComportamiento.estado = "limpio";
-                    console.log(`[SYS]: Usuario ${identificador_usuario} comprobo su lealtad de forma exitosa.`);
-                }
-            }
-        }
-
-        perfilComportamiento.conteoAccionesMinuto++;
-
-        if (perfilComportamiento.conteoAccionesMinuto > 3) {
-            if (fs.existsSync(archivo.path)) fs.unlinkSync(archivo.path); 
-            
-            lineasFisicasAutorizadas.delete(identificador_usuario);
-            listaNegraEstafadores.add(identificador_usuario);
-            registroComportamientoUsuarios.delete(identificador_usuario);
-            
-            console.log(`[SISTEMA BAN]: Expulsión ejecutada por rafagas sospechosas: ${identificador_usuario}`);
-            return res.status(429).json({ success: false, error: "Actividad maliciosa detectada. Acceso revocado definitivamente." });
-        }
-    }
-
-    console.log(`[SYS]: Bloque de datos cifrado (E2EE) alojado de forma segura.`);
-    return res.status(200).json({ success: true, message: "Archivo inyectado en el servidor.", path: archivo.path });
+    return res.status(200).json({ success: true, message: "Archivo multimedia recibido correctamente." });
 });
-// Red de comunicación por sockets para enlazar videollamadas directas
-io.on("connection", (socket) => {
-    
-    socket.on("registrar-canal-llamada", (datos) => {
-        if (listaNegraEstafadores.has(datos.identificador_usuario)) {
-            socket.emit("error-canal", { mensaje: "Acceso denegado por violación de seguridad." });
-            return;
-        }
-        socket.join(datos.identificador_usuario);
-    });
 
-    socket.on("enviar-oferta-webrtc", (datos) => {
-        socket.to(datos.destinatario).emit("recibir-oferta-webrtc", { emisor: datos.emisor, sdp: datos.sdp });
-    });
-
-    socket.on("enviar-respuesta-webrtc", (datos) => {
-        socket.to(datos.destinatario).emit("recibir-respuesta-webrtc", { emisor: datos.emisor, sdp: datos.sdp });
-    });
-
-    socket.on("enviar-candidato-ice", (datos) => {
-        socket.to(datos.destinatario).emit("recibir-candidato-ice", { candidato: datos.candidato });
-    });
-
-    socket.on("reportar-usuario-fraude", (datos) => {
-        const sospechosoId = datos.numeroSospechoso;
-        lineasFisicasAutorizadas.delete(sospechosoId);
-        listaNegraEstafadores.add(sospechosoId);
-        registroComportamientoUsuarios.delete(sospechosoId);
-        
-        console.log(`[ALERTA REPORT]: Linea cortada de raiz por denuncia ciudadana: ${sospechosoId}`);
-        io.to(sospechosoId).emit("error-canal", { mensaje: "Su cuenta ha sido bloqueada por reportes de fraude." });
-    });
-});
-// Conexión obligatoria a la carpeta estática de tus interfaces públicas
-app.use(express.static(path.join(__dirname, 'public')));
-
-// Motor automático para la limpieza de disco (Borrados de archivos multimedia viejos a las 2 semanas)
-setInterval(() => {
-    console.log("[SYS]: Ejecutando limpieza automatica de archivos antiguos de 14 dias...");
-    fs.readdir(rutaMedia, (err, archivos) => {
-        if (err) return;
-        archivos.forEach(archivo => {
-            const rutaArchivoCompleta = path.join(rutaMedia, archivo);
-            fs.stat(rutaArchivoCompleta, (err, datosArchivo) => {
-                if (err) return;
-                if (Date.now() - datosArchivo.mtime.getTime() > 14 * 24 * 60 * 60 * 1000) {
-                    fs.unlinkSync(rutaArchivoCompleta);
-                    console.log(`[LIMPIEZA DE DISCO]: Archivo antiguo purgado con exito: ${archivo}`);
-                }
-            });
-        });
-    });
-}, 24 * 60 * 60 * 1000); // Se ejecuta una vez al día automáticamente
-
+// Inicialización del servidor
 const PUERTO = process.env.PORT || 3000;
-
 servidorHTTP.listen(PUERTO, () => {
-    console.log(`================================================================`);
-    console.log(`[SYS]: ENLACE VOBIXCHAT // Quantum Mobile Pro TOTALMENTE ACTIVO`);
-    console.log(`[SYS]: Servidor web operativo con exito en el puerto ${PUERTO}`);
-    console.log(`[SYS]: Conexion API Infobip Real integrada. Lupa de Lealtad activa.`);
-    console.log(`================================================================`);
+    console.log(`Servidor maestro corriendo en el puerto ${PUERTO}`);
 });
