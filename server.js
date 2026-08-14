@@ -91,7 +91,7 @@ const upload = multer({
     }
 });
 // =================================================================
-// PARTE 3: CLEAN INTERFACE PIPELINE WITH GLOBAL GEOLOCATION ENGINE
+// PARTE 3: PRE-RENDERED HIGH-IMPACT GLASSMORPHISM INTERFACE LAYER
 // =================================================================
 app.get('/', (req, res) => {
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
@@ -102,13 +102,11 @@ app.get('/', (req, res) => {
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
             <title>VOBIXCHAT // Quantum Security Gateway</title>
-            <link rel="stylesheet" href="https://cloudflare.com">
-            <script src="https://cloudflare.com"></script>
             <style>
                 * { box-sizing: border-box; margin: 0; padding: 0; }
                 body { 
                     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
-                    background: radial-gradient(circle at center, #0d0f19 0%, #030305 100%); 
+                    background: radial-gradient(circle at center, #0e111a 0%, #040508 100%); 
                     color: #ffffff; 
                     display: flex; 
                     justify-content: center; 
@@ -118,131 +116,174 @@ app.get('/', (req, res) => {
                     overflow: hidden;
                     position: relative;
                 }
+                
+                body::after {
+                    content: '';
+                    position: absolute;
+                    top: 0; left: 0; width: 100%; height: 100%;
+                    background-image: linear-gradient(rgba(0, 255, 204, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(0, 255, 204, 0.03) 1px, transparent 1px);
+                    background-size: 30px 30px;
+                    z-index: 0;
+                }
+
+                .glow-circle {
+                    position: absolute;
+                    width: 450px;
+                    height: 450px;
+                    background: linear-gradient(135deg, rgba(0, 255, 204, 0.2), rgba(0, 136, 255, 0.2));
+                    filter: blur(120px);
+                    border-radius: 50%;
+                    z-index: 0;
+                    animation: floatGlow 10s infinite alternate ease-in-out;
+                }
+                @keyframes floatGlow {
+                    0% { transform: translate(-20px, -20px) scale(1); }
+                    100% { transform: translate(20px, 20px) scale(1.1); }
+                }
+
                 .card { 
-                    background: rgba(15, 17, 26, 0.45); 
-                    backdrop-filter: blur(20px);
-                    -webkit-backdrop-filter: blur(20px);
+                    background: rgba(18, 22, 35, 0.55); 
+                    backdrop-filter: blur(25px);
+                    -webkit-backdrop-filter: blur(25px);
                     width: 100%; 
-                    max-width: 440px; 
-                    padding: 55px 40px; 
-                    border-radius: 28px; 
-                    border: 1px solid rgba(255, 255, 255, 0.05); 
-                    box-shadow: 0 25px 60px rgba(0,0,0,0.65), inset 0 1px 0 rgba(255,255,255,0.1); 
+                    max-width: 450px; 
+                    padding: 60px 45px; 
+                    border-radius: 32px; 
+                    border: 1px solid rgba(0, 255, 204, 0.15); 
+                    box-shadow: 0 30px 70px rgba(0,0,0,0.8), inset 0 1px 1px rgba(255,255,255,0.1); 
                     text-align: center; 
                     z-index: 1;
                     position: relative;
+                    transition: border 0.3s ease;
                 }
                 h1 { 
-                    font-size: 36px; 
+                    font-size: 40px; 
                     font-weight: 900; 
-                    letter-spacing: 6px; 
-                    background: linear-gradient(135deg, #00ffcc 0%, #00aaff 100%);
+                    letter-spacing: 8px; 
+                    background: linear-gradient(135deg, #00ffcc 0%, #00bcff 100%);
                     -webkit-background-clip: text;
                     -webkit-text-fill-color: transparent;
-                    margin-bottom: 8px;
+                    margin-bottom: 6px;
                 }
                 .subtitle {
                     font-size: 11px;
                     text-transform: uppercase;
-                    letter-spacing: 4px;
+                    letter-spacing: 5px;
                     color: #00ffcc;
-                    margin-bottom: 35px;
+                    margin-bottom: 40px;
                     font-weight: 800;
+                    text-shadow: 0 0 15px rgba(0,255,204,0.4);
                 }
-                p { color: #848494; font-size: 14px; margin-bottom: 35px; line-height: 1.6; font-weight: 400; }
-                .input-group { text-align: left; margin-bottom: 30px; }
-                label { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: 2px; color: #9292a2; margin-bottom: 12px; font-weight: 700; }
-                .iti { width: 100%; }
-                .iti__country-list { background-color: #11131c; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; }
-                .iti__country { color: #ffffff; padding: 12px; font-size: 14px; }
-                .iti__country.iti__highlight { background-color: rgba(0, 255, 204, 0.15); color: #00ffcc; }
-                .iti__dial-code { color: #848494; }
-                input { 
+                p { color: #8c90a6; font-size: 14px; margin-bottom: 35px; line-height: 1.65; font-weight: 400; }
+                .input-group { text-align: left; margin-bottom: 35px; }
+                label { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: 2px; color: #a0a6c0; margin-bottom: 12px; font-weight: 700; }
+                
+                .phone-box {
+                    display: flex;
                     width: 100%;
+                    background: rgba(8, 10, 16, 0.6);
+                    border: 1px solid rgba(255, 255, 255, 0.08);
+                    border-radius: 16px;
+                    overflow: hidden;
+                    transition: all 0.3s ease;
+                }
+                .phone-box:focus-within {
+                    border-color: #00ffcc;
+                    box-shadow: 0 0 25px rgba(0, 255, 204, 0.25);
+                    background: rgba(0, 0, 0, 0.7);
+                }
+                select {
+                    background: transparent;
+                    color: #00ffcc;
+                    border: none;
+                    padding: 18px;
+                    font-size: 16px;
+                    font-weight: bold;
+                    outline: none;
+                    cursor: pointer;
+                    border-right: 1px solid rgba(255, 255, 255, 0.08);
+                }
+                select option {
+                    background: #121623;
+                    color: #ffffff;
+                }
+                input { 
+                    flex: 1;
                     padding: 18px 20px; 
-                    border: 1px solid rgba(255, 255, 255, 0.06); 
-                    border-radius: 14px; 
-                    background: rgba(5, 6, 10, 0.4); 
+                    border: none;
+                    background: transparent;
                     color: #ffffff; 
-                    font-size: 16px; 
+                    font-size: 17px; 
                     outline: none; 
-                    transition: all 0.3s ease; 
-                    letter-spacing: 0.5px;
+                    letter-spacing: 1px;
                 }
-                input:focus { 
-                    border-color: #00ffcc; 
-                    box-shadow: 0 0 20px rgba(0, 255, 204, 0.2);
-                    background: rgba(0, 0, 0, 0.6);
-                }
+                
                 button { 
                     width: 100%; 
                     padding: 18px; 
                     border: none; 
-                    border-radius: 14px; 
-                    background: linear-gradient(135deg, #00ffcc 0%, #0088ff 100%); 
-                    color: #030305; 
+                    border-radius: 16px; 
+                    background: linear-gradient(135deg, #00ffcc 0%, #0077ff 100%); 
+                    color: #040508; 
                     font-size: 16px; 
                     font-weight: 800; 
                     cursor: pointer; 
-                    transition: all 0.3s ease;
-                    box-shadow: 0 4px 25px rgba(0, 255, 204, 0.25);
-                    letter-spacing: 1px;
+                    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                    box-shadow: 0 5px 30px rgba(0, 255, 204, 0.3);
+                    letter-spacing: 1.5px;
                 }
                 button:hover { 
                     transform: translateY(-2px);
-                    box-shadow: 0 8px 30px rgba(0, 255, 204, 0.45);
+                    box-shadow: 0 10px 40px rgba(0, 255, 204, 0.5);
+                    filter: brightness(1.15);
                 }
-                .status-display { margin-top: 25px; font-size: 13px; font-weight: 700; min-height: 20px; letter-spacing: 0.8px; text-transform: uppercase; }
+                button:active { transform: translateY(0); }
+                .status-display { margin-top: 25px; font-size: 13px; font-weight: 700; min-height: 20px; letter-spacing: 1px; text-transform: uppercase; }
             </style>
         </head>
         <body>
+            <div class="glow-circle"></div>
             <div class="card">
                 <h1>VOBIXCHAT</h1>
                 <div class="subtitle">SECURITY GATEWAY</div>
-                <p>Módulo de autenticación de red para la validación de líneas físicas legítimas y asignación de credenciales cifradas globales.</p>
+                <p>Módulo de autenticación cuántica automatizada. Ingrese su terminal telefónico para validar los candados de identidad móvil.</p>
                 <div class="input-group">
-                    <label id="geoLabel">Línea Móvil (Localizando Red...)</label>
-                    <input type="tel" id="phoneNumber" autocomplete="off">
+                    <label>Terminal Físico Legítimo</label>
+                    <div class="phone-box">
+                        <select id="countryPrefix">
+                            <option value="+34">🇪🇸 +34</option>
+                            <option value="+1">🇩🇴 +1</option>
+                            <option value="+1">🇺🇸 +1</option>
+                            <option value="+52">🇲🇽 +52</option>
+                            <option value="+54">🇦🇷 +54</option>
+                            <option value="+57">🇨🇴 +57</option>
+                        </select>
+                        <input type="tel" id="phoneNumber" placeholder="600 000 000" autocomplete="off">
+                    </div>
                 </div>
-                <button onclick="procesarVerificacion()">AUTORIZAR DISPARO SMS</button>
+                <button onclick="procesarVerificacion()" id="btnAction">EJECUTAR DESPACHO SMS</button>
                 <div class="status-display" id="statusMessage"></div>
             </div>
             <script>
-                const inputElement = document.querySelector("#phoneNumber");
-                const labelElement = document.getElementById("geoLabel");
-                const itiInstance = window.intlTelInput(inputElement, {
-                    initialCountry: "auto",
-                    geoIpLookup: function(success, failure) {
-                        fetch('https://ipapi.co')
-                            .then(res => res.json())
-                            .then(data => {
-                                labelElement.innerText = "Línea Móvil (Red: " + data.country_name + ")";
-                                success(data.country_code);
-                            })
-                            .catch(() => {
-                                labelElement.innerText = "Línea Móvil (Red Local)";
-                                success("ES");
-                            });
-                    },
-                    utilsScript: "https://cloudflare.com"
-                });
-
                 async function procesarVerificacion() {
+                    const prefijo = document.getElementById('countryPrefix').value;
+                    const campoNumero = document.getElementById('phoneNumber');
                     const visualMensaje = document.getElementById('statusMessage');
-                    const valorNumero = inputElement.value.trim();
-                    if (!valorNumero) {
+                    const btn = document.getElementById('btnAction');
+                    const valorNumero = campoNumero.value.trim().replace(/\\s+/g, '');
+
+                    if (!valorNumero || valorNumero.length < 6) {
                         visualMensaje.innerText = "SISTEMA: Ingrese un terminal válido.";
                         visualMensaje.style.color = "#ff4d4d";
                         return;
                     }
-                    const numeroE164Global = itiInstance.getNumber();
-                    if (!itiInstance.isValidNumber()) {
-                        visualMensaje.innerText = "SISTEMA: Formato numérico inválido.";
-                        visualMensaje.style.color = "#ff4d4d";
-                        return;
-                    }
+
+                    const numeroE164Global = prefijo + valorNumero;
                     visualMensaje.innerText = "ESTADO: Enlazando con antenas Infobip...";
                     visualMensaje.style.color = "#00ffcc";
+                    btn.style.opacity = "0.7";
+                    btn.disabled = true;
+
                     try {
                         const respuesta = await fetch('/api/seguridad/verificar-usuario', {
                             method: 'POST',
@@ -251,24 +292,15 @@ app.get('/', (req, res) => {
                         });
                         const datos = await respuesta.json();
                         if (datos.success) {
-                            visualMensaje.innerText = "SISTEMA: PIN despachado con éxito.";
+                            visualMensaje.innerText = "SISTEMA: PIN de seguridad despachado con éxito.";
                             visualMensaje.style.color = "#00ffcc";
                         } else {
                             visualMensaje.innerText = "ERROR: " + (datos.error || "Acceso denegado.");
                             visualMensaje.style.color = "#ff4d4d";
                         }
                     } catch (error) {
-                        visualMensaje.innerText = "CRÍTICO: Fallo en el cortafuegos de red.";
-                        visualMensaje.style.color = "#ff4d4d";
-                    }
-                }
-            </script>
-        </body>
-        </html>
-    `);
-});
 // =================================================================
-// PARTE 4: USER INTEGRITY VALIDATION & INFOBIP INSIGHT ENGINE
+// PARTE 4: USER INTEGRITY VALIDATION & INFOBIP CORE SMS PIPELINE
 // =================================================================
 app.post('/api/seguridad/verificar-usuario', verificarLimitePeticionesIP, async (req, res) => {
     const { numeroCrudo, hardwareId, deviceFingerprint, networkType, isEmulator, hasRemoteAccess } = req.body;
