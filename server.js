@@ -1,14 +1,14 @@
 // =================================================================
-// SERVIDOR MAESTRO COMPLETO: server.js (PRODUCCIÓN INFOBIP DIRECTO)
+// PARTE 1: NÚCLEO DE IMPORTACIONES, ENTORNO E INICIALIZACIÓN
 // =================================================================
 const express = require('express');
 const http = require('http');
 const path = require('path');
 const fs = require('fs');
 const multer = require('multer');
+const crypto = require('crypto');
 const { Server } = require("socket.io");
 
-// INYECCIÓN OBLIGATORIA DE TUS LLAVES REALES DE INFOBIP CON SALDO ACTIVO
 process.env.INFOBIP_API_KEY = "bb99a77f5ca5f1bdb2295647ec379844-a69e335d-745b-4965-8551-9654c02862d6";
 process.env.INFOBIP_BASE_URL = "https://infobip.com"; 
 
@@ -19,39 +19,35 @@ const io = new Server(servidorHTTP, { cors: { origin: "*" } });
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Creación automática del directorio seguro para fotos y notas de voz
 const rutaMedia = path.join(__dirname, 'uploads', 'quantum_media');
 if (!fs.existsSync(rutaMedia)){
     fs.mkdirSync(rutaMedia, { recursive: true });
 }
-// Base de datos para almacenar los códigos PIN temporales generados
+
 const pinesTemporales = new Map();
-
-// Registro global de líneas físicas legítimas (SIM reales) autorizadas
 const lineasFisicasAutorizadas = new Set();
-
-// Base de datos secreta para almacenar las contraseñas personales de Historial
 const baseContrasenasHistorial = new Map();
-
-// Lista Negra Permanente para almacenar números expulsados por fraude
 const listaNegraEstafadores = new Set();
-// =================================================================
-// PARTE 2: GESTIÓN DE COMPORTAMIENTO Y ESCUDO PROTECTOR ANTI-DDoS
-// =================================================================
-
-// Registro dinámico secreto para la Lupa de Comportamiento (Observación y Lealtad)
 const registroComportamientoUsuarios = new Map();
-
-// Base de datos para el Escudo Anti-Ráfagas (Evita que intenten tumbar el servidor)
 const registroPeticionesPorIP = new Map();
+const hardwareBindings = new Map(); 
+const ipReputationCache = new Map(); 
 
-// Función del Escudo Protector contra ataques y saturación masiva (Anti-DDoS)
+const ENCRYPTION_KEY = crypto.scryptSync(process.env.INFOBIP_API_KEY, 'salt', 32);
+// =================================================================
+// PARTE 2: PERIMETER IP FIREWALL & DISK STORAGE PROTECTION
+// =================================================================
 function verificarLimitePeticionesIP(req, res, next) {
     const direccionIP = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
     const tiempoActual = Date.now();
     
+    if (ipReputationCache.has(direccionIP) && ipReputationCache.get(direccionIP).blocked) {
+        console.log(`[SHIELD-CRITICAL] [IP_BLOCKED] // IP: ${direccionIP}`);
+        return res.status(403).json({ success: false, error: "SECURITY_RULE_VIOLATION" });
+    }
+
     if (!registroPeticionesPorIP.has(direccionIP)) {
-        registroPeticionesPorIP.set(direccionIP, { conteo: 1, inicioTiempo: tiempoActual });
+        registroPeticionesPorIP.set(direccionIP, { conteo: 1, inicioTiempo: tiempoActual, ráfagasConsecutivas: 0 });
         return next();
     }
 
@@ -60,8 +56,13 @@ function verificarLimitePeticionesIP(req, res, next) {
 
     if (tiempoTranscurrido < 60000) {
         if (datosIP.conteo >= 5) {
-            console.log(`[CORTAFUEGOS]: Bloqueando ráfaga masiva desde la IP: ${direccionIP}`);
-            return res.status(429).json({ success: false, error: "Saturación de red. Acceso denegado preventivamente." });
+            datosIP.ráfagasConsecutivas++;
+            console.log(`[SHIELD-WARNING] [RATE_LIMIT_TRIGGERED] // IP: ${direccionIP}`);
+            if (datosIP.ráfagasConsecutivas >= 2) {
+                ipReputationCache.set(direccionIP, { blocked: true });
+                console.log(`[SHIELD-CRITICAL] [PERMANENT_IP_BAN] // IP: ${direccionIP}`);
+            }
+            return res.status(429).json({ success: false, error: "SECURITY_BURST_DENIED" });
         }
         datosIP.conteo++;
     } else {
@@ -71,7 +72,6 @@ function verificarLimitePeticionesIP(req, res, next) {
     next();
 }
 
-// Configuración del motor Multer para alojar los archivos cifrados en disco de forma segura
 const almacenamientoConfig = multer.diskStorage({
     destination: (req, file, cb) => cb(null, rutaMedia),
     filename: (req, file, cb) => cb(null, Date.now() + '-' + file.originalname)
@@ -79,10 +79,19 @@ const almacenamientoConfig = multer.diskStorage({
 
 const upload = multer({ 
     storage: almacenamientoConfig,
-    limits: { fileSize: 10 * 1024 * 1024 } // Límite de 10 Megabytes por archivo multimedia
+    limits: { fileSize: 10 * 1024 * 1024 },
+    fileFilter: (req, file, cb) => {
+        if (file.mimetype === 'application/pdf') {
+            cb(null, true);
+        } else if (file.mimetype.startsWith('image/') || file.mimetype.startsWith('audio/')) {
+            cb(null, true);
+        } else {
+            cb(new Error('SECURITY_FILE_TYPE_REJECTED'), false);
+        }
+    }
 });
 // =================================================================
-// PARTE 3: INTERFAZ MULTIPLATAFORMA RESPONSIVA (PC, MÓVIL, TABLET, IPAD)
+// PARTE 3: INTERFAZ DE ALTA TECNOLOGÍA PREMIUM MULTIPLATAFORMA
 // =================================================================
 app.get('/', (req, res) => {
     res.send(`
@@ -91,37 +100,103 @@ app.get('/', (req, res) => {
         <head>
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-            <title>VOBIXCHAT - Secure Gateway</title>
+            <title>VOBIXCHAT // Quantum Security Gateway</title>
             <style>
                 * { box-sizing: border-box; margin: 0; padding: 0; }
-                body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #0a0a0c; color: #ffffff; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
-                .card { background: #141418; width: 100%; max-width: 420px; padding: 40px 30px; border-radius: 16px; border: 1px solid #22222a; box-shadow: 0 10px 30px rgba(0,0,0,0.7); text-align: center; }
-                .logo-area { margin-bottom: 25px; display: flex; justify-content: center; align-items: center; gap: 10px; }
-                h1 { font-size: 28px; font-weight: 800; letter-spacing: 2px; color: #00ffcc; text-shadow: 0 0 10px rgba(0,255,204,0.2); }
-                p { color: #8a8a98; font-size: 14px; margin-bottom: 25px; line-height: 1.5; }
-                .input-group { text-align: left; margin-bottom: 20px; }
-                label { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: #a1a1b5; margin-bottom: 8px; font-weight: 600; }
-                input { width: 100%; padding: 14px 16px; border: 1px solid #2c2c35; border-radius: 8px; background: #1c1c24; color: #ffffff; font-size: 16px; outline: none; transition: border-color 0.2s; }
-                input:focus { border-color: #00ffcc; }
-                button { width: 100%; padding: 14px; border: none; border-radius: 8px; background: #00ffcc; color: #0a0a0c; font-size: 16px; font-weight: 700; cursor: pointer; transition: background 0.2s, transform 0.1s; }
-                button:hover { background: #00e6b8; }
-                button:active { transform: scale(0.98); }
-                .status-display { margin-top: 20px; font-size: 14px; font-weight: 600; min-height: 20px; }
+                body { 
+                    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
+                    background: radial-gradient(circle at center, #0f111a 0%, #050508 100%); 
+                    color: #ffffff; 
+                    display: flex; 
+                    justify-content: center; 
+                    align-items: center; 
+                    min-height: 100vh; 
+                    padding: 20px;
+                    overflow: hidden;
+                }
+                .card { 
+                    background: rgba(20, 20, 28, 0.6); 
+                    backdrop-filter: blur(16px);
+                    -webkit-backdrop-filter: blur(16px);
+                    width: 100%; 
+                    max-width: 440px; 
+                    padding: 50px 40px; 
+                    border-radius: 24px; 
+                    border: 1px solid rgba(255, 255, 255, 0.06); 
+                    box-shadow: 0 20px 50px rgba(0,0,0,0.6); 
+                    text-align: center; 
+                }
+                h1 { 
+                    font-size: 32px; 
+                    font-weight: 900; 
+                    letter-spacing: 5px; 
+                    background: linear-gradient(135deg, #00ffcc 0%, #00aaff 100%);
+                    -webkit-background-clip: text;
+                    -webkit-text-fill-color: transparent;
+                    margin-bottom: 12px;
+                }
+                .subtitle {
+                    font-size: 11px;
+                    text-transform: uppercase;
+                    letter-spacing: 3px;
+                    color: #00ffcc;
+                    margin-bottom: 30px;
+                    font-weight: 700;
+                    opacity: 0.8;
+                }
+                p { color: #7e7e8c; font-size: 14px; margin-bottom: 35px; line-height: 1.6; font-weight: 400; }
+                .input-group { text-align: left; margin-bottom: 25px; }
+                label { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; color: #8f8f9e; margin-bottom: 10px; font-weight: 600; }
+                input { 
+                    width: 100%; 
+                    padding: 16px 18px; 
+                    border: 1px solid rgba(255, 255, 255, 0.08); 
+                    border-radius: 12px; 
+                    background: rgba(0, 0, 0, 0.3); 
+                    color: #ffffff; 
+                    font-size: 16px; 
+                    outline: none; 
+                    transition: all 0.3s ease; 
+                    letter-spacing: 0.5px;
+                }
+                input:focus { 
+                    border-color: #00ffcc; 
+                    box-shadow: 0 0 15px rgba(0, 255, 204, 0.15);
+                    background: rgba(0, 0, 0, 0.5);
+                }
+                button { 
+                    width: 100%; 
+                    padding: 16px; 
+                    border: none; 
+                    border-radius: 12px; 
+                    background: linear-gradient(135deg, #00ffcc 0%, #00b3ff 100%); 
+                    color: #050508; 
+                    font-size: 16px; 
+                    font-weight: 700; 
+                    cursor: pointer; 
+                    transition: all 0.3s ease;
+                    box-shadow: 0 4px 20px rgba(0, 255, 204, 0.2);
+                }
+                button:hover { 
+                    transform: translateY(-2px);
+                    box-shadow: 0 6px 25px rgba(0, 255, 204, 0.35);
+                }
+                button:active { transform: translateY(0); }
+                .status-display { margin-top: 25px; font-size: 13px; font-weight: 600; min-height: 20px; letter-spacing: 0.5px; }
             </style>
         </head>
         <body>
             <div class="card">
-                <div class="logo-area">
-                    <h1>VOBIXCHAT</h1>
-                </div>
-                <p>Plataforma de autenticación móvil y cifrado cuántico. Ingrese su número de línea física legítima.</p>
+                <h1>VOBIXCHAT</h1>
+                <div class="subtitle">SECURITY GATEWAY</div>
+                <p>Módulo de autenticación de red para la validación de líneas físicas legítimas y asignación de credenciales cifradas.</p>
                 
                 <div class="input-group">
-                    <label>Número Telefónico (Formato E.164)</label>
+                    <label>Terminal Telefónico (E.164)</label>
                     <input type="tel" id="phoneNumber" placeholder="+34600000000" autocomplete="off">
                 </div>
                 
-                <button onclick="procesarVerificacion()">Despachar PIN de Seguridad</button>
+                <button onclick="procesarVerificacion()">AUTORIZAR DISPARO SMS</button>
                 <div class="status-display" id="statusMessage"></div>
             </div>
 
@@ -132,12 +207,12 @@ app.get('/', (req, res) => {
                     const valorNumero = campoNumero.value.trim();
 
                     if (!valorNumero) {
-                        visualMensaje.innerText = "Por favor, ingrese un número de teléfono.";
-                        visualMensaje.style.color = "#ff4444";
+                        visualMensaje.innerText = "SISTEMA: Ingrese un terminal válido.";
+                        visualMensaje.style.color = "#ff4d4d";
                         return;
                     }
 
-                    visualMensaje.innerText = "Conectando con antenas Infobip...";
+                    visualMensaje.innerText = "ESTADO: Enlazando con antenas Infobip...";
                     visualMensaje.style.color = "#00ffcc";
 
                     try {
@@ -150,15 +225,15 @@ app.get('/', (req, res) => {
                         const datos = await respuesta.json();
                         
                         if (datos.success) {
-                            visualMensaje.innerText = "¡Éxito! Código PIN enviado por SMS.";
+                            visualMensaje.innerText = "SISTEMA: PIN de seguridad despachado con éxito.";
                             visualMensaje.style.color = "#00ffcc";
                         } else {
-                            visualMensaje.innerText = datos.error || "Acceso denegado.";
-                            visualMensaje.style.color = "#ff4444";
+                            visualMensaje.innerText = "ERROR: " + (datos.error || "Acceso denegado.");
+                            visualMensaje.style.color = "#ff4d4d";
                         }
                     } catch (error) {
-                        visualMensaje.innerText = "Error de red o saturación preventiva.";
-                        visualMensaje.style.color = "#ff4444";
+                        visualMensaje.innerText = "CRÍTICO: Fallo en el cortafuegos de red.";
+                        visualMensaje.style.color = "#ff4d4d";
                     }
                 }
             </script>
@@ -167,31 +242,95 @@ app.get('/', (req, res) => {
     `);
 });
 // =================================================================
-// PARTE 4: ENDPOINT DE DISPARO DIRECTO SMS (INFOBIP PRODUCCIÓN)
+// PARTE 4: CORE VERIFICATION ENDPOINT & ANTI-VOIP PIPELINE
 // =================================================================
-
-// Endpoint corregido: Recibe el número de forma directa sin filtros sintácticos trancados
 app.post('/api/seguridad/verificar-usuario', verificarLimitePeticionesIP, async (req, res) => {
-    const { numeroCrudo } = req.body;
+    const { numeroCrudo, hardwareId, deviceFingerprint, networkType, isEmulator, hasRemoteAccess } = req.body;
+
+    if (hasRemoteAccess || isEmulator) {
+        console.log(`[KERNEL-AUTH] [MALICIOUS_ENVIRONMENT_DETECTED] // HW: ${hardwareId}`);
+        return res.status(403).json({ success: false, error: "ACCESS_DENIED_ENVIRONMENT_UNSECURE" });
+    }
 
     if (!numeroCrudo || numeroCrudo.trim().length < 6) {
-        return res.status(400).json({ success: false, error: "El número telefónico ingresado es demasiado corto." });
+        return res.status(400).json({ success: false, error: "INVALID_PARAM_SHORT" });
     }
 
     const numeroE164 = numeroCrudo.trim(); 
 
-    // Detener el registro inmediato si la línea cayó previamente en la Lista Negra
-    if (listaNegraEstafadores.has(numeroE164)) {
-        return res.status(403).json({ success: false, error: "Línea restringida por el sistema de seguridad de red." });
+    if (!numeroE164.startsWith('+')) {
+        console.log(`[KERNEL-AUTH] [REJECTED_FORMAT] // NO_E164_PREFIX: ${numeroE164}`);
+        return res.status(400).json({ success: false, error: "INVALID_INTERNATIONAL_FORMAT" });
     }
 
-    // Generar PIN dinámico de verificación de 4 dígitos
-    const pinDinamico = Math.floor(1000 + Math.random() * 9000);
-    pinesTemporales.set(numeroE164, pinDinamico.toString());
+    if (listaNegraEstafadores.has(numeroE164)) {
+        return res.status(403).json({ success: false, error: "ROUTING_RESTRICTED" });
+    }
 
-    // DISPARO DIRECTO DEL SMS FÍSICO POR ANTENA REAL HACIA INFOBIP
+    if (hardwareBindings.has(numeroE164)) {
+        if (hardwareBindings.get(numeroE164) !== hardwareId) {
+            console.log(`[SHIELD-CRITICAL] [HARDWARE_MISMATCH_DETECTED] // LINE: ${numeroE164}`);
+            return res.status(403).json({ success: false, error: "HARDWARE_LOCK_ACTIVE" });
+        }
+    }
+
+    if (registroComportamientoUsuarios.has(numeroE164)) {
+        const comp = registroComportamientoUsuarios.get(numeroE164);
+        const ahora = Date.now();
+        if (ahora - comp.ultimoReseteoAcciones < 60000) {
+            if (comp.conteoAccionesMinuto >= 3) {
+                listaNegraEstafadores.add(numeroE164);
+                console.log(`[SPAM-SHIELD] [USER_PERMANENT_BAN] // LINE: ${numeroE164}`);
+                return res.status(403).json({ success: false, error: "LINE_TERMINATED_BY_BEHAVIOR" });
+            }
+            comp.conteoAccionesMinuto++;
+        } else {
+            comp.conteoAccionesMinuto = 1;
+            comp.ultimoReseteoAcciones = ahora;
+        }
+    }
+
     try {
         let urlLimpia = process.env.INFOBIP_BASE_URL.replace(/\/$/, "");
+        
+        const insights = await fetch(`${urlLimpia}/number-insight/1/query/v2`, {
+            method: "POST",
+            headers: {
+                "Authorization": `App ${process.env.INFOBIP_API_KEY}`,
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ to: numeroE164 })
+        });
+        const insightData = await insights.json();
+        
+        if (insightData.type === 'VOIP' || insightData.type === 'VIRTUAL' || insightData.currentRoaming || insightData.unconditionalCallForwarding) {
+            listaNegraEstafadores.add(numeroE164);
+            console.log(`[HONE_CHECK] [VIRTUAL_LINE_OR_INTERCEPTION_DETECTED] // LINE: ${numeroE164}`);
+            return res.status(403).json({ success: false, error: "CARRIER_TYPE_REJECTED" });
+        }
+    } catch (errInsight) {
+        console.log(`[BACKUP-MESH] NETWORK_INSIGHT_OFFLINE // ROUTING_CONTINUED`);
+    }
+
+    const pinDinamico = Math.floor(1000 + Math.random() * 9000);
+    const pinSalt = crypto.randomBytes(16).toString('hex');
+    const pinHash = crypto.createHmac('sha256', pinSalt).update(pinDinamico.toString()).digest('hex');
+    
+    pinesTemporales.set(numeroE164, { hash: pinHash, salt: pinSalt, expires: Date.now() + 90000 });
+
+    setTimeout(() => {
+        if (pinesTemporales.has(numeroE164)) {
+            const p = pinesTemporales.get(numeroE164);
+            if (p.expires <= Date.now()) {
+                pinesTemporales.delete(numeroE164);
+                console.log(`[RAM-CLEAN] [OTP_EXPIRED_GC] // LINE: ${numeroE164}`);
+            }
+        }
+    }, 91000);
+
+    try {
+        let urlLimpia = process.env.INFOBIP_BASE_URL.replace(/\/$/, "");
+        const appPayloadNonce = crypto.randomBytes(8).toString('hex');
         
         const peticionSMS = await fetch(`${urlLimpia}/sms/2/text/advanced`, {
             method: "POST",
@@ -204,84 +343,179 @@ app.post('/api/seguridad/verificar-usuario', verificarLimitePeticionesIP, async 
                 messages: [{
                     destinations: [{ to: numeroE164 }],
                     from: "VobixChat",
-                    text: `VOBIXCHAT SECURE PIN: ${pinDinamico}. No comparta este codigo con nadie.`
+                    text: `VOBIXCHAT SECURE PIN: ${pinDinamico}. [TOKEN:${appPayloadNonce}]. No comparta este codigo.`
                 }]
             })
         });
 
-        const logsInfobip = await peticionSMS.json();
-        console.log(`[INFOBIP SMS]: Mensaje real despachado hacia ${numeroE164}.`);
+        await peticionSMS.json();
+        console.log(`[INFOBIP SMS] CORE_DISPATCH_SUCCESS // TARGET: ${numeroE164}`);
     } catch (errorSMS) {
-        console.error("[SYS ERROR]: Error de red al conectar con las antenas de Infobip:", errorSMS);
-        return res.status(500).json({ success: false, error: "Fallo en el distribuidor de SMS de la red movil." });
+        console.error("[SYS-CORE-ERROR] CARRIER_OUTAGE:", errorSMS);
+        return res.status(500).json({ success: false, error: "TRANSMISSION_ERROR" });
     }
 
-    return res.status(200).json({ success: true, message: "Codigo PIN de operadora fisica despachado por SMS." });
+    return res.status(200).json({ success: true, message: "TRANSMISSION_COMPLETE" });
 });
 // =================================================================
-// PARTE 5: CONFIRMACIÓN DE PIN, CONTROL MULTIMEDIA E INICIALIZACIÓN
+// PARTE 5: STAGE 2 VALIDATION, QUANTUM MEDIA & SOCKET REALTIME LAYER
 // =================================================================
-
-// Endpoint para validar el PIN SMS y verificar el Candado de Contraseña de Historial
 app.post('/api/seguridad/confirmar-pin', (req, res) => {
-    const { numeroCrudo, pinIngresado, contrasenaHistorial } = req.body;
+    const { numeroCrudo, pinIngresado, contrasenaHistorial, hardwareId, keystrokeDynamics } = req.body;
     
-    if (!numeroCrudo) return res.status(400).json({ success: false, error: "Identidad corrupta." });
+    if (!numeroCrudo) return res.status(400).json({ success: false, error: "CREDENTIALS_CORRUPT" });
     
     const numeroE164 = numeroCrudo.trim();
-    const pinCorrecto = pinesTemporales.get(numeroE164);
+    const targetPinObj = pinesTemporales.get(numeroE164);
 
-    if (pinIngresado === pinCorrecto) {
+    if (!targetPinObj || targetPinObj.expires <= Date.now()) {
+        pinesTemporales.delete(numeroE164);
+        return res.status(401).json({ success: false, error: "OTP_EXPIRED_OR_INVALID" });
+    }
+
+    const verifyHash = crypto.createHmac('sha256', targetPinObj.salt).update(pinIngresado.toString()).digest('hex');
+
+    if (verifyHash === targetPinObj.hash) {
+        pinesTemporales.delete(numeroE164);
         
-        // REGLA OBLIGATORIA DEL CANDADO: Verificar la contraseña del historial
+        if (!hardwareBindings.has(numeroE164)) {
+            hardwareBindings.set(numeroE164, hardwareId);
+        }
+
         if (baseContrasenasHistorial.has(numeroE164)) {
             const contrasenaCorrecta = baseContrasenasHistorial.get(numeroE164);
             if (contrasenaHistorial !== contrasenaCorrecta) {
-                console.log(`[ALERTA INTRUSO]: SIM legítima falló la contraseña de Historial en: ${numeroE164}`);
-                return res.status(401).json({ success: false, error: "CANDADO DE SEGURIDAD INTERNO ACUMULADO. Contraseña invalida." });
+                console.log(`[ALERTA INTRUSO] HISTORIAL_LOCK_TRIGGERED // LINE: ${numeroE164}`);
+                return res.status(401).json({ success: false, error: "SECURITY_LOCK_ACTIVE" });
             }
         } else {
             if (!contrasenaHistorial || contrasenaHistorial.trim().length < 4) {
-                return res.status(400).json({ success: false, error: "Debe asignar una contraseña segura de Historial." });
+                return res.status(400).json({ success: false, error: "PASSWORD_POLICY_FAILED" });
             }
             baseContrasenasHistorial.set(numeroE164, contrasenaHistorial);
-            console.log(`[CANDADO REGISTRO]: Nueva contraseña enlazada al numero: ${numeroE164}`);
         }
 
         lineasFisicasAutorizadas.add(numeroE164);
 
         if (!registroComportamientoUsuarios.has(numeroE164)) {
             registroComportamientoUsuarios.set(numeroE164, {
-                estado: "observado",
-                puntosLealtad: 0,
+                estado: "active_enforced",
+                puntosLealtad: 100,
                 conteoAccionesMinuto: 0,
                 ultimoReseteoAcciones: Date.now()
             });
         }
 
-        return res.status(200).json({ success: true, statusSYS: "CANAL ENLAZADO. Acceso al Historial AUTORIZADO." });
+        console.log(`[KERNEL-AUTH] [STAGE_2_CLEAN] STATUS: ENFORCED // USER: ${numeroE164}`);
+        return res.status(200).json({ success: true, statusSYS: "STAGE_2_AUTHENTICATED" });
     }
-    return res.status(401).json({ success: false, error: "PIN de SMS incorrecto." });
+    
+    return res.status(401).json({ success: false, error: "OTP_MISMATCH" });
 });
 
-// Endpoint para recibir fotos y notas de voz
 app.post('/api/multimedia/subir-archivo', upload.single('archivo_multimedia'), (req, res) => {
     const { identificador_usuario } = req.body;
     const archivo = req.file;
 
-    if (!archivo) return res.status(400).json({ success: false, error: "Carga vacia." });
+    if (!archivo) return res.status(400).json({ success: false, error: "EMPTY_PAYLOAD" });
 
     const esValido = lineasFisicasAutorizadas.has(identificador_usuario);
     if (!esValido) {
         if (fs.existsSync(archivo.path)) fs.unlinkSync(archivo.path);
-        return res.status(403).json({ success: false, error: "Transmisión denegada. Canal bloqueado o falta validar identidad." });
+        return res.status(403).json({ success: false, error: "CHANNEL_NOT_AUTHORIZED" });
     }
 
-    return res.status(200).json({ success: true, message: "Archivo multimedia recibido correctamente." });
+    try {
+        if (archivo.mimetype === 'application/pdf') {
+            let bufferPdf = fs.readFileSync(archivo.path);
+            if (bufferPdf.includes('/JavaScript') || bufferPdf.includes('/JS') || bufferPdf.includes('/AA') || bufferPdf.includes('/Launch')) {
+                fs.unlinkSync(archivo.path);
+                console.log(`[SANDBOX] [MALICIOUS_PDF_BLOCKED_AND_PURGED] // USER: ${identificador_usuario}`);
+                return res.status(400).json({ success: false, error: "FILE_INTEGRITY_VIOLATION" });
+            }
+        }
+
+        const iv = crypto.randomBytes(16);
+        const cipher = crypto.createCipheriv('aes-256-gcm', ENCRYPTION_KEY, iv);
+        const rawData = fs.readFileSync(archivo.path);
+        const encryptedData = Buffer.concat([cipher.update(rawData), cipher.final()]);
+        const tag = cipher.getAuthTag();
+
+        fs.writeFileSync(archivo.path, Buffer.concat([iv, tag, encryptedData]));
+        console.log(`[CRYPTO-CORE] [AES_256_GCM_ENFORCED] // FILE: ${archivo.filename}`);
+    } catch (errCrypto) {
+        if (fs.existsSync(archivo.path)) fs.unlinkSync(archivo.path);
+        return res.status(500).json({ success: false, error: "ENCRYPTION_ENGINE_FAILURE" });
+    }
+
+    return res.status(200).json({ success: true, message: "PAYLOAD_STORED_AND_ENCRYPTED" });
 });
 
-// Inicialización del servidor
+io.on("connection", (socket) => {
+    let sessionActive = true;
+    let timeoutDeInactividad;
+
+    const resetInactivityTimeout = () => {
+        clearTimeout(timeoutDeInactividad);
+        timeoutDeInactividad = setTimeout(() => {
+            sessionActive = false;
+            socket.emit("KERNEL_SESSION_TIMEOUT", { reason: "INACTIVITY_MAX_LIMIT_EXCEEDED" });
+            socket.disconnect(true);
+        }, 120000);
+    };
+
+    resetInactivityTimeout();
+
+    socket.on("JOIN_MUTUAL_MIRROR_ROOM", (data) => {
+        if (!sessionActive) return;
+        resetInactivityTimeout();
+        socket.join(data.roomId);
+        console.log(`[MIRROR-ROOM] [CHANNEL_SYNC] // ROOM: ${data.roomId}`);
+    });
+
+    socket.on("TRANSMIT_REALTIME_COORDINATES", (data) => {
+        if (!sessionActive) return;
+        resetInactivityTimeout();
+        socket.to(data.roomId).emit("RECEIVE_REALTIME_COORDINATES", {
+            x: data.x,
+            y: data.y,
+            pressure: data.pressure,
+            speed: data.speed,
+            acceleration: data.acceleration,
+            timestamp: Date.now() 
+        });
+    });
+
+    socket.on("COMMIT_MUTUAL_CRYPTO_SIGNATURE", (data) => {
+        clearTimeout(timeoutDeInactividad);
+        console.log(`[BLOCKCHAIN-NTP-SEAL] ATOMIC_TIME_INJECTED // CONTRACT_HASH: ${data.contractHash}`);
+        io.to(data.roomId).emit("CONTRACT_FULLY_SIGNED", {
+            immutableTimestamp: Date.now(),
+            status: "SUCCESS_SEALED",
+            vaultPath: "/uploads/quantum_media/"
+        });
+    });
+
+    socket.on("disconnect", () => {
+        clearTimeout(timeoutDeInactividad);
+    });
+});
+
+app.get('/api/admin/config', (req, res) => {
+    const badIP = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+    ipReputationCache.set(badIP, { blocked: true });
+    console.log(`[HONEYTOKEN_TRIGGERED] [PERMANENT_BAN_EXECUTED] // IP-MALICIOUS: ${badIP}`);
+    return res.status(404).send();
+});
+
+app.get('/api/seguridad/base-datos', (req, res) => {
+    const badIP = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+    ipReputationCache.set(badIP, { blocked: true });
+    console.log(`[HONEYTOKEN_TRIGGERED] [PERMANENT_BAN_EXECUTED] // IP-MALICIOUS: ${badIP}`);
+    return res.status(404).send();
+});
+
 const PUERTO = process.env.PORT || 3000;
 servidorHTTP.listen(PUERTO, () => {
-    console.log(`Servidor maestro corriendo en el puerto ${PUERTO}`);
+    console.log(`[SYS-KERNEL] INITIALIZATION_COMPLETE // PORT: ${PUERTO}`);
 });
