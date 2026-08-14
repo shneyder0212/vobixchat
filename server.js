@@ -1,5 +1,5 @@
 // =================================================================
-// PARTE 1: NÚCLEO DE IMPORTACIONES, ENTORNO E INICIALIZACIÓN
+// PARTE 1: SYSTEM CORE INITIALIZATION & CRYPTO SETUP
 // =================================================================
 const express = require('express');
 const http = require('http');
@@ -91,7 +91,7 @@ const upload = multer({
     }
 });
 // =================================================================
-// PARTE 3: INTERFAZ DE ALTA TECNOLOGÍA PREMIUM MULTIPLATAFORMA
+// PARTE 3: HIGH-TECH QUANTUM INTERFACE WITH GLOBAL AUTO-GEOLOCATION
 // =================================================================
 app.get('/', (req, res) => {
     res.send(`
@@ -101,11 +101,13 @@ app.get('/', (req, res) => {
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
             <title>VOBIXCHAT // Quantum Security Gateway</title>
+            <link rel="stylesheet" href="https://cloudflare.com">
+            <script src="https://cloudflare.com"></script>
             <style>
                 * { box-sizing: border-box; margin: 0; padding: 0; }
                 body { 
                     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
-                    background: radial-gradient(circle at center, #0f111a 0%, #050508 100%); 
+                    background: radial-gradient(circle at center, #0d0f19 0%, #030305 100%); 
                     color: #ffffff; 
                     display: flex; 
                     justify-content: center; 
@@ -113,87 +115,118 @@ app.get('/', (req, res) => {
                     min-height: 100vh; 
                     padding: 20px;
                     overflow: hidden;
+                    position: relative;
+                }
+                body::before {
+                    content: '';
+                    position: absolute;
+                    width: 300px;
+                    height: 300px;
+                    background: linear-gradient(45deg, #00ffcc, #00aaff);
+                    filter: blur(150px);
+                    border-radius: 50%;
+                    top: 15%;
+                    left: 15%;
+                    opacity: 0.15;
+                    z-index: 0;
+                    animation: pulseGlow 8s infinite alternate;
+                }
+                @keyframes pulseGlow {
+                    0% { transform: scale(1); opacity: 0.15; }
+                    100% { transform: scale(1.2); opacity: 0.25; }
                 }
                 .card { 
-                    background: rgba(20, 20, 28, 0.6); 
-                    backdrop-filter: blur(16px);
-                    -webkit-backdrop-filter: blur(16px);
+                    background: rgba(15, 17, 26, 0.45); 
+                    backdrop-filter: blur(20px);
+                    -webkit-backdrop-filter: blur(20px);
                     width: 100%; 
                     max-width: 440px; 
-                    padding: 50px 40px; 
-                    border-radius: 24px; 
-                    border: 1px solid rgba(255, 255, 255, 0.06); 
-                    box-shadow: 0 20px 50px rgba(0,0,0,0.6); 
+                    padding: 55px 40px; 
+                    border-radius: 28px; 
+                    border: 1px solid rgba(255, 255, 255, 0.05); 
+                    box-shadow: 0 25px 60px rgba(0,0,0,0.65), inset 0 1px 0 rgba(255,255,255,0.1); 
                     text-align: center; 
+                    z-index: 1;
+                    position: relative;
                 }
                 h1 { 
-                    font-size: 32px; 
+                    font-size: 36px; 
                     font-weight: 900; 
-                    letter-spacing: 5px; 
+                    letter-spacing: 6px; 
                     background: linear-gradient(135deg, #00ffcc 0%, #00aaff 100%);
                     -webkit-background-clip: text;
                     -webkit-text-fill-color: transparent;
-                    margin-bottom: 12px;
+                    margin-bottom: 8px;
                 }
                 .subtitle {
                     font-size: 11px;
                     text-transform: uppercase;
-                    letter-spacing: 3px;
+                    letter-spacing: 4px;
                     color: #00ffcc;
-                    margin-bottom: 30px;
-                    font-weight: 700;
-                    opacity: 0.8;
+                    margin-bottom: 35px;
+                    font-weight: 800;
+                    text-shadow: 0 0 10px rgba(0,255,204,0.3);
                 }
-                p { color: #7e7e8c; font-size: 14px; margin-bottom: 35px; line-height: 1.6; font-weight: 400; }
-                .input-group { text-align: left; margin-bottom: 25px; }
-                label { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; color: #8f8f9e; margin-bottom: 10px; font-weight: 600; }
+                p { color: #848494; font-size: 14px; margin-bottom: 35px; line-height: 1.6; font-weight: 400; }
+                .input-group { text-align: left; margin-bottom: 30px; }
+                label { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: 2px; color: #9292a2; margin-bottom: 12px; font-weight: 700; }
+                
+                .iti { width: 100%; }
+                .iti__country-list { background-color: #11131c; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+                .iti__country { color: #ffffff; padding: 12px; font-size: 14px; }
+                .iti__country.iti__highlight { background-color: rgba(0, 255, 204, 0.15); color: #00ffcc; }
+                .iti__dial-code { color: #848494; }
+                .iti__flag-container { border-radius: 12px 0 0 12px; }
+                
                 input { 
-                    width: 100%; 
-                    padding: 16px 18px; 
-                    border: 1px solid rgba(255, 255, 255, 0.08); 
-                    border-radius: 12px; 
-                    background: rgba(0, 0, 0, 0.3); 
+                    width: 100%;
+                    padding: 18px 20px; 
+                    border: 1px solid rgba(255, 255, 255, 0.06); 
+                    border-radius: 14px; 
+                    background: rgba(5, 6, 10, 0.4); 
                     color: #ffffff; 
                     font-size: 16px; 
                     outline: none; 
-                    transition: all 0.3s ease; 
+                    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
                     letter-spacing: 0.5px;
                 }
                 input:focus { 
                     border-color: #00ffcc; 
-                    box-shadow: 0 0 15px rgba(0, 255, 204, 0.15);
-                    background: rgba(0, 0, 0, 0.5);
+                    box-shadow: 0 0 20px rgba(0, 255, 204, 0.2);
+                    background: rgba(0, 0, 0, 0.6);
                 }
                 button { 
                     width: 100%; 
-                    padding: 16px; 
+                    padding: 18px; 
                     border: none; 
-                    border-radius: 12px; 
-                    background: linear-gradient(135deg, #00ffcc 0%, #00b3ff 100%); 
-                    color: #050508; 
+                    border-radius: 14px; 
+                    background: linear-gradient(135deg, #00ffcc 0%, #0088ff 100%); 
+                    color: #030305; 
                     font-size: 16px; 
-                    font-weight: 700; 
+                    font-weight: 800; 
                     cursor: pointer; 
-                    transition: all 0.3s ease;
-                    box-shadow: 0 4px 20px rgba(0, 255, 204, 0.2);
+                    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                    box-shadow: 0 4px 25px rgba(0, 255, 204, 0.25);
+                    letter-spacing: 1px;
                 }
                 button:hover { 
                     transform: translateY(-2px);
-                    box-shadow: 0 6px 25px rgba(0, 255, 204, 0.35);
+                    box-shadow: 0 8px 30px rgba(0, 255, 204, 0.45);
+                    filter: brightness(1.1);
                 }
                 button:active { transform: translateY(0); }
-                .status-display { margin-top: 25px; font-size: 13px; font-weight: 600; min-height: 20px; letter-spacing: 0.5px; }
+                .status-display { margin-top: 25px; font-size: 13px; font-weight: 700; min-height: 20px; letter-spacing: 0.8px; text-transform: uppercase; }
             </style>
         </head>
         <body>
             <div class="card">
                 <h1>VOBIXCHAT</h1>
                 <div class="subtitle">SECURITY GATEWAY</div>
-                <p>Módulo de autenticación de red para la validación de líneas físicas legítimas y asignación de credenciales cifradas.</p>
+                <p>Módulo de autenticación de red para la validación de líneas físicas legítimas y asignación de credenciales cifradas globales.</p>
                 
                 <div class="input-group">
-                    <label>Terminal Telefónico (E.164)</label>
-                    <input type="tel" id="phoneNumber" placeholder="+34600000000" autocomplete="off">
+                    <label id="geoLabel">Línea Móvil (Localizando Red...)</label>
+                    <input type="tel" id="phoneNumber" autocomplete="off">
                 </div>
                 
                 <button onclick="procesarVerificacion()">AUTORIZAR DISPARO SMS</button>
@@ -201,13 +234,40 @@ app.get('/', (req, res) => {
             </div>
 
             <script>
+                const inputElement = document.querySelector("#phoneNumber");
+                const labelElement = document.getElementById("geoLabel");
+                
+                const itiInstance = window.intlTelInput(inputElement, {
+                    initialCountry: "auto",
+                    geoIpLookup: function(success, failure) {
+                        fetch('https://ipapi.co')
+                            .then(res => res.json())
+                            .then(data => {
+                                labelElement.innerText = "Línea Móvil (Red Detectada: " + data.country_name + ")";
+                                success(data.country_code);
+                            })
+                            .catch(() => {
+                                labelElement.innerText = "Línea Móvil (Red Local)";
+                                success("ES");
+                            });
+                    },
+                    utilsScript: "https://cloudflare.com"
+                });
+
                 async function procesarVerificacion() {
-                    const campoNumero = document.getElementById('phoneNumber');
                     const visualMensaje = document.getElementById('statusMessage');
-                    const valorNumero = campoNumero.value.trim();
+                    const valorNumero = inputElement.value.trim();
 
                     if (!valorNumero) {
                         visualMensaje.innerText = "SISTEMA: Ingrese un terminal válido.";
+                        visualMensaje.style.color = "#ff4d4d";
+                        return;
+                    }
+
+                    const numeroE164Global = itiInstance.getNumber();
+
+                    if (!itiInstance.isValidNumber()) {
+                        visualMensaje.innerText = "SISTEMA: Formato numérico inválido para el país detectado.";
                         visualMensaje.style.color = "#ff4d4d";
                         return;
                     }
@@ -219,7 +279,7 @@ app.get('/', (req, res) => {
                         const respuesta = await fetch('/api/seguridad/verificar-usuario', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ numeroCrudo: valorNumero })
+                            body: JSON.stringify({ numeroCrudo: numeroE164Global })
                         });
                         
                         const datos = await respuesta.json();
@@ -232,17 +292,8 @@ app.get('/', (req, res) => {
                             visualMensaje.style.color = "#ff4d4d";
                         }
                     } catch (error) {
-                        visualMensaje.innerText = "CRÍTICO: Fallo en el cortafuegos de red.";
-                        visualMensaje.style.color = "#ff4d4d";
-                    }
-                }
-            </script>
-        </body>
-        </html>
-    `);
-});
 // =================================================================
-// PARTE 4: CORE VERIFICATION ENDPOINT & ANTI-VOIP PIPELINE
+// PARTE 4: INTEGRITY ENFORCEMENT & INFOBIP PIPELINE DE DISPARO
 // =================================================================
 app.post('/api/seguridad/verificar-usuario', verificarLimitePeticionesIP, async (req, res) => {
     const { numeroCrudo, hardwareId, deviceFingerprint, networkType, isEmulator, hasRemoteAccess } = req.body;
@@ -342,7 +393,6 @@ app.post('/api/seguridad/verificar-usuario', verificarLimitePeticionesIP, async 
             body: JSON.stringify({
                 messages: [{
                     destinations: [{ to: numeroE164 }],
-                    from: "VobixChat",
                     text: `VOBIXCHAT SECURE PIN: ${pinDinamico}. [TOKEN:${appPayloadNonce}]. No comparta este codigo.`
                 }]
             })
