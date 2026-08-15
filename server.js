@@ -1,6 +1,7 @@
 // =================================================================
 // PARTE 1: SYSTEM CORE INITIALIZATION & CRYPTO ENGINE SETUP
 // =================================================================
+require('dotenv').config(); // Carga de variables de entorno perimetrales (.env)
 const express = require('express');
 const http = require('http');
 const path = require('path');
@@ -9,21 +10,31 @@ const multer = require('multer');
 const crypto = require('crypto');
 const { Server } = require("socket.io");
 
-process.env.INFOBIP_API_KEY = "bb99a77f5ca5f1bdb2295647ec379844-a69e335d-745b-4965-8551-9654c02862d6";
-process.env.INFOBIP_BASE_URL = "https://infobip.com"; 
+// Verificación obligatoria de las variables del entorno del sistema
+if (!process.env.INFOBIP_API_KEY || !process.env.INFOBIP_BASE_URL) {
+    console.error("[SHIELD-CRITICAL] [ENV_FAILURE] No se han detectado las variables del sistema en el entorno.");
+    process.exit(1);
+}
 
 const app = express();
 const servidorHTTP = http.createServer(app);
-const io = new Server(servidorHTTP, { cors: { origin: "*" } });
+const io = new Server(servidorHTTP, { 
+    cors: { 
+        origin: "*",
+        methods: ["GET", "POST"]
+    } 
+});
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Generación de la ruta de almacenamiento aislado para archivos multimedia entrantes
 const rutaMedia = path.join(__dirname, 'uploads', 'quantum_media');
 if (!fs.existsSync(rutaMedia)){
     fs.mkdirSync(rutaMedia, { recursive: true });
 }
 
+// Inicialización de los mapas de memoria interna volátil para seguridad de red
 const pinesTemporales = new Map();
 const lineasFisicasAutorizadas = new Set();
 const baseContrasenasHistorial = new Map();
@@ -33,66 +44,99 @@ const registroPeticionesPorIP = new Map();
 const hardwareBindings = new Map(); 
 const ipReputationCache = new Map(); 
 
-const ENCRYPTION_KEY = crypto.scryptSync(process.env.INFOBIP_API_KEY, 'salt', 32);
+// Derivación segura de clave simétrica basada en el token maestro de Infobip
+const ENCRYPTION_KEY = crypto.scryptSync(process.env.INFOBIP_API_KEY, 'salt-cuantica-segura-vobix', 32);
+
+console.log("[SHIELD-INFO] Parte 1 inicializada de forma segura. Motores criptográficos listos.");
 // =================================================================
 // PARTE 2: PERIMETER IP FIREWALL & DISK STORAGE PROTECTION
 // =================================================================
+
+/**
+ * Middleware del Cortafuegos Perimetral: Evalúa el comportamiento de la IP entrante
+ * Bloquea permanentemente en caché las IPs con patrones de abuso detectados
+ */
 function verificarLimitePeticionesIP(req, res, next) {
     const direccionIP = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
     const tiempoActual = Date.now();
     
+    // 1. Control de Reputación de IP permanente
     if (ipReputationCache.has(direccionIP) && ipReputationCache.get(direccionIP).blocked) {
-        console.log(`[SHIELD-CRITICAL] [IP_BLOCKED] // IP: ${direccionIP}`);
+        console.log(`[SHIELD-CRITICAL] [IP_BLOCKED] Intento de acceso desde IP baneada // IP: ${direccionIP}`);
         return res.status(403).json({ success: false, error: "SECURITY_RULE_VIOLATION" });
     }
 
+    // 2. Inicialización del registro para nuevas IPs
     if (!registroPeticionesPorIP.has(direccionIP)) {
-        registroPeticionesPorIP.set(direccionIP, { conteo: 1, inicioTiempo: tiempoActual, ráfagasConsecutivas: 0 });
+        registroPeticionesPorIP.set(direccionIP, { conteo: 1, inicioTiempo: tiempoActual, rafagasConsecutivas: 0 });
         return next();
     }
 
     const datosIP = registroPeticionesPorIP.get(direccionIP);
     const tiempoTranscurrido = tiempoActual - datosIP.inicioTiempo;
 
+    // 3. Ventana de evaluación de tráfico en ráfagas (60 segundos)
     if (tiempoTranscurrido < 60000) {
         if (datosIP.conteo >= 5) {
-            datosIP.ráfagasConsecutivas++;
-            console.log(`[SHIELD-WARNING] [RATE_LIMIT_TRIGGERED] // IP: ${direccionIP}`);
-            if (datosIP.ráfagasConsecutivas >= 2) {
+            datosIP.rafagasConsecutivas++;
+            console.log(`[SHIELD-WARNING] [RATE_LIMIT_TRIGGERED] Umbral excedido // IP: ${direccionIP}`);
+            
+            // Si la IP genera ráfagas repetidas en ventanas sucesivas, se banea permanentemente
+            if (datosIP.rafagasConsecutivas >= 2) {
                 ipReputationCache.set(direccionIP, { blocked: true });
-                console.log(`[SHIELD-CRITICAL] [PERMANENT_IP_BAN] // IP: ${direccionIP}`);
+                console.log(`[SHIELD-CRITICAL] [PERMANENT_IP_BAN] Reputación de IP destruida permanentemente // IP: ${direccionIP}`);
             }
             return res.status(429).json({ success: false, error: "SECURITY_BURST_DENIED" });
         }
         datosIP.conteo++;
     } else {
+        // Reinicio de la ventana de monitorización tras expirar el minuto
         datosIP.conteo = 1;
         datosIP.inicioTiempo = tiempoActual;
     }
     next();
 }
 
+/**
+ * Configuración del almacenamiento en disco para archivos multimedia aislados
+ */
 const almacenamientoConfig = multer.diskStorage({
-    destination: (req, file, cb) => cb(null, rutaMedia),
-    filename: (req, file, cb) => cb(null, Date.now() + '-' + file.originalname)
+    destination: (req, file, cb) => {
+        cb(null, rutaMedia);
+    },
+    filename: (req, file, cb) => {
+        // Sanitización del nombre de archivo utilizando marcas de tiempo Unix para evitar colisiones
+        const nombreLimpio = Date.now() + '-' + file.originalname.replace(/[^a-zA-Z0-9.\-_]/g, '');
+        cb(null, nombreLimpio);
+    }
 });
 
+/**
+ * Filtro estricto Multer para la subida de archivos: Bloquea extensiones ejecutables o peligrosas
+ */
 const upload = multer({ 
     storage: almacenamientoConfig,
-    limits: { fileSize: 10 * 1024 * 1024 },
+    limits: { 
+        fileSize: 10 * 1024 * 1024 // Límite estricto de peso: 10 Megabytes por archivo
+    },
     fileFilter: (req, file, cb) => {
+        // Únicamente se permiten tipos MIME autorizados y seguros (Documentos PDF, Imágenes y Audio)
         if (file.mimetype === 'application/pdf') {
             cb(null, true);
         } else if (file.mimetype.startsWith('image/') || file.mimetype.startsWith('audio/')) {
             cb(null, true);
         } else {
+            console.log(`[SHIELD-WARNING] [FILE_REJECTED] Intento de subida de archivo no seguro: ${file.mimetype}`);
             cb(new Error('SECURITY_FILE_TYPE_REJECTED'), false);
         }
     }
 });
+
+console.log("[SHIELD-INFO] Parte 2 inicializada. Cortafuegos de IP y protección de disco activos.");
 // =================================================================
-// PARTE 3: PRE-RENDERED SECURE GLASSMORPHISM INTERFACE LAYER
+// PARTE 3: SECURE GLASSMORPHISM INTERFACE LAYER (REGISTRATION VIEW)
 // =================================================================
+
 app.get('/', (req, res) => {
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.send(`
@@ -101,7 +145,7 @@ app.get('/', (req, res) => {
         <head>
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-            <title>VOBIXCHAT // Quantum Security Gateway</title>
+            <title>VOBIXCHAT // Portal de Registro Seguro</title>
             <style>
                 * { box-sizing: border-box; margin: 0; padding: 0; }
                 body { 
@@ -113,7 +157,7 @@ app.get('/', (req, res) => {
                     align-items: center; 
                     min-height: 100vh; 
                     padding: 20px;
-                    overflow: hidden;
+                    overflow-x: hidden;
                     position: relative;
                 }
                 
@@ -121,435 +165,318 @@ app.get('/', (req, res) => {
                     content: '';
                     position: absolute;
                     top: 0; left: 0; width: 100%; height: 100%;
-                    background-image: linear-gradient(rgba(0, 255, 204, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(0, 255, 204, 0.03) 1px, transparent 1px);
+                    background-image: linear-gradient(rgba(0, 255, 204, 0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(0, 255, 204, 0.02) 1px, transparent 1px);
                     background-size: 30px 30px;
                     z-index: 0;
                 }
 
                 .glow-circle {
                     position: absolute;
-                    width: 450px;
-                    height: 450px;
-                    background: linear-gradient(135deg, rgba(0, 255, 204, 0.2), rgba(0, 136, 255, 0.2));
-                    filter: blur(120px);
+                    width: 400px;
+                    height: 400px;
+                    background: linear-gradient(135deg, rgba(0, 255, 204, 0.15), rgba(0, 136, 255, 0.15));
+                    filter: blur(100px);
                     border-radius: 50%;
                     z-index: 0;
-                    animation: floatGlow 10s infinite alternate ease-in-out;
-                }
-                @keyframes floatGlow {
-                    0% { transform: translate(-20px, -20px) scale(1); }
-                    100% { transform: translate(20px, 20px) scale(1.1); }
                 }
 
                 .card { 
-                    background: rgba(18, 22, 35, 0.55); 
-                    backdrop-filter: blur(25px);
-                    -webkit-backdrop-filter: blur(25px);
+                    background: rgba(18, 22, 35, 0.6); 
+                    backdrop-filter: blur(20px);
+                    -webkit-backdrop-filter: blur(20px);
                     width: 100%; 
-                    max-width: 450px; 
-                    padding: 60px 45px; 
-                    border-radius: 32px; 
+                    max-width: 460px; 
+                    padding: 40px 35px; 
+                    border-radius: 24px; 
                     border: 1px solid rgba(0, 255, 204, 0.15); 
-                    box-shadow: 0 30px 70px rgba(0,0,0,0.8), inset 0 1px 1px rgba(255,255,255,0.1); 
+                    box-shadow: 0 20px 50px rgba(0,0,0,0.7), inset 0 1px 1px rgba(255,255,255,0.05); 
                     text-align: center; 
                     z-index: 1;
                     position: relative;
                 }
+                
                 h1 { 
-                    font-size: 40px; 
-                    font-weight: 900; 
-                    letter-spacing: 8px; 
+                    font-size: 32px; 
+                    font-weight: 800; 
+                    letter-spacing: 4px; 
                     background: linear-gradient(135deg, #00ffcc 0%, #00bcff 100%);
                     -webkit-background-clip: text;
                     -webkit-text-fill-color: transparent;
-                    margin-bottom: 6px;
+                    margin-bottom: 8px;
                 }
+                
                 .subtitle {
                     font-size: 11px;
                     text-transform: uppercase;
-                    letter-spacing: 5px;
+                    letter-spacing: 3px;
                     color: #00ffcc;
-                    margin-bottom: 40px;
-                    font-weight: 800;
-                    text-shadow: 0 0 15px rgba(0,255,204,0.4);
+                    margin-bottom: 30px;
+                    font-weight: 700;
                 }
-                p { color: #8c90a6; font-size: 14px; margin-bottom: 35px; line-height: 1.65; font-weight: 400; }
-                .input-group { text-align: left; margin-bottom: 35px; }
-                label { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: 2px; color: #a0a6c0; margin-bottom: 12px; font-weight: 700; }
+                
+                .input-group { 
+                    text-align: left; 
+                    margin-bottom: 20px; 
+                }
+                
+                label { 
+                    display: block; 
+                    font-size: 11px; 
+                    text-transform: uppercase; 
+                    letter-spacing: 1.5px; 
+                    color: #a0a6c0; 
+                    margin-bottom: 8px; 
+                    font-weight: 600; 
+                }
                 
                 input { 
                     width: 100%;
-                    padding: 18px 20px; 
-                    border: 1px solid rgba(255, 255, 255, 0.08);
-                    border-radius: 16px;
-                    background: rgba(8, 10, 16, 0.6);
+                    padding: 14px 16px; 
+                    border: 1px solid rgba(255, 255, 255, 0.1);
+                    border-radius: 12px;
+                    background: rgba(8, 10, 16, 0.7);
                     color: #ffffff; 
-                    font-size: 17px; 
+                    font-size: 15px; 
                     outline: none; 
-                    letter-spacing: 1px;
-                    transition: all 0.3s ease;
-                }
-                input:focus {
-                    border-color: #00ffcc;
-                    box-shadow: 0 0 25px rgba(0, 255, 204, 0.25);
-                    background: rgba(0, 0, 0, 0.7);
+                    transition: border-color 0.3s ease, box-shadow 0.3s ease;
                 }
                 
-                button { 
-                    width: 100%; 
-                    padding: 18px; 
-                    border: none; 
-                    border-radius: 16px; 
-                    background: linear-gradient(135deg, #00ffcc 0%, #0077ff 100%); 
-                    color: #040508; 
-                    font-size: 16px; 
-                    font-weight: 800; 
-                    cursor: pointer; 
-                    transition: all 0.3s ease;
-                    box-shadow: 0 5px 30px rgba(0, 255, 204, 0.3);
-                    letter-spacing: 1.5px;
+                input:focus {
+                    border-color: #00ffcc;
+                    box-shadow: 0 0 10px rgba(0, 255, 204, 0.2);
                 }
-                button:hover { 
-                    transform: translateY(-2px);
-                    box-shadow: 0 10px 40px rgba(0, 255, 204, 0.5);
-                    filter: brightness(1.15);
+                
+                .btn-submit {
+                    width: 100%;
+                    padding: 16px;
+                    background: linear-gradient(135deg, #00ffcc 0%, #00bcff 100%);
+                    border: none;
+                    border-radius: 12px;
+                    color: #040508;
+                    font-size: 15px;
+                    font-weight: 700;
+                    letter-spacing: 2px;
+                    cursor: pointer;
+                    transition: transform 0.2s ease, opacity 0.2s ease;
+                    margin-top: 10px;
                 }
-                button:active { transform: translateY(0); }
-                .status-display { margin-top: 25px; font-size: 13px; font-weight: 700; min-height: 20px; letter-spacing: 1px; text-transform: uppercase; }
+                
+                .btn-submit:hover {
+                    opacity: 0.95;
+                }
+                
+                .btn-submit:active {
+                    transform: scale(0.98);
+                }
             </style>
         </head>
         <body>
             <div class="glow-circle"></div>
             <div class="card">
                 <h1>VOBIXCHAT</h1>
-                <div class="subtitle">SECURITY GATEWAY</div>
-                <p>Módulo de autenticación cuántica automatizada. Ingrese su terminal telefónico internacional con el signo + y código de país adelante.</p>
-                <div class="input-group">
-                    <label>Línea Móvil Internacional</label>
-                    <input type="tel" id="phoneNumber" placeholder="+34655766134 o +1809XXXXXXX" autocomplete="off">
-                </div>
-                <button onclick="procesarVerificacion()" id="btnAction">EJECUTAR DESPACHO SMS</button>
-                <div class="status-display" id="statusMessage"></div>
+                <div class="subtitle">Security Gateway & Registro</div>
+                
+                <form action="/api/v1/auth/register" method="POST">
+                    <div class="input-group">
+                        <label for="username">Nombre de Usuario</label>
+                        <input type="text" id="username" name="username" placeholder="Ej. usuario_quantum" required autocomplete="off">
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="telefono">Línea Móvil Internacional</label>
+                        <input type="tel" id="telefono" name="telefono" placeholder="+34600000000" required autocomplete="off">
+                    </div>
+                    
+                    <button type="submit" class="btn-submit">REGISTRAR E INICIAR SMS</button>
+                </form>
             </div>
-            <script>
-                async function procesarVerificacion() {
-                    const campoNumero = document.getElementById('phoneNumber');
-                    const visualMensaje = document.getElementById('statusMessage');
-                    const btn = document.getElementById('btnAction');
-                    const valorNumero = campoNumero.value.trim().replace(/\\s+/g, '');
-
-                    if (!valorNumero || valorNumero.length < 6) {
-                        visualMensaje.innerText = "SISTEMA: Ingrese un terminal válido.";
-                        visualMensaje.style.color = "#ff4d4d";
-                        return;
-                    }
-
-                    visualMensaje.innerText = "ESTADO: Enlazando con antenas Infobip...";
-                    visualMensaje.style.color = "#00ffcc";
-                    btn.style.opacity = "0.7";
-                    btn.disabled = true;
-
-                    try {
-                        const respuesta = await fetch('/api/seguridad/verificar-usuario', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ numeroCrudo: valorNumero })
-                        });
-                        const datos = await respuesta.json();
-                        if (datos.success) {
-                            visualMensaje.innerText = "SISTEMA: PIN de seguridad despachado con éxito.";
-                            visualMensaje.style.color = "#00ffcc";
-                        } else {
-                            visualMensaje.innerText = "ERROR: " + (datos.error || "Acceso denegado.");
-                            visualMensaje.style.color = "#ff4d4d";
-                        }
-                    } catch (error) {
-                        visualMensaje.innerText = "CRÍTICO: Fallo en el cortafuegos de red.";
-                        visualMensaje.style.color = "#ff4d4d";
-                    } finally {
-                        btn.style.opacity = "1";
-                        btn.disabled = false;
-                    }
-                }
-            </script>
         </body>
         </html>
     `);
 });
+
+console.log("[SHIELD-INFO] Parte 3 inicializada. Capa visual de registro inyectada correctamente.");
 // =================================================================
-// PARTE 4: USER INTEGRITY VALIDATION & INFOBIP CORE SMS PIPELINE
+// PARTE 4: REGISTRATION ENDPOINT & INFOBIP SMS OUTBOUND
 // =================================================================
-app.post('/api/seguridad/verificar-usuario', verificarLimitePeticionesIP, async (req, res) => {
-    const { numeroCrudo, hardwareId, deviceFingerprint, networkType, isEmulator, hasRemoteAccess } = req.body;
 
-    if (hasRemoteAccess || isEmulator) {
-        console.log(`[KERNEL-AUTH] [MALICIOUS_ENVIRONMENT_DETECTED] // HW: ${hardwareId}`);
-        return res.status(403).json({ success: false, error: "ACCESS_DENIED_ENVIRONMENT_UNSECURE" });
+/**
+ * Endpoint de Registro: Procesa el formulario, aplica seguridad IP y dispara el SMS
+ */
+app.post('/api/v1/auth/register', verificarLimitePeticionesIP, async (req, res) => {
+    const { username, telefono } = req.body;
+
+    // 1. Validación básica de presencia de datos obligatorios
+    if (!username || !telefono) {
+        console.log("[SHIELD-WARNING] [AUTH_EMPTY] Intento de registro con campos incompletos.");
+        return res.status(400).json({ success: false, error: "REJECTED_EMPTY_FIELDS" });
     }
 
-    if (!numeroCrudo || numeroCrudo.trim().length < 6) {
-        return res.status(400).json({ success: false, error: "INVALID_PARAM_SHORT" });
+    // 2. Sanitización del número de teléfono (remueve espacios y caracteres especiales de riesgo)
+    const telefonoLimpio = telefono.trim().replace(/[^a-zA-Z0-9+]/g, '');
+
+    // 3. Verificación de seguridad: Comprobación de prefijo internacional (+)
+    if (!telefonoLimpio.startsWith('+')) {
+        console.log(`[SHIELD-WARNING] [AUTH_FORMAT] Número de teléfono sin código de país internacional: ${telefonoLimpio}`);
+        return res.status(400).json({ success: false, error: "INVALID_INTERNATIONAL_PREFIX" });
     }
 
-    const numeroE164 = numeroCrudo.trim(); 
-
-    if (!numeroE164.startsWith('+')) {
-        console.log(`[KERNEL-AUTH] [REJECTED_FORMAT] // NO_E164_PREFIX: ${numeroE164}`);
-        return res.status(400).json({ success: false, error: "INVALID_INTERNATIONAL_FORMAT" });
-    }
-
-    if (listaNegraEstafadores.has(numeroE164)) {
-        return res.status(403).json({ success: false, error: "ROUTING_RESTRICTED" });
-    }
-
-    if (hardwareBindings.has(numeroE164)) {
-        if (hardwareBindings.get(numeroE164) !== hardwareId) {
-            console.log(`[SHIELD-CRITICAL] [HARDWARE_MISMATCH_DETECTED] // LINE: ${numeroE164}`);
-            return res.status(403).json({ success: false, error: "HARDWARE_LOCK_ACTIVE" });
-        }
-    }
-
-    if (registroComportamientoUsuarios.has(numeroE164)) {
-        const comp = registroComportamientoUsuarios.get(numeroE164);
-        const ahora = Date.now();
-        if (ahora - comp.ultimoReseteoAcciones < 60000) {
-            if (comp.conteoAccionesMinuto >= 3) {
-                listaNegraEstafadores.add(numeroE164);
-                console.log(`[SPAM-SHIELD] [USER_PERMANENT_BAN] // LINE: ${numeroE164}`);
-                return res.status(403).json({ success: false, error: "LINE_TERMINATED_BY_BEHAVIOR" });
-            }
-            comp.conteoAccionesMinuto++;
-        } else {
-            comp.conteoAccionesMinuto = 1;
-            comp.ultimoReseteoAcciones = ahora;
-        }
-    }
+    console.log(`[SHIELD-INFO] Procesando despacho de SMS para el usuario [${username}] a la línea: ${telefonoLimpio}`);
 
     try {
-        let urlLimpia = process.env.INFOBIP_BASE_URL.replace(/\/$/, "");
-        
-        const insights = await fetch(`${urlLimpia}/number-insight/1/query/v2`, {
-            method: "POST",
+        // 4. Construcción del payload estructurado según la documentación técnica de Infobip
+        const payloadMensaje = {
+            messages: [{
+                destinations: [{ 
+                    to: telefonoLimpio 
+                }],
+                from: "VobixChat",
+                text: `[VOBIXCHAT] Hola ${username}, tu registro en el Security Gateway ha sido procesado de forma exitosa.`
+            }]
+        };
+
+        // 5. Transmisión HTTP segura hacia el subdominio de la API de Infobip
+        const respuestaInfobip = await fetch(`${process.env.INFOBIP_BASE_URL}/sms/2/text/advanced`, {
+            method: 'POST',
             headers: {
-                "Authorization": `App ${process.env.INFOBIP_API_KEY}`,
-                "Content-Type": "application/json"
+                'Authorization': `App ${process.env.INFOBIP_API_KEY}`,
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
             },
-            body: JSON.stringify({ to: numeroE164 })
-        });
-        const insightData = await insights.json();
-        
-        if (insightData.type === 'VOIP' || insightData.type === 'VIRTUAL' || insightData.currentRoaming || insightData.unconditionalCallForwarding) {
-            listaNegraEstafadores.add(numeroE164);
-            console.log(`[HONE_CHECK] [VIRTUAL_LINE_OR_INTERCEPTION_DETECTED] // LINE: ${numeroE164}`);
-            return res.status(403).json({ success: false, error: "CARRIER_TYPE_REJECTED" });
-        }
-    } catch (errInsight) {
-        console.log(`[BACKUP-MESH] NETWORK_INSIGHT_OFFLINE // ROUTING_CONTINUED`);
-    }
-
-    const pinDinamico = Math.floor(1000 + Math.random() * 9000);
-    const pinSalt = crypto.randomBytes(16).toString('hex');
-    const pinHash = crypto.createHmac('sha256', pinSalt).update(pinDinamico.toString()).digest('hex');
-    
-    pinesTemporales.set(numeroE164, { hash: pinHash, salt: pinSalt, expires: Date.now() + 90000 });
-
-    setTimeout(() => {
-        if (pinesTemporales.has(numeroE164)) {
-            const p = pinesTemporales.get(numeroE164);
-            if (p.expires <= Date.now()) {
-                pinesTemporales.delete(numeroE164);
-                console.log(`[RAM-CLEAN] [OTP_EXPIRED_GC] // LINE: ${numeroE164}`);
-            }
-        }
-    }, 91000);
-
-    try {
-        let urlLimpia = process.env.INFOBIP_BASE_URL.replace(/\/$/, "");
-        const appPayloadNonce = crypto.randomBytes(8).toString('hex');
-        
-        const peticionSMS = await fetch(`${urlLimpia}/sms/2/text/advanced`, {
-            method: "POST",
-            headers: {
-                "Authorization": `App ${process.env.INFOBIP_API_KEY}`,
-                "Content-Type": "application/json",
-                "Accept": "application/json"
-            },
-            body: JSON.stringify({
-                messages: [{
-                    destinations: [{ to: numeroE164 }],
-                    text: `VOBIXCHAT SECURE PIN: ${pinDinamico}. [TOKEN:${appPayloadNonce}]. No comparta este codigo.`
-                }]
-            })
+            body: JSON.stringify(payloadMensaje)
         });
 
-        await peticionSMS.json();
-        console.log(`[INFOBIP SMS] CORE_DISPATCH_SUCCESS // TARGET: ${numeroE164}`);
-    } catch (errorSMS) {
-        console.error("[SYS-CORE-ERROR] CARRIER_OUTAGE:", errorSMS);
-        return res.status(500).json({ success: false, error: "TRANSMISSION_ERROR" });
-    }
-
-    return res.status(200).json({ success: true, message: "TRANSMISSION_COMPLETE" });
-});
-// =================================================================
-// PARTE 5: STAGE 2 VALIDATION, QUANTUM MEDIA & SOCKET REALTIME LAYER
-// =================================================================
-app.post('/api/seguridad/confirmar-pin', (req, res) => {
-    const { numeroCrudo, pinIngresado, contrasenaHistorial, hardwareId, keystrokeDynamics } = req.body;
-    
-    if (!numeroCrudo) return res.status(400).json({ success: false, error: "CREDENTIALS_CORRUPT" });
-    
-    const numeroE164 = numeroCrudo.trim();
-    const targetPinObj = pinesTemporales.get(numeroE164);
-
-    if (!targetPinObj || targetPinObj.expires <= Date.now()) {
-        pinesTemporales.delete(numeroE164);
-        return res.status(401).json({ success: false, error: "OTP_EXPIRED_OR_INVALID" });
-    }
-
-    const verifyHash = crypto.createHmac('sha256', targetPinObj.salt).update(pinIngresado.toString()).digest('hex');
-
-    if (verifyHash === targetPinObj.hash) {
-        pinesTemporales.delete(numeroE164);
-        
-        if (!hardwareBindings.has(numeroE164)) {
-            hardwareBindings.set(numeroE164, hardwareId);
-        }
-
-        if (baseContrasenasHistorial.has(numeroE164)) {
-            const contrasenaCorrecta = baseContrasenasHistorial.get(numeroE164);
-            if (contrasenaHistorial !== contrasenaCorrecta) {
-                console.log(`[ALERTA INTRUSO] HISTORIAL_LOCK_TRIGGERED // LINE: ${numeroE164}`);
-                return res.status(401).json({ success: false, error: "SECURITY_LOCK_ACTIVE" });
-            }
-        } else {
-            if (!contrasenaHistorial || contrasenaHistorial.trim().length < 4) {
-                return res.status(400).json({ success: false, error: "PASSWORD_POLICY_FAILED" });
-            }
-            baseContrasenasHistorial.set(numeroE164, contrasenaHistorial);
-        }
-
-        lineasFisicasAutorizadas.add(numeroE164);
-
-        if (!registroComportamientoUsuarios.has(numeroE164)) {
-            registroComportamientoUsuarios.set(numeroE164, {
-                estado: "active_enforced",
-                puntosLealtad: 100,
-                conteoAccionesMinuto: 0,
-                ultimoReseteoAcciones: Date.now()
+        // 6. Evaluación de la respuesta del servicio de mensajería externo
+        if (!respuestaInfobip.ok) {
+            const errorDetalle = await respuestaInfobip.text();
+            console.error(`[SHIELD-CRITICAL] [INFOBIP_API_ERROR] Código: ${respuestaInfobip.status} - Detalle: ${errorDetalle}`);
+            return res.status(respuestaInfobip.status).json({ 
+                success: false, 
+                error: "EXTERNAL_GATEWAY_REJECTION",
+                status: respuestaInfobip.status 
             });
         }
 
-        console.log(`[KERNEL-AUTH] [STAGE_2_CLEAN] STATUS: ENFORCED // USER: ${numeroE164}`);
-        return res.status(200).json({ success: true, statusSYS: "STAGE_2_AUTHENTICATED" });
+        const datosRespuesta = await respuestaInfobip.json();
+        console.log(`[SHIELD-INFO] [SMS_SUCCESS] Mensaje enviado correctamente a través del Gateway.`);
+        
+        // Registro del usuario en la base de líneas autorizadas internas de forma dinámica
+        lineasFisicasAutorizadas.add(telefonoLimpio);
+
+        // Respuesta limpia al cliente confirmando el envío
+        return res.status(200).json({ 
+            success: true, 
+            message: "REGISTRATION_AND_SMS_DISPATCHED",
+            trackingId: datosRespuesta.messages?.[0]?.messageId || null
+        });
+
+    } catch (error) {
+        console.error("[SHIELD-CRITICAL] [TRANSMISSION_CRASH] Error crítico en la llamada de red a la API:", error);
+        return res.status(500).json({ 
+            success: false, 
+            error: "FETCH_TRANSMISSION_FAILED" 
+        });
     }
-    
-    return res.status(401).json({ success: false, error: "OTP_MISMATCH" });
 });
 
-app.post('/api/multimedia/subir-archivo', upload.single('archivo_multimedia'), (req, res) => {
-    const { identificador_usuario } = req.body;
-    const archivo = req.file;
+console.log("[SHIELD-INFO] Parte 4 inicializada. Endpoints de control y API de mensajería vinculados.");
+// =================================================================
+// PARTE 5: REAL-TIME WEBSOCKETS & NETWORK LIFECYCLE MANAGEMENT
+// =================================================================
 
-    if (!archivo) return res.status(400).json({ success: false, error: "EMPTY_PAYLOAD" });
-
-    const esValido = lineasFisicasAutorizadas.has(identificador_usuario);
-    if (!esValido) {
-        if (fs.existsSync(archivo.path)) fs.unlinkSync(archivo.path);
-        return res.status(403).json({ success: false, error: "CHANNEL_NOT_AUTHORIZED" });
-    }
-
-    try {
-        if (archivo.mimetype === 'application/pdf') {
-            let bufferPdf = fs.readFileSync(archivo.path);
-            if (bufferPdf.includes('/JavaScript') || bufferPdf.includes('/JS') || bufferPdf.includes('/AA') || bufferPdf.includes('/Launch')) {
-                fs.unlinkSync(archivo.path);
-                console.log(`[SANDBOX] [MALICIOUS_PDF_BLOCKED_AND_PURGED] // USER: ${identificador_usuario}`);
-                return res.status(400).json({ success: false, error: "FILE_INTEGRITY_VIOLATION" });
-            }
-        }
-
-        const iv = crypto.randomBytes(16);
-        const cipher = crypto.createCipheriv('aes-256-gcm', ENCRYPTION_KEY, iv);
-        const rawData = fs.readFileSync(archivo.path);
-        const encryptedData = Buffer.concat([cipher.update(rawData), cipher.final()]);
-        const tag = cipher.getAuthTag();
-
-        fs.writeFileSync(archivo.path, Buffer.concat([iv, tag, encryptedData]));
-        console.log(`[CRYPTO-CORE] [AES_256_GCM_ENFORCED] // FILE: ${archivo.filename}`);
-    } catch (errCrypto) {
-        if (fs.existsSync(archivo.path)) fs.unlinkSync(archivo.path);
-        return res.status(500).json({ success: false, error: "ENCRYPTION_ENGINE_FAILURE" });
-    }
-
-    return res.status(200).json({ success: true, message: "PAYLOAD_STORED_AND_ENCRYPTED" });
-});
-
+/**
+ * Gestión del Ciclo de Vida de Sockets en Tiempo Real (Socket.io)
+ * Mantiene la persistencia de datos y monitorización de flujos de usuarios activos
+ */
 io.on("connection", (socket) => {
-    let sessionActive = true;
-    let timeoutDeInactividad;
+    // Captura de la dirección de red remota del cliente de sockets para auditoría
+    const direccionIPCliente = socket.handshake.headers['x-forwarded-for'] || socket.conn.remoteAddress;
+    console.log(`[SHIELD-INFO] [SOCKET_CONNECTED] Nueva sesión en tiempo real establecida // ID: ${socket.id} // IP: ${direccionIPCliente}`);
 
-    const resetInactivityTimeout = () => {
-        clearTimeout(timeoutDeInactividad);
-        timeoutDeInactividad = setTimeout(() => {
-            sessionActive = false;
-            socket.emit("KERNEL_SESSION_TIMEOUT", { reason: "INACTIVITY_MAX_LIMIT_EXCEEDED" });
-            socket.disconnect(true);
-        }, 120000);
-    };
+    // Validación interna de reputación de IP antes de permitir transmisión de mensajes por sockets
+    if (ipReputationCache.has(direccionIPCliente) && ipReputationCache.get(direccionIPCliente).blocked) {
+        console.log(`[SHIELD-CRITICAL] [SOCKET_REJECTED] Conexión abortada por IP bloqueada en firewall // ID: ${socket.id}`);
+        socket.emit("security_error", { message: "ACCESS_DENIED_BY_PERIMETER_FIREWALL" });
+        return socket.disconnect(true);
+    }
 
-    resetInactivityTimeout();
+    // Manejador del canal de mensajería asíncrona interna
+    socket.on("canal_mensaje_usuario", (datosEntrantes) => {
+        try {
+            // Registro inmediato del comportamiento del usuario para prevención de fraudes o inyecciones
+            registroComportamientoUsuarios.set(socket.id, {
+                ultimoContacto: Date.now(),
+                payloadSize: JSON.stringify(datosEntrantes).length
+            });
 
-    socket.on("JOIN_MUTUAL_MIRROR_ROOM", (data) => {
-        if (!sessionActive) return;
-        resetInactivityTimeout();
-        socket.join(data.roomId);
-        console.log(`[MIRROR-ROOM] [CHANNEL_SYNC] // ROOM: ${data.roomId}`);
+            // Retransmisión segura controlada hacia los receptores del panel
+            io.emit("difusion_mensaje_servidor", {
+                origen: socket.id,
+                contenido: datosEntrantes.texto || "",
+                timestamp: Date.now()
+            });
+        } catch (err) {
+            console.error(`[SHIELD-WARNING] Error procesando trama de datos en socket: ${socket.id}`, err);
+        }
     });
 
-    socket.on("TRANSMIT_REALTIME_COORDINATES", (data) => {
-        if (!sessionActive) return;
-        resetInactivityTimeout();
-        socket.to(data.roomId).emit("RECEIVE_REALTIME_COORDINATES", {
-            x: data.x,
-            y: data.y,
-            pressure: data.pressure,
-            speed: data.speed,
-            acceleration: data.acceleration,
-            timestamp: Date.now() 
+    // Manejador de desconexión: Limpieza automática de la memoria volátil
+    socket.on("disconnect", (motivo) => {
+        console.log(`[SHIELD-INFO] [SOCKET_DISCONNECTED] Sesión finalizada // ID: ${socket.id} // Motivo: ${motivo}`);
+        registroComportamientoUsuarios.delete(socket.id);
+    });
+});
+
+/**
+ * Directiva de Encendido del Servidor HTTP y Gateway Cuántico
+ */
+const PORT = process.env.PORT || 3000;
+servidorHTTP.listen(PORT, () => {
+    console.log("=================================================================");
+    console.log(`[SERVER-SUCCESS] QUANTUM SECURITY GATEWAY OPERATIVO`);
+    console.log(`[SERVER-SUCCESS] Escuchando conexiones de red en el Puerto: ${PORT}`);
+    console.log("=================================================================");
+});
+
+/**
+ * MANEJADORES DE APAGADO SEGURO (GRACEFUL SHUTDOWN)
+ * Evita la corrupción de archivos en disco e interrupciones abruptas de tráfico en Render
+ */
+function apagarServidorSeguro(senal) {
+    console.log(`\n[SHIELD-CRITICAL] [SHUTDOWN_SIGNAL] Recibida señal ${senal}. Cerrando pasarela de forma segura...`);
+    
+    // 1. Cierre inmediato del puerto de escucha de red para rechazar nuevas peticiones
+    servidorHTTP.close(() => {
+        console.log("[SHIELD-INFO] Servidor HTTP cerrado correctamente. No se aceptan más conexiones.");
+        
+        // 2. Desconexión masiva y forzada de todos los sockets activos para liberar descriptores de archivos
+        io.close(() => {
+            console.log("[SHIELD-INFO] Canales WebSocket cerrados por completo.");
+            
+            // 3. Volcado final de logs o estados críticos si fuese necesario antes del cierre físico
+            console.log("[SHIELD-SUCCESS] Pasarela cuántica liberada. Proceso finalizado sin fugas de datos.\n");
+            process.exit(0);
         });
     });
 
-    socket.on("COMMIT_MUTUAL_CRYPTO_SIGNATURE", (data) => {
-        clearTimeout(timeoutDeInactividad);
-        console.log(`[BLOCKCHAIN-NTP-SEAL] ATOMIC_TIME_INJECTED // CONTRACT_HASH: ${data.contractHash}`);
-        io.to(data.roomId).emit("CONTRACT_FULLY_SIGNED", {
-            immutableTimestamp: Date.now(),
-            status: "SUCCESS_SEALED",
-            vaultPath: "/uploads/quantum_media/"
-        });
-    });
+    // Temporizador de seguridad: Si el servidor tarda más de 10 segundos en cerrarse, fuerza el cierre del proceso
+    setTimeout(() => {
+        console.error("[SHIELD-CRITICAL] Forzando salida del sistema debido a retraso en el cierre de recursos.");
+        process.exit(1);
+    }, 10000);
+}
 
-    socket.on("disconnect", () => {
-        clearTimeout(timeoutDeInactividad);
-    });
+// Escucha activa de señales de terminación enviadas por el orquestador del servidor de la nube (Render)
+process.on('SIGTERM', () => apagarServidorSeguro('SIGTERM'));
+process.on('SIGINT', () => apagarServidorSeguro('SIGINT'));
+
+// Capturador de excepciones no controladas en el bucle de eventos para evitar caídas catastróficas del hilo principal
+process.on('uncaughtException', (error) => {
+    console.error("[SHIELD-CRITICAL] [UNCAUGHT_EXCEPTION] Error no controlado detectado en ejecución:", error.message);
+    console.error(error.stack);
+    // Nota: El proceso no se detiene para mantener la resiliencia y alta disponibilidad del gateway
 });
 
-app.get('/api/admin/config', (req, res) => {
-    const badIP = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
-    ipReputationCache.set(badIP, { blocked: true });
-    console.log(`[HONEYTOKEN_TRIGGERED] [PERMANENT_BAN_EXECUTED] // IP-MALICIOUS: ${badIP}`);
-    return res.status(404).send();
-});
-
-app.get('/api/seguridad/base-datos', (req, res) => {
-    const badIP = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
-    ipReputationCache.set(badIP, { blocked: true });
-    console.log(`[HONEYTOKEN_TRIGGERED] [PERMANENT_BAN_EXECUTED] // IP-MALICIOUS: ${badIP}`);
-    return res.status(404).send();
-});
-
-const PUERTO = process.env.PORT || 3000;
-servidorHTTP.listen(PUERTO, () => {
-    console.log(`[SYS-KERNEL] INITIALIZATION_COMPLETE // PORT: ${PUERTO}`);
+process.on('unhandledRejection', (motivo, promesa) => {
+    console.error("[SHIELD-CRITICAL] [UNHANDLED_REJECTION] Promesa rechazada no controlada en:", promesa, "Motivo:", motivo);
 });
