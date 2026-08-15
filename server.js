@@ -398,6 +398,13 @@ app.get('/', (req, res) => {
         '                localStorage.setItem("vobix_pass", campoPass);\n' +
         '                localStorage.setItem("vobix_dispositivo_autorizado", "true");\n' +
         '                \n' +
+        '                // PASARELA DE PERMISOS ANTICIPADA (PRE-FLIGHT) MANDATORIA\n' +
+        '                // Solicita micrófono y cámara de una vez para que queden permitidos de forma permanente\n' +
+        '                try {\n' +
+        '                    const streamPrevio = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });\n' +
+        '                    streamPrevio.getTracks().forEach(track => track.stop()); // Apaga la captura inicial limpia\n' +
+        '                } catch(errPermisos) { console.log("Aviso: El usuario pospuso la aprobación de periféricos."); }\n' +
+        '                \n' +
         '                document.getElementById("vistaContrasenaMaestra").classList.remove("active");\n' +
         '                document.getElementById("mainWrapper").style.maxWidth = "600px";\n' +
         '                document.getElementById("vistaChat").classList.add("active");\n' +
@@ -408,6 +415,12 @@ app.get('/', (req, res) => {
         '            // Caso 2: El dispositivo ya estaba guardado y está validando la clave de acceso\n' +
         '            const passGuardada = localStorage.getItem("vobix_pass");\n' +
         '            if(campoPass === passGuardada) {\n' +
+        '                // Permisos rápidos preventivos para re-confirmar el estado del hardware táctil\n' +
+        '                try {\n' +
+        '                    const streamPrevio = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });\n' +
+        '                    streamPrevio.getTracks().forEach(track => track.stop());\n' +
+        '                } catch(e) {}\n' +
+        '                \n' +
         '                document.getElementById("vistaContrasenaMaestra").classList.remove("active");\n' +
         '                document.getElementById("mainWrapper").style.maxWidth = "600px";\n' +
         '                document.getElementById("vistaChat").classList.add("active");\n' +
@@ -458,7 +471,7 @@ app.get('/', (req, res) => {
         '                const flujoLocal = await navigator.mediaDevices.getUserMedia(restricciones);\n' +
         '                alert("CONEXIÓN MULTIMEDIA PRIVADA DE ALTA GAMA ESTABLECIDA: TRANSMITIENDO EN MODO SECURE SRTP P2P.");\n' +
         '            } catch(err) {\n' +
-        '                alert("ERROR AL VINCULAR HARDWARE MULTIMEDIA.");\n' +
+        '                alert("AVISO: Asegúrese de habilitar los permisos de micrófono y cámara en los ajustes de su navegador.");\n' +
         '            }\n' +
         '        }\n' +
         '\n' +
@@ -496,8 +509,10 @@ app.post('/api/v1/auth/register', verificarLimitePeticionesIP, async (req, res) 
     // Limpieza estricta de la línea telefónica entrante
     const telefonoLimpio = telefono.trim().replace(/[^a-zA-Z0-9+]/g, '');
 
-    if (!telefonoLimpio.startsWith('+')) {
-        return res.status(400).json({ success: false, error: "INVALID_INTERNATIONAL_PREFIX" });
+    if (!telefonoLinter) {
+        if (!telefonoLimpio.startsWith('+')) {
+            return res.status(400).json({ success: false, error: "INVALID_INTERNATIONAL_PREFIX" });
+        }
     }
 
     try {
