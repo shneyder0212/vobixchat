@@ -116,7 +116,7 @@ app.get('/', (req, res) => {
         '            justify-content: center; \n' +
         '            align-items: center; \n' +
         '            min-height: 100vh; \n' +
-        '            min-height: 100dvh; \n' +
+        '            min-height: 100dvh; \n' + 
         '            overflow: hidden;\n' +
         '        }\n' +
         '        /* Contenedor Principal Adaptable */\n' +
@@ -126,7 +126,7 @@ app.get('/', (req, res) => {
         '            width: 100%;\n' +
         '            max-width: 440px;\n' +
         '            height: 100vh; \n' +
-        '            height: 100dvh; \n' +
+        '            height: 100dvh; \n' + 
         '            display: flex;\n' +
         '            flex-direction: column;\n' +
         '            position: relative;\n' +
@@ -322,7 +322,7 @@ app.get('/', (req, res) => {
         '            } catch(e) { campoTel.value = "+"; }\n' +
         '        }\n' +
         '\n' +
-        '        // AJAX Fase 1: Communication asíncrona con formateador inteligente de prefijo local de España\n' +
+        '        // AJAX Fase 1: Comunicación asíncrona con formateador inteligente de prefijo local de España\n' +
         '        async function solicitarPinSMS() {\n' +
         '            const user = document.getElementById("username").value.trim();\n' +
         '            let tel = document.getElementById("telefono").value.trim();\n' +
@@ -620,7 +620,7 @@ io.on("connection", (socket) => {
     socket.on("canal_mensaje_usuario", (datos) => {
         registroComportamientoUsuarios.set(socket.id, { ultimoContacto: Date.now() });
         
-        // Difusión segura de mensajes de chat en la red interna a través de socket
+        // Difusión segura de mensajes de chat en la red interna
         io.emit("difusion_mensaje_servidor", { 
             origen: socket.id,
             contenido: datos.texto || "" 
