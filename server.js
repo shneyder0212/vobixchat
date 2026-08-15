@@ -1,5 +1,5 @@
 // =================================================================
-// PARTE 1 DE 4: CONFIGURACIÓN DEL NÚCLEO, VARIABLES MAESTRAS Y FIREWALL PERIMETRAL
+// PARTE 1 DE 6: DECLARACIÓN DE MÓDULOS DEL NÚCLEO Y MONTAJE DE VARIABLES
 // =================================================================
 require('dotenv').config();
 const express = require('express');
@@ -28,9 +28,12 @@ const rutaMedia = path.join(__dirname, 'uploads', 'quantum_media');
 if (!fs.existsSync(rutaMedia)){
     fs.mkdirSync(rutaMedia, { recursive: true });
 }
+// =================================================================
+// PARTE 2 DE 6: ESTRUCTURAS DE SEGURIDAD INTERNA Y FIREWALL POR IP
+// =================================================================
 
-// Memorias internas persistentes (Respaldo absoluto de tus 34 directivas de control)
-const pinesTemporales = new Map(); // Mapa que guardará los PINs de verificación generados
+// Memorias internas persistentes en el servidor (Tus 34 directivas de control)
+const pinesTemporales = new Map(); // Guarda los PINs de verificación vinculados a cada línea
 const lineasFisicasAutorizadas = new Set();
 const baseContrasenasHistorial = new Map();
 const listaNegraEstafadores = new Set();
@@ -39,13 +42,15 @@ const registroPeticionesPorIP = new Map();
 const hardwareBindings = new Map(); 
 const ipReputationCache = new Map(); 
 
+// Inicialización del motor criptográfico del núcleo
 const ENCRYPTION_KEY = crypto.scryptSync(process.env.INFOBIP_API_KEY, 'salt-segura', 32);
 
-// Middleware del Cortafuegos Perimetral contra ataques en ráfaga por dirección IP
+// Middleware del Cortafuegos Perimetral contra inundación de peticiones por IP
 function verificarLimitePeticionesIP(req, res, next) {
     const direccionIP = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
     const tiempoActual = Date.now();
     
+    // Control de reputación: Bloqueo inmediato si la IP ya está baneada
     if (ipReputationCache.has(direccionIP) && ipReputationCache.get(direccionIP).blocked) {
         return res.status(403).json({ success: false, error: "SECURITY_RULE_VIOLATION" });
     }
@@ -59,6 +64,7 @@ function verificarLimitePeticionesIP(req, res, next) {
     if (tiempoActual - datosIP.inicioTiempo < 60000) {
         if (datosIP.conteo >= 5) {
             datosIP.rafagas++;
+            // Baneo permanente si genera ráfagas en ventanas sucesivas
             if (datosIP.rafagas >= 2) ipReputationCache.set(direccionIP, { blocked: true });
             return res.status(429).json({ success: false, error: "SECURITY_BURST_DENIED" });
         }
@@ -70,6 +76,7 @@ function verificarLimitePeticionesIP(req, res, next) {
     next();
 }
 
+// Configuración de almacenamiento en disco protegido y sanitizado
 const almacenamientoConfig = multer.diskStorage({
     destination: (req, file, cb) => cb(null, rutaMedia),
     filename: (req, file, cb) => cb(null, Date.now() + '-' + file.originalname.replace(/[^a-zA-Z0-9.\-_]/g, ''))
@@ -77,8 +84,9 @@ const almacenamientoConfig = multer.diskStorage({
 
 const upload = multer({ 
     storage: almacenamientoConfig,
-    limits: { fileSize: 10 * 1024 * 1024 },
+    limits: { fileSize: 10 * 1024 * 1024 }, // Límite estricto de 10MB por archivo
     fileFilter: (req, file, cb) => {
+        // Bloqueo de extensiones peligrosas: Solo se permiten PDFs, Imágenes y Audio
         if (file.mimetype === 'application/pdf' || file.mimetype.startsWith('image/') || file.mimetype.startsWith('audio/')) {
             cb(null, true);
         } else {
@@ -87,7 +95,7 @@ const upload = multer({
     }
 });
 // =================================================================
-// PARTE 2 DE 4: INTERFAZ VISUAL SINGLE-PAGE (ESCÁNER, PIN Y PANEL INTERIOR)
+// PARTE 3 DE 6: CAPA DE ENTRADA WEB Y HOJA DE ESTILOS CSS (SPA)
 // =================================================================
 app.get('/', (req, res) => {
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
@@ -110,6 +118,7 @@ app.get('/', (req, res) => {
         '            min-height: 100vh;\n' +
         '            overflow: hidden;\n' +
         '        }\n' +
+        '        /* Marco Principal Estilo Glassmorphism */\n' +
         '        .app-container {\n' +
         '            background: rgba(10, 16, 30, 0.85);\n' +
         '            border: 1px solid rgba(0, 255, 204, 0.3);\n' +
@@ -121,8 +130,11 @@ app.get('/', (req, res) => {
         '            position: relative;\n' +
         '            transition: max-width 0.5s ease;\n' +
         '        }\n' +
+        '        /* Conmutador de Vistas Dinámicas */\n' +
         '        .view { display: none; text-align: center; }\n' +
         '        .view.active { display: block; }\n' +
+        '        \n' +
+        '        /* Animación del Radar Cuántico */\n' +
         '        .radar-circle {\n' +
         '            width: 120px;\n' +
         '            height: 120px;\n' +
@@ -157,6 +169,7 @@ app.get('/', (req, res) => {
         '            text-transform: uppercase;\n' +
         '            letter-spacing: 0.5px;\n' +
         '        }\n' +
+        '        /* Cajas de Entrada (Cero Números Personales) */\n' +
         '        .input-box { margin-bottom: 20px; text-align: left; }\n' +
         '        .input-box label { display: block; font-size: 11px; color: #566f8a; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px; }\n' +
         '        .input-box input {\n' +
@@ -169,13 +182,23 @@ app.get('/', (req, res) => {
         '            color: #00ffcc; font-weight: bold; font-size: 13px; cursor: pointer; text-transform: uppercase; border-radius: 6px; font-family: inherit; letter-spacing: 1px;\n' +
         '        }\n' +
         '        .btn-quantum:hover { background: rgba(0, 255, 204, 0.1); box-shadow: 0 0 15px rgba(0, 255, 204, 0.2); }\n' +
+        '        \n' +
+        '        /* Estilos del Entorno de Chat Interno */\n' +
         '        .chat-header { border-bottom: 1px solid rgba(0, 255, 204, 0.2); padding-bottom: 15px; margin-bottom: 15px; display: flex; justify-content: space-between; }\n' +
         '        .chat-area { height: 220px; background: #080d1a; border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 6px; padding: 15px; overflow-y: auto; margin-bottom: 15px; text-align: left; font-size: 13px; }\n' +
         '        .chat-footer { display: flex; gap: 10px; }\n' +
         '        .chat-footer input { flex: 1; }\n' +
         '    </style>\n' +
         '    <script src="/socket.io/socket.io.js"></script>\n' +
-        '</head>\n' +
+        '</head>'
+    );
+});
+// =================================================================
+// PARTE 4 DE 6: CUERPO HTML DE LAS COMPONENTES DINÁMICAS (SPA)
+// =================================================================
+app.get('/render-body', (req, res) => {
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.send(
         '<body>\n' +
         '    <div class="app-container" id="mainWrapper">\n' +
         '        \n' +
@@ -216,7 +239,15 @@ app.get('/', (req, res) => {
         '        </div>\n' +
         '\n' +
         '    </div>\n' +
-        '\n' +
+        '</body>'
+    );
+});
+// =================================================================
+// PARTE 5 DE 6: MOTOR LÓGICO FRONTAL (AUTODETECCIÓN POR IP Y AJAX)
+// =================================================================
+app.get('/render-scripts', (req, res) => {
+    res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+    res.send(
         '    <script>\n' +
         '        let lineaGuardada = "";\n' +
         '        const prefijos = { "ES": "+34", "DO": "+1", "MX": "+52", "AR": "+54", "CO": "+57", "US": "+1" };\n' +
@@ -247,88 +278,57 @@ app.get('/', (req, res) => {
         '                const res = await fetch("/api/v1/auth/register", {\n' +
         '                    method: "POST",\n' +
         '                    headers: { "Content-Type": "application/json" },\n' +
-// =================================================================
-// PARTE 3 DE 4: BACKEND ENDPOINTS (CONTROL ANTI-VOIP Y DESPACHO DE PIN)
-// =================================================================
-
-// Endpoint de Registro: Filtra VoIP, genera un token PIN de 6 dígitos y dispara el SMS
-app.post('/api/v1/auth/register', verificarLimitePeticionesIP, async (req, res) => {
-    const { username, telefono } = req.body;
-    if (!username || !telefono) {
-        return res.status(400).json({ success: false, error: "REJECTED_EMPTY_FIELDS" });
-    }
-    
-    // Limpieza estricta de la línea entrante
-    const telefonoLimpio = telefono.trim().replace(/[^a-zA-Z0-9+]/g, '');
-
-    if (!telefonoLimpio.startsWith('+')) {
-        return res.status(400).json({ success: false, error: "INVALID_INTERNATIONAL_PREFIX" });
-    }
-
-    try {
-        // --- FILTRO DE SEGURIDAD EXCLUSIVO: INFOBIP NUMBER LOOKUP ---
-        // Consulta la base global de operadoras para validar que la SIM sea física y real
-        const consultaLookup = await fetch(process.env.INFOBIP_BASE_URL + "/number-lookup/1/query", {
-            method: 'POST',
-            headers: {
-                'Authorization': "App " + process.env.INFOBIP_API_KEY,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ to: [telefonoLimpio] })
-        });
-
-        if (consultaLookup.ok) {
-            const resultadoLookup = await consultaLookup.json();
-            const tipoRed = resultadoLookup.results && resultadoLookup.results[0] ? resultadoLookup.results[0].type : null;
-            
-            // Aborta inmediatamente si es un número virtual o VoIP de fraude
-            if (tipoRed === "VOIP" || tipoRed === "VIRTUAL") {
-                console.log("[SHIELD-CRITICAL] Intento de acceso bloqueado por número VoIP: " + telefonoLimpio);
-                return res.status(400).json({ success: false, error: "VOIP_LINE_FORBIDDEN" });
-            }
-        }
-
-        // --- GENERADOR CRIPTOGRÁFICO DE PIN (TOKEN DE 6 DÍGITOS REALES) ---
-        const pinSecreto = Math.floor(100000 + Math.random() * 900000).toString();
-        
-        // Se guarda en el Mapa seguro interno junto con un control de intentos
-        pinesTemporales.set(telefonoLimpio, { 
-            pin: pinSecreto, 
-            intentos: 0,
-            timestamp: Date.now()
-        });
-
-        // --- TRANSMISIÓN REAL DEL SMS CON EL PIN SECRETO ---
-        const respuestaInfobip = await fetch(process.env.INFOBIP_BASE_URL + "/sms/2/text/advanced", {
-            method: 'POST',
-            headers: {
-                'Authorization': "App " + process.env.INFOBIP_API_KEY,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                messages: [{
-                    destinations: [{ to: telefonoLimpio }],
-                    from: "VobixChat",
-                    text: "[VOBIXCHAT] Tu codigo de verificacion de acceso seguro es: " + pinSecreto
-                }]
-            })
-        });
-
-        if (!respuestaInfobip.ok) {
-            const errorDetalle = await respuestaInfobip.text();
-            console.error("[API_ERROR_SMS] " + respuestaInfobip.status + " - " + errorDetalle);
-            return res.status(respuestaInfobip.status).json({ success: false, error: "EXTERNAL_GATEWAY_REJECTION" });
-        }
-
-        return res.status(200).json({ success: true });
-        
-    } catch (error) {
-        console.error("[CRITICAL_ERROR_BACKEND]", error);
-        return res.status(500).json({ success: false, error: "TRANSMISSION_FAILED" });
-    }
+        '                    body: JSON.stringify({ username: user, telefono: tel })\n' +
+        '                });\n' +
+        '                const data = await res.json();\n' +
+        '                if (data.success) {\n' +
+        '                    lineaGuardada = tel;\n' +
+        '                    document.getElementById("vistaScanner").classList.remove("active");\n' +
+        '                    document.getElementById("vistaPin").classList.add("active");\n' +
+        '                } else { status.innerText = "RECHAZADO: " + data.error; }\n' +
+        '            } catch(e) { status.innerText = "ERROR DE TRANSMISIÓN"; }\n' +
+        '        }\n' +
+        '\n' +
+        '        async function enviarValidacionPin() {\n' +
+        '            const pin = document.getElementById("codigoPin").value.trim();\n' +
+        '            const statusPin = document.getElementById("statusPinField");\n' +
+        '            try {\n' +
+        '                const res = await fetch("/api/v1/auth/verify-pin", {\n' +
+        '                    method: "POST",\n' +
+        '                    headers: { "Content-Type": "application/json" },\n' +
+        '                    body: JSON.stringify({ telefono: lineaGuardada, pin: pin })\n' +
+        '                });\n' +
+        '                const data = await res.json();\n' +
+        '                if (data.success) {\n' +
+        '                    document.getElementById("mainWrapper").style.maxWidth = "600px";\n' +
+        '                    document.getElementById("vistaPin").classList.remove("active");\n' +
+        '                    document.getElementById("vistaChat").classList.add("active");\n' +
+        '                    conectarSockets();\n' +
+        '                } else { statusPin.innerText = "PIN RECHAZADO: ACCESO BLOQUEADO"; }\n' +
+        '            } catch(e) { statusPin.innerText = "ERROR DE VALIDACIÓN"; }\n' +
+        '        }\n' +
+        '\n' +
+        '        let socket = null;\n' +
+        '        function conectarSockets() {\n' +
+        '            socket = io();\n' +
+        '            socket.on("difusion_mensaje_servidor", (data) => {\n' +
+        '                const p = document.getElementById("pantallaChat");\n' +
+        '                p.innerHTML += "<div><span style=\'color:#00ffcc;\'>[CHAT]:</span> " + data.contenido + "</div>";\n' +
+        '                p.scrollTop = p.scrollHeight;\n' +
+        '            });\n' +
+        '        }\n' +
+        '        \n' +
+        '        function transmitirMensaje() {\n' +
+        '            const m = document.getElementById("mensajeChat");\n' +
+        '            if(m.value.trim() && socket) { socket.emit("canal_mensaje_usuario", { texto: m.value }); m.value = ""; }\n' +
+        '        }\n' +
+        '        \n' +
+        '        window.onload = fijarPrefijoPorRed;\n' +
+        '    </script>'
+    );
 });
 // =================================================================
-// PARTE 4 DE 4: BACKEND CONTROLLERS (VERIFICACIÓN PIN, SOCKETS Y APAGADO)
+// PARTE 6 DE 6: CONTROLADORES BACKEND, WEBSOCKETS Y ENCENDIDO DE RED
 // =================================================================
 
 // Endpoint de Validación: Comprueba matemáticamente el PIN introducido por el usuario
