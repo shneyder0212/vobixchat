@@ -116,7 +116,7 @@ app.get('/', (req, res) => {
         '            justify-content: center; \n' +
         '            align-items: center; \n' +
         '            min-height: 100vh; \n' +
-        '            min-height: 100dvh; \n' + // Altura dinámica para teclados móviles
+        '            min-height: 100dvh; \n' +
         '            overflow: hidden;\n' +
         '        }\n' +
         '        /* Contenedor Principal Adaptable */\n' +
@@ -126,7 +126,7 @@ app.get('/', (req, res) => {
         '            width: 100%;\n' +
         '            max-width: 440px;\n' +
         '            height: 100vh; \n' +
-        '            height: 100dvh; \n' + // Ajuste automático al desplegar teclado
+        '            height: 100dvh; \n' +
         '            display: flex;\n' +
         '            flex-direction: column;\n' +
         '            position: relative;\n' +
@@ -151,7 +151,6 @@ app.get('/', (req, res) => {
         '        .status-log { font-size: 11px; color: #637085; margin-bottom: 25px; text-transform: uppercase; letter-spacing: 0.5px; }\n' +
         '        .input-box { margin-bottom: 20px; text-align: left; }\n' +
         '        .input-box label { display: block; font-size: 12px; color: #94a3b8; margin-bottom: 8px; text-transform: uppercase; font-weight: 600; }\n' +
-        '        /* Tamaño de fuente a 16px obligatorio para mitigar el zoom forzado de Apple iOS */\n' +
         '        .input-box input {\n' +
         '            width: 100%; padding: 14px; background: #1a202c; border: 1px solid #2d3748;\n' +
         '            border-radius: 8px; color: #fff; font-size: 16px; outline: none; font-family: inherit;\n' +
@@ -323,7 +322,7 @@ app.get('/', (req, res) => {
         '            } catch(e) { campoTel.value = "+"; }\n' +
         '        }\n' +
         '\n' +
-        '        // AJAX Fase 1: Comunicación asíncrona con formateador inteligente de prefijo local de España\n' +
+        '        // AJAX Fase 1: Communication asíncrona con formateador inteligente de prefijo local de España\n' +
         '        async function solicitarPinSMS() {\n' +
         '            const user = document.getElementById("username").value.trim();\n' +
         '            let tel = document.getElementById("telefono").value.trim();\n' +
@@ -509,10 +508,8 @@ app.post('/api/v1/auth/register', verificarLimitePeticionesIP, async (req, res) 
     // Limpieza estricta de la línea telefónica entrante
     const telefonoLimpio = telefono.trim().replace(/[^a-zA-Z0-9+]/g, '');
 
-    if (!telefonoLinter) {
-        if (!telefonoLimpio.startsWith('+')) {
-            return res.status(400).json({ success: false, error: "INVALID_INTERNATIONAL_PREFIX" });
-        }
+    if (!telefonoLimpio.startsWith('+')) {
+        return res.status(400).json({ success: false, error: "INVALID_INTERNATIONAL_PREFIX" });
     }
 
     try {
