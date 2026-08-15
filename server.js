@@ -1,5 +1,5 @@
 // =================================================================
-// PARTE 1 DE 3: CONFIGURACIÓN DEL NÚCLEO, ARCHIVOS Y FIREWALL por IP
+// PARTE 1 DE 3: MÓDULOS DEL NÚCLEO, FIREWALL ANTI-RÁFAGAS Y CONTROL CRIPTOGRÁFICO
 // =================================================================
 require('dotenv').config();
 const express = require('express');
@@ -10,7 +10,7 @@ const multer = require('multer');
 const crypto = require('crypto');
 const { Server } = require("socket.io");
 
-// Verificación de seguridad de variables de entorno
+// Validación perimetral de credenciales del sistema en Render
 if (!process.env.INFOBIP_API_KEY || !process.env.INFOBIP_BASE_URL) {
     console.error("[SHIELD-CRITICAL] Falta configurar las variables de entorno de Infobip.");
     process.exit(1);
@@ -23,22 +23,26 @@ const io = new Server(servidorHTTP, { cors: { origin: "*" } });
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Crear directorio seguro para almacenamiento de multimedia
+// Repositorio de almacenamiento seguro para archivos multimedia aislados
 const rutaMedia = path.join(__dirname, 'uploads', 'quantum_media');
 if (!fs.existsSync(rutaMedia)){
     fs.mkdirSync(rutaMedia, { recursive: true });
 }
 
-// Memorias internas para control de seguridad perimetral
-const registroPeticionesPorIP = new Map();
-const ipReputationCache = new Map(); 
+// Memorias persistentes en tiempo de ejecución (Directivas obligatorias de control)
+const pinesTemporales = new Map();
 const lineasFisicasAutorizadas = new Set();
+const baseContrasenasHistorial = new Map();
+const listaNegraEstafadores = new Set();
 const registroComportamientoUsuarios = new Map();
+const registroPeticionesPorIP = new Map();
+const hardwareBindings = new Map(); 
+const ipReputationCache = new Map(); 
 
-// Clave criptográfica interna del sistema
+// Inicialización del motor criptográfico del servidor
 const ENCRYPTION_KEY = crypto.scryptSync(process.env.INFOBIP_API_KEY, 'salt-segura', 32);
 
-// Middleware del Cortafuegos Perimetral contra ataques e inundación de peticiones
+// Filtro perimetral del Firewall por IP: Bloquea intentos de inundación (DDoS)
 function verificarLimitePeticionesIP(req, res, next) {
     const direccionIP = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
     const tiempoActual = Date.now();
@@ -67,7 +71,7 @@ function verificarLimitePeticionesIP(req, res, next) {
     next();
 }
 
-// Configuración del disco para almacenamiento seguro
+// Configuración de almacenamiento en disco protegido
 const almacenamientoConfig = multer.diskStorage({
     destination: (req, file, cb) => cb(null, rutaMedia),
     filename: (req, file, cb) => cb(null, Date.now() + '-' + file.originalname.replace(/[^a-zA-Z0-9.\-_]/g, ''))
@@ -85,7 +89,7 @@ const upload = multer({
     }
 });
 // =================================================================
-// PARTE 2 DE 3: NUEVA INTERFAZ VISUAL DE REGISTRO (DISEÑO PREMIUM OSCURO)
+// PARTE 2 DE 3: INTERFAZ VISUAL "QUANTUM SCANNER" CON DETECCIÓN AUTOMÁTICA POR IP
 // =================================================================
 app.get('/', (req, res) => {
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
@@ -95,104 +99,170 @@ app.get('/', (req, res) => {
         <head>
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>VOBIXCHAT // Registro Avanzado</title>
+            <title>VOBIXCHAT // Escáner de Red</title>
             <style>
                 * { box-sizing: border-box; margin: 0; padding: 0; }
                 body { 
-                    font-family: 'Segoe UI', Roboto, sans-serif; 
-                    background: #0b0e14; 
-                    color: #ffffff; 
+                    font-family: 'Consolas', monospace, sans-serif; 
+                    background: #060913; 
+                    color: #00ffcc; 
                     display: flex; 
                     justify-content: center; 
                     align-items: center; 
                     min-height: 100vh;
+                    overflow: hidden;
                 }
-                .register-container {
-                    background: #121722;
-                    border: 1px solid #1e2638;
+                .scanner-frame {
+                    background: rgba(10, 16, 30, 0.85);
+                    border: 1px solid rgba(0, 255, 204, 0.3);
                     width: 100%;
-                    max-width: 420px;
-                    padding: 40px 30px;
-                    border-radius: 16px;
-                    box-shadow: 0 15px 35px rgba(0,0,0,0.5);
-                }
-                .header-zone {
+                    max-width: 440px;
+                    padding: 40px;
+                    border-radius: 20px;
+                    box-shadow: 0 0 40px rgba(0, 255, 204, 0.1);
                     text-align: center;
-                    margin-bottom: 35px;
+                    position: relative;
                 }
-                .header-zone h1 {
-                    font-size: 28px;
-                    color: #00ffcc;
-                    letter-spacing: 2px;
-                    margin-bottom: 5px;
+                .radar-circle {
+                    width: 140px;
+                    height: 140px;
+                    border: 2px dashed rgba(0, 255, 204, 0.4);
+                    border-radius: 50%;
+                    margin: 0 auto 30px auto;
+                    position: relative;
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    box-shadow: inset 0 0 20px rgba(0, 255, 204, 0.05);
                 }
-                .header-zone p {
-                    color: #637085;
-                    font-size: 13px;
+                .radar-circle::after {
+                    content: '';
+                    position: absolute;
+                    width: 100%;
+                    height: 100%;
+                    border: 2px solid #00ffcc;
+                    border-radius: 50%;
+                    border-left-color: transparent;
+                    border-bottom-color: transparent;
+                    animation: spinRadar 2s linear infinite;
                 }
-                .form-group {
-                    margin-bottom: 22px;
+                @keyframes spinRadar {
+                    0% { transform: rotate(0deg); }
+                    100% { transform: rotate(360deg); }
                 }
-                .form-group label {
-                    display: block;
+                .status-log {
                     font-size: 12px;
-                    color: #94a3b8;
-                    margin-bottom: 8px;
-                    font-weight: 600;
-                    text-transform: uppercase;
+                    color: #8fa0b5;
+                    margin-bottom: 25px;
+                    height: 18px;
                     letter-spacing: 1px;
                 }
-                .form-group input {
+                .input-box {
+                    margin-bottom: 20px;
+                    text-align: left;
+                }
+                .input-box label {
+                    display: block;
+                    font-size: 11px;
+                    color: #566f8a;
+                    margin-bottom: 8px;
+                    text-transform: uppercase;
+                    letter-spacing: 2px;
+                }
+                .input-box input {
                     width: 100%;
                     padding: 14px;
-                    background: #1a202c;
-                    border: 1px solid #2d3748;
-                    border-radius: 8px;
+                    background: #0d1527;
+                    border: 1px solid rgba(0, 255, 204, 0.2);
+                    border-radius: 6px;
                     color: #fff;
-                    font-size: 15px;
+                    font-size: 16px;
                     outline: none;
-                    transition: border-color 0.2s;
-                }
-                .form-group input:focus {
-                    border-color: #00ffcc;
-                }
-                .btn-action {
-                    width: 100%;
-                    padding: 15px;
-                    background: #00ffcc;
-                    color: #0b0e14;
-                    border: none;
-                    border-radius: 8px;
-                    font-size: 15px;
-                    font-weight: 700;
-                    cursor: pointer;
-                    transition: background 0.2s;
-                    text-transform: uppercase;
+                    font-family: inherit;
                     letter-spacing: 1px;
                 }
-                .btn-action:hover {
-                    background: #00e6b8;
+                .input-box input:focus {
+                    border-color: #00ffcc;
+                    box-shadow: 0 0 10px rgba(0, 255, 204, 0.2);
+                }
+                .btn-scan {
+                    width: 100%;
+                    padding: 16px;
+                    background: transparent;
+                    border: 1px solid #00ffcc;
+                    color: #00ffcc;
+                    font-weight: bold;
+                    font-size: 14px;
+                    cursor: pointer;
+                    letter-spacing: 2px;
+                    text-transform: uppercase;
+                    transition: all 0.3s;
+                    border-radius: 6px;
+                    font-family: inherit;
+                }
+                .btn-scan:hover {
+                    background: rgba(0, 255, 204, 0.1);
+                    box-shadow: 0 0 15px rgba(0, 255, 204, 0.2);
                 }
             </style>
         </head>
         <body>
-            <div class="register-container">
-                <div class="header-zone">
-                    <h1>VOBIXCHAT</h1>
-                    <p>Inscripción segura al canal de comunicaciones</p>
+            <div class="scanner-frame">
+                <div class="radar-circle">
+                    <span style="font-size: 11px; font-weight: bold; letter-spacing: 1px;">SECURE</span>
                 </div>
+                <div class="status-log" id="statusField">SISTEMA INICIALIZADO...</div>
+                
                 <form action="/api/v1/auth/register" method="POST">
-                    <div class="form-group">
-                        <label>Nombre de Usuario</label>
-                        <input type="text" name="username" placeholder="Ej. alex_quantum" required autocomplete="off">
+                    <div class="input-box">
+                        <label>Identificador Único</label>
+                        <input type="text" name="username" placeholder="Nombre de usuario" required autocomplete="off">
                     </div>
-                    <div class="form-group">
-                        <label>Línea Telefónica Móvil</label>
-                        <input type="tel" name="telefono" placeholder="+34655766134" required autocomplete="off">
+                    <div class="input-box">
+                        <label>Terminal Físico (Línea)</label>
+                        <input type="tel" id="telefono" name="telefono" placeholder="Cargando pasarela..." required autocomplete="off">
                     </div>
-                    <button type="submit" class="btn-action">Verificar y Registrar</button>
+                    <button type="submit" class="btn-scan">Autorizar Acceso SMS</button>
                 </form>
             </div>
+
+            <script>
+                // Mapeo dinámico de prefijos sin banderas
+                const prefijosMundiales = {
+                    "ES": "+34", "DO": "+1", "MX": "+52", "AR": "+54", "CO": "+57", 
+                    "CL": "+56", "PE": "+51", "VE": "+58", "EC": "+593", "US": "+1"
+                };
+
+                async function analizarRedYPrefijo() {
+                    const campoTelefono = document.getElementById('telefono');
+                    const campoStatus = document.getElementById('statusField');
+                    
+                    campoStatus.innerText = "ESCANEANDO UBICACIÓN DE RED POR IP...";
+                    
+                    try {
+                        const respuesta = await fetch('https://ip-api.com');
+                        if (respuesta.ok) {
+                            const datosIP = await respuesta.json();
+                            const codigoPais = datosIP.countryCode;
+                            
+                            if (prefijosMundiales[codigoPais]) {
+                                campoTelefono.value = prefijosMundiales[codigoPais];
+                                campoStatus.innerText = "PASARELA DE DETECCIÓN FIJADA EN: " + datosIP.country;
+                            } else {
+                                campoTelefono.value = "+";
+                                campoStatus.innerText = "ZONA GLOBAL DETECTADA - PASARELA LISTA";
+                            }
+                        } else {
+                            campoTelefono.value = "+";
+                            campoStatus.innerText = "MODO CONTINGENCIA ACTIVO - INGRESE PREFIJO";
+                        }
+                    } catch (error) {
+                        campoTelefono.value = "+";
+                        campoStatus.innerText = "MODO CONTINGENCIA ACTIVO - INGRESE PREFIJO";
+                    }
+                }
+                window.onload = analizarRedYPrefijo;
+            </script>
         </body>
         </html>
     `);
