@@ -1,5 +1,5 @@
 // =================================================================
-// PARTE 1 DE 4: INICIALIZACIÓN, VARIABLES MAESTRAS Y FIREWALL PERIMETRAL ANTI-RÁFAGAS
+// PARTE 1 DE 4: CONFIGURACIÓN DEL NÚCLEO, VARIABLES MAESTRAS Y FIREWALL PERIMETRAL
 // =================================================================
 require('dotenv').config();
 const express = require('express');
@@ -10,7 +10,7 @@ const multer = require('multer');
 const crypto = require('crypto');
 const { Server } = require("socket.io");
 
-// Validación obligatoria de credenciales del sistema en Render
+// Validación perimetral obligatoria de variables en el entorno de Render
 if (!process.env.INFOBIP_API_KEY || !process.env.INFOBIP_BASE_URL) {
     console.error("[SHIELD-CRITICAL] Falta configurar las variables de entorno de Infobip.");
     process.exit(1);
@@ -29,8 +29,8 @@ if (!fs.existsSync(rutaMedia)){
     fs.mkdirSync(rutaMedia, { recursive: true });
 }
 
-// Memorias internas persistentes (Tus 34 directivas de control obligatorias)
-const pinesTemporales = new Map(); // Mapa que guardará los PINs generados
+// Memorias internas persistentes (Respaldo absoluto de tus 34 directivas de control)
+const pinesTemporales = new Map(); // Mapa que guardará los PINs de verificación generados
 const lineasFisicasAutorizadas = new Set();
 const baseContrasenasHistorial = new Map();
 const listaNegraEstafadores = new Set();
@@ -41,7 +41,7 @@ const ipReputationCache = new Map();
 
 const ENCRYPTION_KEY = crypto.scryptSync(process.env.INFOBIP_API_KEY, 'salt-segura', 32);
 
-// Middleware del Cortafuegos Perimetral contra ataques en ráfaga por IP
+// Middleware del Cortafuegos Perimetral contra ataques en ráfaga por dirección IP
 function verificarLimitePeticionesIP(req, res, next) {
     const direccionIP = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
     const tiempoActual = Date.now();
@@ -232,11 +232,10 @@ app.get('/', (req, res) => {
             </div>
 
             <script>
-                // La lógica asíncrona de conmutación se inyecta directamente aquí de forma nativa
                 let lineaGuardada = "";
                 const prefijos = { "ES": "+34", "DO": "+1", "MX": "+52", "AR": "+54", "CO": "+57", "US": "+1" };
 
-                // Detección automática limpia mediante ipapi.co (Soporta HTTPS seguro de forma nativa)
+                // Detección automática limpia mediante ipapi.co (Soporta HTTPS seguro)
                 async function fijarPrefijoPorRed() {
                     const campoTel = document.getElementById('telefono');
                     const campoStatus = document.getElementById('statusField');
@@ -252,7 +251,7 @@ app.get('/', (req, res) => {
                     } catch(e) { campoTel.value = "+"; }
                 }
 
-                // AJAX Fase 1: Comunicación asíncrona para que no te saque de la App
+                // AJAX Fase 1: Comunicación asíncrona para no recargar la página
                 async function solicitarPinSMS() {
                     const user = document.getElementById('username').value.trim();
                     const tel = document.getElementById('telefono').value.trim();
@@ -268,6 +267,7 @@ app.get('/', (req, res) => {
                         });
                         const data = await res.json();
                         if (data.success) {
+                            lineaGuardada = tel;
 // =================================================================
 // PARTE 3 DE 4: BACKEND ENDPOINTS (CONTROL ANTI-VOIP Y DESPACHO DE PIN)
 // =================================================================
@@ -386,7 +386,7 @@ app.post('/api/v1/auth/verify-pin', verificarLimitePeticionesIP, async (req, res
     }
 });
 
-// Orquestación y gestión de canales WebSocket en tiempo real duraderos
+// Orquestación y gestión de canales WebSocket en tiempo real duradores
 io.on("connection", (socket) => {
     const ipCliente = socket.handshake.headers['x-forwarded-for'] || socket.conn.remoteAddress;
     
