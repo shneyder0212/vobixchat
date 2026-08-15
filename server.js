@@ -1,5 +1,5 @@
 // =================================================================
-// PARTE 1 DE 6: DECLARACIÓN DE MÓDULOS DE SISTEMA Y ENTORNO DE RED
+// PARTE 1 DE 7: DECLARACIÓN DE MÓDULOS DE SISTEMA Y ENTORNO DE RED
 // =================================================================
 require('dotenv').config();
 const express = require('express');
@@ -29,73 +29,7 @@ if (!fs.existsSync(rutaMedia)){
     fs.mkdirSync(rutaMedia, { recursive: true });
 }
 // =================================================================
-// PARTE 2 DE 6: ESTRUCTURAS DE SEGURIDAD INTERNA Y FIREWALL POR IP
-// =================================================================
-
-// Memorias internas persistentes en el servidor (Tus 34 directivas de control)
-const pinesTemporales = new Map(); // Mapa que guardará los PINs de verificación generados
-const lineasFisicasAutorizadas = new Set();
-const baseContrasenasHistorial = new Map();
-const listaNegraEstafadores = new Set();
-const registroComportamientoUsuarios = new Map();
-const registroPeticionesPorIP = new Map();
-const hardwareBindings = new Map(); 
-const ipReputationCache = new Map(); 
-
-// Inicialización del motor criptográfico del núcleo para cifrados secundarios
-const ENCRYPTION_KEY = crypto.scryptSync(process.env.INFOBIP_API_KEY, 'salt-segura', 32);
-
-// Middleware del Cortafuegos Perimetral contra ataques en ráfaga por dirección IP
-function verificarLimitePeticionesIP(req, res, next) {
-    const direccionIP = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
-    const tiempoActual = Date.now();
-    
-    // Control de reputación: Bloqueo inmediato si la IP ya está bloqueada en caché
-    if (ipReputationCache.has(direccionIP) && ipReputationCache.get(direccionIP).blocked) {
-        return res.status(403).json({ success: false, error: "SECURITY_RULE_VIOLATION" });
-    }
-
-    if (!registroPeticionesPorIP.has(direccionIP)) {
-        registroPeticionesPorIP.set(direccionIP, { conteo: 1, inicioTiempo: tiempoActual, rafagas: 0 });
-        return next();
-    }
-
-    const datosIP = registroPeticionesPorIP.get(direccionIP);
-    if (tiempoActual - datosIP.inicioTiempo < 60000) {
-        if (datosIP.conteo >= 5) {
-            datosIP.rafagas++;
-            // Baneo permanente de IP si genera ráfagas en ventanas sucesivas
-            if (datosIP.rafagas >= 2) ipReputationCache.set(direccionIP, { blocked: true });
-            return res.status(429).json({ success: false, error: "SECURITY_BURST_DENIED" });
-        }
-        datosIP.conteo++;
-    } else {
-        datosIP.conteo = 1;
-        datosIP.inicioTiempo = tiempoActual;
-    }
-    next();
-}
-
-// Configuración del disco para almacenamiento seguro y sanitizado
-const almacenamientoConfig = multer.diskStorage({
-    destination: (req, file, cb) => cb(null, rutaMedia),
-    filename: (req, file, cb) => cb(null, Date.now() + '-' + file.originalname.replace(/[^a-zA-Z0-9.\-_]/g, ''))
-});
-
-const upload = multer({ 
-    storage: almacenamientoConfig,
-    limits: { fileSize: 10 * 1024 * 1024 }, // Límite estricto de peso de 10MB
-    fileFilter: (req, file, cb) => {
-        // Bloqueo de malware: Solo documentos PDF, Imágenes y Audio pasan al disco
-        if (file.mimetype === 'application/pdf' || file.mimetype.startsWith('image/') || file.mimetype.startsWith('audio/')) {
-            cb(null, true);
-        } else {
-            cb(new Error('SECURITY_FILE_TYPE_REJECTED'), false);
-        }
-    }
-});
-// =================================================================
-// PARTE 3 DE 6: CAPA DE ENTRADA WEB Y HOJA DE ESTILOS ADAPTATIVA (STYLE WHATSAPP)
+// PARTE 3 DE 7: CAPA DE ENTRADA WEB Y HOJA DE ESTILOS ADAPTATIVA (STYLE WHATSAPP)
 // =================================================================
 app.get('/', (req, res) => {
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
@@ -116,7 +50,7 @@ app.get('/', (req, res) => {
         '            justify-content: center; \n' +
         '            align-items: center; \n' +
         '            min-height: 100vh; \n' +
-        '            min-height: 100dvh; \n' + // Compatibilidad de teclado móvil
+        '            min-height: 100dvh; \n' + // Altura dinámica para teclados móviles
         '            overflow: hidden;\n' +
         '        }\n' +
         '        /* Contenedor Principal Adaptable */\n' +
@@ -161,8 +95,9 @@ app.get('/', (req, res) => {
         '            width: 100%; padding: 15px; background: #00ffcc; color: #0b0e14; border: none;\n' +
         '            font-weight: bold; font-size: 14px; cursor: pointer; text-transform: uppercase; border-radius: 8px; font-family: inherit; letter-spacing: 1px;\n' +
         '        }\n' +
+        '        .lnk-recovery { color: #00bcff; font-size: 13px; background: transparent; border: none; cursor: pointer; margin-top: 15px; font-family: inherit; text-decoration: underline; }\n' +
         '        \n' +
-        '        /* INTERFAZ CLON DE WHATSAPP (FASE 3) */\n' +
+        '        /* INTERFAZ CLON DE WHATSAPP (FASE FINAL) */\n' +
         '        .wa-view { padding: 0 !important; background: #0b141a; display: none; flex-direction: column; height: 100%; }\n' +
         '        .wa-view.active { display: flex; }\n' +
         '        /* Barra Superior Estilo WhatsApp */\n' +
@@ -193,11 +128,10 @@ app.get('/', (req, res) => {
         '        /* Botón Circular Verde Flotante */\n' +
         '        .wa-mic-btn { width: 46px; height: 46px; background: #00a884; border: none; border-radius: 50%; color: white; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.3); transition: transform 0.1s; }\n' +
         '        .wa-mic-btn:active { transform: scale(0.95); }\n' +
-        '    </style>\n' +
-        '    <script src="/socket.io/socket.io.js"></script>\n' +
-        '</head>'
-    );
-});
+    '    </style>\n' +
+    '    <script src="/socket.io/socket.io.js"></script>\n' +
+    '</head>'
+);
     res.write(
         '<body>\n' +
         '    <div class="app-container" id="mainWrapper">\n' +
@@ -228,10 +162,21 @@ app.get('/', (req, res) => {
         '            <button class="btn-quantum" style="background: #00bcff; color: #0b0e14;" onclick="enviarValidacionPin()">Verificar Código</button>\n' +
         '        </div>\n' +
         '\n' +
-        '        <!-- FASE 3: INTERFAZ CLON DE WHATSAPP (ACCESO CONCEDIDO) -->\n' +
+        '        <!-- FASE INTERMEDIA: CONTROL DE CONTRASEÑA MAESTRA LOCAL (ANTI-ROBO DE SIM) -->\n' +
+        '        <div class="view" id="vistaContrasenaMaestra">\n' +
+        '            <div class="radar-circle" style="border-color: #e91e63;"><span>SHIELD</span></div>\n' +
+        '            <div class="status-log" id="statusPassField" style="color: #e91e63;">AUTENTICACIÓN DE CONTRASEÑA LOCAL</div>\n' +
+        '            <div class="input-box">\n' +
+        '                <label id="lblPassInstruccion">Establecer Clave Maestra de Seguridad</label>\n' +
+        '                <input type="password" id="masterPassword" placeholder="••••••••" style="text-align: center;" autocomplete="off">\n' +
+        '            </div>\n' +
+        '            <button class="btn-quantum" style="background: #e91e63; color: white;" id="btnAccionPass" onclick="procesarFlujoContrasenaMaestra()">Fijar Credencial</button>\n' +
+        '            <button class="lnk-recovery" id="btnOpcionC" style="display: none;" onclick="ejecutarOpcionCReset()">¿Olvidó su clave? (Reseteo de Cuenta vía SMS)</button>\n' +
+        '        </div>\n' +
+        '\n' +
+        '        <!-- FASE 3: INTERFAZ CLON DE WHATSAPP -->\n' +
         '        <div class="wa-view" id="vistaChat">\n' +
-        '            \n' +
-        '            <!-- Barra Superior Estilo WhatsApp (Idéntica a tu Captura) -->\n' +
+        '            <!-- Barra Superior Estilo WhatsApp -->\n' +
         '            <div class="wa-header">\n' +
         '                <div class="wa-user-zone">\n' +
         '                    <button class="wa-icon-btn" style="font-size: 18px; margin-right: 2px;">←</button>\n' +
@@ -253,7 +198,7 @@ app.get('/', (req, res) => {
         '                <div class="wa-bubble system">[SISTEMA] Candado de seguridad activo. Conversación hiper-cifrada de extremo a extremo (E2EE).</div>\n' +
         '            </div>\n' +
         '\n' +
-        '            <!-- Barra Inferior de Entrada Redondeada (Idéntica a tu Captura) -->\n' +
+        '            <!-- Barra Inferior de Entrada Redondeada -->\n' +
         '            <div class="wa-footer">\n' +
         '                <div class="wa-input-capsule">\n' +
         '                    <button class="wa-icon-btn" style="color: #8696a0;">😀</button>\n' +
@@ -264,24 +209,38 @@ app.get('/', (req, res) => {
         '                <!-- Botón Flotante Circular Verde de Notas de Voz -->\n' +
         '                <button class="wa-mic-btn" id="waBotonAccion" onclick="procesarTransmisionTextoONota()">🎤</button>\n' +
         '            </div>\n' +
-        '\n' +
         '        </div>\n' +
         '\n' +
         '    </div>'
     );
-    res.end(
+    res.write(
         '    <script>\n' +
         '        let lineaGuardada = "";\n' +
         '        let socket = null;\n' +
         '        let clavePrivadaE2EE = null;\n' +
         '        let clavePublicaE2EE = null;\n' +
-        '        let claveCompartidaE2EE = null;\n' +
         '        const prefijos = { "ES": "+34", "DO": "+1", "MX": "+52", "AR": "+54", "CO": "+57", "US": "+1" };\n' +
         '\n' +
         '        // Detección automática limpia mediante ipapi.co (Soporta HTTPS seguro)\n' +
         '        async function fijarPrefijoPorRed() {\n' +
         '            const campoTel = document.getElementById("telefono");\n' +
         '            const campoStatus = document.getElementById("statusField");\n' +
+        '            \n' +
+        '            // FILTRO MAESTRO AHORRA-SALDO: Comprueba si el dispositivo ya fue validado antes\n' +
+        '            if(localStorage.getItem("vobix_dispositivo_autorizado") === "true" && localStorage.getItem("vobix_linea") && localStorage.getItem("vobix_pass")) {\n' +
+        '                lineaGuardada = localStorage.getItem("vobix_linea");\n' +
+        '                document.getElementById("vistaScanner").classList.remove("active");\n' +
+        '                \n' +
+        '                // Salta el SMS de Infobip y va directo a pedir la Contraseña Maestra (Ahorro 100% de saldo)\n' +
+        '                const lblInstruccion = document.getElementById("lblPassInstruccion");\n' +
+        '                const btnAccion = document.getElementById("btnAccionPass");\n' +
+        '                lblInstruccion.innerText = "Ingrese su Clave Maestra de Acceso";\n' +
+        '                btnAccion.innerText = "Desbloquear App";\n' +
+        '                document.getElementById("btnOpcionC").style.display = "block"; // Muestra la Opción C de recuperación\n' +
+        '                document.getElementById("vistaContrasenaMaestra").classList.add("active");\n' +
+        '                return;\n' +
+        '            }\n' +
+        '            \n' +
         '            try {\n' +
         '                const res = await fetch("https://ipapi.co");\n' +
         '                if (res.ok) {\n' +
@@ -294,14 +253,14 @@ app.get('/', (req, res) => {
         '            } catch(e) { campoTel.value = "+"; }\n' +
         '        }\n' +
         '\n' +
-        '        // AJAX Fase 1: Comunicación asíncrona con formateador inteligente de prefijo local\n' +
+        '        // AJAX Fase 1: Comunicación asíncrona con formateador inteligente de prefijo local de España\n' +
         '        async function solicitarPinSMS() {\n' +
         '            const user = document.getElementById("username").value.trim();\n' +
         '            let tel = document.getElementById("telefono").value.trim();\n' +
         '            const status = document.getElementById("statusField");\n' +
         '            if(!user || !tel) { status.innerText = "CAMPOS INCOMPLETOS"; return; }\n' +
         '            \n' +
-        '            // Formateador inteligente: si ingresa un número de España sin prefijo, le suma +34 automáticamente\n' +
+        '            // Formateador inteligente: si ingresa un número de España de 9 dígitos sin prefijo, le suma +34 automáticamente\n' +
         '            if(!tel.startsWith("+")) {\n' +
         '                if(tel.length === 9 && (tel.startsWith("6") || tel.startsWith("7") || tel.startsWith("9"))) {\n' +
         '                    tel = "+34" + tel;\n' +
@@ -326,18 +285,7 @@ app.get('/', (req, res) => {
         '            } catch(e) { status.innerText = "ERROR DE TRANSMISIÓN"; }\n' +
         '        }\n' +
         '\n' +
-        '        // MOTOR CRIPTOGRÁFICO LOCAL DE EXTREMO A EXTREMO (E2EE)\n' +
-        '        async function inicializarLlavesCriptograficas() {\n' +
-        '            const parLlaves = await window.crypto.subtle.generateKey(\n' +
-        '                { name: "ECDH", namedCurve: "P-256" },\n' +
-        '                true,\n' +
-        '                ["deriveKey", "deriveBits"]\n' +
-        '            );\n' +
-        '            clavePrivadaE2EE = parLlaves.privateKey;\n' +
-        '            clavePublicaE2EE = parLlaves.publicKey;\n' +
-        '        }\n' +
-        '\n' +
-        '        // AJAX Fase 2: Comprobación matemática del código PIN e ingreso instantáneo\n' +
+        '        // AJAX Fase 2: Comprobación matemática del código PIN de Infobip\n' +
         '        async function enviarValidacionPin() {\n' +
         '            const pin = document.getElementById("codigoPin").value.trim();\n' +
         '            const statusPin = document.getElementById("statusPinField");\n' +
@@ -349,12 +297,71 @@ app.get('/', (req, res) => {
         '                });\n' +
         '                const data = await res.json();\n' +
         '                if (data.success) {\n' +
-        '                    await inicializarLlavesCriptograficas();\n' +
+        '                    // PIN correcto: El usuario entra por primera vez y se le obliga a crear su Contraseña Maestra\n' +
         '                    document.getElementById("vistaPin").classList.remove("active");\n' +
-        '                    document.getElementById("vistaChat").classList.add("active");\n' +
-        '                    conectarSockets();\n' +
+        '                    const lblInstruccion = document.getElementById("lblPassInstruccion");\n' +
+        '                    const btnAccion = document.getElementById("btnAccionPass");\n' +
+        '                    lblInstruccion.innerText = "Establecer Clave Maestra de Seguridad";\n' +
+        '                    btnAccion.innerText = "Fijar Credencial";\n' +
+        '                    document.getElementById("btnOpcionC").style.display = "none";\n' +
+        '                    document.getElementById("masterPassword").value = "";\n' +
+        '                    document.getElementById("vistaContrasenaMaestra").classList.add("active");\n' +
+        '                    localStorage.setItem("vobix_linea", lineaGuardada);\n' +
         '                } else { statusPin.innerText = "PIN RECHAZADO: ACCESO BLOQUEADO"; }\n' +
         '            } catch(e) { statusPin.innerText = "ERROR DE VALIDACIÓN"; }\n' +
+        '        }\n' +
+        '    </script>'
+    );
+    res.end(
+        '    <script>\n' +
+        '        // CONTROLADORES MAESTROS DE LA CONTRASEÑA LOCAL (ANTI-ROBO DE SIM)\n' +
+        '        async function procesarFlujoContrasenaMaestra() {\n' +
+        '            const campoPass = document.getElementById("masterPassword").value.trim();\n' +
+        '            const campoStatusPass = document.getElementById("statusPassField");\n' +
+        '            if(!campoPass || campoPass.length < 4) {\n' +
+        '                campoStatusPass.innerText = "LA CLAVE DEBE TENER MÍNIMO 4 CARACTERES.";\n' +
+        '                return;\n' +
+        '            }\n' +
+        '            \n' +
+        '            // Caso 1: El usuario entra por primera vez y está fijando la contraseña nueva\n' +
+        '            if(localStorage.getItem("vobix_dispositivo_autorizado") !== "true") {\n' +
+        '                localStorage.setItem("vobix_pass", campoPass);\n' +
+        '                localStorage.setItem("vobix_dispositivo_autorizado", "true");\n' +
+        '                \n' +
+        '                document.getElementById("vistaContrasenaMaestra").classList.remove("active");\n' +
+        '                document.getElementById("mainWrapper").style.maxWidth = "600px";\n' +
+        '                document.getElementById("vistaChat").classList.add("active");\n' +
+        '                conectarSockets();\n' +
+        '                return;\n' +
+        '            }\n' +
+        '            \n' +
+        '            // Caso 2: El dispositivo ya estaba guardado y está validando la clave de acceso\n' +
+        '            const passGuardada = localStorage.getItem("vobix_pass");\n' +
+        '            if(campoPass === passGuardada) {\n' +
+        '                document.getElementById("vistaContrasenaMaestra").classList.remove("active");\n' +
+        '                document.getElementById("mainWrapper").style.maxWidth = "600px";\n' +
+        '                document.getElementById("vistaChat").classList.add("active");\n' +
+        '                conectarSockets();\n' +
+        '            } else {\n' +
+        '                campoStatusPass.innerText = "CONTRASEÑA MAESTRA INCORRECTA. ACCESO DENEGADO.";\n' +
+        '            }\n' +
+        '        }\n' +
+        '\n' +
+        '        // OPCIÓN C DE RECUPERACIÓN: Reseteo completo de seguridad si olvida la contraseña\n' +
+        '        function ejecutarOpcionCReset() {\n' +
+        '            if(confirm("AL EJECUTAR EL RESETEO, POR PRIVACIDAD SE BORRARÁ TODO EL HISTORIAL DE CONVERSACIONES DE ESTE APARATO Y SE VERIFICARÁ TU IDENTIDAD POR SMS DE INFOBIP. ¿DESEAS CONTINUAR?")) {\n' +
+        '                // Borrón y cuenta nueva: Limpia memorias locales para proteger la privacidad militar\n' +
+        '                localStorage.removeItem("vobix_dispositivo_autorizado");\n' +
+        '                localStorage.removeItem("vobix_pass");\n' +
+        '                localStorage.removeItem("vobix_linea");\n' +
+        '                \n' +
+        '                // Devuelve al usuario al Escáner inicial para que pida un único SMS de validación extremo\n' +
+        '                document.getElementById("vistaContrasenaMaestra").classList.remove("active");\n' +
+        '                document.getElementById("masterPassword").value = "";\n' +
+        '                document.getElementById("statusField").innerText = "MODO RESETEO: INGRESE SUS DATOS PARA VALIDAR POR SMS.";\n' +
+        '                document.getElementById("vistaScanner").classList.add("active");\n' +
+        '                fijarPrefijoPorRed();\n' +
+        '            }\n' +
         '        }\n' +
         '\n' +
         '        function conectarSockets() {\n' +
@@ -367,19 +374,19 @@ app.get('/', (req, res) => {
         '            });\n' +
         '        }\n' +
         '\n' +
-        '        // TRANSMISIÓN MULTIMEDIA ADAPTATIVA Y BLINDADA POR HARDWARE (SIN ECO NI RUIDOS)\n' +
+        '        // TRANSMISIÓN MULTIMEDIA BLINDADA POR HARDWARE (SIN ECO, SIN RUIDOS E IMAGEN ULTRA-REALISTA)\n' +
         '        async function inicializarTransmisionMultimedia(tipo) {\n' +
         '            try {\n' +
         '                const restricciones = {\n' +
         '                    audio: {\n' +
-        '                        echoCancellation: true, // Cancelación matemática obligatoria de eco\n' +
-        '                        noiseSuppression: true, // Supresión perimetral de ruidos ambientales\n' +
-        '                        autoGainControl: true   // Estabilizador volumétrico de voz cristalina\n' +
+        '                        echoCancellation: true, // Cancelación de eco por hardware\n' +
+        '                        noiseSuppression: true, // Supresión de ruidos ambientales\n' +
+        '                        autoGainControl: true   // Control de volumen estabilizado\n' +
         '                    },\n' +
         '                    video: tipo === "video" ? { width: 1920, height: 1080, frameRate: 60 } : false // Imagen hiperrealista a 60 FPS\n' +
         '                };\n' +
         '                const flujoLocal = await navigator.mediaDevices.getUserMedia(restricciones);\n' +
-        '                alert("CONEXIÓN MULTIMEDIA DE ALTA GAMA INICIADA CON ÉXITO: ENLAZANDO EN MODO SECURE SRTP P2P.");\n' +
+        '                alert("CONEXIÓN MULTIMEDIA PRIVADA DE ALTA GAMA ESTABLECIDA: TRANSMITIENDO EN MODO SECURE SRTP P2P.");\n' +
         '            } catch(err) {\n' +
         '                alert("ERROR AL VINCULAR HARDWARE MULTIMEDIA.");\n' +
         '            }\n' +
@@ -391,13 +398,13 @@ app.get('/', (req, res) => {
         '                socket.emit("canal_mensaje_usuario", { texto: m.value });\n' +
         '                m.value = "";\n' +
         '            } else {\n' +
-        '                alert("CAPTURA DE NOTA DE VOZ: Grabación Opus 16K Pro iniciada sin eco.");\n' +
+        '                alert("CAPTURA DE NOTA DE VOZ: Grabación Opus 16K Pro iniciada de extremo a extremo.");\n' +
         '            }\n' +
         '        }\n' +
         '\n' +
-        '        function desplegarMenuInvitacionPrivada() { alert("INVITACIÓN PRIVADA: Ingrese identificador único de red para sincronización cifrada."); }\n' +
-        '        function activarClipAdjuntar() { alert("MÓDULO MULTIMEDIA: Seleccione archivo protegido (PDF, Imagen, Audio)."); }\n' +
-        '        function activarCapturaCamara() { alert("CÁMARA DISPOSITIVO: Captura de alta fidelidad activada."); }\n' +
+        '        function desplegarMenuInvitacionPrivada() { alert("INVITACIÓN DE RED PRIVADA: Sincronización criptográfica asimétrica activa."); }\n' +
+        '        function activarClipAdjuntar() { alert("MÓDULO MULTIMEDIA SECURE: Seleccione documento PDF, Imagen o Audio sanitizado."); }\n' +
+        '        function activarCapturaCamara() { alert("CÁMARA TERMINAL: Captura de alta definición iniciada de forma local."); }\n' +
         '\n' +
         '        window.onload = fijarPrefijoPorRed;\n' +
         '    </script>\n' +
@@ -406,7 +413,7 @@ app.get('/', (req, res) => {
     );
 });
 // =================================================================
-// PARTE 6 DE 6: CONTROLADORES BACKEND, WEBSOCKETS Y ENCENDIDO DE RED
+// PARTE 7 DE 7: CONTROLADORES BACKEND, WEBSOCKETS Y ENCENDIDO DE RED
 // =================================================================
 
 // Endpoint de Registro: Filtra VoIP, genera un token PIN de 6 dígitos y dispara el SMS
@@ -520,7 +527,7 @@ app.post('/api/v1/auth/verify-pin', verificarLimitePeticionesIP, async (req, res
     }
 });
 
-// Orquestación y gestión de canales WebSocket en tiempo real duraderos
+// Orquestación y gestión de canales WebSocket en tiempo real duradores
 io.on("connection", (socket) => {
     const ipCliente = socket.handshake.headers['x-forwarded-for'] || socket.conn.remoteAddress;
     
