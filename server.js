@@ -29,6 +29,72 @@ if (!fs.existsSync(rutaMedia)){
     fs.mkdirSync(rutaMedia, { recursive: true });
 }
 // =================================================================
+// PARTE 2 DE 7: ESTRUCTURAS DE SEGURIDAD INTERNA Y FIREWALL POR IP
+// =================================================================
+
+// Memorias internas persistentes en el servidor (Tus 34 directivas de control)
+const pinesTemporales = new Map(); // Mapa que guardará los PINs de verificación generados
+const lineasFisicasAutorizadas = new Set();
+const baseContrasenasHistorial = new Map();
+const listaNegraEstafadores = new Set();
+const registroComportamientoUsuarios = new Map();
+const registroPeticionesPorIP = new Map();
+const hardwareBindings = new Map(); 
+const ipReputationCache = new Map(); 
+
+// Inicialización del motor criptográfico del núcleo para cifrados secundarios
+const ENCRYPTION_KEY = crypto.scryptSync(process.env.INFOBIP_API_KEY, 'salt-segura', 32);
+
+// Middleware del Cortafuegos Perimetral contra ataques en ráfaga por dirección IP
+function verificarLimitePeticionesIP(req, res, next) {
+    const direccionIP = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+    const tiempoActual = Date.now();
+    
+    // Control de reputación: Bloqueo inmediato si la IP ya está bloqueada en caché
+    if (ipReputationCache.has(direccionIP) && ipReputationCache.get(direccionIP).blocked) {
+        return res.status(403).json({ success: false, error: "SECURITY_RULE_VIOLATION" });
+    }
+
+    if (!registroPeticionesPorIP.has(direccionIP)) {
+        registroPeticionesPorIP.set(direccionIP, { conteo: 1, inicioTiempo: tiempoActual, rafagas: 0 });
+        return next();
+    }
+
+    const datosIP = registroPeticionesPorIP.get(direccionIP);
+    if (tiempoActual - datosIP.inicioTiempo < 60000) {
+        if (datosIP.conteo >= 5) {
+            datosIP.rafagas++;
+            // Baneo permanente de IP si genera ráfagas en ventanas sucesivas
+            if (datosIP.rafagas >= 2) ipReputationCache.set(direccionIP, { blocked: true });
+            return res.status(429).json({ success: false, error: "SECURITY_BURST_DENIED" });
+        }
+        datosIP.conteo++;
+    } else {
+        datosIP.conteo = 1;
+        datosIP.inicioTiempo = tiempoActual;
+    }
+    next();
+}
+
+// Configuración del disco para almacenamiento seguro y sanitizado
+const almacenamientoConfig = multer.diskStorage({
+    destination: (req, file, cb) => cb(null, rutaMedia),
+    filename: (req, file, cb) => cb(null, Date.now() + '-' + file.originalname.replace(/[^a-zA-Z0-9.\-_]/g, ''))
+});
+
+const upload = multer({ 
+    storage: almacenamientoConfig,
+    limits: { fileSize: 10 * 1024 * 1024 }, // Límite estricto de peso de 10MB
+    fileFilter: (req, file, cb) => {
+        // Bloqueo de malware: Solo documentos PDF, Imágenes y Audio pasan al disco
+        if (file.mimetype === 'application/pdf' || file.mimetype.startsWith('image/') || file.mimetype.startsWith('audio/')) {
+            cb(null, true);
+        } else {
+            cb(new Error('SECURITY_FILE_TYPE_REJECTED'), false);
+        }
+    }
+});
+// =================================================================
 // PARTE 3 DE 7: CAPA DE ENTRADA WEB Y HOJA DE ESTILOS ADAPTATIVA (STYLE WHATSAPP)
 // =================================================================
 app.get('/', (req, res) => {
@@ -115,6 +181,8 @@ app.get('/', (req, res) => {
         '        \n' +
         '        /* Área del Chat e Historial */\n' +
         '        .wa-chat-area { flex: 1; padding: 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; background-image: radial-gradient(rgba(255,255,255,0.02) 1px, transparent 0); background-size: 20px 20px; }\n' +
+        '        .wa-chat-area::-webkit-scrollbar { width: 4px; }\n' +
+        '        .wa-chat-area::-webkit-scrollbar-thumb { background: #374248; border-radius: 4px; }\n' +
         '        .wa-bubble { max-width: 80%; padding: 8px 12px; border-radius: 8px; font-size: 14.5px; line-height: 1.4; word-break: break-word; text-align: left; position: relative; }\n' +
         '        .wa-bubble.system { background: #182229; color: #8696a0; font-size: 12px; align-self: center; text-align: center; border-radius: 6px; border: 1px solid rgba(255,255,255,0.03); }\n' +
         '        .wa-bubble.inbound { background: #202c33; color: #e9edef; align-self: flex-start; border-top-left-radius: 0; }\n' +
@@ -128,10 +196,11 @@ app.get('/', (req, res) => {
         '        /* Botón Circular Verde Flotante */\n' +
         '        .wa-mic-btn { width: 46px; height: 46px; background: #00a884; border: none; border-radius: 50%; color: white; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.3); transition: transform 0.1s; }\n' +
         '        .wa-mic-btn:active { transform: scale(0.95); }\n' +
-    '    </style>\n' +
-    '    <script src="/socket.io/socket.io.js"></script>\n' +
-    '</head>'
-);
+        '    </style>\n' +
+        '    <script src="/socket.io/socket.io.js"></script>\n' +
+        '</head>'
+    );
+});
     res.write(
         '<body>\n' +
         '    <div class="app-container" id="mainWrapper">\n' +
@@ -237,6 +306,7 @@ app.get('/', (req, res) => {
         '                lblInstruccion.innerText = "Ingrese su Clave Maestra de Acceso";\n' +
         '                btnAccion.innerText = "Desbloquear App";\n' +
         '                document.getElementById("btnOpcionC").style.display = "block"; // Muestra la Opción C de recuperación\n' +
+        '                document.getElementById("masterPassword").value = "";\n' +
         '                document.getElementById("vistaContrasenaMaestra").classList.add("active");\n' +
         '                return;\n' +
         '            }\n' +
