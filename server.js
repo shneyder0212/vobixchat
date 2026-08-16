@@ -209,7 +209,6 @@ app.get('/', (req, res) => {
         '    <script src="/socket.io/socket.io.js"></script>\n' +
         '</head>'
     );
-});
     res.write(
         '<body>\n' +
         '    <div class="app-container" id="mainWrapper">\n' +
@@ -427,7 +426,7 @@ app.get('/', (req, res) => {
         '                } else { statusPin.innerText = "PIN RECHAZADO: ACCESO BLOQUEADO"; }\n' +
         '            } catch(e) { statusPin.innerText = "ERROR DE VALIDACIÓN"; }\n' +
         '        }\n' +
-    '    </script>'
+        '    </script>'
     );
     res.end(
         '    <script>\n' +
@@ -654,7 +653,7 @@ app.post('/api/v1/auth/verify-pin', verificarLimitePeticionesIP, async (req, res
     }
 
     let telefonoLimpio = telefono.trim().replace(/[^a-zA-Z0-9+]/g, '');
-    if (telefonoLimpio === "655766134") { telefonoLimpio = "+34655766134"; }
+    if (telefonoLinter === "655766134" || telefonoLimpio === "655766134") { telefonoLimpio = "+34655766134"; }
 
     // Comprobación de la existencia de la sesión en la memoria protegida
     if (!pinesTemporales.has(telefonoLimpio)) {
