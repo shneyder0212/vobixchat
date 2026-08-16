@@ -155,10 +155,14 @@ app.get('/', (req, res) => {
         '        .wa-bubble.system { background: #0c1524; color: #527575; font-size: 11px; align-self: center; text-align: center; width: 90%; text-transform: uppercase; }\n' +
         '        .wa-bubble.inbound { background: #0d1622; color: #ffffff; align-self: flex-start; }\n' +
         '        .wa-bubble.outbound { background: #002e25; color: #00ffcc; align-self: flex-end; border-color: rgba(0, 255, 204, 0.3); }\n' +
-        '        .wa-footer { padding: 10px 14px; padding-bottom: max(14px, env(safe-area-inset-bottom)); display: flex; align-items: center; background: #060b12; border-top: 1px solid rgba(0, 255, 204, 0.15); flex-shrink: 0; }\n' +
-        '        .wa-input-capsule { flex: 1; background: #0d1520; border: 1px solid rgba(0, 255, 204, 0.3); border-radius: 25px; padding: 4px 10px 4px 16px; display: flex; align-items: center; gap: 8px; }\n' +
-        '        .wa-input-capsule input { flex: 1; background: transparent; border: none; color: #fff; padding: 8px 0; font-size: 15px; outline: none; min-width: 0; }\n' +
+        '        .wa-footer { padding: 10px 14px; padding-bottom: max(14px, env(safe-area-inset-bottom)); display: flex; flex-direction: column; background: #060b12; border-top: 1px solid rgba(0, 255, 204, 0.15); flex-shrink: 0; }\n' +
+        '        .wa-input-row { display: flex; align-items: center; gap: 6px; width: 100%; }\n' +
+        '        .wa-input-capsule { flex: 1; background: #0d1520; border: 1px solid rgba(0, 255, 204, 0.3); border-radius: 25px; padding: 4px 10px 4px 12px; display: flex; align-items: center; gap: 6px; }\n' +
+        '        .wa-input-capsule input { flex: 1; background: transparent; border: none; color: #fff; padding: 8px 0; font-size: 14px; outline: none; min-width: 0; }\n' +
         '        .tool-btn { background: transparent; border: none; color: #00ffcc; cursor: pointer; font-size: 18px; padding: 4px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }\n' +
+        '        .emoji-picker-panel { display: none; grid-template-columns: repeat(8, 1fr); gap: 5px; background: #0d1520; border: 1px solid rgba(0,255,204,0.3); border-radius: 8px; padding: 8px; margin-bottom: 8px; max-height: 100px; overflow-y: auto; }\n' +
+        '        .emoji-picker-panel.active { display: grid; }\n' +
+        '        .emoji-btn { background: transparent; border: none; font-size: 18px; cursor: pointer; text-align: center; }\n' +
         '    </style>\n' +
         '    <script src="/socket.io/socket.io.js"></script>\n' +
         '</head>\n' +
@@ -263,10 +267,28 @@ app.get('/', (req, res) => {
         '                <div class="wa-bubble system">[SISTEMA] Candado de seguridad activo. Conversación hiper-cifrada de extremo a extremo (E2EE).</div>\n' +
         '            </div>\n' +
         '            <div class="wa-footer">\n' +
-        '                <div class="wa-input-capsule">\n' +
-        '                    <input type="text" id="mensajeChat" placeholder="Tocar para escribir..." autocomplete="off" onkeydown="if(event.key===\'Enter\') procesarTransmisionTextoUrgente()">\n' +
-        '                    <button type="button" class="tool-btn" style="color: #00ffcc; font-size: 18px;" onclick="procesarTransmisionTextoUrgente()" title="Enviar">➤</button>\n' +
+        '                <div class="emoji-picker-panel" id="panelEmojis">\n' +
+        '                    <button class="emoji-btn" onclick="insertarEmoji(\'😊\')">😊</button>\n' +
+        '                    <button class="emoji-btn" onclick="insertarEmoji(\'😂\')">😂</button>\n' +
+        '                    <button class="emoji-btn" onclick="insertarEmoji(\'👍\')">👍</button>\n' +
+        '                    <button class="emoji-btn" onclick="insertarEmoji(\'❤️\')">❤️</button>\n' +
+        '                    <button class="emoji-btn" onclick="insertarEmoji(\'🔥\')">🔥</button>\n' +
+        '                    <button class="emoji-btn" onclick="insertarEmoji(\'🎉\')">🎉</button>\n' +
+        '                    <button class="emoji-btn" onclick="insertarEmoji(\'🙏\')">🙏</button>\n' +
+        '                    <button class="emoji-btn" onclick="insertarEmoji(\'🚀\')">🚀</button>\n' +
         '                </div>\n' +
+        '                <div class="wa-input-row">\n' +
+        '                    <button type="button" class="tool-btn" onclick="togglePanelEmojis()" title="Emojis">😊</button>\n' +
+        '                    <button type="button" class="tool-btn" onclick="document.getElementById(\'inputArchivoChat\').click()" title="Adjuntar Documento o Foto">📎</button>\n' +
+        '                    <button type="button" class="tool-btn" onclick="document.getElementById(\'inputCamaraChat\').click()" title="Cámara">📷</button>\n' +
+        '                    <div class="wa-input-capsule">\n' +
+        '                        <input type="text" id="mensajeChat" placeholder="Tocar para escribir..." autocomplete="off" onkeydown="if(event.key===\'Enter\') procesarTransmisionTextoUrgente()">\n' +
+        '                    </div>\n' +
+        '                    <button type="button" class="tool-btn" id="btnAudioNota" onclick="toggleNotaVoz()" title="Nota de Voz">🎤</button>\n' +
+        '                    <button type="button" class="tool-btn" style="color: #00ffcc;" onclick="procesarTransmisionTextoUrgente()" title="Enviar">➤</button>\n' +
+        '                </div>\n' +
+        '                <input type="file" id="inputArchivoChat" style="display:none" accept=".pdf,image/*,audio/*,video/*" onchange="subirArchivoChatDirecto(this)">\n' +
+        '                <input type="file" id="inputCamaraChat" style="display:none" accept="image/*" capture="environment" onchange="subirArchivoChatDirecto(this)">\n' +
         '            </div>\n' +
         '        </div>\n' +
         '    </div>\n' +
@@ -282,6 +304,7 @@ app.get('/', (req, res) => {
         '        let mediaRecorder = null;\n' +
         '        let audioChunks = [];\n' +
         '        let tipoLlamadaActual = "video";\n' +
+        '        let grabandoAudio = false;\n' +
         '        const peersConexiones = {};\n' +
         '        const confServidoresIce = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };\n' +
         '\n' +
@@ -328,6 +351,64 @@ app.get('/', (req, res) => {
         '            document.getElementById("menuTresPuntos").classList.remove("active");\n' +
         '            document.getElementById("barraBusquedaArroba").classList.toggle("active");\n' +
         '            document.getElementById("inputBusquedaArroba").focus();\n' +
+        '        }\n' +
+        '\n' +
+        '        function togglePanelEmojis() {\n' +
+        '            document.getElementById("panelEmojis").classList.toggle("active");\n' +
+        '        }\n' +
+        '\n' +
+        '        function insertarEmoji(emoji) {\n' +
+        '            const input = document.getElementById("mensajeChat");\n' +
+        '            input.value += emoji;\n' +
+        '            input.focus();\n' +
+        '        }\n' +
+        '\n' +
+        '        async function subirArchivoChatDirecto(input) {\n' +
+        '            if (!input.files || !input.files[0]) return;\n' +
+        '            const formData = new FormData();\n' +
+        '            formData.append("contratoArchivo", input.files[0]);\n' +
+        '            try {\n' +
+        '                const res = await fetch("/api/v1/contrato/subir", { method: "POST", body: formData });\n' +
+        '                const data = await res.json();\n' +
+        '                if (data.success) {\n' +
+        '                    const msg = "📄 Archivo adjunto: " + data.archivoUrl;\n' +
+        '                    if (socket) socket.emit("canal_mensaje_usuario", { sala: salaToken, texto: msg, usuario: miNombreUsuario });\n' +
+        '                } else {\n' +
+        '                    alert("Error al subir archivo.");\n' +
+        '                }\n' +
+        '            } catch (e) { alert("Error de red al subir archivo."); }\n' +
+        '        }\n' +
+        '\n' +
+        '        function toggleNotaVoz() {\n' +
+        '            if (!grabandoAudio) {\n' +
+        '                navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {\n' +
+        '                    mediaRecorder = new MediaRecorder(stream);\n' +
+        '                    audioChunks = [];\n' +
+        '                    mediaRecorder.ondataavailable = e => audioChunks.push(e.data);\n' +
+        '                    mediaRecorder.onstop = async () => {\n' +
+        '                        const blob = new Blob(audioChunks, { type: "audio/webm" });\n' +
+        '                        const formData = new FormData();\n' +
+        '                        formData.append("contratoArchivo", blob, "nota_voz.webm");\n' +
+        '                        try {\n' +
+        '                            const res = await fetch("/api/v1/contrato/subir", { method: "POST", body: formData });\n' +
+        '                            const data = await res.json();\n' +
+        '                            if (data.success) {\n' +
+        '                                const msg = "🎤 Nota de voz: <audio controls src=\\"" + data.archivoUrl + "\\"></audio>";\n' +
+        '                                if (socket) socket.emit("canal_mensaje_usuario", { sala: salaToken, texto: msg, usuario: miNombreUsuario });\n' +
+        '                            }\n' +
+        '                        } catch(e) { alert("Error al enviar nota de voz"); }\n' +
+        '                        stream.getTracks().forEach(t => t.stop());\n' +
+        '                    };\n' +
+        '                    mediaRecorder.start();\n' +
+        '                    grabandoAudio = true;\n' +
+        '                    document.getElementById("btnAudioNota").style.color = "#ff3333";\n' +
+        '                    alert("🔴 Grabando nota de voz... Vuelva a pulsar el micrófono para detener y enviar.");\n' +
+        '                }).catch(err => alert("⚠️ No se pudo acceder al micrófono."));\n' +
+        '            } else {\n' +
+        '                if (mediaRecorder) mediaRecorder.stop();\n' +
+        '                grabandoAudio = false;\n' +
+        '                document.getElementById("btnAudioNota").style.color = "#00ffcc";\n' +
+        '            }\n' +
         '        }\n' +
         '\n' +
         '        function ejecutarBusquedaArroba() {\n' +
@@ -410,7 +491,7 @@ app.get('/', (req, res) => {
         '            }\n' +
         '        }\n' +
         '\n' +
-        '        // CORRECCIÓN CLAVE: AL ACEPTAR, SE CIERRA EL OVERLAY Y SE CONECTA LA MULTICONFERENCIA BIDIRECCIONAL\n' +
+        '        // CORRECCIÓN CLAVE PARA LAS LLAMADAS: Al aceptar, activamos medios y nos unimos a la multiconferencia disparando la oferta PeerConnection\n' +
         '        async function aceptarLlamadaEntrante() {\n' +
         '            document.getElementById("modalLlamadaEntrante").classList.remove("active");\n' +
         '            tipoLlamadaActual = window.tipoLlamadaPendiente || "video";\n' +
@@ -441,6 +522,7 @@ app.get('/', (req, res) => {
         '        }\n' +
         '\n' +
         '        function crearPeerRemoto(idSocketRemoto, nombreRemoto, esOferente) {\n' +
+        '            if (peersConexiones[idSocketRemoto]) return peersConexiones[idSocketRemoto];\n' +
         '            const pc = new RTCPeerConnection(confServidoresIce);\n' +
         '            peersConexiones[idSocketRemoto] = pc;\n' +
         '\n' +
@@ -508,8 +590,6 @@ app.get('/', (req, res) => {
         '            document.getElementById("btnColgarLlamada").style.display = "none";\n' +
         '            if (socket) socket.emit("colgar_multiconferencia", { sala: salaToken });\n' +
         '        }\n' +
-        '\n' +
-        '        function intercambiarVideos() {}\n' +
         '\n' +
         '        function abrirLienzoFirmaEspejo() {\n' +
         '            document.getElementById("menuTresPuntos").classList.remove("active");\n' +
