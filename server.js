@@ -128,23 +128,23 @@ app.get('/', (req, res) => {
         '        .search-bar-overlay input { flex: 1; background: #04070c; border: 1px solid #00ffcc; border-radius: 6px; padding: 6px 10px; color: #fff; font-size: 14px; outline: none; }\n' +
         '        .btn-search-go { background: #00ffcc; color: #030508; border: none; border-radius: 6px; padding: 6px 12px; font-weight: bold; font-size: 11px; cursor: pointer; text-transform: uppercase; }\n' +
         '        \n' +
-        '        /* ESTILO WHATSAPP PARA VIDEOLLAMADAS PANTALLA COMPLETA Y PIP FLUIDO */\n' +
+        '        /* VIDEOLLAMADAS PANTALLA COMPLETA + PIP */\n' +
         '        .webrtc-container { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 25; flex-direction: column; justify-content: center; align-items: center; overflow: hidden; }\n' +
         '        .webrtc-container.active { display: flex; }\n' +
         '        .video-box-remoto { width: 100%; height: 100%; position: absolute; top: 0; left: 0; background: #000; }\n' +
         '        .video-box-remoto video { width: 100%; height: 100%; object-fit: cover; }\n' +
-        '        .video-box-local { width: 110px; height: 160px; background: #111; border: 2px solid #00ffcc; border-radius: 10px; overflow: hidden; position: absolute; top: 70px; right: 15px; z-index: 30; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.7); transition: all 0.3s ease; }\n' +
+        '        .video-box-local { width: 100px; height: 150px; background: #111; border: 2px solid #00ffcc; border-radius: 8px; overflow: hidden; position: absolute; top: 60px; right: 12px; z-index: 30; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.7); transition: all 0.3s ease; }\n' +
         '        .video-box-local video { width: 100%; height: 100%; object-fit: cover; }\n' +
         '        .video-box-local.fullscreen { width: 100%; height: 100%; top: 0; right: 0; border: none; border-radius: 0; z-index: 24; }\n' +
-        '        .video-box-remoto.small { width: 110px; height: 160px; top: 70px; right: 15px; left: auto; border: 2px solid #ff3333; border-radius: 10px; z-index: 30; cursor: pointer; position: absolute; }\n' +
-        '        .video-overlay-controls { position: absolute; bottom: 30px; left: 0; width: 100%; display: flex; justify-content: center; gap: 20px; z-index: 35; }\n' +
+        '        .video-box-remoto.small { width: 100px; height: 150px; top: 60px; right: 12px; left: auto; border: 2px solid #ff3333; border-radius: 8px; z-index: 30; cursor: pointer; position: absolute; }\n' +
+        '        .video-overlay-controls { position: absolute; bottom: 25px; left: 0; width: 100%; display: flex; justify-content: center; gap: 20px; z-index: 35; }\n' +
         '\n' +
         '        .incoming-call-overlay { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(3, 5, 8, 0.95); z-index: 200; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 20px; }\n' +
         '        .incoming-call-overlay.active { display: flex; }\n' +
         '        .incoming-avatar { width: 100px; height: 100px; border: 3px solid #00ffcc; border-radius: 50%; background: #0a111a; display: flex; justify-content: center; align-items: center; font-size: 40px; margin-bottom: 20px; animation: pulseRing 1.5s infinite; }\n' +
         '        @keyframes pulseRing { 0% { box-shadow: 0 0 0 0 rgba(0, 255, 204, 0.4); } 70% { box-shadow: 0 0 0 20px rgba(0, 255, 204, 0); } 100% { box-shadow: 0 0 0 0 rgba(0, 255, 204, 0); } }\n' +
         '        .incoming-actions { display: flex; gap: 30px; margin-top: 40px; }\n' +
-        '        .btn-call-action { width: 65px; height: 65px; border-radius: 50%; border: none; font-size: 24px; cursor: pointer; display: flex; justify-content: center; align-items: center; }\n' +
+        '        .btn-call-action { width: 60px; height: 60px; border-radius: 50%; border: none; font-size: 22px; cursor: pointer; display: flex; justify-content: center; align-items: center; }\n' +
         '        .btn-accept { background: #00ffcc; color: #030508; box-shadow: 0 0 15px rgba(0, 255, 204, 0.7); }\n' +
         '        .btn-reject { background: #ff3333; color: #fff; box-shadow: 0 0 15px rgba(255, 51, 51, 0.7); }\n' +
         '        .mirror-signature-overlay { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(3, 5, 8, 0.96); z-index: 50; flex-direction: column; padding: 15px; }\n' +
@@ -157,17 +157,26 @@ app.get('/', (req, res) => {
         '        .signature-footer { display: flex; gap: 10px; margin-top: 12px; }\n' +
         '        .btn-sig { flex: 1; padding: 12px; background: transparent; border: 1px solid #e91e63; color: #e91e63; font-size: 10px; font-weight: bold; text-transform: uppercase; border-radius: 6px; cursor: pointer; }\n' +
         '        .btn-sig.confirm { border-color: #00ffcc; color: #00ffcc; }\n' +
-        '        .wa-chat-area { flex: 1; padding: 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }\n' +
-        '        .wa-bubble { max-width: 82%; padding: 10px 14px; border-radius: 8px; font-size: 14px; line-height: 1.4; word-break: break-word; text-align: left; font-family: "Consolas", monospace; border: 1px solid rgba(0, 255, 204, 0.15); }\n' +
+        '        .wa-chat-area { flex: 1; padding: 12px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }\n' +
+        '        .wa-bubble { max-width: 85%; padding: 8px 12px; border-radius: 8px; font-size: 13px; line-height: 1.4; word-break: break-word; text-align: left; font-family: "Consolas", monospace; border: 1px solid rgba(0, 255, 204, 0.15); }\n' +
         '        .wa-bubble.system { background: #0c1524; color: #527575; font-size: 11px; align-self: center; text-align: center; width: 90%; text-transform: uppercase; }\n' +
         '        .wa-bubble.inbound { background: #0d1622; color: #ffffff; align-self: flex-start; }\n' +
         '        .wa-bubble.outbound { background: #002e25; color: #00ffcc; align-self: flex-end; border-color: rgba(0, 255, 204, 0.3); }\n' +
-        '        .wa-footer { padding: 10px 14px; padding-bottom: max(14px, env(safe-area-inset-bottom)); display: flex; flex-direction: column; background: #060b12; border-top: 1px solid rgba(0, 255, 204, 0.15); flex-shrink: 0; }\n' +
-        '        .wa-input-row { display: flex; align-items: center; gap: 6px; width: 100%; }\n' +
-        '        .wa-input-capsule { flex: 1; background: #0d1520; border: 1px solid rgba(0, 255, 204, 0.3); border-radius: 25px; padding: 4px 10px 4px 12px; display: flex; align-items: center; gap: 6px; }\n' +
+        '        \n' +
+        '        /* BURBUJA FLOTANTE DE HERRAMIENTAS Y TECLADO LIMPIO */\n' +
+        '        .wa-footer { padding: 8px; padding-bottom: max(10px, env(safe-area-inset-bottom)); display: flex; flex-direction: column; background: #060b12; border-top: 1px solid rgba(0, 255, 204, 0.15); flex-shrink: 0; position: relative; }\n' +
+        '        .wa-input-row { display: flex; align-items: center; gap: 8px; width: 100%; }\n' +
+        '        .wa-input-capsule { flex: 1; background: #0d1520; border: 1px solid rgba(0, 255, 204, 0.3); border-radius: 25px; padding: 4px 12px; display: flex; align-items: center; }\n' +
         '        .wa-input-capsule input { flex: 1; background: transparent; border: none; color: #fff; padding: 8px 0; font-size: 14px; outline: none; min-width: 0; }\n' +
-        '        .tool-btn { background: transparent; border: none; color: #00ffcc; cursor: pointer; font-size: 18px; padding: 4px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }\n' +
-        '        .emoji-picker-panel { display: none; grid-template-columns: repeat(8, 1fr); gap: 5px; background: #0d1520; border: 1px solid rgba(0,255,204,0.3); border-radius: 8px; padding: 8px; margin-bottom: 8px; max-height: 100px; overflow-y: auto; }\n' +
+        '        .tool-btn { background: transparent; border: none; color: #00ffcc; cursor: pointer; font-size: 20px; padding: 6px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }\n' +
+        '        \n' +
+        '        /* BURBUJA FLOTANTE POPUP */\n' +
+        '        .tools-popup-bubble { display: none; position: absolute; bottom: 65px; left: 10px; right: 10px; background: #0a111a; border: 1px solid #00ffcc; border-radius: 12px; padding: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.9); z-index: 100; flex-direction: column; gap: 10px; }\n' +
+        '        .tools-popup-bubble.active { display: flex; }\n' +
+        '        .tools-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; text-align: center; }\n' +
+        '        .tool-item { background: #0d1520; border: 1px solid rgba(0,255,204,0.2); border-radius: 8px; padding: 10px; color: #00ffcc; font-size: 18px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px; }\n' +
+        '        .tool-item span { font-size: 9px; text-transform: uppercase; color: #527575; }\n' +
+        '        .emoji-picker-panel { display: none; grid-template-columns: repeat(8, 1fr); gap: 4px; background: #070b12; border: 1px solid rgba(0,255,204,0.2); border-radius: 6px; padding: 6px; max-height: 90px; overflow-y: auto; }\n' +
         '        .emoji-picker-panel.active { display: grid; }\n' +
         '        .emoji-btn { background: transparent; border: none; font-size: 18px; cursor: pointer; text-align: center; }\n' +
         '    </style>\n' +
@@ -235,8 +244,8 @@ app.get('/', (req, res) => {
         '                    </div>\n' +
         '                </div>\n' +
         '                <div class="wa-actions">\n' +
-        '                    <button class="wa-icon-btn" onclick="iniciarConferencia(\'video\')" title="Videollamada Grupal">📹</button>\n' +
-        '                    <button class="wa-icon-btn" onclick="iniciarConferencia(\'audio\')" title="Llamada de Voz Grupal">📞</button>\n' +
+        '                    <button class="wa-icon-btn" onclick="iniciarConferencia(\'video\')" title="Videollamada">📹</button>\n' +
+        '                    <button class="wa-icon-btn" onclick="iniciarConferencia(\'audio\')" title="Llamada de Voz">📞</button>\n' +
         '                    <button class="btn-quantum-hangup" id="btnColgarLlamada" onclick="colgarLlamada()" title="Colgar">❌</button>\n' +
         '                    <button class="wa-icon-btn" onclick="toggleMenuTresPuntos()">⁝</button>\n' +
         '                    <div class="dropdown-menu" id="menuTresPuntos">\n' +
@@ -254,7 +263,7 @@ app.get('/', (req, res) => {
         '                <button class="wa-icon-btn" style="font-size: 14px;" onclick="toggleBuscadorArroba()">❌</button>\n' +
         '            </div>\n' +
         '            \n' +
-        '            <!-- CONTENEDOR DE VIDEO TIPO WHATSAPP (PANTALLA COMPLETA + PIP INTERCAMBIABLE) -->\n' +
+        '            <!-- VIDEOLLAMADA PANTALLA COMPLETA + PIP -->\n' +
         '            <div class="webrtc-container" id="parrillaVideos">\n' +
         '                <div class="video-box-remoto" id="boxRemotoPrincipal"></div>\n' +
         '                <div class="video-box-local" id="boxLocalPiP" onclick="intercambiarVideosPiP()">\n' +
@@ -282,25 +291,32 @@ app.get('/', (req, res) => {
         '            <div class="wa-chat-area" id="pantallaChat">\n' +
         '                <div class="wa-bubble system">[SISTEMA] Candado de seguridad activo. Conversación hiper-cifrada de extremo a extremo (E2EE).</div>\n' +
         '            </div>\n' +
+        '            \n' +
+        '            <!-- BARRA INFERIOR LIMPIA CON BURBUJA FLOTANTE DE HERRAMIENTAS -->\n' +
         '            <div class="wa-footer">\n' +
-        '                <div class="emoji-picker-panel" id="panelEmojis">\n' +
-        '                    <button class="emoji-btn" onclick="insertarEmoji(\'😊\')">😊</button>\n' +
-        '                    <button class="emoji-btn" onclick="insertarEmoji(\'😂\')">😂</button>\n' +
-        '                    <button class="emoji-btn" onclick="insertarEmoji(\'👍\')">👍</button>\n' +
-        '                    <button class="emoji-btn" onclick="insertarEmoji(\'❤️\')">❤️</button>\n' +
-        '                    <button class="emoji-btn" onclick="insertarEmoji(\'🔥\')">🔥</button>\n' +
-        '                    <button class="emoji-btn" onclick="insertarEmoji(\'🎉\')">🎉</button>\n' +
-        '                    <button class="emoji-btn" onclick="insertarEmoji(\'🙏\')">🙏</button>\n' +
-        '                    <button class="emoji-btn" onclick="insertarEmoji(\'🚀\')">🚀</button>\n' +
+        '                <div class="tools-popup-bubble" id="burbujaHerramientas">\n' +
+        '                    <div class="tools-grid">\n' +
+        '                        <div class="tool-item" onclick="toggleNotaVoz(); toggleBurbujaHerramientas();" id="btnAudioNota">🎤<span>Audio</span></div>\n' +
+        '                        <div class="tool-item" onclick="document.getElementById(\'inputCamaraChat\').click(); toggleBurbujaHerramientas();">📷<span>Cámara</span></div>\n' +
+        '                        <div class="tool-item" onclick="document.getElementById(\'inputArchivoChat\').click(); toggleBurbujaHerramientas();">📎<span>Doc</span></div>\n' +
+        '                        <div class="tool-item" onclick="togglePanelEmojis()">😊<span>Emojis</span></div>\n' +
+        '                    </div>\n' +
+        '                    <div class="emoji-picker-panel" id="panelEmojis">\n' +
+        '                        <button class="emoji-btn" onclick="insertarEmoji(\'😊\')">😊</button>\n' +
+        '                        <button class="emoji-btn" onclick="insertarEmoji(\'😂\')">😂</button>\n' +
+        '                        <button class="emoji-btn" onclick="insertarEmoji(\'👍\')">👍</button>\n' +
+        '                        <button class="emoji-btn" onclick="insertarEmoji(\'❤️\')">❤️</button>\n' +
+        '                        <button class="emoji-btn" onclick="insertarEmoji(\'🔥\')">🔥</button>\n' +
+        '                        <button class="emoji-btn" onclick="insertarEmoji(\'🎉\')">🎉</button>\n' +
+        '                        <button class="emoji-btn" onclick="insertarEmoji(\'🙏\')">🙏</button>\n' +
+        '                        <button class="emoji-btn" onclick="insertarEmoji(\'🚀\')">🚀</button>\n' +
+        '                    </div>\n' +
         '                </div>\n' +
         '                <div class="wa-input-row">\n' +
-        '                    <button type="button" class="tool-btn" onclick="togglePanelEmojis()" title="Emojis">😊</button>\n' +
-        '                    <button type="button" class="tool-btn" onclick="document.getElementById(\'inputArchivoChat\').click()" title="Adjuntar Documento o Foto">📎</button>\n' +
-        '                    <button type="button" class="tool-btn" onclick="document.getElementById(\'inputCamaraChat\').click()" title="Cámara">📷</button>\n' +
+        '                    <button type="button" class="tool-btn" onclick="toggleBurbujaHerramientas()" title="Herramientas">➕</button>\n' +
         '                    <div class="wa-input-capsule">\n' +
-        '                        <input type="text" id="mensajeChat" placeholder="Tocar para escribir..." autocomplete="off" onkeydown="if(event.key===\'Enter\') procesarTransmisionTextoUrgente()">\n' +
+        '                        <input type="text" id="mensajeChat" placeholder="Escribir..." autocomplete="off" onkeydown="if(event.key===\'Enter\') procesarTransmisionTextoUrgente()">\n' +
         '                    </div>\n' +
-        '                    <button type="button" class="tool-btn" id="btnAudioNota" onclick="toggleNotaVoz()" title="Nota de Voz">🎤</button>\n' +
         '                    <button type="button" class="tool-btn" style="color: #00ffcc;" onclick="procesarTransmisionTextoUrgente()" title="Enviar">➤</button>\n' +
         '                </div>\n' +
         '                <input type="file" id="inputArchivoChat" style="display:none" accept=".pdf,image/*,audio/*,video/*" onchange="subirArchivoChatDirecto(this)">\n' +
@@ -370,6 +386,10 @@ app.get('/', (req, res) => {
         '            document.getElementById("inputBusquedaArroba").focus();\n' +
         '        }\n' +
         '\n' +
+        '        function toggleBurbujaHerramientas() {\n' +
+        '            document.getElementById("burbujaHerramientas").classList.toggle("active");\n' +
+        '        }\n' +
+        '\n' +
         '        function togglePanelEmojis() {\n' +
         '            document.getElementById("panelEmojis").classList.toggle("active");\n' +
         '        }\n' +
@@ -380,7 +400,6 @@ app.get('/', (req, res) => {
         '            input.focus();\n' +
         '        }\n' +
         '\n' +
-        '        // INTERCAMBIAR VIDEO GRANDE Y PEQUEÑO AL TOCAR (ESTILO WHATSAPP)\n' +
         '        function intercambiarVideosPiP() {\n' +
         '            modoPiPInvertido = !modoPiPInvertido;\n' +
         '            const boxLocal = document.getElementById("boxLocalPiP");\n' +
@@ -402,7 +421,7 @@ app.get('/', (req, res) => {
         '                const res = await fetch("/api/v1/contrato/subir", { method: "POST", body: formData });\n' +
         '                const data = await res.json();\n' +
         '                if (data.success) {\n' +
-        '                    const msg = "📄 Archivo adjunto: " + data.archivoUrl;\n' +
+        '                    const msg = "📄 Archivo: " + data.archivoUrl;\n' +
         '                    if (socket) socket.emit("canal_mensaje_usuario", { sala: salaToken, texto: msg, usuario: miNombreUsuario });\n' +
         '                } else {\n' +
         '                    alert("Error al subir archivo.");\n' +
@@ -432,28 +451,23 @@ app.get('/', (req, res) => {
         '                    };\n' +
         '                    mediaRecorder.start();\n' +
         '                    grabandoAudio = true;\n' +
-        '                    document.getElementById("btnAudioNota").style.color = "#ff3333";\n' +
-        '                    alert("🔴 Grabando nota de voz... Vuelva a pulsar el micrófono para detener y enviar.");\n' +
-        '                }).catch(err => alert("⚠️ No se pudo acceder al micrófono."));\n' +
+        '                    alert("🔴 Grabando audio... Vuelva a pulsar el micrófono en el menú para detener.");\n' +
+        '                }).catch(err => alert("⚠️ Micrófono no disponible."));\n' +
         '            } else {\n' +
         '                if (mediaRecorder) mediaRecorder.stop();\n' +
         '                grabandoAudio = false;\n' +
-        '                document.getElementById("btnAudioNota").style.color = "#00ffcc";\n' +
+        '                alert("🟢 Nota de voz enviada.");\n' +
         '            }\n' +
         '        }\n' +
         '\n' +
         '        function ejecutarBusquedaArroba() {\n' +
         '            const q = document.getElementById("inputBusquedaArroba").value.trim().toLowerCase();\n' +
-        '            if (!q) {\n' +
-        '                alert("⚠️ Ingrese un nombre con @ o número para buscar en el canal.");\n' +
-        '                return;\n' +
-        '            }\n' +
+        '            if (!q) { alert("⚠️ Ingrese término de búsqueda."); return; }\n' +
         '            const burbujas = document.querySelectorAll(".wa-bubble");\n' +
         '            let encontrados = 0;\n' +
         '            burbujas.forEach(b => {\n' +
         '                if (!b.classList.contains("system")) {\n' +
-        '                    const txt = b.innerText.toLowerCase();\n' +
-        '                    if (txt.includes(q)) {\n' +
+        '                    if (b.innerText.toLowerCase().includes(q)) {\n' +
         '                        b.style.display = "block";\n' +
         '                        b.style.border = "2px solid #00ffcc";\n' +
         '                        encontrados++;\n' +
@@ -462,15 +476,14 @@ app.get('/', (req, res) => {
         '                    }\n' +
         '                }\n' +
         '            });\n' +
-        '            alert("🔍 Búsqueda completada. Resultados coincidentes: " + encontrados);\n' +
+        '            alert("🔍 Coincidencias: " + encontrados);\n' +
         '        }\n' +
         '\n' +
         '        function generarInvitacionSalaPrivada() {\n' +
         '            document.getElementById("menuTresPuntos").classList.remove("active");\n' +
-        '            const urlBase = window.location.origin + window.location.pathname;\n' +
-        '            const urlPrivada = urlBase + "?canal=" + salaToken;\n' +
+        '            const urlPrivada = window.location.origin + window.location.pathname + "?canal=" + salaToken;\n' +
         '            navigator.clipboard.writeText(urlPrivada);\n' +
-        '            alert("🔗 ¡ENLACE DE SALA PRIVADA COPIADO!\\n\\nTodo invitado que abra este enlace SERÁ OBLIGADO A REGISTRARSE antes de unirse.");\n' +
+        '            alert("🔗 Enlace privado copiado al portapapeles.");\n' +
         '        }\n' +
         '\n' +
         '        async function subirContratoServidor(input) {\n' +
@@ -483,13 +496,10 @@ app.get('/', (req, res) => {
         '                const data = await res.json();\n' +
         '                if (data.success) {\n' +
         '                    if (socket) socket.emit("notificar_contrato_nuevo", { sala: salaToken, url: data.archivoUrl });\n' +
-        '                    alert("📄 CONTRATO SUBIDO Y SINCRONIZADO.");\n' +
         '                    abrirLienzoFirmaEspejo();\n' +
         '                    cargarContratoEnVisor(data.archivoUrl);\n' +
-        '                } else {\n' +
-        '                    alert("Error al subir contrato.");\n' +
         '                }\n' +
-        '            } catch (e) { alert("Error de red al subir documento."); }\n' +
+        '            } catch (e) { alert("Error al subir contrato."); }\n' +
         '        }\n' +
         '\n' +
         '        function cargarContratoEnVisor(url) {\n' +
@@ -512,7 +522,6 @@ app.get('/', (req, res) => {
         '                    document.getElementById("videoLocal").srcObject = flujoLocalGlobal;\n' +
         '                }\n' +
         '                document.getElementById("btnColgarLlamada").style.display = "flex";\n' +
-        '\n' +
         '                if (socket) {\n' +
         '                    socket.emit("unir_multiconferencia", { sala: salaToken, usuario: miNombreUsuario });\n' +
         '                    socket.emit("wa_multimedia_signaling", { sala: salaToken, llamadaEntrante: true, remitente: miNombreUsuario, tipo: tipo });\n' +
@@ -537,12 +546,11 @@ app.get('/', (req, res) => {
         '                    document.getElementById("videoLocal").srcObject = flujoLocalGlobal;\n' +
         '                }\n' +
         '                document.getElementById("btnColgarLlamada").style.display = "flex";\n' +
-        '\n' +
         '                if (socket) {\n' +
         '                    socket.emit("unir_multiconferencia", { sala: salaToken, usuario: miNombreUsuario });\n' +
         '                }\n' +
         '            } catch (err) {\n' +
-        '                alert("⚠️ Error al activar la cámara o el micrófono para la llamada.");\n' +
+        '                alert("⚠️ Error al activar cámara o micrófono.");\n' +
         '            }\n' +
         '        }\n' +
         '\n' +
@@ -590,6 +598,7 @@ app.get('/', (req, res) => {
         '                }\n' +
         '            };\n' +
         '\n' +
+        '            // CORRECCIÓN CLAVE: Asegurar la negociación bidireccional estable de video\n' +
         '            if (esOferente) {\n' +
         '                pc.onnegotiationneeded = async () => {\n' +
         '                    try {\n' +
@@ -677,7 +686,7 @@ app.get('/', (req, res) => {
         '            if (socket) socket.emit("limpiar_trazo_remoto", { sala: salaToken });\n' +
         '        }\n' +
         '        function estamparSelloImpenetrable() {\n' +
-        '            alert("🔒 SELLO CRIPTOGRÁFICO DE VALIDEZ JURÍDICA ESTAMPADO CORRECTAMENTE.");\n' +
+        '            alert("🔒 Sello criptográfico estampado.");\n' +
         '            cerrarLienzoFirmaEspejo();\n' +
         '        }\n' +
         '\n' +
@@ -686,7 +695,7 @@ app.get('/', (req, res) => {
         '            if(paramsUrl.has("canal")) {\n' +
         '                salaToken = paramsUrl.get("canal");\n' +
         '                if(localStorage.getItem("vobix_dispositivo_autorizado") !== "true") {\n' +
-        '                    document.getElementById("statusField").innerText = "ACCESO RESTRINGIDO // REGISTRESE CON SMS...";\n' +
+        '                    document.getElementById("statusField").innerText = "ACCESO RESTRINGIDO // REGISTRESE...";\n' +
         '                    return;\n' +
         '                }\n' +
         '                miNombreUsuario = localStorage.getItem("vobix_nombre") || "Usuario";\n' +
@@ -703,7 +712,7 @@ app.get('/', (req, res) => {
         '                document.getElementById("waContactoNombre").innerText = miNombreUsuario;\n' +
         '                document.getElementById("vistaScanner").classList.remove("active");\n' +
         '                document.getElementById("lblPassInstruccion").innerText = "Ingrese Clave Maestra";\n' +
-        '                document.getElementById("btnAccionPass").innerText = "Desbloquear App";\n' +
+        '                document.getElementById("btnAccionPass").innerText = "Desbloquear";\n' +
         '                document.getElementById("btnOpcionC").style.display = "block";\n' +
         '                document.getElementById("vistaContrasenaMaestra").classList.add("active");\n' +
         '                return;\n' +
@@ -734,7 +743,7 @@ app.get('/', (req, res) => {
         '                        document.getElementById("codigoPin").value = "777777";\n' +
         '                    }\n' +
         '                } else if(data.error === "VOIP_REJECTED") {\n' +
-        '                    alert("⛔ ACCESO DENEGADO: Los números VoIP no están permitidos.");\n' +
+        '                    alert("⛔ VoIP no permitido.");\n' +
         '                }\n' +
         '            } catch(e) { alert("Error de red"); }\n' +
         '        }\n' +
@@ -808,7 +817,6 @@ app.get('/', (req, res) => {
         '            socket.on("notificar_contrato_nuevo", (data) => {\n' +
         '                cargarContratoEnVisor(data.url);\n' +
         '                reproducirSonidoNotificacion(false);\n' +
-        '                alert("📄 NUEVO CONTRATO CARGADO POR LA OTRA PARTE.");\n' +
         '            });\n' +
         '\n' +
         '            socket.on("lista_usuarios_sala", (usuarios) => {\n' +
