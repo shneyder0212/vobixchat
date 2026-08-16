@@ -115,7 +115,7 @@ app.get('/', (req, res) => {
         '            display: flex; \n' +
         '            justify-content: center; \n' +
         '            align-items: center; \n' +
-        '            min-height: 100vh; \n' +
+        '            min-height: 100vh; \n' + 
         '            min-height: 100dvh; \n' + 
         '            overflow: hidden;\n' +
         '        }\n' +
@@ -199,7 +199,6 @@ app.get('/', (req, res) => {
         '    <script src="/socket.io/socket.io.js"></script>\n' +
         '</head>'
     );
-});
     res.write(
         '<body>\n' +
         '    <div class="app-container" id="mainWrapper">\n' +
@@ -599,6 +598,7 @@ app.post('/api/v1/auth/verify-pin', verificarLimitePeticionesIP, async (req, res
 
     // Validación estricta del token de 6 dígitos
     if (datosPin.pin === pin.trim()) {
+        pinesTemporales.delete(telefonoLinter);
         pinesTemporales.delete(telefonoLimpio);
         lineasFisicasAutorizadas.add(telefonoLimpio); // Autorización de la SIM real
         return res.status(200).json({ success: true });
@@ -620,7 +620,7 @@ io.on("connection", (socket) => {
     socket.on("canal_mensaje_usuario", (datos) => {
         registroComportamientoUsuarios.set(socket.id, { ultimoContacto: Date.now() });
         
-        // Difusión segura de mensajes de chat en la red interna
+        // Difusión segura de mensajes de chat en la red interna a través de socket
         io.emit("difusion_mensaje_servidor", { 
             origen: socket.id,
             contenido: datos.texto || "" 
