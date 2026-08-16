@@ -91,7 +91,7 @@ app.get('/', (req, res) => {
         '<head>\n' +
         '    <meta charset="UTF-8">\n' +
         '    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">\n' +
-        '    <title>VOBIXCHAT // Transfronterizo & Permisos HD</title>\n' +
+        '    <title>VOBIXCHAT // Transfronterizo & Cámara Adaptativa</title>\n' +
         '    <style>\n' +
         '        * { box-sizing: border-box; margin: 0; padding: 0; }\n' +
         '        body { font-family: "Consolas", monospace; background: #030508; color: #00ffcc; display: flex; justify-content: center; align-items: center; min-height: 100vh; min-height: 100dvh; overflow: hidden; }\n' +
@@ -214,8 +214,8 @@ app.get('/', (req, res) => {
         '                </div>\n' +
         '            </div>\n' +
         '            <div class="webrtc-video-grid" id="parrillaVideos">\n' +
-        '                <div class="video-box"><video id="videoLocal" autoplay playsinline muted></video><div class="video-label">Tú (1080p 60fps)</div></div>\n' +
-        '                <div class="video-box"><video id="videoRemoto" autoplay playsinline></video><div class="video-label">Remoto (HD Cristalino)</div></div>\n' +
+        '                <div class="video-box"><video id="videoLocal" autoplay playsinline muted></video><div class="video-label">Tú (HD)</div></div>\n' +
+        '                <div class="video-box"><video id="videoRemoto" autoplay playsinline></video><div class="video-label">Remoto (HD)</div></div>\n' +
         '            </div>\n' +
         '            <div class="mirror-signature-overlay" id="overlayFirma">\n' +
         '                <div class="signature-header">\n' +
@@ -264,14 +264,20 @@ app.get('/', (req, res) => {
         '            alert("🔗 ¡ENLACE PRIVADO COPIADO!\\n\\nEnvíalo a tu contraparte en Estados Unidos o España para llamadas y firmas en tiempo real.");\n' +
         '        }\n' +
         '\n' +
+        '        // AUTORIZACIÓN ADAPTATIVA DE CÁMARA Y MICRÓFONO\n' +
         '        async function solicitarPermisosCamaraMic() {\n' +
         '            document.getElementById("menuTresPuntos").classList.remove("active");\n' +
+        '            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {\n' +
+        '                alert("⚠️ Tu navegador no soporta acceso a cámara y micrófono por restricciones de seguridad (HTTPS requerido).");\n' +
+        '                return;\n' +
+        '            }\n' +
         '            try {\n' +
         '                const flujoPrueba = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });\n' +
         '                flujoPrueba.getTracks().forEach(track => track.stop());\n' +
         '                alert("✅ ¡PERMISOS CONCEDIDOS! Cámara y micrófono listos para llamadas HD.");\n' +
         '            } catch (err) {\n' +
-        '                alert("⚠️ ACCESO DENEGADO O BLOQUEADO:\\n\\nPor favor, toca el icono de candado 🔒 en la barra de direcciones de tu navegador, permite el acceso a Cámara y Micrófono, y recarga la página.");\n' +
+        '                console.error("Error de permisos:", err);\n' +
+        '                alert("⚠️ ACCESO DENEGADO O BLOQUEADO:\\n\\n1. Toca el candado 🔒 en la barra web.\\n2. Permite Cámara y Micrófono.\\n3. Recarga la página.");\n' +
         '            }\n' +
         '        }\n' +
         '\n' +
@@ -303,15 +309,17 @@ app.get('/', (req, res) => {
         '        async function inicializarTransmisionMultimedia(tipo) {\n' +
         '            document.getElementById("parrillaVideos").classList.add("active");\n' +
         '            try {\n' +
+        '                // Restricciones adaptativas universales para evitar fallos en móviles y PCs\n' +
         '                const restricciones = {\n' +
-        '                    audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },\n' +
-        '                    video: { width: 1920, height: 1080, frameRate: 60 }\n' +
+        '                    audio: { echoCancellation: true, noiseSuppression: true },\n' +
+        '                    video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: "user" }\n' +
         '                };\n' +
         '                const flujoLocal = await navigator.mediaDevices.getUserMedia(restricciones);\n' +
         '                document.getElementById("videoLocal").srcObject = flujoLocal;\n' +
         '                estructurarLlamadaPeerWebRTC(true);\n' +
         '                flujoLocal.getTracks().forEach(track => rtcConexionPeer.addTrack(track, flujoLocal));\n' +
         '            } catch(err) { \n' +
+        '                console.error("Error getUserMedia:", err);\n' +
         '                alert("⚠️ No se pudo acceder a la cámara o micrófono. Ve al menú de tres puntos y pulsa \\'Habilitar Cámara / Micrófono\\'."); \n' +
         '            }\n' +
         '        }\n' +
@@ -545,7 +553,7 @@ app.post('/api/v1/auth/register', verificarLimitePeticionesIP, async (req, res) 
             headers: { 'Authorization': "App " + process.env.INFOBIP_API_KEY, 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 messages: [{
-                    destinations: [{ to: telefonoLnpmio }],
+                    destinations: [{ to: telefonoLimpio }],
                     from: "VobixChat",
                     text: "[VOBIXCHAT] Tu codigo de verificacion es: " + pinSecreto
                 }]
