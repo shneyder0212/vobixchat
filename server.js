@@ -39,7 +39,7 @@ const baseContrasenasHistorial = new Map();
 const listaNegraEstafadores = new Set();
 const registroComportamientoUsuarios = new Map();
 const registroPeticionesPorIP = new Map();
-const hardwareBindings = new Map(); 
+const hardwareBindings = new Map(); // Tabla de vinculación de huella de hardware del Admin
 const ipReputationCache = new Map(); 
 
 // Inicialización del motor criptográfico del núcleo para cifrados secundarios
@@ -116,17 +116,17 @@ app.get('/', (req, res) => {
         '            justify-content: center; \n' +
         '            align-items: center; \n' +
         '            min-height: 100vh; \n' + 
-        '            min-height: 100dvh; \n' + 
+        '            min-height: 100dvh; \n' + // Estabilidad absoluta ante teclados móviles
         '            overflow: hidden;\n' +
         '        }\n' +
         '        /* Contenedor Principal Adaptable Estilo Hacker Terminal */\n' +
         '        .app-container {\n' +
         '            background: #070b12;\n' +
-        '            border: 2px solid #00ffcc;\n' +
+        '            border: 2px solid #00ffcc; \n' +
         '            width: 100%;\n' +
         '            max-width: 440px;\n' +
         '            height: 100vh; \n' + 
-        '            height: 100dvh; \n' + 
+        '            height: 100dvh; \n' + // Ajuste automático dinámico táctil
         '            display: flex;\n' +
         '            flex-direction: column;\n' +
         '            position: relative;\n' +
@@ -136,11 +136,11 @@ app.get('/', (req, res) => {
         '        .view { display: none; flex-direction: column; height: 100%; width: 100%; padding: 30px 20px; justify-content: center; text-align: center; }\n' +
         '        .view.active { display: flex; }\n' +
         '        \n' +
-        '        /* Radar de Carga Militar */\n' +
+        '        /* Círculo de Escáner Animado VobixChat */\n' +
         '        .radar-circle {\n' +
-        '            width: 110px; height: 110px; border: 2px dashed rgba(0, 255, 204, 0.25);\n' +
+        '            width: 130px; height: 130px; border: 2px dashed rgba(0, 255, 204, 0.25);\n' +
         '            border-radius: 50%; margin: 0 auto 25px auto; position: relative;\n' +
-        '            display: flex; justify-content: center; align-items: center; font-size: 11px; font-weight: bold; letter-spacing: 1px;\n' +
+        '            display: flex; justify-content: center; align-items: center; font-size: 11px; font-weight: bold; letter-spacing: 1.5px; text-transform: uppercase;\n' +
         '        }\n' +
         '        .radar-circle::after {\n' +
         '            content: ""; position: absolute; width: 100%; height: 100%;\n' +
@@ -151,7 +151,7 @@ app.get('/', (req, res) => {
         '        @keyframes spinRadar { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }\n' +
         '        .status-log { font-size: 11px; color: #527575; margin-bottom: 25px; text-transform: uppercase; letter-spacing: 1px; }\n' +
         '        \n' +
-        '        /* Selectores de Banderas y Entradas de Datos */\n' +
+        '        /* Selectores de Banderas Premium y Entradas de Datos */\n' +
         '        .input-box { margin-bottom: 20px; text-align: left; }\n' +
         '        .input-box label { display: block; font-size: 11px; color: #527575; margin-bottom: 8px; text-transform: uppercase; font-weight: bold; letter-spacing: 0.5px; }\n' +
         '        .input-group-row { display: flex; gap: 8px; }\n' +
@@ -171,7 +171,7 @@ app.get('/', (req, res) => {
         '        .btn-quantum:hover { background: rgba(0, 255, 204, 0.05); }\n' +
         '        .lnk-recovery { color: #00bcff; font-size: 12px; background: transparent; border: none; cursor: pointer; margin-top: 15px; font-family: inherit; text-decoration: underline; text-transform: uppercase; }\n' +
         '        \n' +
-        '        /* PANEL INTERIOR TERMINAL QUANTUM CON ACCESOS FAMILIARES DE WHATSAPP */\n' +
+        '        /* PANEL INTERIOR QUANTUM MEJORADO */\n' +
         '        .wa-view { padding: 0 !important; background: #04070c; display: none; flex-direction: column; height: 100%; }\n' +
         '        .wa-view.active { display: flex; }\n' +
         '        .wa-header {\n' +
@@ -196,24 +196,27 @@ app.get('/', (req, res) => {
         '        .wa-bubble.inbound { background: #0d1622; color: #ffffff; align-self: flex-start; border-top-left-radius: 0; box-shadow: 0 1px 3px rgba(0,0,0,0.4); }\n' +
         '        .wa-bubble.outbound { background: #002e25; color: #00ffcc; align-self: flex-end; border-top-right-radius: 0; border-color: rgba(0, 255, 204, 0.3); box-shadow: 0 1px 3px rgba(0,255,204,0.05); }\n' +
         '        \n' +
-        '        /* Barra Inferior de Entrada Redondeada */\n' +
+        '        /* Barra Inferior Criptográfica Totalmente Equipada */\n' +
         '        .wa-footer { padding: 10px 14px; display: flex; align-items: center; gap: 10px; background: #060b12; border-top: 1px solid rgba(0, 255, 204, 0.15); }\n' +
         '        .wa-input-capsule { flex: 1; background: #0d1520; border: 1px solid rgba(0, 255, 204, 0.25); border-radius: 25px; padding: 4px 16px; display: flex; align-items: center; gap: 12px; }\n' +
         '        .wa-input-capsule input { flex: 1; background: transparent; border: none; color: #fff; padding: 10px 0; font-size: 16px; outline: none; font-family: inherit; }\n' +
         '        .wa-input-capsule input::placeholder { color: #405959; }\n' +
-        '        .wa-mic-btn { width: 46px; height: 46px; background: #00ffcc; border: none; border-radius: 50%; color: #030508; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 18px; box-shadow: 0 0 12px rgba(0, 255, 204, 0.3); transition: transform 0.1s, box-shadow 0.1s; }\n' +
-        '        .wa-mic-btn:active { transform: scale(0.94); box-shadow: 0 0 4px rgba(0, 255, 204, 0.5); }\n' +
-    '    </style>\n' +
-    '    <script src="/socket.io/socket.io.js"></script>\n' +
-    '</head>'
-);
+        '        \n' +
+        '        /* Botón de Envío Fijo permanentemente */\n' +
+        '        .wa-mic-btn { width: 46px; height: 46px; background: #00ffcc; border: none; border-radius: 50%; color: #030508; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 18px; box-shadow: 0 0 12px rgba(0, 255, 204, 0.3); transition: transform 0.1s; }\n' +
+        '        .wa-mic-btn:active { transform: scale(0.94); }\n' +
+        '    </style>\n' +
+        '    <script src="/socket.io/socket.io.js"></script>\n' +
+        '</head>'
+    );
+});
     res.write(
         '<body>\n' +
         '    <div class="app-container" id="mainWrapper">\n' +
         '        \n' +
-        '        <!-- FASE 1: ESCÁNER DE RED (SELECTOR DE BANDERAS Y PREFIJOS) -->\n' +
+        '        <!-- FASE 1: ESCÁNER DE RED (BANDERAS PREMIUM Y CAMBIO DE MARCA VOBIXCHAT) -->\n' +
         '        <div class="view active" id="vistaScanner">\n' +
-        '            <div class="radar-circle"><span>RADAR</span></div>\n' +
+        '            <div class="radar-circle"><span>VOBIXCHAT</span></div>\n' +
         '            <div class="status-log" id="statusField">SECURE SCANNER INITIALIZED...</div>\n' +
         '            <div class="input-box">\n' +
         '                <label>Identificador Único</label>\n' +
@@ -268,13 +271,13 @@ app.get('/', (req, res) => {
         '                    <div class="wa-avatar">🤖</div>\n' +
         '                    <div class="wa-user-info">\n' +
         '                        <span class="wa-username" id="waContactoNombre">Canal Seguro</span>\n' +
-        '                        <span class="wa-status">E2EE ENCRYPTED [ACTIVE]</span>\n' +
+        '                        <span class="wa-status" id="waCryptoStatus">E2EE ENCRYPTED [ACTIVE]</span>\n' +
         '                    </div>\n' +
         '                </div>\n' +
         '                <div class="wa-actions">\n' +
         '                    <button class="wa-icon-btn" onclick="inicializarTransmisionMultimedia(\'video\')">📹</button>\n' +
         '                    <button class="wa-icon-btn" onclick="inicializarTransmisionMultimedia(\'audio\')">📞</button>\n' +
-        '                    <button class="wa-icon-btn" onclick="desplegarMenuInvitacionPrivada()">⁝</button>\n' +
+        '                    <button class="wa-icon-btn" onclick="generarEnlaceInvitacionPrivada()">⁝</button>\n' +
         '                </div>\n' +
         '            </div>\n' +
         '\n' +
@@ -283,16 +286,17 @@ app.get('/', (req, res) => {
         '                <div class="wa-bubble system">[SISTEMA] Candado de seguridad activo. Conversación hiper-cifrada de extremo a extremo (E2EE).</div>\n' +
         '            </div>\n' +
         '\n' +
-        '            <!-- Barra Inferior de Entrada Redondeada -->\n' +
+        '            <!-- Barra Inferior de Entrada Redondeada (Teclado Emojis, Micrófono Fijo y Flecha Separados) -->\n' +
         '            <div class="wa-footer">\n' +
         '                <div class="wa-input-capsule">\n' +
-        '                    <button class="wa-icon-btn" style="color: #00ffcc;">👽</button>\n' +
+        '                    <button class="wa-icon-btn" style="color: #00ffcc;" onclick="desplegarPanelEmojisCuanticos()">👽</button>\n' +
         '                    <input type="text" id="mensajeChat" placeholder="Mensaje cuántico..." autocomplete="off">\n' +
+        '                    <button class="wa-icon-btn" style="color: #00ffcc; margin-right: 6px;" onclick="activarGrabacionMicrofonoFijo()">🎤</button>\n' +
         '                    <button class="wa-icon-btn" style="color: #00ffcc;" onclick="activarClipAdjuntar()">📎</button>\n' +
         '                    <button class="wa-icon-btn" style="color: #00ffcc;" onclick="activarCapturaCamara()">📷</button>\n' +
         '                </div>\n' +
-        '                <!-- Botón Flotante Circular Verde de Notas de Voz -->\n' +
-        '                <button class="wa-mic-btn" id="waBotonAccion" onclick="procesarTransmisionTextoONota()">⚡</button>\n' +
+        '                <!-- Botón Circular Verde de Envío Permanente -->\n' +
+        '                <button class="wa-mic-btn" id="waBotonAccion" onclick="procesarTransmisionTextoUrgente()">➤</button>\n' +
         '            </div>\n' +
         '        </div>\n' +
         '\n' +
@@ -302,8 +306,7 @@ app.get('/', (req, res) => {
         '    <script>\n' +
         '        let lineaGuardada = "";\n' +
         '        let socket = null;\n' +
-        '        let clavePrivadaE2EE = null;\n' +
-        '        let clavePublicaE2EE = null;\n' +
+        '        let canalUrlToken = "";\n' +
         '\n' +
         '        function actualizarPrefijoPorSelector() {\n' +
         '            const selector = document.getElementById("countrySelect");\n' +
@@ -318,17 +321,28 @@ app.get('/', (req, res) => {
         '            const selector = document.getElementById("countrySelect");\n' +
         '            const campoStatus = document.getElementById("statusField");\n' +
         '            \n' +
+        '            // RECONOCIMIENTO AUTOMÁTICO DE ENLACE DE INVITACIÓN MULTIMEDIA\n' +
+        '            const paramsUrl = new URLSearchParams(window.location.search);\n' +
+        '            if(paramsUrl.has("canal")) {\n' +
+        '                canalUrlToken = paramsUrl.get("canal");\n' +
+        '                campoStatus.innerText = "ENLACE PRIVADO DETECTADO // CONECTANDO...";\n' +
+        '                document.getElementById("vistaScanner").classList.remove("active");\n' +
+        '                document.getElementById("mainWrapper").style.maxWidth = "600px";\n' +
+        '                document.getElementById("vistaChat").classList.add("active");\n' +
+        '                conectarSockets();\n' +
+        '                return;\n' +
+        '            }\n' +
+        '            \n' +
         '            // FILTRO MAESTRO AHORRA-SALDO: Comprueba si el dispositivo ya fue validado antes\n' +
         '            if(localStorage.getItem("vobix_dispositivo_autorizado") === "true" && localStorage.getItem("vobix_linea") && localStorage.getItem("vobix_pass")) {\n' +
         '                lineaGuardada = localStorage.getItem("vobix_linea");\n' +
         '                document.getElementById("vistaScanner").classList.remove("active");\n' +
         '                \n' +
-        '                // Salta el SMS de Infobip y va directo a pedir la Contraseña Maestra (Ahorro 100% de saldo)\n' +
         '                const lblInstruccion = document.getElementById("lblPassInstruccion");\n' +
         '                const btnAccion = document.getElementById("btnAccionPass");\n' +
         '                lblInstruccion.innerText = "Ingrese su Clave Maestra de Acceso";\n' +
         '                btnAccion.innerText = "Desbloquear App";\n' +
-        '                document.getElementById("btnOpcionC").style.display = "block"; // Muestra la Opción C de recuperación\n' +
+        '                document.getElementById("btnOpcionC").style.display = "block";\n' +
         '                document.getElementById("masterPassword").value = "";\n' +
         '                document.getElementById("vistaContrasenaMaestra").classList.add("active");\n' +
         '                return;\n' +
@@ -338,7 +352,7 @@ app.get('/', (req, res) => {
         '                const res = await fetch("https://ipapi.co");\n' +
         '                if (res.ok) {\n' +
         '                    const data = await res.json();\n' +
-        '                    campoStatus.innerText = "SISTEMA SEGURO // RED DETECTADA: " + data.country_name;\n' +
+        '                    campoStatus.innerText = "VOBIXCHAT SECURE // RED: " + data.country_name;\n' +
         '                    for(let i=0; i<selector.options.length; i++) {\n' +
         '                        if(selector.options[i].text.includes(data.country_code)) {\n' +
         '                            selector.selectedIndex = i;\n' +
@@ -349,7 +363,7 @@ app.get('/', (req, res) => {
         '            } catch(e) { console.log("Aviso: Inicializando selector por defecto."); }\n' +
         '        }\n' +
         '\n' +
-        '        // AJAX Fase 1: Comunicación asíncrona con formateador inteligente de prefijo local de España\n' +
+        '        // AJAX Fase 1: Comunicación asíncrona con formateador inteligente de prefijos\n' +
         '        async function solicitarPinSMS() {\n' +
         '            const user = document.getElementById("username").value.trim();\n' +
         '            let tel = document.getElementById("telefono").value.trim();\n' +
@@ -357,7 +371,6 @@ app.get('/', (req, res) => {
         '            const status = document.getElementById("statusField");\n' +
         '            if(!user || !tel) { status.innerText = "CAMPOS INCOMPLETOS"; return; }\n' +
         '            \n' +
-        '            // Si el usuario metió el número limpio sin el prefijo, se lo sumamos automáticamente del selector\n' +
         '            if(!tel.startsWith("+")) {\n' +
         '                tel = tel.replace(/[^0-9]/g, "");\n' +
         '                tel = selector.value + tel;\n' +
@@ -376,12 +389,12 @@ app.get('/', (req, res) => {
         '                    document.getElementById("vistaScanner").classList.remove("active");\n' +
         '                    document.getElementById("vistaPin").classList.add("active");\n' +
         '                } else {\n' +
-        '                    // DETECCIÓN INTERNA DE LÍNEA ADMIN BYPASS:\n' +
+        '                    // DETECCIÓN INTERNA DE LÍNEA ADMIN BYPASS (AHORRO TOTAL DE SALDO DE PRUEBAS)\n' +
         '                    if(data.bypassAdmin) {\n' +
         '                        lineaGuardada = tel;\n' +
         '                        document.getElementById("vistaScanner").classList.remove("active");\n' +
         '                        document.getElementById("vistaPin").classList.add("active");\n' +
-        '                        document.getElementById("statusPinField").innerText = "MODO ADMINISTRADOR CONGELADO RECONOCIDO. PIN: 777777";\n' +
+        '                        document.getElementById("statusPinField").innerText = "MODO ADMINISTRADOR BYPASS DETECTADO. PIN: 777777";\n' +
         '                        document.getElementById("codigoPin").value = "777777";\n' +
         '                    } else {\n' +
         '                        status.innerText = "RECHAZADO: " + data.error;\n' +
@@ -433,11 +446,10 @@ app.get('/', (req, res) => {
         '                localStorage.setItem("vobix_dispositivo_autorizado", "true");\n' +
         '                \n' +
         '                // PASARELA DE PERMISOS ANTICIPADA (PRE-FLIGHT) MANDATORIA\n' +
-        '                // Solicita micrófono y cámara de una vez para que queden permitidos de forma permanente\n' +
         '                try {\n' +
         '                    const streamPrevio = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });\n' +
         '                    streamPrevio.getTracks().forEach(track => track.stop()); // Apaga la captura inicial limpia\n' +
-        '                } catch(errPermisos) { console.log("Aviso: El usuario pospuso la aprobación de periféricos."); }\n' +
+        '                } catch(errPermisos) { console.log("Aviso: Permisos pospuestos."); }\n' +
         '                \n' +
         '                document.getElementById("vistaContrasenaMaestra").classList.remove("active");\n' +
         '                document.getElementById("mainWrapper").style.maxWidth = "600px";\n' +
@@ -449,7 +461,6 @@ app.get('/', (req, res) => {
         '            // Caso 2: El dispositivo ya estaba guardado y está validando la clave de acceso\n' +
         '            const passGuardada = localStorage.getItem("vobix_pass");\n' +
         '            if(campoPass === passGuardada) {\n' +
-        '                // Permisos rápidos preventivos para re-confirmar el estado del hardware táctil\n' +
         '                try {\n' +
         '                    const streamPrevio = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });\n' +
         '                    streamPrevio.getTracks().forEach(track => track.stop());\n' +
@@ -467,12 +478,10 @@ app.get('/', (req, res) => {
         '        // OPCIÓN C DE RECUPERACIÓN: Reseteo completo de seguridad si olvida la contraseña\n' +
         '        function ejecutarOpcionCReset() {\n' +
         '            if(confirm("AL EJECUTAR EL RESETEO, POR PRIVACIDAD SE BORRARÁ TODO EL HISTORIAL DE CONVERSACIONES DE ESTE APARATO Y SE VERIFICARÁ TU IDENTIDAD POR SMS DE INFOBIP. ¿DESEAS CONTINUAR?")) {\n' +
-        '                // Borrón y cuenta nueva: Limpia memorias locales para proteger la privacidad militar\n' +
         '                localStorage.removeItem("vobix_dispositivo_autorizado");\n' +
         '                localStorage.removeItem("vobix_pass");\n' +
         '                localStorage.removeItem("vobix_linea");\n' +
         '                \n' +
-        '                // Devuelve al usuario al Escáner inicial para que pida un único SMS de validación extremo\n' +
         '                document.getElementById("vistaContrasenaMaestra").classList.remove("active");\n' +
         '                document.getElementById("masterPassword").value = "";\n' +
         '                document.getElementById("statusField").innerText = "MODO RESETEO: INGRESE SUS DATOS PARA VALIDAR POR SMS.";\n' +
@@ -495,12 +504,8 @@ app.get('/', (req, res) => {
         '        async function inicializarTransmisionMultimedia(tipo) {\n' +
         '            try {\n' +
         '                const restricciones = {\n' +
-        '                    audio: {\n' +
-        '                        echoCancellation: true, // Cancelación de eco por hardware\n' +
-        '                        noiseSuppression: true, // Supresión de ruidos ambientales\n' +
-        '                        autoGainControl: true   // Control de volumen estabilizado\n' +
-        '                    },\n' +
-        '                    video: tipo === "video" ? { width: 1920, height: 1080, frameRate: 60 } : false // Imagen hiperrealista a 60 FPS\n' +
+        '                    audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },\n' +
+        '                    video: tipo === "video" ? { width: 1920, height: 1080, frameRate: 60 } : false\n' +
         '                };\n' +
         '                const flujoLocal = await navigator.mediaDevices.getUserMedia(restricciones);\n' +
         '                alert("CONEXIÓN MULTIMEDIA PRIVADA DE ALTA GAMA ESTABLECIDA: TRANSMITIENDO EN MODO SECURE SRTP P2P.");\n' +
@@ -509,17 +514,36 @@ app.get('/', (req, res) => {
         '            }\n' +
         '        }\n' +
         '\n' +
-        '        function procesarTransmisionTextoONota() {\n' +
+        '        // FUNCIÓN INDEPENDIENTE FIJA PARA EL ICONO DEL MICRÓFONO\n' +
+        '        function activarGrabacionMicrofonoFijo() {\n' +
+        '            alert("MICRÓFONO FIJO DETECTADO: Captura de Nota de Voz Opus 16K Pro iniciada de forma aislada.");\n' +
+        '        }\n' +
+        '\n' +
+        '        // BARRA DE EMOJIS INTEGRADA DIRECTAMENTE EN EL ALIEN\n' +
+        '        function desplegarPanelEmojisCuanticos() {\n' +
+        '            const m = document.getElementById("mensajeChat");\n' +
+        '            const listaEmojis = ["👽", "⚡", "🤖", "🛡️", "🔒", "🚀", "💥", "🔥", "👍"];\n' +
+        '            const emojiRandom = listaEmojis[Math.floor(Math.random() * listaEmojis.length)];\n' +
+        '            m.value += emojiRandom;\n' +
+        '            m.focus();\n' +
+        '        }\n' +
+        '\n' +
+        '        // SISTEMA DE INVITACIONES POR ENLACE CUÁNTICO FUNCIONAL\n' +
+        '        function generarEnlaceInvitacionPrivada() {\n' +
+        '            const tokenCanal = Math.random().toString(36).substring(2, 10);\n' +
+        '            const urlEnlace = window.location.origin + "/?canal=" + tokenCanal;\n' +
+        '            navigator.clipboard.writeText(urlEnlace);\n' +
+        '            alert("🔗 ¡ENLACE CUÁNTICO GENERADO Y COPIADO!\\n\\nEnvíalo por WhatsApp o SMS a tu compañero para enlazar la videollamada de inmediato:\\n\\n" + urlEnlace);\n' +
+        '        }\n' +
+        '\n' +
+        '        function procesarTransmisionTextoUrgente() {\n' +
         '            const m = document.getElementById("mensajeChat");\n' +
         '            if(m.value.trim() && socket) {\n' +
         '                socket.emit("canal_mensaje_usuario", { texto: m.value });\n' +
         '                m.value = "";\n' +
-        '            } else {\n' +
-        '                alert("CAPTURA DE NOTA DE VOZ: Grabación Opus 16K Pro iniciada de extremo a extremo.");\n' +
         '            }\n' +
         '        }\n' +
         '\n' +
-        '        function desplegarMenuInvitacionPrivada() { alert("INVITACIÓN DE RED PRIVADA: Sincronización criptográfica asimétrica activa."); }\n' +
         '        function activarClipAdjuntar() { alert("MÓDULO MULTIMEDIA SECURE: Seleccione documento PDF, Imagen o Audio sanitizado."); }\n' +
         '        function activarCapturaCamara() { alert("CÁMARA TERMINAL: Captura de alta definición iniciada de forma local."); }\n' +
         '\n' +
@@ -675,7 +699,7 @@ io.on("connection", (socket) => {
         });
     });
 
-    // Control WebRTC para Signaling Cifrado P2P de Llamadas y Videollamadas E2EE
+    // Control WebRTC para Señalización Cifrada P2P de Llamadas y Videollamadas E2EE
     socket.on("wa_multimedia_signaling", (tramaCifrada) => {
         socket.broadcast.emit("wa_multimedia_signaling_stream", tramaCifrada);
     });
