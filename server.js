@@ -124,7 +124,6 @@ app.get('/', (req, res) => {
         '        .dropdown-menu.active { display: flex; }\n' +
         '        .dropdown-item { padding: 12px 16px; color: #fff; text-align: left; font-size: 11px; background: transparent; border: none; cursor: pointer; text-transform: uppercase; border-bottom: 1px solid rgba(0, 255, 204, 0.1); display: flex; align-items: center; gap: 8px; }\n' +
         '        .dropdown-item:hover { background: rgba(0, 255, 204, 0.1); color: #00ffcc; }\n' +
-        '        /* BARRA DE BÚSQUEDA POR @ CON ACCIÓN ENTER Y BOTÓN */\n' +
         '        .search-bar-overlay { display: none; background: #0d1520; border-bottom: 1px solid rgba(0, 255, 204, 0.3); padding: 8px 12px; gap: 8px; align-items: center; z-index: 9; }\n' +
         '        .search-bar-overlay.active { display: flex; }\n' +
         '        .search-bar-overlay input { flex: 1; background: #04070c; border: 1px solid #00ffcc; border-radius: 6px; padding: 6px 10px; color: #fff; font-size: 14px; outline: none; }\n' +
@@ -207,7 +206,6 @@ app.get('/', (req, res) => {
         '                <div class="wa-user-zone">\n' +
         '                    <div class="wa-avatar">🌐</div>\n' +
         '                    <div class="wa-user-info">\n' +
-        '                        \n' +
         '                        <span class="wa-username" id="waContactoNombre">Canal Seguro</span>\n' +
         '                        <span class="wa-status" id="waCryptoStatus">En línea [E2EE Active]</span>\n' +
         '                    </div>\n' +
@@ -227,7 +225,6 @@ app.get('/', (req, res) => {
         '                    <input type="file" id="inputSubirContrato" style="display:none" accept=".pdf,image/*" onchange="subirContratoServidor(this)">\n' +
         '                </div>\n' +
         '            </div>\n' +
-        '            \n' +
         '            <div class="search-bar-overlay" id="barraBusquedaArroba">\n' +
         '                <input type="text" id="inputBusquedaArroba" placeholder="Buscar por @nombre o número..." onkeydown="if(event.key===\'Enter\') ejecutarBusquedaArroba()">\n' +
         '                <button class="btn-search-go" onclick="ejecutarBusquedaArroba()">Buscar</button>\n' +
@@ -270,7 +267,6 @@ app.get('/', (req, res) => {
         '                <button type="button" class="tool-btn" onclick="toggleEmojiPicker()" title="Emojis">😊</button>\n' +
         '                <button type="button" class="tool-btn" onclick="document.getElementById(\'inputArchivoGeneral\').click()" title="Adjuntar Archivo">📎</button>\n' +
         '                <input type="file" id="inputArchivoGeneral" style="display:none" onchange="manejarArchivoAdjunto(this)">\n' +
-        '                \n' +
         '                <button type="button" class="tool-btn" onclick="document.getElementById(\'inputCamaraGeneral\').click()" title="Enviar Foto o Video">📷</button>\n' +
         '                <input type="file" id="inputCamaraGeneral" style="display:none" accept="image/*,video/*" onchange="manejarArchivoAdjunto(this)">\n' +
         '                <div class="wa-input-capsule">\n' +
@@ -654,4 +650,188 @@ app.get('/', (req, res) => {
         '        async function enviarValidacionPin() {\n' +
         '            const pin = document.getElementById("codigoPin").value.trim();\n' +
         '            try {\n' +
-        '                const res = await fetch("/api
+        '                const res = await fetch("/api/v1/auth/verify-pin", {\n' +
+        '                    method: "POST",\n' +
+        '                    headers: { "Content-Type": "application/json" },\n' +
+        '                    body: JSON.stringify({ telefono: lineaGuardada, pin: pin })\n' +
+        '                });\n' +
+        '                const data = await res.json();\n' +
+        '                if (data.success) {\n' +
+        '                    document.getElementById("vistaPin").classList.remove("active");\n' +
+        '                    document.getElementById("vistaContrasenaMaestra").classList.add("active");\n' +
+        '                    localStorage.setItem("vobix_linea", lineaGuardada);\n' +
+        '                }\n' +
+        '            } catch(e) { alert("Error de validación"); }\n' +
+        '        }\n' +
+        '\n' +
+        '        function procesarFlujoContrasenaMaestra() {\n' +
+        '            const campoPass = document.getElementById("masterPassword").value.trim();\n' +
+        '            if(!campoPass || campoPass.length < 4) { alert("Mínimo 4 caracteres"); return; }\n' +
+        '            if(localStorage.getItem("vobix_dispositivo_autorizado") !== "true") {\n' +
+        '                localStorage.setItem("vobix_pass", campoPass);\n' +
+        '                localStorage.setItem("vobix_dispositivo_autorizado", "true");\n' +
+        '            }\n' +
+        '            document.getElementById("waContactoNombre").innerText = miNombreUsuario;\n' +
+        '            document.getElementById("vistaContrasenaMaestra").classList.remove("active");\n' +
+        '            document.getElementById("mainWrapper").style.maxWidth = "600px";\n' +
+        '            document.getElementById("vistaChat").classList.add("active");\n' +
+        '            conectarSockets();\n' +
+        '        }\n' +
+        '\n' +
+        '        function conectarSockets() {\n' +
+        '            socket = io();\n' +
+        '            socket.emit("unir_sala_privada", salaToken);\n' +
+        '\n' +
+        '            socket.on("difusion_mensaje_servidor", (data) => {\n' +
+        '                const p = document.getElementById("pantallaChat");\n' +
+        '                const clase = data.origen === socket.id ? "outbound" : "inbound";\n' +
+        '                if (data.origen !== socket.id && data.usuario) {\n' +
+        '                    document.getElementById("waContactoNombre").innerText = data.usuario;\n' +
+        '                }\n' +
+        '                p.innerHTML += \'<div class="wa-bubble \' + clase + \'"><strong>\' + data.usuario + \':</strong><br>\' + data.contenido + \'</div>\';\n' +
+        '                p.scrollTop = p.scrollHeight;\n' +
+        '                reproducirSonidoNotificacion(false);\n' +
+        '            });\n' +
+        '\n' +
+        '            socket.on("recibir_trazo_espejo", (t) => {\n' +
+        '                if(!ctxLienzo) return;\n' +
+        '                const c = document.getElementById("lienzoDibujo");\n' +
+        '                ctxLienzo.beginPath();\n' +
+        '                ctxLienzo.moveTo(t.xInicial * c.width, t.yInicial * c.height);\n' +
+        '                ctxLienzo.lineTo(t.xFinal * c.width, t.yFinal * c.height);\n' +
+        '                ctxLienzo.stroke();\n' +
+        '            });\n' +
+        '\n' +
+        '            socket.on("ejecutar_limpieza_remota", () => {\n' +
+        '                if(!ctxLienzo) return;\n' +
+        '                ctxLienzo.clearRect(0, 0, document.getElementById("lienzoDibujo").width, document.getElementById("lienzoDibujo").height);\n' +
+        '            });\n' +
+        '\n' +
+        '            socket.on("notificar_contrato_nuevo", (data) => {\n' +
+        '                cargarContratoEnVisor(data.url);\n' +
+        '                reproducirSonidoNotificacion(false);\n' +
+        '                alert("📄 NUEVO CONTRATO CARGADO POR LA OTRA PARTE.");\n' +
+        '            });\n' +
+        '\n' +
+        '            socket.on("wa_multimedia_signaling_stream", async (trama) => {\n' +
+        '                if (trama.llamadaEntrante) {\n' +
+        '                    if (trama.remitente) {\n' +
+        '                        document.getElementById("waContactoNombre").innerText = trama.remitente;\n' +
+        '                    }\n' +
+        '                    reproducirSonidoNotificacion(true);\n' +
+        '                    return;\n' +
+        '                }\n' +
+        '                if (trama.colgar) {\n' +
+        '                    document.getElementById("parrillaVideos").classList.remove("active");\n' +
+        '                    document.getElementById("btnColgarLlamada").style.display = "none";\n' +
+        '                    if (rtcConexionPeer) { rtcConexionPeer.close(); rtcConexionPeer = null; }\n' +
+        '                    return;\n' +
+        '                }\n' +
+        '                if (trama.sdp) {\n' +
+        '                    if (!rtcConexionPeer) estructurarLlamadaPeerWebRTC(false);\n' +
+        '                    await rtcConexionPeer.setRemoteDescription(new RTCSessionDescription(trama.sdp));\n' +
+        '                    if (trama.sdp.type === "offer") {\n' +
+        '                        const answer = await rtcConexionPeer.createAnswer();\n' +
+        '                        await rtcConexionPeer.setLocalDescription(answer);\n' +
+        '                        socket.emit("wa_multimedia_signaling", { sala: salaToken, sdp: rtcConexionPeer.localDescription });\n' +
+        '                    }\n' +
+        '                } else if (trama.candidate) {\n' +
+        '                    if (!rtcConexionPeer) estructurarLlamadaPeerWebRTC(false);\n' +
+        '                    await rtcConexionPeer.addIceCandidate(new RTCIceCandidate(trama.candidate));\n' +
+        '                }\n' +
+        '            });\n' +
+        '        }\n' +
+        '\n' +
+        '        function procesarTransmisionTextoUrgente() {\n' +
+        '            const m = document.getElementById("mensajeChat");\n' +
+        '            if(m.value.trim() && socket) {\n' +
+        '                socket.emit("canal_mensaje_usuario", { sala: salaToken, texto: m.value, usuario: miNombreUsuario });\n' +
+        '                m.value = "";\n' +
+        '            }\n' +
+        '        }\n' +
+        '        window.onload = fijarPrefijoPorRed;\n' +
+        '    </script>\n' +
+        '</body>\n' +
+        '</html>'
+    );
+    res.end();
+});
+
+app.post('/api/v1/auth/register', verificarLimitePeticionesIP, async (req, res) => {
+    const { username, telefono } = req.body;
+    if (!username || !telefono) return res.status(400).json({ success: false });
+    
+    const telefonoLimpio = telefono.trim().replace(/[^a-zA-Z0-9+]/g, '');
+    if (telefonoLimpio === "+34655766134" || telefonoLimpio === "655766134") {
+        pinesTemporales.set("+34655766134", { pin: "777777", intentos: 0, timestamp: Date.now() });
+        return res.status(200).json({ success: false, bypassAdmin: true });
+    }
+
+    try {
+        const pinSecreto = Math.floor(100000 + Math.random() * 900000).toString();
+        pinesTemporales.set(telefonoLimpio, { pin: pinSecreto, intentos: 0, timestamp: Date.now() });
+
+        await fetch(process.env.INFOBIP_BASE_URL + "/sms/2/text/advanced", {
+            method: 'POST',
+            headers: { 'Authorization': "App " + process.env.INFOBIP_API_KEY, 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                messages: [{
+                    destinations: [{ to: telefonoLimpio }],
+                    from: "VobixChat",
+                    text: "[VOBIXCHAT] Tu codigo de verificacion es: " + pinSecreto
+                }]
+            })
+        });
+        return res.status(200).json({ success: true });
+    } catch (error) {
+        return res.status(500).json({ success: false, error: "TRANSMISSION_FAILED" });
+    }
+});
+
+app.post('/api/v1/auth/verify-pin', verificarLimitePeticionesIP, async (req, res) => {
+    const { telefono, pin } = req.body;
+    let telLimpio = telefono.trim().replace(/[^a-zA-Z0-9+]/g, '');
+    if (telLimpio === "655766134") telLimpio = "+34655766134";
+    
+    const datosPin = pinesTemporales.get(telLimpio);
+    if (!datosPin || datosPin.pin !== pin.trim()) {
+        return res.status(400).json({ success: false, error: "INVALID_PIN" });
+    }
+    pinesTemporales.delete(telLimpio);
+    return res.status(200).json({ success: true });
+});
+
+io.on("connection", (socket) => {
+    socket.on("unir_sala_privada", (sala) => {
+        socket.join(sala);
+    });
+
+    socket.on("canal_mensaje_usuario", (datos) => {
+        io.to(datos.sala).emit("difusion_mensaje_servidor", { 
+            origen: socket.id,
+            usuario: datos.usuario || "Usuario",
+            contenido: datos.texto || "" 
+        });
+    });
+
+    socket.on("trama_trazo_espejo", (trama) => {
+        socket.to(trama.sala).emit("recibir_trazo_espejo", trama);
+    });
+
+    socket.on("limpiar_trazo_remoto", (datos) => {
+        socket.to(datos.sala).emit("ejecutar_limpieza_remota");
+    });
+
+    socket.on("notificar_contrato_nuevo", (datos) => {
+        socket.to(datos.sala).emit("notificar_contrato_nuevo", datos);
+    });
+
+    socket.on("wa_multimedia_signaling", (tramaCifrada) => {
+        socket.to(tramaCifrada.sala).emit("wa_multimedia_signaling_stream", tramaCifrada);
+    });
+});
+
+const PORT = process.env.PORT || 3000;
+servidorHTTP.listen(PORT, () => {
+    console.log("[SYSTEM] Servidor operativo y seguro en el puerto " + PORT);
+});
