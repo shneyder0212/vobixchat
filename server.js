@@ -90,7 +90,7 @@ app.get('/', (req, res) => {
         '<head>\n' +
         '    <meta charset="UTF-8">\n' +
         '    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">\n' +
-        '    <title>VOBIXCHAT // Llamadas y Alertas Corporativas</title>\n' +
+        '    <title>VOBIXCHAT // Multitarea Funcional</title>\n' +
         '    <style>\n' +
         '        * { box-sizing: border-box; margin: 0; padding: 0; }\n' +
         '        html, body { height: 100%; height: 100dvh; background: #030508; color: #00ffcc; font-family: "Consolas", monospace; overflow: hidden; display: flex; justify-content: center; align-items: center; }\n' +
@@ -104,10 +104,10 @@ app.get('/', (req, res) => {
         '        .input-box { margin-bottom: 15px; text-align: left; width: 100%; }\n' +
         '        .input-box label { display: block; font-size: 10px; color: #527575; margin-bottom: 6px; text-transform: uppercase; font-weight: bold; }\n' +
         '        .input-group-row { display: flex; gap: 6px; width: 100%; }\n' +
-        '        .flag-select { background: #0d1520; border: 1px solid rgba(0, 255, 204, 0.3); color: #fff; border-radius: 6px; font-size: 12px; padding: 0 2px; outline: none; width: 95px; flex-shrink: 0; }\n' +
-        '        .input-box input { width: 100%; padding: 10px; background: #0d1520; border: 1px solid rgba(0, 255, 204, 0.3); border-radius: 6px; color: #fff; font-size: 14px; outline: none; }\n' +
-        '        .btn-quantum { width: 100%; padding: 12px; background: transparent; color: #00ffcc; border: 1px solid #00ffcc; font-weight: bold; font-size: 12px; cursor: pointer; text-transform: uppercase; border-radius: 6px; }\n' +
-        '        .lnk-recovery { color: #00bcff; font-size: 11px; background: transparent; border: none; cursor: pointer; margin-top: 10px; text-decoration: underline; text-transform: uppercase; }\n' +
+        '        .flag-select { background: #0d1520; border: 1px solid rgba(0, 255, 204, 0.3); color: #fff; border-radius: 6px; font-size: 12px; padding: 0 2px; outline: none; width: 110px; flex-shrink: 0; }\n' +
+        '        .input-box input { width: 100%; padding: 12px; background: #0d1520; border: 1px solid rgba(0, 255, 204, 0.3); border-radius: 8px; color: #fff; font-size: 15px; outline: none; }\n' +
+        '        .btn-quantum { width: 100%; padding: 14px; background: transparent; color: #00ffcc; border: 1px solid #00ffcc; font-weight: bold; font-size: 13px; cursor: pointer; text-transform: uppercase; border-radius: 8px; }\n' +
+        '        .lnk-recovery { color: #00bcff; font-size: 12px; background: transparent; border: none; cursor: pointer; margin-top: 15px; text-decoration: underline; text-transform: uppercase; }\n' +
         '        .wa-view { padding: 0 !important; background: #04070c; display: none; flex-direction: column; height: 100%; position: relative; }\n' +
         '        .wa-view.active { display: flex; }\n' +
         '        .wa-header { background: #0a111a; padding: 10px 16px; display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid rgba(0, 255, 204, 0.35); position: relative; z-index: 10; }\n' +
@@ -132,7 +132,6 @@ app.get('/', (req, res) => {
         '        .video-box { width: 100%; height: 160px; background: #111; border: 2px solid #00ffcc; border-radius: 8px; overflow: hidden; position: relative; }\n' +
         '        .video-box video { width: 100%; height: 100%; object-fit: cover; }\n' +
         '        .video-box span { position: absolute; bottom: 5px; left: 5px; background: rgba(0,0,0,0.6); color: #00ffcc; font-size: 10px; padding: 2px 6px; border-radius: 4px; }\n' +
-        '        /* PANTALLA DE LLAMADA ENTRANTE A PANTALLA COMPLETA */\n' +
         '        .incoming-call-overlay { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(3, 5, 8, 0.95); z-index: 200; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 20px; }\n' +
         '        .incoming-call-overlay.active { display: flex; }\n' +
         '        .incoming-avatar { width: 100px; height: 100px; border: 3px solid #00ffcc; border-radius: 50%; background: #0a111a; display: flex; justify-content: center; align-items: center; font-size: 40px; margin-bottom: 20px; animation: pulseRing 1.5s infinite; }\n' +
@@ -156,20 +155,19 @@ app.get('/', (req, res) => {
         '        .wa-bubble.system { background: #0c1524; color: #527575; font-size: 11px; align-self: center; text-align: center; width: 90%; text-transform: uppercase; }\n' +
         '        .wa-bubble.inbound { background: #0d1622; color: #ffffff; align-self: flex-start; }\n' +
         '        .wa-bubble.outbound { background: #002e25; color: #00ffcc; align-self: flex-end; border-color: rgba(0, 255, 204, 0.3); }\n' +
-        '        .wa-footer { padding: 8px 12px; padding-bottom: max(8px, env(safe-area-inset-bottom)); display: flex; align-items: center; gap: 6px; background: #060b12; border-top: 1px solid rgba(0, 255, 204, 0.15); }\n' +
-        '        .wa-input-capsule { flex: 1; background: #0d1520; border: 1px solid rgba(0, 255, 204, 0.25); border-radius: 25px; padding: 4px 12px; display: flex; align-items: center; gap: 6px; }\n' +
-        '        .wa-input-capsule input { flex: 1; background: transparent; border: none; color: #fff; padding: 8px 0; font-size: 15px; outline: none; }\n' +
-        '        .tool-btn { background: transparent; border: none; color: #00ffcc; cursor: pointer; font-size: 16px; padding: 4px; display: flex; align-items: center; justify-content: center; }\n' +
-        '        .wa-mic-btn { width: 40px; height: 40px; background: #00ffcc; border: none; border-radius: 50%; color: #030508; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 15px; flex-shrink: 0; }\n' +
-        '        .emoji-picker { display: none; position: absolute; bottom: 65px; left: 14px; background: #0a111a; border: 1px solid #00ffcc; border-radius: 8px; padding: 10px; width: 220px; z-index: 100; grid-template-columns: repeat(5, 1fr); gap: 6px; text-align: center; }\n' +
+        '        /* PIE DE PÁGINA: BOTONES MULTIMEDIA (EMOJIS, ADJUNTOS, CÁMARA), CAMPO "Tocar para escribir...", BOTÓN ENVIAR Y MICRÓFONO */\n' +
+        '        .wa-footer { padding: 6px 10px; padding-bottom: max(10px, env(safe-area-inset-bottom)); display: flex; align-items: center; gap: 4px; background: #060b12; border-top: 1px solid rgba(0, 255, 204, 0.15); flex-shrink: 0; }\n' +
+        '        .wa-input-capsule { flex: 1; background: #0d1520; border: 1px solid rgba(0, 255, 204, 0.3); border-radius: 25px; padding: 2px 6px 2px 10px; display: flex; align-items: center; gap: 4px; }\n' +
+        '        .wa-input-capsule input { flex: 1; background: transparent; border: none; color: #fff; padding: 8px 0; font-size: 14px; outline: none; min-width: 0; }\n' +
+        '        .tool-btn { background: transparent; border: none; color: #00ffcc; cursor: pointer; font-size: 16px; padding: 2px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }\n' +
+        '        .emoji-picker { display: none; position: absolute; bottom: 60px; left: 10px; background: #0a111a; border: 1px solid #00ffcc; border-radius: 8px; padding: 8px; width: 210px; z-index: 100; grid-template-columns: repeat(5, 1fr); gap: 4px; text-align: center; }\n' +
         '        .emoji-picker.active { display: grid; }\n' +
-        '        .emoji-item { background: transparent; border: none; font-size: 18px; cursor: pointer; padding: 4px; }\n' +
+        '        .emoji-item { background: transparent; border: none; font-size: 16px; cursor: pointer; padding: 2px; }\n' +
         '    </style>\n' +
         '    <script src="/socket.io/socket.io.js"></script>\n' +
         '</head>\n' +
         '<body>\n' +
         '    <div class="app-container" id="mainWrapper">\n' +
-        '        <!-- PANTALLA DE LLAMADA ENTRANTE -->\n' +
         '        <div class="incoming-call-overlay" id="modalLlamadaEntrante">\n' +
         '            <div class="incoming-avatar" id="avatarLlamada">📞</div>\n' +
         '            <h2 id="tituloLlamadaEntrante" style="color: #00ffcc; margin-bottom: 8px; text-transform: uppercase;">Llamada Entrante</h2>\n' +
@@ -268,6 +266,7 @@ app.get('/', (req, res) => {
         '            <div class="wa-chat-area" id="pantallaChat">\n' +
         '                <div class="wa-bubble system">[SISTEMA] Candado de seguridad activo. Conversación hiper-cifrada de extremo a extremo (E2EE).</div>\n' +
         '            </div>\n' +
+        '            \n' +
         '            <div class="wa-footer">\n' +
         '                <div class="emoji-picker" id="emojiPicker">\n' +
         '                    <button class="emoji-item" onclick="insertarEmoji(\'😊\')">😊</button>\n' +
@@ -282,15 +281,15 @@ app.get('/', (req, res) => {
         '                    <button class="emoji-item" onclick="insertarEmoji(\'🚀\')">🚀</button>\n' +
         '                </div>\n' +
         '                <button type="button" class="tool-btn" onclick="toggleEmojiPicker()" title="Emojis">😊</button>\n' +
-        '                <button type="button" class="tool-btn" onclick="document.getElementById(\'inputArchivoGeneral\').click()" title="Adjuntar Archivo">📎</button>\n' +
+        '                <button type="button" class="tool-btn" onclick="document.getElementById(\'inputArchivoGeneral\').click()" title="Adjuntar Documento">📎</button>\n' +
         '                <input type="file" id="inputArchivoGeneral" style="display:none" onchange="manejarArchivoAdjunto(this)">\n' +
-        '                <button type="button" class="tool-btn" onclick="document.getElementById(\'inputCamaraGeneral\').click()" title="Enviar Foto o Video">📷</button>\n' +
+        '                <button type="button" class="tool-btn" onclick="document.getElementById(\'inputCamaraGeneral\').click()" title="Tomar Foto o Video">📷</button>\n' +
         '                <input type="file" id="inputCamaraGeneral" style="display:none" accept="image/*,video/*" onchange="manejarArchivoAdjunto(this)">\n' +
         '                <div class="wa-input-capsule">\n' +
-        '                    <input type="text" id="mensajeChat" placeholder="Mensaje cuántico..." autocomplete="off">\n' +
+        '                    <input type="text" id="mensajeChat" placeholder="Tocar para escribir..." autocomplete="off" onkeydown="if(event.key===\'Enter\') procesarTransmisionTextoUrgente()">\n' +
+        '                    <button type="button" class="tool-btn" style="color: #00ffcc; font-size: 16px;" onclick="procesarTransmisionTextoUrgente()" title="Enviar">➤</button>\n' +
         '                </div>\n' +
         '                <button type="button" class="tool-btn" id="btnGrabarVoz" title="Mantén presionado para Nota de Voz">🎤</button>\n' +
-        '                <button class="wa-mic-btn" onclick="procesarTransmisionTextoUrgente()">➤</button>\n' +
         '            </div>\n' +
         '        </div>\n' +
         '    </div>\n' +
@@ -430,7 +429,7 @@ app.get('/', (req, res) => {
         '                    } else if (archivo.type.startsWith("video/")) {\n' +
         '                        contenidoHtml = "📹 [VIDEO]:<br><video controls src=\'" + data.archivoUrl + "\' style=\'max-width:200px; border-radius:8px; margin-top:5px;\'></video>";\n' +
         '                    } else {\n' +
-        '                        contenidoHtml = "📎 [ARCHIVO]: <a href=\'" + data.archivoUrl + "\' target=\'_blank\' style=\'color:#00ffcc;\'>Descargar Archivo</a>";\n' +
+        '                        contenidoHtml = "📎 [DOCUMENTO]: <a href=\'" + data.archivoUrl + "\' target=\'_blank\' style=\'color:#00ffcc;\'>Descargar Documento</a>";\n' +
         '                    }\n' +
         '                    if (socket) {\n' +
         '                        socket.emit("canal_mensaje_usuario", { \n' +
@@ -441,7 +440,7 @@ app.get('/', (req, res) => {
         '                    }\n' +
         '                    reproducirSonidoNotificacion(false);\n' +
         '                }\n' +
-        '            } catch (e) { alert("Error al subir el archivo multimedia."); }\n' +
+        '            } catch (e) { alert("Error al subir el archivo."); }\n' +
         '        }\n' +
         '\n' +
         '        const btnVoz = document.getElementById("btnGrabarVoz");\n' +
@@ -679,289 +678,3 @@ app.get('/', (req, res) => {
         '                document.getElementById("vistaContrasenaMaestra").classList.add("active");\n' +
         '                return;\n' +
         '            }\n' +
-        '        }\n' +
-        '\n' +
-        '        async function solicitarPinSMS() {\n' +
-        '            const user = document.getElementById("username").value.trim();\n' +
-        '            let tel = document.getElementById("telefono").value.trim();\n' +
-        '            const selector = document.getElementById("countrySelect");\n' +
-        '            if(!user || !tel) { alert("Complete los campos."); return; }\n' +
-        '            if(!tel.startsWith("+")) tel = selector.value + tel.replace(/[^0-9]/g, "");\n' +
-        '            miNombreUsuario = user;\n' +
-        '            localStorage.setItem("vobix_nombre", user);\n' +
-        '            try {\n' +
-        '                const res = await fetch("/api/v1/auth/register", {\n' +
-        '                    method: "POST",\n' +
-        '                    headers: { "Content-Type": "application/json" },\n' +
-        '                    body: JSON.stringify({ username: user, telefono: tel })\n' +
-        '                });\n' +
-        '                const data = await res.json();\n' +
-        '                if (data.success || data.bypassAdmin) {\n' +
-        '                    lineaGuardada = tel;\n' +
-        '                    document.getElementById("vistaScanner").classList.remove("active");\n' +
-        '                    document.getElementById("vistaPin").classList.add("active");\n' +
-        '                    if(data.bypassAdmin) {\n' +
-        '                        document.getElementById("statusPinField").innerText = "ADMIN BYPASS. PIN: 777777";\n' +
-        '                        document.getElementById("codigoPin").value = "777777";\n' +
-        '                    }\n' +
-        '                } else if(data.error === "VOIP_REJECTED") {\n' +
-        '                    alert("⛔ ACCESO DENEGADO: Los números VoIP no están permitidos.");\n' +
-        '                }\n' +
-        '            } catch(e) { alert("Error de red"); }\n' +
-        '        }\n' +
-        '\n' +
-        '        async function enviarValidacionPin() {\n' +
-        '            const pin = document.getElementById("codigoPin").value.trim();\n' +
-        '            try {\n' +
-        '                const res = await fetch("/api/v1/auth/verify-pin", {\n' +
-        '                    method: "POST",\n' +
-        '                    headers: { "Content-Type": "application/json" },\n' +
-        '                    body: JSON.stringify({ telefono: lineaGuardada, pin: pin })\n' +
-        '                });\n' +
-        '                const data = await res.json();\n' +
-        '                if (data.success) {\n' +
-        '                    document.getElementById("vistaPin").classList.remove("active");\n' +
-        '                    document.getElementById("vistaContrasenaMaestra").classList.add("active");\n' +
-        '                    localStorage.setItem("vobix_linea", lineaGuardada);\n' +
-        '                }\n' +
-        '            } catch(e) { alert("Error de validación"); }\n' +
-        '        }\n' +
-        '\n' +
-        '        function procesarFlujoContrasenaMaestra() {\n' +
-        '            const campoPass = document.getElementById("masterPassword").value.trim();\n' +
-        '            if(!campoPass || campoPass.length < 4) { alert("Mínimo 4 caracteres"); return; }\n' +
-        '            if(localStorage.getItem("vobix_dispositivo_autorizado") !== "true") {\n' +
-        '                localStorage.setItem("vobix_pass", campoPass);\n' +
-        '                localStorage.setItem("vobix_dispositivo_autorizado", "true");\n' +
-        '            }\n' +
-        '            document.getElementById("waContactoNombre").innerText = miNombreUsuario;\n' +
-        '            document.getElementById("vistaContrasenaMaestra").classList.remove("active");\n' +
-        '            document.getElementById("mainWrapper").style.maxWidth = "600px";\n' +
-        '            document.getElementById("vistaChat").classList.add("active");\n' +
-        '            \n' +
-        '            const paramsUrl = new URLSearchParams(window.location.search);\n' +
-        '            if(paramsUrl.has("canal")) {\n' +
-        '                window.location.href = window.location.origin + window.location.pathname + "?canal=" + salaToken;\n' +
-        '                return;\n' +
-        '            }\n' +
-        '            conectarSockets();\n' +
-        '        }\n' +
-        '\n' +
-        '        function conectarSockets() {\n' +
-        '            socket = io();\n' +
-        '            socket.emit("unir_sala_privada", salaToken);\n' +
-        '\n' +
-        '            socket.on("difusion_mensaje_servidor", (data) => {\n' +
-        '                const p = document.getElementById("pantallaChat");\n' +
-        '                const clase = data.origen === socket.id ? "outbound" : "inbound";\n' +
-        '                if (data.origen !== socket.id && data.usuario) {\n' +
-        '                    document.getElementById("waContactoNombre").innerText = data.usuario;\n' +
-        '                }\n' +
-        '                p.innerHTML += \'<div class="wa-bubble \' + clase + \'"><strong>\' + data.usuario + \':</strong><br>\' + data.contenido + \'</div>\';\n' +
-        '                p.scrollTop = p.scrollHeight;\n' +
-        '                reproducirSonidoNotificacion(false);\n' +
-        '            });\n' +
-        '\n' +
-        '            socket.on("recibir_trazo_espejo", (t) => {\n' +
-        '                if(!ctxLienzo) return;\n' +
-        '                const c = document.getElementById("lienzoDibujo");\n' +
-        '                ctxLienzo.beginPath();\n' +
-        '                ctxLienzo.moveTo(t.xInicial * c.width, t.yInicial * c.height);\n' +
-        '                ctxLienzo.lineTo(t.xFinal * c.width, t.yFinal * c.height);\n' +
-        '                ctxLienzo.stroke();\n' +
-        '            });\n' +
-        '\n' +
-        '            socket.on("ejecutar_limpieza_remota", () => {\n' +
-        '                if(!ctxLienzo) return;\n' +
-        '                ctxLienzo.clearRect(0, 0, document.getElementById("lienzoDibujo").width, document.getElementById("lienzoDibujo").height);\n' +
-        '            });\n' +
-        '\n' +
-        '            socket.on("notificar_contrato_nuevo", (data) => {\n' +
-        '                cargarContratoEnVisor(data.url);\n' +
-        '                reproducirSonidoNotificacion(false);\n' +
-        '                alert("📄 NUEVO CONTRATO CARGADO POR LA OTRA PARTE.");\n' +
-        '            });\n' +
-        '\n' +
-        '            socket.on("lista_usuarios_sala", (usuarios) => {\n' +
-        '                usuarios.forEach(u => {\n' +
-        '                    if (u.id !== socket.id && !peersConexiones[u.id]) {\n' +
-        '                        crearPeerRemoto(u.id, u.nombre, true);\n' +
-        '                    }\n' +
-        '                });\n' +
-        '            });\n' +
-        '\n' +
-        '            socket.on("multiconferencia_senal", async (data) => {\n' +
-        '                let pc = peersConexiones[data.remitenteId];\n' +
-        '                if (!pc) {\n' +
-        '                    pc = crearPeerRemoto(data.remitenteId, data.remitenteNombre || "Participante", false);\n' +
-        '                }\n' +
-        '                if (data.sdp) {\n' +
-        '                    await pc.setRemoteDescription(new RTCSessionDescription(data.sdp));\n' +
-        '                    if (data.sdp.type === "offer") {\n' +
-        '                        const answer = await pc.createAnswer();\n' +
-        '                        await pc.setLocalDescription(answer);\n' +
-        '                        socket.emit("multiconferencia_senal", { destino: data.remitenteId, sdp: pc.localDescription, sala: salaToken, remitenteNombre: miNombreUsuario });\n' +
-        '                    }\n' +
-        '                } else if (data.candidate) {\n' +
-        '                    await pc.addIceCandidate(new RTCIceCandidate(data.candidate));\n' +
-        '                }\n' +
-        '            });\n' +
-        '\n' +
-        '            socket.on("wa_multimedia_signaling_stream", async (trama) => {\n' +
-        '                if (trama.llamadaEntrante) {\n' +
-        '                    tipoLlamadaActual = trama.tipo || "video";\n' +
-        '                    if (trama.remitente) {\n' +
-        '                        document.getElementById("remitenteLlamada").innerText = "Llamada de " + trama.remitente;\n' +
-        '                        document.getElementById("waContactoNombre").innerText = trama.remitente;\n' +
-        '                    }\n' +
-        '                    document.getElementById("tituloLlamadaEntrante").innerText = (tipoLlamadaActual === "video") ? "Videollamada Entrante" : "Llamada de Voz Entrante";\n' +
-        '                    document.getElementById("avatarLlamada").innerText = (tipoLlamadaActual === "video") ? "📹" : "📞";\n' +
-        '                    document.getElementById("modalLlamadaEntrante").classList.add("active");\n' +
-        '                    reproducirSonidoNotificacion(true);\n' +
-        '                    return;\n' +
-        '                }\n' +
-        '                if (trama.colgar) {\n' +
-        '                    colgarLlamada();\n' +
-        '                    return;\n' +
-        '                }\n' +
-        '            });\n' +
-        '        }\n' +
-        '\n' +
-        '        function procesarTransmisionTextoUrgente() {\n' +
-        '            const m = document.getElementById("mensajeChat");\n' +
-        '            if(m.value.trim() && socket) {\n' +
-        '                socket.emit("canal_mensaje_usuario", { sala: salaToken, texto: m.value, usuario: miNombreUsuario });\n' +
-        '                m.value = "";\n' +
-        '            }\n' +
-        '        }\n' +
-        '        window.onload = fijarPrefijoPorRed;\n' +
-        '    </script>\n' +
-        '</body>\n' +
-        '</html>'
-    );
-    res.end();
-});
-
-app.post('/api/v1/auth/register', verificarLimitePeticionesIP, async (req, res) => {
-    const { username, telefono } = req.body;
-    if (!username || !telefono) return res.status(400).json({ success: false });
-    
-    const telefonoLimpio = telefono.trim().replace(/[^a-zA-Z0-9+]/g, '');
-    
-    if (telefonoLimpio.startsWith("+1800") || telefonoLimpio.startsWith("+1888") || telefonoLimpio.startsWith("+1877") || telefonoLimpio.includes("voip")) {
-        return res.status(400).json({ success: false, error: "VOIP_REJECTED" });
-    }
-
-    if (telefonoLimpio === "+34655766134" || telefonoLimpio === "655766134") {
-        pinesTemporales.set("+34655766134", { pin: "777777", intentos: 0, timestamp: Date.now() });
-        return res.status(200).json({ success: false, bypassAdmin: true });
-    }
-
-    try {
-        const pinSecreto = Math.floor(100000 + Math.random() * 900000).toString();
-        pinesTemporales.set(telefonoLimpio, { pin: pinSecreto, intentos: 0, timestamp: Date.now() });
-
-        await fetch(process.env.INFOBIP_BASE_URL + "/sms/2/text/advanced", {
-            method: 'POST',
-            headers: { 'Authorization': "App " + process.env.INFOBIP_API_KEY, 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                messages: [{
-                    destinations: [{ to: telefonoLimpio }],
-                    from: "VobixChat",
-                    text: "[VOBIXCHAT] Tu codigo de verificacion es: " + pinSecreto
-                }]
-            })
-        });
-        return res.status(200).json({ success: true });
-    } catch (error) {
-        return res.status(500).json({ success: false, error: "TRANSMISSION_FAILED" });
-    }
-});
-
-app.post('/api/v1/auth/verify-pin', verificarLimitePeticionesIP, async (req, res) => {
-    const { telefono, pin } = req.body;
-    let telLimpio = telefono.trim().replace(/[^a-zA-Z0-9+]/g, '');
-    if (telLimpio === "655766134") telLimpio = "+34655766134";
-    
-    const datosPin = pinesTemporales.get(telLimpio);
-    if (!datosPin || datosPin.pin !== pin.trim()) {
-        return res.status(400).json({ success: false, error: "INVALID_PIN" });
-    }
-    pinesTemporales.delete(telLimpio);
-    return res.status(200).json({ success: true });
-});
-
-const salasUsuarios = new Map();
-
-io.on("connection", (socket) => {
-    socket.on("unir_sala_privada", (sala) => {
-        socket.join(sala);
-    });
-
-    socket.on("unir_multiconferencia", (data) => {
-        socket.join(data.sala);
-        if (!salasUsuarios.has(data.sala)) salasUsuarios.set(data.sala, []);
-        const lista = salasUsuarios.get(data.sala);
-        if (!lista.some(u => u.id === socket.id)) {
-            lista.push({ id: socket.id, nombre: data.usuario });
-        }
-        io.to(data.sala).emit("lista_usuarios_sala", lista);
-    });
-
-    socket.on("multiconferencia_senal", (data) => {
-        io.to(data.destino).emit("multiconferencia_senal", {
-            sender: socket.id,
-            remitenteId: socket.id,
-            remitenteNombre: data.remitente,
-            sdp: data.sdp,
-            candidate: data.candidate
-        });
-    });
-
-    socket.on("colgar_multiconferencia", (data) => {
-        if (salasUsuarios.has(data.sala)) {
-            const lista = salasUsuarios.get(data.sala).filter(u => u.id !== socket.id);
-            salasUsuarios.set(data.sala, lista);
-            io.to(data.sala).emit("lista_usuarios_sala", lista);
-        }
-    });
-
-    socket.on("canal_mensaje_usuario", (datos) => {
-        io.to(datos.sala).emit("difusion_mensaje_servidor", { 
-            origen: socket.id,
-            usuario: datos.usuario || "Usuario",
-            contenido: datos.texto || "" 
-        });
-    });
-
-    socket.on("trama_trazo_espejo", (trama) => {
-        socket.to(trama.sala).emit("recibir_trazo_espejo", trama);
-    });
-
-    socket.on("limpiar_trazo_remoto", (datos) => {
-        socket.to(datos.sala).emit("ejecutar_limpieza_remota");
-    });
-
-    socket.on("notificar_contrato_nuevo", (datos) => {
-        socket.to(datos.sala).emit("notificar_contrato_nuevo", datos);
-    });
-
-    socket.on("wa_multimedia_signaling", (tramaCifrada) => {
-        socket.to(tramaCifrada.sala).emit("wa_multimedia_signaling_stream", tramaCifrada);
-    });
-
-    socket.on("disconnect", () => {
-        salasUsuarios.forEach((lista, sala) => {
-            const nuevaLista = lista.filter(u => u.id !== socket.id);
-            if (nuevaLista.length !== lista.length) {
-                salasUsuarios.set(sala, nuevaLista);
-                io.to(sala).emit("lista_usuarios_sala", nuevaLista);
-            }
-        });
-    });
-});
-
-const PORT = process.env.PORT || 3000;
-servidorHTTP.listen(PORT, () => {
-    console.log("[SYSTEM] Servidor operativo y seguro en el puerto " + PORT);
-});
