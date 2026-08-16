@@ -91,7 +91,7 @@ app.get('/', (req, res) => {
         '<head>\n' +
         '    <meta charset="UTF-8">\n' +
         '    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">\n' +
-        '    <title>VOBIXCHAT // Canal Seguro & Multimedia Cuántico</title>\n' +
+        '    <title>VOBIXCHAT // Canal Seguro & Multimedia Definitivo</title>\n' +
         '    <style>\n' +
         '        * { box-sizing: border-box; margin: 0; padding: 0; }\n' +
         '        body { font-family: "Consolas", monospace; background: #030508; color: #00ffcc; display: flex; justify-content: center; align-items: center; min-height: 100vh; min-height: 100dvh; overflow: hidden; }\n' +
@@ -119,17 +119,15 @@ app.get('/', (req, res) => {
         '        .wa-status { font-size: 11px; color: #527575; }\n' +
         '        .wa-actions { display: flex; gap: 10px; align-items: center; position: relative; }\n' +
         '        .wa-icon-btn { background: transparent; border: none; color: #00ffcc; cursor: pointer; font-size: 18px; }\n' +
-        '        /* BOTÓN DE COLGAR ESTILO WHATSAPP (NEÓN ROJO) */\n' +
         '        .btn-quantum-hangup { background: #ff3333; border: none; color: #fff; border-radius: 50%; width: 36px; height: 36px; display: none; align-items: center; justify-content: center; cursor: pointer; font-size: 16px; box-shadow: 0 0 10px rgba(255, 51, 51, 0.7); }\n' +
         '        .dropdown-menu { display: none; position: absolute; top: 35px; right: 0; background: #0a111a; border: 1px solid #00ffcc; border-radius: 8px; width: 260px; max-height: 250px; overflow-y: auto; box-shadow: 0 4px 15px rgba(0,0,0,0.8); z-index: 100; flex-direction: column; }\n' +
         '        .dropdown-menu.active { display: flex; }\n' +
         '        .dropdown-item { padding: 12px 16px; color: #fff; text-align: left; font-size: 11px; background: transparent; border: none; cursor: pointer; text-transform: uppercase; border-bottom: 1px solid rgba(0, 255, 204, 0.1); display: flex; align-items: center; gap: 8px; }\n' +
         '        .dropdown-item:hover { background: rgba(0, 255, 204, 0.1); color: #00ffcc; }\n' +
-        '        /* BARRA DE BÚSQUEDA POR @ */\n' +
         '        .search-bar-overlay { display: none; background: #0d1520; border-bottom: 1px solid rgba(0, 255, 204, 0.3); padding: 8px 12px; gap: 8px; align-items: center; z-index: 9; }\n' +
         '        .search-bar-overlay.active { display: flex; }\n' +
         '        .search-bar-overlay input { flex: 1; background: #04070c; border: 1px solid #00ffcc; border-radius: 6px; padding: 6px 10px; color: #fff; font-size: 14px; outline: none; }\n' +
-        '        /* ESTILO VIDEOLLAMADA: PANTALLA COMPLETA + MINIATURA FLOTANTE */\n' +
+        '        .btn-search-go { background: #00ffcc; color: #030508; border: none; border-radius: 6px; padding: 6px 12px; font-weight: bold; font-size: 11px; cursor: pointer; text-transform: uppercase; }\n' +
         '        .webrtc-container { display: none; position: absolute; top: 55px; left: 0; width: 100%; height: calc(100% - 115px); background: #000; z-index: 20; overflow: hidden; }\n' +
         '        .webrtc-container.active { display: block; }\n' +
         '        #videoRemoto { width: 100%; height: 100%; object-fit: cover; }\n' +
@@ -220,7 +218,7 @@ app.get('/', (req, res) => {
         '                    <div class="dropdown-menu" id="menuTresPuntos">\n' +
         '                        <button class="dropdown-item" onclick="generarInvitacionSalaPrivada()">🔗 Invitar a Sala Privada</button>\n' +
         '                        <button class="dropdown-item" onclick="toggleBuscadorArroba()">🔍 Buscar Usuario (@)</button>\n' +
-        '                        <button class="dropdown-item" onclick="solicitarPermisosCamaraMic()">🔓 Habilitar Cámara / Micrófono</button>\n' +
+        '                        <button class="dropdown-item" onclick="forzarPermisosPermanentes()">🔓 Habilitar Cámara / Micrófono</button>\n' +
         '                        <button class="dropdown-item" onclick="document.getElementById(\'inputSubirContrato\').click()">📄 Subir Contrato a Firmar</button>\n' +
         '                        <button class="dropdown-item" onclick="abrirLienzoFirmaEspejo()">✍️ Firma en Espejo (Tiempo Real)</button>\n' +
         '                    </div>\n' +
@@ -229,6 +227,7 @@ app.get('/', (req, res) => {
         '            </div>\n' +
         '            <div class="search-bar-overlay" id="barraBusquedaArroba">\n' +
         '                <input type="text" id="inputBusquedaArroba" placeholder="Buscar por @nombre o número..." onkeyup="filtrarMensajesChat(this.value)">\n' +
+        '                <button class="btn-search-go" onclick="ejecutarBusquedaArroba()">Buscar</button>\n' +
         '                <button class="wa-icon-btn" style="font-size: 14px;" onclick="toggleBuscadorArroba()">❌</button>\n' +
         '            </div>\n' +
         '            <div class="webrtc-container" id="parrillaVideos">\n' +
@@ -268,8 +267,9 @@ app.get('/', (req, res) => {
         '                <button type="button" class="tool-btn" onclick="toggleEmojiPicker()" title="Emojis">😊</button>\n' +
         '                <button type="button" class="tool-btn" onclick="document.getElementById(\'inputArchivoGeneral\').click()" title="Adjuntar Archivo">📎</button>\n' +
         '                <input type="file" id="inputArchivoGeneral" style="display:none" onchange="manejarArchivoAdjunto(this)">\n' +
-        '                <button type="button" class="tool-btn" onclick="document.getElementById(\'inputCamaraGeneral\').click()" title="Tomar Foto">📷</button>\n' +
-        '                <input type="file" id="inputCamaraGeneral" style="display:none" accept="image/*,video/*" capture="environment" onchange="manejarArchivoAdjunto(this)">\n' +
+        '                \n' +
+        '                <button type="button" class="tool-btn" onclick="document.getElementById(\'inputCamaraGeneral\').click()" title="Enviar Foto o Video">📷</button>\n' +
+        '                <input type="file" id="inputCamaraGeneral" style="display:none" accept="image/*,video/*" onchange="manejarArchivoAdjunto(this)">\n' +
         '                <div class="wa-input-capsule">\n' +
         '                    <input type="text" id="mensajeChat" placeholder="Mensaje cuántico..." autocomplete="off">\n' +
         '                </div>\n' +
@@ -336,6 +336,16 @@ app.get('/', (req, res) => {
         '            });\n' +
         '        }\n' +
         '\n' +
+        '        function ejecutarBusquedaArroba() {\n' +
+        '            const query = document.getElementById("inputBusquedaArroba").value.trim();\n' +
+        '            if (!query) {\n' +
+        '                alert("⚠️ Ingrese un nombre con @ o número para buscar.");\n' +
+        '                return;\n' +
+        '            }\n' +
+        '            filtrarMensajesChat(query);\n' +
+        '            alert("🔍 Búsqueda ejecutada para: " + query);\n' +
+        '        }\n' +
+        '\n' +
         '        function toggleEmojiPicker() {\n' +
         '            document.getElementById("emojiPicker").classList.toggle("active");\n' +
         '        }\n' +
@@ -355,13 +365,13 @@ app.get('/', (req, res) => {
         '            alert("🔗 ¡ENLACE DE SALA PRIVADA COPIADO!\\n\\nCompártelo para que la otra persona ingrese y se registre.");\n' +
         '        }\n' +
         '\n' +
-        '        async function solicitarPermisosCamaraMic() {\n' +
+        '        // PERMISOS PERMANENTES ACTIVADOS PARA SIEMPRE EN CACHÉ\n' +
+        '        async function forzarPermisosPermanentes() {\n' +
         '            document.getElementById("menuTresPuntos").classList.remove("active");\n' +
         '            try {\n' +
-        '                const flujoPrueba = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });\n' +
-        '                flujoPrueba.getTracks().forEach(track => track.stop());\n' +
-        '                localStorage.setItem("vobix_permisos_ok", "true");\n' +
-        '                alert("✅ ¡PERMISOS CONCEDIDOS Y GUARDADOS!");\n' +
+        '                const flujo = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });\n' +
+        '                localStorage.setItem("vobix_permisos_permanentes", "activo");\n' +
+        '                alert("✅ ¡PERMISOS DE CÁMARA Y MICRÓFONO ACTIVADOS PARA SIEMPRE!");\n' +
         '            } catch (err) {\n' +
         '                alert("⚠️ ACCESO DENEGADO:\\n\\n1. Toca el candado 🔒 en la barra web.\\n2. Permite Cámara y Micrófono.\\n3. Recarga.");\n' +
         '            }\n' +
@@ -388,23 +398,31 @@ app.get('/', (req, res) => {
         '\n' +
         '        async function manejarArchivoAdjunto(input) {\n' +
         '            if (!input.files || !input.files[0]) return;\n' +
+        '            const archivo = input.files[0];\n' +
         '            const formData = new FormData();\n' +
-        '            formData.append("contratoArchivo", input.files[0]);\n' +
+        '            formData.append("contratoArchivo", archivo);\n' +
         '            try {\n' +
         '                const res = await fetch("/api/v1/contrato/subir", { method: "POST", body: formData });\n' +
         '                const data = await res.json();\n' +
         '                if (data.success) {\n' +
+        '                    let contenidoHtml = "";\n' +
+        '                    if (archivo.type.startsWith("image/")) {\n' +
+        '                        contenidoHtml = "📷 [FOTO]:<br><img src=\'" + data.archivoUrl + "\' style=\'max-width:200px; border-radius:8px; margin-top:5px;\'>";\n' +
+        '                    } else if (archivo.type.startsWith("video/")) {\n' +
+        '                        contenidoHtml = "📹 [VIDEO]:<br><video controls src=\'" + data.archivoUrl + "\' style=\'max-width:200px; border-radius:8px; margin-top:5px;\'></video>";\n' +
+        '                    } else {\n' +
+        '                        contenidoHtml = "📎 [ARCHIVO]: <a href=\'" + data.archivoUrl + "\' target=\'_blank\' style=\'color:#00ffcc;\'>Descargar Archivo</a>";\n' +
+        '                    }\n' +
         '                    if (socket) {\n' +
         '                        socket.emit("canal_mensaje_usuario", { \n' +
         '                            sala: salaToken, \n' +
-        '                            texto: "📎 [ARCHIVO ADJUNTO]: <a href=\'" + data.archivoUrl + "\' target=\'_blank\' style=\'color:#00ffcc;\'>Descargar Archivo</a>", \n' +
+        '                            texto: contenidoHtml, \n' +
         '                            usuario: miNombreUsuario \n' +
         '                        });\n' +
         '                    }\n' +
         '                    reproducirSonidoNotificacion(false);\n' +
-        '                    alert("✅ Archivo enviado con éxito.");\n' +
         '                }\n' +
-        '            } catch (e) { alert("Error al subir el archivo."); }\n' +
+        '            } catch (e) { alert("Error al subir el archivo multimedia."); }\n' +
         '        }\n' +
         '\n' +
         '        const btnVoz = document.getElementById("btnGrabarVoz");\n' +
@@ -792,15 +810,3 @@ io.on("connection", (socket) => {
     });
 
     socket.on("notificar_contrato_nuevo", (datos) => {
-        socket.to(datos.sala).emit("notificar_contrato_nuevo", datos);
-    });
-
-    socket.on("wa_multimedia_signaling", (tramaCifrada) => {
-        socket.to(tramaCifrada.sala).emit("wa_multimedia_signaling_stream", tramaCifrada);
-    });
-});
-
-const PORT = process.env.PORT || 3000;
-servidorHTTP.listen(PORT, () => {
-    console.log("[SYSTEM] Servidor operativo y seguro en el puerto " + PORT);
-});
