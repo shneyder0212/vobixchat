@@ -91,11 +91,11 @@ app.get('/', (req, res) => {
         '<head>\n' +
         '    <meta charset="UTF-8">\n' +
         '    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">\n' +
-        '    <title>VOBIXCHAT // Transfronterizo & Llamadas HD con Colgar</title>\n' +
+        '    <title>VOBIXCHAT // Canal Seguro & Multimedia Cuántico</title>\n' +
         '    <style>\n' +
         '        * { box-sizing: border-box; margin: 0; padding: 0; }\n' +
         '        body { font-family: "Consolas", monospace; background: #030508; color: #00ffcc; display: flex; justify-content: center; align-items: center; min-height: 100vh; min-height: 100dvh; overflow: hidden; }\n' +
-        '        .app-container { background: #070b12; border: 2px solid #00ffcc; width: 100%; max-width: 440px; height: 100vh; height: 100dvh; display: flex; flex-direction: column; position: relative; box-shadow: 0 0 25px rgba(0, 255, 204, 0.15); }\n' +
+        '        .app-container { background: #070b12; border: 2px solid #00ffcc; width: 100%; max-width: 440px; height: 100vh; height: 100dvh; display: flex; flex-direction: column; position: relative; box-shadow: 0 0 25px rgba(0, 255, 204, 0.15); transition: height 0.2s ease; }\n' +
         '        .view { display: none; flex-direction: column; height: 100%; width: 100%; padding: 30px 20px; justify-content: center; text-align: center; }\n' +
         '        .view.active { display: flex; }\n' +
         '        .radar-circle { width: 130px; height: 130px; border: 2px dashed rgba(0, 255, 204, 0.25); border-radius: 50%; margin: 0 auto 25px auto; position: relative; display: flex; justify-content: center; align-items: center; font-size: 11px; font-weight: bold; letter-spacing: 1.5px; text-transform: uppercase; }\n' +
@@ -119,6 +119,9 @@ app.get('/', (req, res) => {
         '        .wa-status { font-size: 11px; color: #527575; }\n' +
         '        .wa-actions { display: flex; gap: 12px; align-items: center; position: relative; }\n' +
         '        .wa-icon-btn { background: transparent; border: none; color: #00ffcc; cursor: pointer; font-size: 18px; }\n' +
+        '        /* BOTÓN DE COLGAR TECNOLÓGICO Y DINÁMICO */\n' +
+        '        .btn-quantum-hangup { background: radial-gradient(circle, #ff3333 0%, #990000 100%); border: 1px solid #ff6666; color: #fff; border-radius: 50%; width: 36px; height: 36px; display: none; align-items: center; justify-content: center; cursor: pointer; font-size: 16px; box-shadow: 0 0 12px rgba(255, 51, 51, 0.7); animation: pulseHangup 1.5s infinite; }\n' +
+        '        @keyframes pulseHangup { 0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 51, 51, 0.7); } 70% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(255, 51, 51, 0); } 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 51, 51, 0); } }\n' +
         '        .dropdown-menu { display: none; position: absolute; top: 35px; right: 0; background: #0a111a; border: 1px solid #00ffcc; border-radius: 8px; width: 260px; max-height: 250px; overflow-y: auto; box-shadow: 0 4px 15px rgba(0,0,0,0.8); z-index: 100; flex-direction: column; }\n' +
         '        .dropdown-menu.active { display: flex; }\n' +
         '        .dropdown-item { padding: 12px 16px; color: #fff; text-align: left; font-size: 11px; background: transparent; border: none; cursor: pointer; text-transform: uppercase; border-bottom: 1px solid rgba(0, 255, 204, 0.1); display: flex; align-items: center; gap: 8px; }\n' +
@@ -203,15 +206,14 @@ app.get('/', (req, res) => {
         '                <div class="wa-user-zone">\n' +
         '                    <div class="wa-avatar">🌐</div>\n' +
         '                    <div class="wa-user-info">\n' +
-        '                        <span class="wa-username" id="waContactoNombre">Sala Segura Transfronteriza</span>\n' +
-        '                        <span class="wa-status" id="waCryptoStatus">E2EE HD [ACTIVE]</span>\n' +
+        '                        <span class="wa-username" id="waContactoNombre">Canal Seguro</span>\n' +
+        '                        <span class="wa-status" id="waCryptoStatus">E2EE ENCRYPTED [ACTIVE]</span>\n' +
         '                    </div>\n' +
         '                </div>\n' +
         '                <div class="wa-actions">\n' +
-        '                    <!-- Controles de llamadas superior con botón Colgar -->\n' +
         '                    <button class="wa-icon-btn" onclick="inicializarTransmisionMultimedia(\'video\')" title="Videollamada HD">📹</button>\n' +
-        '                    <button class="wa-icon-btn" onclick="inicializarTransmisionMultimedia(\'audio\')" title="Llamada de Voz de Datos">📞</button>\n' +
-        '                    <button class="wa-icon-btn" id="btnColgarLlamada" onclick="colgarLlamada()" title="Colgar Llamada" style="color: #ff3333; display: none;">❌📞</button>\n' +
+        '                    <button class="wa-icon-btn" onclick="inicializarTransmisionMultimedia(\'audio\')" title="Llamada de Voz HD">📞</button>\n' +
+        '                    <button class="btn-quantum-hangup" id="btnColgarLlamada" onclick="colgarLlamada()" title="Colgar Llamada">❌</button>\n' +
         '                    <button class="wa-icon-btn" onclick="toggleMenuTresPuntos()">⁝</button>\n' +
         '                    <div class="dropdown-menu" id="menuTresPuntos">\n' +
         '                        <button class="dropdown-item" onclick="generarInvitacionSalaPrivada()">🔗 Invitar a Sala Privada</button>\n' +
@@ -241,7 +243,7 @@ app.get('/', (req, res) => {
         '                </div>\n' +
         '            </div>\n' +
         '            <div class="wa-chat-area" id="pantallaChat">\n' +
-        '                <div class="wa-bubble system">[SISTEMA] Conectado con cifrado E2EE y WebRTC HD Activo.</div>\n' +
+        '                <div class="wa-bubble system">[SISTEMA] Candado de seguridad activo. Conversación hiper-cifrada de extremo a extremo (E2EE).</div>\n' +
         '            </div>\n' +
         '            <div class="wa-footer">\n' +
         '                <div class="emoji-picker" id="emojiPicker">\n' +
@@ -257,14 +259,14 @@ app.get('/', (req, res) => {
         '                    <button class="emoji-item" onclick="insertarEmoji(\'🚀\')">🚀</button>\n' +
         '                </div>\n' +
         '                <button type="button" class="tool-btn" onclick="toggleEmojiPicker()" title="Emojis">😊</button>\n' +
-        '                <button type="button" class="tool-btn" onclick="document.getElementById(\'inputArchivoGeneral\').click()" title="Adjuntar Archivo o Trabajo">📎</button>\n' +
+        '                <button type="button" class="tool-btn" onclick="document.getElementById(\'inputArchivoGeneral\').click()" title="Adjuntar Archivo">📎</button>\n' +
         '                <input type="file" id="inputArchivoGeneral" style="display:none" onchange="manejarArchivoAdjunto(this)">\n' +
-        '                <button type="button" class="tool-btn" onclick="document.getElementById(\'inputCamaraGeneral\').click()" title="Tomar Foto o Video">📷</button>\n' +
+        '                <button type="button" class="tool-btn" onclick="document.getElementById(\'inputCamaraGeneral\').click()" title="Tomar Foto">📷</button>\n' +
         '                <input type="file" id="inputCamaraGeneral" style="display:none" accept="image/*,video/*" capture="environment" onchange="manejarArchivoAdjunto(this)">\n' +
         '                <div class="wa-input-capsule">\n' +
-        '                    <input type="text" id="mensajeChat" placeholder="Mensaje cifrado..." autocomplete="off">\n' +
+        '                    <input type="text" id="mensajeChat" placeholder="Mensaje cuántico..." autocomplete="off">\n' +
         '                </div>\n' +
-        '                <button type="button" class="tool-btn" id="btnGrabarVoz" title="Nota de Voz" onmousedown="iniciarGrabacionVoz()" onmouseup="detenerGrabacionVoz()">🎤</button>\n' +
+        '                <button type="button" class="tool-btn" id="btnGrabarVoz" title="Mantén presionado para Nota de Voz">🎤</button>\n' +
         '                <button class="wa-mic-btn" onclick="procesarTransmisionTextoUrgente()">➤</button>\n' +
         '            </div>\n' +
         '        </div>\n' +
@@ -283,6 +285,31 @@ app.get('/', (req, res) => {
         '        let audioChunks = [];\n' +
         '        const confServidoresIce = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };\n' +
         '\n' +
+        '        // CORRECCIÓN VIEWPORT ANDROID (ANTISOLAPAMIENTO DE TECLADO)\n' +
+        '        if (window.visualViewport) {\n' +
+        '            window.visualViewport.addEventListener("resize", () => {\n' +
+        '                const contenedor = document.getElementById("mainWrapper");\n' +
+        '                contenedor.style.height = window.visualViewport.height + "px";\n' +
+        '                window.scrollTo(0, 0);\n' +
+        '            });\n' +
+        '        }\n' +
+        '\n' +
+        '        // SONIDO NATIVO DE NOTIFICACIÓN (AUDIO CONTEXT BEEP)\n' +
+        '        function reproducirSonidoNotificacion() {\n' +
+        '            try {\n' +
+        '                const ctxAudio = new (window.AudioContext || window.webkitAudioContext)();\n' +
+        '                const osc = ctxAudio.createOscillator();\n' +
+        '                const gain = ctxAudio.createGain();\n' +
+        '                osc.type = "sine";\n' +
+        '                osc.frequency.setValueAtTime(880, ctxAudio.currentTime);\n' +
+        '                gain.gain.setValueAtTime(0.1, ctxAudio.currentTime);\n' +
+        '                osc.connect(gain);\n' +
+        '                gain.connect(ctxAudio.destination);\n' +
+        '                osc.start();\n' +
+        '                osc.stop(ctxAudio.currentTime + 0.15);\n' +
+        '            } catch(e) { console.log("Audio omitido por restricciones del navegador"); }\n' +
+        '        }\n' +
+        '\n' +
         '        function toggleMenuTresPuntos() {\n' +
         '            document.getElementById("menuTresPuntos").classList.toggle("active");\n' +
         '        }\n' +
@@ -300,9 +327,10 @@ app.get('/', (req, res) => {
         '\n' +
         '        function generarInvitacionSalaPrivada() {\n' +
         '            document.getElementById("menuTresPuntos").classList.remove("active");\n' +
-        '            const urlPrivada = window.location.origin + "/?canal=" + salaToken;\n' +
+        '            const urlBase = window.location.origin + window.location.pathname;\n' +
+        '            const urlPrivada = urlBase + "?canal=" + salaToken;\n' +
         '            navigator.clipboard.writeText(urlPrivada);\n' +
-        '            alert("🔗 ¡ENLACE PRIVADO COPIADO!\\n\\nEnvíalo a tu contraparte para llamadas, archivos y firmas en tiempo real.");\n' +
+        '            alert("🔗 ¡ENLACE DE SALA PRIVADA COPIADO!\\n\\nCompártelo con tu contacto para acceder directamente.");\n' +
         '        }\n' +
         '\n' +
         '        async function solicitarPermisosCamaraMic() {\n' +
@@ -346,21 +374,26 @@ app.get('/', (req, res) => {
         '                    if (socket) {\n' +
         '                        socket.emit("canal_mensaje_usuario", { \n' +
         '                            sala: salaToken, \n' +
-        '                            texto: "📎 [ARCHIVO / TRABAJO]: <a href=\'" + data.archivoUrl + "\' target=\'_blank\' style=\'color:#00ffcc;\'>Descargar Archivo</a>", \n' +
+        '                            texto: "📎 [ARCHIVO ADJUNTO]: <a href=\'" + data.archivoUrl + "\' target=\'_blank\' style=\'color:#00ffcc;\'>Descargar Archivo</a>", \n' +
         '                            usuario: miNombreUsuario \n' +
         '                        });\n' +
         '                    }\n' +
+        '                    reproducirSonidoNotificacion();\n' +
         '                    alert("✅ Archivo enviado con éxito.");\n' +
         '                }\n' +
         '            } catch (e) { alert("Error al subir el archivo."); }\n' +
         '        }\n' +
         '\n' +
-        '        async function iniciarGrabacionVoz() {\n' +
+        '        // GRABACIÓN DE NOTAS DE VOZ COMPATIBLE CON MÓVILES (TOUCH + MOUSE)\n' +
+        '        const btnVoz = document.getElementById("btnGrabarVoz");\n' +
+        '        \n' +
+        '        async function iniciarGrabacionVoz(e) {\n' +
+        '            e.preventDefault();\n' +
         '            try {\n' +
         '                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });\n' +
         '                mediaRecorder = new MediaRecorder(stream);\n' +
         '                audioChunks = [];\n' +
-        '                mediaRecorder.ondataavailable = e => audioChunks.push(e.data);\n' +
+        '                mediaRecorder.ondataavailable = ev => audioChunks.push(ev.data);\n' +
         '                mediaRecorder.onstop = async () => {\n' +
         '                    const audioBlob = new Blob(audioChunks, { type: "audio/webm" });\n' +
         '                    const formData = new FormData();\n' +
@@ -373,20 +406,27 @@ app.get('/', (req, res) => {
         '                            texto: "🎤 [NOTA DE VOZ]:<br><audio controls src=\'" + data.archivoUrl + "\'></audio>",\n' +
         '                            usuario: miNombreUsuario\n' +
         '                        });\n' +
+        '                        reproducirSonidoNotificacion();\n' +
         '                    }\n' +
         '                };\n' +
         '                mediaRecorder.start();\n' +
-        '                document.getElementById("btnGrabarVoz").style.color = "#ff3333";\n' +
+        '                btnVoz.style.color = "#ff3333";\n' +
         '            } catch (err) { alert("No se pudo acceder al micrófono."); }\n' +
         '        }\n' +
         '\n' +
-        '        function detenerGrabacionVoz() {\n' +
+        '        function detenerGrabacionVoz(e) {\n' +
+        '            e.preventDefault();\n' +
         '            if (mediaRecorder && mediaRecorder.state === "recording") {\n' +
         '                mediaRecorder.stop();\n' +
         '                mediaRecorder.stream.getTracks().forEach(t => t.stop());\n' +
-        '                document.getElementById("btnGrabarVoz").style.color = "#00ffcc";\n' +
+        '                btnVoz.style.color = "#00ffcc";\n' +
         '            }\n' +
         '        }\n' +
+        '\n' +
+        '        btnVoz.addEventListener("mousedown", iniciarGrabacionVoz);\n' +
+        '        btnVoz.addEventListener("mouseup", detenerGrabacionVoz);\n' +
+        '        btnVoz.addEventListener("touchstart", iniciarGrabacionVoz);\n' +
+        '        btnVoz.addEventListener("touchend", detenerGrabacionVoz);\n' +
         '\n' +
         '        function cargarContratoEnVisor(url) {\n' +
         '            const img = document.getElementById("imagenContratoFondo");\n' +
@@ -394,7 +434,6 @@ app.get('/', (req, res) => {
         '            img.style.display = "block";\n' +
         '        }\n' +
         '\n' +
-        '        // INICIALIZAR LLAMADA (VIDEO O VOZ DE DATOS) CON BOTÓN DE COLGAR ACTIVO\n' +
         '        async function inicializarTransmisionMultimedia(tipo) {\n' +
         '            const activarVideo = (tipo === \'video\');\n' +
         '            if (activarVideo) {\n' +
@@ -411,13 +450,8 @@ app.get('/', (req, res) => {
         '                }\n' +
         '                estructurarLlamadaPeerWebRTC(true);\n' +
         '                flujoLocalGlobal.getTracks().forEach(track => rtcConexionPeer.addTrack(track, flujoLocalGlobal));\n' +
-        '                \n' +
-        '                // Mostrar botón de colgar\n' +
-        '                document.getElementById("btnColgarLlamada").style.display = "inline-block";\n' +
-        '                alert(activarVideo ? "📹 Videollamada HD activa" : "📞 Llamada de Voz de Datos activa");\n' +
-        '            } catch(err) { \n' +
-        '                alert("⚠️ No se pudo iniciar la llamada. Verifique permisos."); \n' +
-        '            }\n' +
+        '                document.getElementById("btnColgarLlamada").style.display = "flex";\n' +
+        '            } catch(err) { alert("⚠️ No se pudo iniciar la llamada."); }\n' +
         '        }\n' +
         '\n' +
         '        function estructurarLlamadaPeerWebRTC(esEmisor) {\n' +
@@ -438,7 +472,6 @@ app.get('/', (req, res) => {
         '            }\n' +
         '        }\n' +
         '\n' +
-        '        // FUNCIÓN DE COLGAR / DESCONECTAR LLAMADA\n' +
         '        function colgarLlamada() {\n' +
         '            if (flujoLocalGlobal) {\n' +
         '                flujoLocalGlobal.getTracks().forEach(track => track.stop());\n' +
@@ -455,7 +488,6 @@ app.get('/', (req, res) => {
         '            if (socket) {\n' +
         '                socket.emit("wa_multimedia_signaling", { sala: salaToken, colgar: true });\n' +
         '            }\n' +
-        '            alert("❌ Llamada finalizada y desconectada.");\n' +
         '        }\n' +
         '\n' +
         '        function abrirLienzoFirmaEspejo() {\n' +
@@ -601,6 +633,7 @@ app.get('/', (req, res) => {
         '                const clase = data.origen === socket.id ? "outbound" : "inbound";\n' +
         '                p.innerHTML += \'<div class="wa-bubble \' + clase + \'"><strong>\' + data.usuario + \':</strong><br>\' + data.contenido + \'</div>\';\n' +
         '                p.scrollTop = p.scrollHeight;\n' +
+        '                reproducirSonidoNotificacion();\n' +
         '            });\n' +
         '\n' +
         '            socket.on("recibir_trazo_espejo", (t) => {\n' +
@@ -619,6 +652,7 @@ app.get('/', (req, res) => {
         '\n' +
         '            socket.on("notificar_contrato_nuevo", (data) => {\n' +
         '                cargarContratoEnVisor(data.url);\n' +
+        '                reproducirSonidoNotificacion();\n' +
         '                alert("📄 NUEVO CONTRATO CARGADO POR LA OTRA PARTE.");\n' +
         '            });\n' +
         '\n' +
