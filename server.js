@@ -128,7 +128,7 @@ app.get('/', (req, res) => {
         '        .search-bar-overlay input { flex: 1; background: #04070c; border: 1px solid #00ffcc; border-radius: 6px; padding: 6px 10px; color: #fff; font-size: 14px; outline: none; }\n' +
         '        .btn-search-go { background: #00ffcc; color: #030508; border: none; border-radius: 6px; padding: 6px 12px; font-weight: bold; font-size: 11px; cursor: pointer; text-transform: uppercase; }\n' +
         '        \n' +
-        '        /* VIDEOLLAMADAS PANTALLA COMPLETA + PIP */\n' +
+        '        /* VIDEOLLAMADA PANTALLA COMPLETA + PIP */\n' +
         '        .webrtc-container { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 25; flex-direction: column; justify-content: center; align-items: center; overflow: hidden; }\n' +
         '        .webrtc-container.active { display: flex; }\n' +
         '        .video-box-remoto { width: 100%; height: 100%; position: absolute; top: 0; left: 0; background: #000; }\n' +
@@ -338,6 +338,7 @@ app.get('/', (req, res) => {
         '        let tipoLlamadaActual = "video";\n' +
         '        let grabandoAudio = false;\n' +
         '        let modoPiPInvertido = false;\n' +
+        '        let timbreInterval = null;\n' +
         '        const peersConexiones = {};\n' +
         '        const confServidoresIce = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };\n' +
         '\n' +
@@ -374,6 +375,21 @@ app.get('/', (req, res) => {
         '                osc.start();\n' +
         '                osc.stop(globalAudioCtx.currentTime + (esLlamada ? 0.5 : 0.2));\n' +
         '            } catch(e) {}\n' +
+        '        }\n' +
+        '\n' +
+        '        function iniciarTimbreContinuo() {\n' +
+        '            detenerTimbreContinuo();\n' +
+        '            reproducirSonidoNotificacion(true);\n' +
+        '            timbreInterval = setInterval(() => {\n' +
+        '                reproducirSonidoNotificacion(true);\n' +
+        '            }, 1500);\n' +
+        '        }\n' +
+        '\n' +
+        '        function detenerTimbreContinuo() {\n' +
+        '            if (timbreInterval) {\n' +
+        '                clearInterval(timbreInterval);\n' +
+        '                timbreInterval = null;\n' +
+        '            }\n' +
         '        }\n' +
         '\n' +
         '        function toggleMenuTresPuntos() {\n' +
@@ -532,6 +548,7 @@ app.get('/', (req, res) => {
         '        }\n' +
         '\n' +
         '        async function aceptarLlamadaEntrante() {\n' +
+        '            detenerTimbreContinuo();\n' +
         '            document.getElementById("modalLlamadaEntrante").classList.remove("active");\n' +
         '            tipoLlamadaActual = window.tipoLlamadaPendiente || "video";\n' +
         '            const activarVideo = (tipoLlamadaActual === \'video\');\n' +
@@ -555,6 +572,7 @@ app.get('/', (req, res) => {
         '        }\n' +
         '\n' +
         '        function rechazarLlamadaEntrante() {\n' +
+        '            detenerTimbreContinuo();\n' +
         '            document.getElementById("modalLlamadaEntrante").classList.remove("active");\n' +
         '            if (socket) socket.emit("wa_multimedia_signaling", { sala: salaToken, colgar: true });\n' +
         '        }\n' +
@@ -585,7 +603,9 @@ app.get('/', (req, res) => {
         '                        videoRemoto.id = "videoRemotoElemento";\n' +
         '                        document.getElementById("boxRemotoPrincipal").appendChild(videoRemoto);\n' +
         '                    }\n' +
+        '                    // SOLUCIÓN CLAVE: Asignar correctamente el stream y forzar reproducción\n' +
         '                    videoRemoto.srcObject = event.streams[0];\n' +
+        '                    videoRemoto.play().catch(e => console.log("Play error:", e));\n' +
         '                } else {\n' +
         '                    let audioRemoto = document.getElementById("audio_" + idSocketRemoto);\n' +
         '                    if (!audioRemoto) {\n' +
@@ -595,10 +615,10 @@ app.get('/', (req, res) => {
         '                        document.body.appendChild(audioRemoto);\n' +
         '                    }\n' +
         '                    audioRemoto.srcObject = event.streams[0];\n' +
+        '                    audioRemoto.play().catch(e => console.log("Audio play error:", e));\n' +
         '                }\n' +
         '            };\n' +
         '\n' +
-        '            // CORRECCIÓN CLAVE: Asegurar la negociación bidireccional estable de video\n' +
         '            if (esOferente) {\n' +
         '                pc.onnegotiationneeded = async () => {\n' +
         '                    try {\n' +
@@ -612,6 +632,7 @@ app.get('/', (req, res) => {
         '        }\n' +
         '\n' +
         '        function colgarLlamada() {\n' +
+        '            detenerTimbreContinuo();\n' +
         '            if (flujoLocalGlobal) {\n' +
         '                flujoLocalGlobal.getTracks().forEach(track => track.stop());\n' +
         '                flujoLocalGlobal = null;\n' +
@@ -854,7 +875,7 @@ app.get('/', (req, res) => {
         '                    document.getElementById("tituloLlamadaEntrante").innerText = (window.tipoLlamadaPendiente === "video") ? "Videollamada Entrante" : "Llamada de Voz Entrante";\n' +
         '                    document.getElementById("avatarLlamada").innerText = (window.tipoLlamadaPendiente === "video") ? "📹" : "📞";\n' +
         '                    document.getElementById("modalLlamadaEntrante").classList.add("active");\n' +
-        '                    reproducirSonidoNotificacion(true);\n' +
+        '                    iniciarTimbreContinuo();\n' +
         '                    return;\n' +
         '                }\n' +
         '                if (trama.colgar) {\n' +
