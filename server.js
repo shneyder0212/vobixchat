@@ -90,18 +90,18 @@ app.get('/', (req, res) => {
         '<head>\n' +
         '    <meta charset="UTF-8">\n' +
         '    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">\n' +
-        '    <title>VOBIXCHAT // Transfronterizo Definitivo</title>\n' +
+        '    <title>VOBIXCHAT // Llamadas y Alertas Corporativas</title>\n' +
         '    <style>\n' +
         '        * { box-sizing: border-box; margin: 0; padding: 0; }\n' +
         '        html, body { height: 100%; height: 100dvh; background: #030508; color: #00ffcc; font-family: "Consolas", monospace; overflow: hidden; display: flex; justify-content: center; align-items: center; }\n' +
         '        .app-container { background: #070b12; border: 2px solid #00ffcc; width: 100%; max-width: 440px; height: 100dvh; display: flex; flex-direction: column; position: relative; box-shadow: 0 0 25px rgba(0, 255, 204, 0.15); overflow: hidden; }\n' +
-        '        .view { display: none; flex-direction: column; height: 100%; width: 100%; padding: 15px; justify-content: center; text-align: center; overflow-y: auto; }\n' +
+        '        .view { display: none; flex-direction: column; height: 100%; width: 100%; padding: 20px; justify-content: center; text-align: center; overflow-y: auto; }\n' +
         '        .view.active { display: flex; }\n' +
-        '        .radar-circle { width: 100px; height: 100px; border: 2px dashed rgba(0, 255, 204, 0.25); border-radius: 50%; margin: 0 auto 15px auto; position: relative; display: flex; justify-content: center; align-items: center; font-size: 10px; font-weight: bold; letter-spacing: 1.5px; text-transform: uppercase; }\n' +
+        '        .radar-circle { width: 110px; height: 110px; border: 2px dashed rgba(0, 255, 204, 0.25); border-radius: 50%; margin: 0 auto 15px auto; position: relative; display: flex; justify-content: center; align-items: center; font-size: 11px; font-weight: bold; letter-spacing: 1.5px; text-transform: uppercase; }\n' +
         '        .radar-circle::after { content: ""; position: absolute; width: 100%; height: 100%; border: 2px solid #00ffcc; border-radius: 50%; border-left-color: transparent; border-bottom-color: transparent; animation: spinRadar 1.5s linear infinite; }\n' +
         '        @keyframes spinRadar { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }\n' +
-        '        .status-log { font-size: 11px; color: #527575; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 1px; }\n' +
-        '        .input-box { margin-bottom: 12px; text-align: left; width: 100%; }\n' +
+        '        .status-log { font-size: 11px; color: #527575; margin-bottom: 15px; text-transform: uppercase; letter-spacing: 1px; }\n' +
+        '        .input-box { margin-bottom: 15px; text-align: left; width: 100%; }\n' +
         '        .input-box label { display: block; font-size: 10px; color: #527575; margin-bottom: 6px; text-transform: uppercase; font-weight: bold; }\n' +
         '        .input-group-row { display: flex; gap: 6px; width: 100%; }\n' +
         '        .flag-select { background: #0d1520; border: 1px solid rgba(0, 255, 204, 0.3); color: #fff; border-radius: 6px; font-size: 12px; padding: 0 2px; outline: none; width: 95px; flex-shrink: 0; }\n' +
@@ -132,6 +132,15 @@ app.get('/', (req, res) => {
         '        .video-box { width: 100%; height: 160px; background: #111; border: 2px solid #00ffcc; border-radius: 8px; overflow: hidden; position: relative; }\n' +
         '        .video-box video { width: 100%; height: 100%; object-fit: cover; }\n' +
         '        .video-box span { position: absolute; bottom: 5px; left: 5px; background: rgba(0,0,0,0.6); color: #00ffcc; font-size: 10px; padding: 2px 6px; border-radius: 4px; }\n' +
+        '        /* PANTALLA DE LLAMADA ENTRANTE A PANTALLA COMPLETA */\n' +
+        '        .incoming-call-overlay { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(3, 5, 8, 0.95); z-index: 200; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 20px; }\n' +
+        '        .incoming-call-overlay.active { display: flex; }\n' +
+        '        .incoming-avatar { width: 100px; height: 100px; border: 3px solid #00ffcc; border-radius: 50%; background: #0a111a; display: flex; justify-content: center; align-items: center; font-size: 40px; margin-bottom: 20px; animation: pulseRing 1.5s infinite; }\n' +
+        '        @keyframes pulseRing { 0% { box-shadow: 0 0 0 0 rgba(0, 255, 204, 0.4); } 70% { box-shadow: 0 0 0 20px rgba(0, 255, 204, 0); } 100% { box-shadow: 0 0 0 0 rgba(0, 255, 204, 0); } }\n' +
+        '        .incoming-actions { display: flex; gap: 30px; margin-top: 40px; }\n' +
+        '        .btn-call-action { width: 65px; height: 65px; border-radius: 50%; border: none; font-size: 24px; cursor: pointer; display: flex; justify-content: center; align-items: center; }\n' +
+        '        .btn-accept { background: #00ffcc; color: #030508; box-shadow: 0 0 15px rgba(0, 255, 204, 0.7); }\n' +
+        '        .btn-reject { background: #ff3333; color: #fff; box-shadow: 0 0 15px rgba(255, 51, 51, 0.7); }\n' +
         '        .mirror-signature-overlay { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(3, 5, 8, 0.96); z-index: 50; flex-direction: column; padding: 15px; }\n' +
         '        .mirror-signature-overlay.active { display: flex; }\n' +
         '        .signature-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 1px solid #e91e63; padding-bottom: 8px; }\n' +
@@ -147,7 +156,6 @@ app.get('/', (req, res) => {
         '        .wa-bubble.system { background: #0c1524; color: #527575; font-size: 11px; align-self: center; text-align: center; width: 90%; text-transform: uppercase; }\n' +
         '        .wa-bubble.inbound { background: #0d1622; color: #ffffff; align-self: flex-start; }\n' +
         '        .wa-bubble.outbound { background: #002e25; color: #00ffcc; align-self: flex-end; border-color: rgba(0, 255, 204, 0.3); }\n' +
-        '        /* PIE DE PÁGINA ADAPTADO CON SAFE-AREA PARA EVITAR COLISIONES CON MANDOS DEL MÓVIL */\n' +
         '        .wa-footer { padding: 8px 12px; padding-bottom: max(8px, env(safe-area-inset-bottom)); display: flex; align-items: center; gap: 6px; background: #060b12; border-top: 1px solid rgba(0, 255, 204, 0.15); }\n' +
         '        .wa-input-capsule { flex: 1; background: #0d1520; border: 1px solid rgba(0, 255, 204, 0.25); border-radius: 25px; padding: 4px 12px; display: flex; align-items: center; gap: 6px; }\n' +
         '        .wa-input-capsule input { flex: 1; background: transparent; border: none; color: #fff; padding: 8px 0; font-size: 15px; outline: none; }\n' +
@@ -161,6 +169,17 @@ app.get('/', (req, res) => {
         '</head>\n' +
         '<body>\n' +
         '    <div class="app-container" id="mainWrapper">\n' +
+        '        <!-- PANTALLA DE LLAMADA ENTRANTE -->\n' +
+        '        <div class="incoming-call-overlay" id="modalLlamadaEntrante">\n' +
+        '            <div class="incoming-avatar" id="avatarLlamada">📞</div>\n' +
+        '            <h2 id="tituloLlamadaEntrante" style="color: #00ffcc; margin-bottom: 8px; text-transform: uppercase;">Llamada Entrante</h2>\n' +
+        '            <p id="remitenteLlamada" style="color: #527575; font-size: 13px; text-transform: uppercase; letter-spacing: 1px;">Usuario intentando conectar...</p>\n' +
+        '            <div class="incoming-actions">\n' +
+        '                <button class="btn-call-action btn-reject" onclick="rechazarLlamadaEntrante()" title="Rechazar">❌</button>\n' +
+        '                <button class="btn-call-action btn-accept" onclick="aceptarLlamadaEntrante()" title="Contestar">✔️</button>\n' +
+        '            </div>\n' +
+        '        </div>\n' +
+        '\n' +
         '        <div class="view active" id="vistaScanner">\n' +
         '            <div class="radar-circle"><span>VOBIXCHAT</span></div>\n' +
         '            <div class="status-log" id="statusField">REGISTRO OBLIGATORIO REQUERIDO...</div>\n' +
@@ -286,6 +305,7 @@ app.get('/', (req, res) => {
         '        let flujoLocalGlobal = null;\n' +
         '        let mediaRecorder = null;\n' +
         '        let audioChunks = [];\n' +
+        '        let tipoLlamadaActual = "video";\n' +
         '        const peersConexiones = {};\n' +
         '        const confServidoresIce = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };\n' +
         '\n' +
@@ -473,24 +493,37 @@ app.get('/', (req, res) => {
         '        }\n' +
         '\n' +
         '        async function iniciarConferencia(tipo) {\n' +
+        '            tipoLlamadaActual = tipo;\n' +
         '            const activarVideo = (tipo === \'video\');\n' +
-        '            document.getElementById("parrillaVideos").classList.add("active");\n' +
+        '            if (activarVideo) document.getElementById("parrillaVideos").classList.add("active");\n' +
         '            try {\n' +
         '                const restricciones = {\n' +
         '                    audio: { echoCancellation: true, noiseSuppression: true },\n' +
         '                    video: activarVideo ? { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: "user" } : false\n' +
         '                };\n' +
         '                flujoLocalGlobal = await navigator.mediaDevices.getUserMedia(restricciones);\n' +
-        '                document.getElementById("videoLocal").srcObject = flujoLocalGlobal;\n' +
+        '                if (activarVideo) {\n' +
+        '                    document.getElementById("videoLocal").srcObject = flujoLocalGlobal;\n' +
+        '                }\n' +
         '                document.getElementById("btnColgarLlamada").style.display = "flex";\n' +
         '\n' +
         '                if (socket) {\n' +
         '                    socket.emit("unir_multiconferencia", { sala: salaToken, usuario: miNombreUsuario });\n' +
-        '                    socket.emit("wa_multimedia_signaling", { sala: salaToken, llamadaEntrante: true, remitente: miNombreUsuario });\n' +
+        '                    socket.emit("wa_multimedia_signaling", { sala: salaToken, llamadaEntrante: true, remitente: miNombreUsuario, tipo: tipo });\n' +
         '                }\n' +
         '            } catch (err) {\n' +
         '                alert("⚠️ Error de permisos de cámara o micrófono.");\n' +
         '            }\n' +
+        '        }\n' +
+        '\n' +
+        '        function aceptarLlamadaEntrante() {\n' +
+        '            document.getElementById("modalLlamadaEntrante").classList.remove("active");\n' +
+        '            iniciarConferencia(tipoLlamadaActual);\n' +
+        '        }\n' +
+        '\n' +
+        '        function rechazarLlamadaEntrante() {\n' +
+        '            document.getElementById("modalLlamadaEntrante").classList.remove("active");\n' +
+        '            if (socket) socket.emit("wa_multimedia_signaling", { sala: salaToken, colgar: true });\n' +
         '        }\n' +
         '\n' +
         '        function crearPeerRemoto(idSocketRemoto, nombreRemoto, esOferente) {\n' +
@@ -508,15 +541,26 @@ app.get('/', (req, res) => {
         '            };\n' +
         '\n' +
         '            pc.ontrack = (event) => {\n' +
-        '                let cajaVideo = document.getElementById("box_" + idSocketRemoto);\n' +
-        '                if (!cajaVideo) {\n' +
-        '                    cajaVideo = document.createElement("div");\n' +
-        '                    cajaVideo.className = "video-box";\n' +
-        '                    cajaVideo.id = "box_" + idSocketRemoto;\n' +
-        '                    cajaVideo.innerHTML = \'<video autoplay playsinline id="v_\' + idSocketRemoto + \'"></video><span>\' + nombreRemoto + \'</span>\';\n' +
-        '                    document.getElementById("parrillaVideos").appendChild(cajaVideo);\n' +
+        '                if (tipoLlamadaActual === "video") {\n' +
+        '                    let cajaVideo = document.getElementById("box_" + idSocketRemoto);\n' +
+        '                    if (!cajaVideo) {\n' +
+        '                        cajaVideo = document.createElement("div");\n' +
+        '                        cajaVideo.className = "video-box";\n' +
+        '                        cajaVideo.id = "box_" + idSocketRemoto;\n' +
+        '                        cajaVideo.innerHTML = \'<video autoplay playsinline id="v_\' + idSocketRemoto + \'"></video><span>\' + nombreRemoto + \'</span>\';\n' +
+        '                        document.getElementById("parrillaVideos").appendChild(cajaVideo);\n' +
+        '                    }\n' +
+        '                    document.getElementById("v_" + idSocketRemoto).srcObject = event.streams[0];\n' +
+        '                } else {\n' +
+        '                    let audioRemoto = document.getElementById("audio_" + idSocketRemoto);\n' +
+        '                    if (!audioRemoto) {\n' +
+        '                        audioRemoto = document.createElement("audio");\n' +
+        '                        audioRemoto.autoplay = true;\n' +
+        '                        audioRemoto.id = "audio_" + idSocketRemoto;\n' +
+        '                        document.body.appendChild(audioRemoto);\n' +
+        '                    }\n' +
+        '                    audioRemoto.srcObject = event.streams[0];\n' +
         '                }\n' +
-        '                document.getElementById("v_" + idSocketRemoto).srcObject = event.streams[0];\n' +
         '            };\n' +
         '\n' +
         '            if (esOferente) {\n' +
@@ -524,7 +568,7 @@ app.get('/', (req, res) => {
         '                    try {\n' +
         '                        const offer = await pc.createOffer();\n' +
         '                        await pc.setLocalDescription(offer);\n' +
-        '                        socket.emit("multiconferencia_senal", { destino: idSocketRemoto, sdp: pc.localDescription, sala: salaToken, remitenteNames: miNombreUsuario });\n' +
+        '                        socket.emit("multiconferencia_senal", { destino: idSocketRemoto, sdp: pc.localDescription, sala: salaToken, remitenteNombre: miNombreUsuario });\n' +
         '                    } catch (e) {}\n' +
         '                };\n' +
         '            }\n' +
@@ -541,6 +585,8 @@ app.get('/', (req, res) => {
         '                delete peersConexiones[id];\n' +
         '                const caja = document.getElementById("box_" + id);\n' +
         '                if (caja) caja.remove();\n' +
+        '                const aud = document.getElementById("audio_" + id);\n' +
+        '                if (aud) aud.remove();\n' +
         '            });\n' +
         '            document.getElementById("parrillaVideos").classList.remove("active");\n' +
         '            document.getElementById("btnColgarLlamada").style.display = "none";\n' +
@@ -763,10 +809,19 @@ app.get('/', (req, res) => {
         '\n' +
         '            socket.on("wa_multimedia_signaling_stream", async (trama) => {\n' +
         '                if (trama.llamadaEntrante) {\n' +
+        '                    tipoLlamadaActual = trama.tipo || "video";\n' +
         '                    if (trama.remitente) {\n' +
+        '                        document.getElementById("remitenteLlamada").innerText = "Llamada de " + trama.remitente;\n' +
         '                        document.getElementById("waContactoNombre").innerText = trama.remitente;\n' +
         '                    }\n' +
+        '                    document.getElementById("tituloLlamadaEntrante").innerText = (tipoLlamadaActual === "video") ? "Videollamada Entrante" : "Llamada de Voz Entrante";\n' +
+        '                    document.getElementById("avatarLlamada").innerText = (tipoLlamadaActual === "video") ? "📹" : "📞";\n' +
+        '                    document.getElementById("modalLlamadaEntrante").classList.add("active");\n' +
         '                    reproducirSonidoNotificacion(true);\n' +
+        '                    return;\n' +
+        '                }\n' +
+        '                if (trama.colgar) {\n' +
+        '                    colgarLlamada();\n' +
         '                    return;\n' +
         '                }\n' +
         '            });\n' +
