@@ -90,24 +90,24 @@ app.get('/', (req, res) => {
         '<head>\n' +
         '    <meta charset="UTF-8">\n' +
         '    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">\n' +
-        '    <title>VOBIXCHAT // Canal Seguro & Notificaciones Activas</title>\n' +
+        '    <title>VOBIXCHAT // Transfronterizo Definitivo</title>\n' +
         '    <style>\n' +
         '        * { box-sizing: border-box; margin: 0; padding: 0; }\n' +
         '        html, body { height: 100%; height: 100dvh; background: #030508; color: #00ffcc; font-family: "Consolas", monospace; overflow: hidden; display: flex; justify-content: center; align-items: center; }\n' +
         '        .app-container { background: #070b12; border: 2px solid #00ffcc; width: 100%; max-width: 440px; height: 100dvh; display: flex; flex-direction: column; position: relative; box-shadow: 0 0 25px rgba(0, 255, 204, 0.15); overflow: hidden; }\n' +
-        '        .view { display: none; flex-direction: column; height: 100%; width: 100%; padding: 20px; justify-content: center; text-align: center; overflow-y: auto; }\n' +
+        '        .view { display: none; flex-direction: column; height: 100%; width: 100%; padding: 15px; justify-content: center; text-align: center; overflow-y: auto; }\n' +
         '        .view.active { display: flex; }\n' +
-        '        .radar-circle { width: 110px; height: 110px; border: 2px dashed rgba(0, 255, 204, 0.25); border-radius: 50%; margin: 0 auto 15px auto; position: relative; display: flex; justify-content: center; align-items: center; font-size: 11px; font-weight: bold; letter-spacing: 1.5px; text-transform: uppercase; }\n' +
+        '        .radar-circle { width: 100px; height: 100px; border: 2px dashed rgba(0, 255, 204, 0.25); border-radius: 50%; margin: 0 auto 15px auto; position: relative; display: flex; justify-content: center; align-items: center; font-size: 10px; font-weight: bold; letter-spacing: 1.5px; text-transform: uppercase; }\n' +
         '        .radar-circle::after { content: ""; position: absolute; width: 100%; height: 100%; border: 2px solid #00ffcc; border-radius: 50%; border-left-color: transparent; border-bottom-color: transparent; animation: spinRadar 1.5s linear infinite; }\n' +
         '        @keyframes spinRadar { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }\n' +
-        '        .status-log { font-size: 11px; color: #527575; margin-bottom: 15px; text-transform: uppercase; letter-spacing: 1px; }\n' +
-        '        .input-box { margin-bottom: 15px; text-align: left; width: 100%; }\n' +
-        '        .input-box label { display: block; font-size: 11px; color: #527575; margin-bottom: 6px; text-transform: uppercase; font-weight: bold; }\n' +
+        '        .status-log { font-size: 11px; color: #527575; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 1px; }\n' +
+        '        .input-box { margin-bottom: 12px; text-align: left; width: 100%; }\n' +
+        '        .input-box label { display: block; font-size: 10px; color: #527575; margin-bottom: 6px; text-transform: uppercase; font-weight: bold; }\n' +
         '        .input-group-row { display: flex; gap: 6px; width: 100%; }\n' +
-        '        .flag-select { background: #0d1520; border: 1px solid rgba(0, 255, 204, 0.3); color: #fff; border-radius: 8px; font-size: 13px; padding: 0 4px; outline: none; width: 110px; flex-shrink: 0; }\n' +
-        '        .input-box input { width: 100%; padding: 12px; background: #0d1520; border: 1px solid rgba(0, 255, 204, 0.3); border-radius: 8px; color: #fff; font-size: 15px; outline: none; }\n' +
-        '        .btn-quantum { width: 100%; padding: 14px; background: transparent; color: #00ffcc; border: 1px solid #00ffcc; font-weight: bold; font-size: 13px; cursor: pointer; text-transform: uppercase; border-radius: 8px; }\n' +
-        '        .lnk-recovery { color: #00bcff; font-size: 12px; background: transparent; border: none; cursor: pointer; margin-top: 15px; text-decoration: underline; text-transform: uppercase; }\n' +
+        '        .flag-select { background: #0d1520; border: 1px solid rgba(0, 255, 204, 0.3); color: #fff; border-radius: 6px; font-size: 12px; padding: 0 2px; outline: none; width: 95px; flex-shrink: 0; }\n' +
+        '        .input-box input { width: 100%; padding: 10px; background: #0d1520; border: 1px solid rgba(0, 255, 204, 0.3); border-radius: 6px; color: #fff; font-size: 14px; outline: none; }\n' +
+        '        .btn-quantum { width: 100%; padding: 12px; background: transparent; color: #00ffcc; border: 1px solid #00ffcc; font-weight: bold; font-size: 12px; cursor: pointer; text-transform: uppercase; border-radius: 6px; }\n' +
+        '        .lnk-recovery { color: #00bcff; font-size: 11px; background: transparent; border: none; cursor: pointer; margin-top: 10px; text-decoration: underline; text-transform: uppercase; }\n' +
         '        .wa-view { padding: 0 !important; background: #04070c; display: none; flex-direction: column; height: 100%; position: relative; }\n' +
         '        .wa-view.active { display: flex; }\n' +
         '        .wa-header { background: #0a111a; padding: 10px 16px; display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid rgba(0, 255, 204, 0.35); position: relative; z-index: 10; }\n' +
@@ -147,11 +147,12 @@ app.get('/', (req, res) => {
         '        .wa-bubble.system { background: #0c1524; color: #527575; font-size: 11px; align-self: center; text-align: center; width: 90%; text-transform: uppercase; }\n' +
         '        .wa-bubble.inbound { background: #0d1622; color: #ffffff; align-self: flex-start; }\n' +
         '        .wa-bubble.outbound { background: #002e25; color: #00ffcc; align-self: flex-end; border-color: rgba(0, 255, 204, 0.3); }\n' +
-        '        .wa-footer { padding: 10px 14px; display: flex; align-items: center; gap: 8px; background: #060b12; border-top: 1px solid rgba(0, 255, 204, 0.15); }\n' +
+        '        /* PIE DE PÁGINA ADAPTADO CON SAFE-AREA PARA EVITAR COLISIONES CON MANDOS DEL MÓVIL */\n' +
+        '        .wa-footer { padding: 8px 12px; padding-bottom: max(8px, env(safe-area-inset-bottom)); display: flex; align-items: center; gap: 6px; background: #060b12; border-top: 1px solid rgba(0, 255, 204, 0.15); }\n' +
         '        .wa-input-capsule { flex: 1; background: #0d1520; border: 1px solid rgba(0, 255, 204, 0.25); border-radius: 25px; padding: 4px 12px; display: flex; align-items: center; gap: 6px; }\n' +
         '        .wa-input-capsule input { flex: 1; background: transparent; border: none; color: #fff; padding: 8px 0; font-size: 15px; outline: none; }\n' +
         '        .tool-btn { background: transparent; border: none; color: #00ffcc; cursor: pointer; font-size: 16px; padding: 4px; display: flex; align-items: center; justify-content: center; }\n' +
-        '        .wa-mic-btn { width: 42px; height: 42px; background: #00ffcc; border: none; border-radius: 50%; color: #030508; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 16px; }\n' +
+        '        .wa-mic-btn { width: 40px; height: 40px; background: #00ffcc; border: none; border-radius: 50%; color: #030508; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 15px; flex-shrink: 0; }\n' +
         '        .emoji-picker { display: none; position: absolute; bottom: 65px; left: 14px; background: #0a111a; border: 1px solid #00ffcc; border-radius: 8px; padding: 10px; width: 220px; z-index: 100; grid-template-columns: repeat(5, 1fr); gap: 6px; text-align: center; }\n' +
         '        .emoji-picker.active { display: grid; }\n' +
         '        .emoji-item { background: transparent; border: none; font-size: 18px; cursor: pointer; padding: 4px; }\n' +
@@ -288,7 +289,6 @@ app.get('/', (req, res) => {
         '        const peersConexiones = {};\n' +
         '        const confServidoresIce = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };\n' +
         '\n' +
-        '        // ACTIVACIÓN PERMANENTE DE AUDIO CONTEXT PARA NOTIFICACIONES EN SEGUNDO PLANO\n' +
         '        let globalAudioCtx = null;\n' +
         '        function iniciarAudioContextPersistente() {\n' +
         '            if (!globalAudioCtx) {\n' +
@@ -524,7 +524,7 @@ app.get('/', (req, res) => {
         '                    try {\n' +
         '                        const offer = await pc.createOffer();\n' +
         '                        await pc.setLocalDescription(offer);\n' +
-        '                        socket.emit("multiconferencia_senal", { destino: idSocketRemoto, sdp: pc.localDescription, sala: salaToken, remitente: miNombreUsuario });\n' +
+        '                        socket.emit("multiconferencia_senal", { destino: idSocketRemoto, sdp: pc.localDescription, sala: salaToken, remitenteNames: miNombreUsuario });\n' +
         '                    } catch (e) {}\n' +
         '                };\n' +
         '            }\n' +
@@ -610,7 +610,6 @@ app.get('/', (req, res) => {
         '            const paramsUrl = new URLSearchParams(window.location.search);\n' +
         '            if(paramsUrl.has("canal")) {\n' +
         '                salaToken = paramsUrl.get("canal");\n' +
-        '                // BLINDAJE ABSOLUTO: SI NO ESTÁ REGISTRADO, SE QUEDA OBLIGATORIAMENTE EN EL SCANNER.\n' +
         '                if(localStorage.getItem("vobix_dispositivo_autorizado") !== "true") {\n' +
         '                    document.getElementById("statusField").innerText = "ACCESO RESTRINGIDO // REGISTRESE CON SMS...";\n' +
         '                    return;\n' +
