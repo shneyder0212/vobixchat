@@ -1,6 +1,3 @@
-// =================================================================
-// PARTE 1 DE 7: DECLARACIÓN DE MÓDULOS DE SISTEMA Y ENTORNO DE RED
-// =================================================================
 require('dotenv').config();
 const express = require('express');
 const http = require('http');
@@ -28,10 +25,6 @@ const rutaMedia = path.join(__dirname, 'uploads', 'quantum_media');
 if (!fs.existsSync(rutaMedia)){
     fs.mkdirSync(rutaMedia, { recursive: true });
 }
-// =================================================================
-// PARTE 2 DE 7: ESTRUCTURAS DE SEGURIDAD INTERNA Y FIREWALL POR IP
-// =================================================================
-
 // Memorias internas persistentes en el servidor (Tus 34 directivas de control)
 const pinesTemporales = new Map(); // Mapa que guardará los PINs de verificación generados
 const lineasFisicasAutorizadas = new Set();
@@ -75,7 +68,6 @@ function verificarLimitePeticionesIP(req, res, next) {
     }
     next();
 }
-
 // Configuración del disco para almacenamiento seguro y sanitizado
 const almacenamientoConfig = multer.diskStorage({
     destination: (req, file, cb) => cb(null, rutaMedia),
@@ -94,8 +86,9 @@ const upload = multer({
         }
     }
 });
+
 // =================================================================
-// PARTE 3 DE 7: CAPA DE ENTRADA WEB Y HOJA DE ESTILOS "TERMINAL QUANTUM"
+// PARTE 4 DE 7 (Original): CAPA DE ENTRADA WEB Y HOJA DE ESTILOS "TERMINAL QUANTUM"
 // =================================================================
 app.get('/', (req, res) => {
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
@@ -220,7 +213,9 @@ app.get('/', (req, res) => {
         '            <div class="input-box">\n' +
         '                <label>Identificador Único</label>\n' +
         '                <input type="text" id="username" placeholder="Nombre de usuario" autocomplete="off">\n' +
-        '            </div>\n' +
+        '            </div>\n'
+    );
+    res.write(
         '            <div class="input-box">\n' +
         '                <label>Terminal Telefónico</label>\n' +
         '                <div class="input-group-row">\n' +
@@ -259,7 +254,9 @@ app.get('/', (req, res) => {
         '            </div>\n' +
         '            <button class="btn-quantum" style="background: transparent; color: #e91e63; border-color: #e91e63;" id="btnAccionPass" onclick="procesarFlujoContrasenaMaestra()">Fijar Credencial</button>\n' +
         '            <button class="lnk-recovery" id="btnOpcionC" style="display: none;" onclick="ejecutarOpcionCReset()">¿Olvidó su clave? (Reseteo de Cuenta vía SMS)</button>\n' +
-        '        </div>\n' +
+        '        </div>\n'
+    );
+    res.write(
         '\n' +
         '        <!-- FASE 3: INTERFAZ ENTORNO QUANTUM CON ACCESOS DE WHATSAPP -->\n' +
         '        <div class="wa-view" id="vistaChat">\n' +
@@ -299,9 +296,7 @@ app.get('/', (req, res) => {
         '            </div>\n' +
         '        </div>\n' +
         '\n' +
-        '    </div>'
-    );
-    res.write(
+        '    </div>\n' +
         '    <script>\n' +
         '        let lineaGuardada = "";\n' +
         '        let socket = null;\n' +
@@ -313,8 +308,9 @@ app.get('/', (req, res) => {
         '            if(!campoTel.value.startsWith("+")) {\n' +
         '                console.log("Fijando prefijo por selector: " + selector.value);\n' +
         '            }\n' +
-        '        }\n' +
-        '\n' +
+        '        }\n'
+    );
+    res.write(
         '        // Detección automática limpia mediante ipapi.co (Soporta HTTPS seguro)\n' +
         '        async function fijarPrefijoPorRed() {\n' +
         '            const selector = document.getElementById("countrySelect");\n' +
@@ -552,10 +548,6 @@ app.get('/', (req, res) => {
         '</html>'
     );
 });
-// =================================================================
-// PARTE 7 DE 7: CONTROLADORES BACKEND, WEBSOCKETS Y ENCENDIDO DE RED
-// =================================================================
-
 // Endpoint de Registro: Filtra VoIP, genera un token PIN de 6 dígitos y dispara el SMS
 app.post('/api/v1/auth/register', verificarLimitePeticionesIP, async (req, res) => {
     const { username, telefono } = req.body;
@@ -596,7 +588,7 @@ app.post('/api/v1/auth/register', verificarLimitePeticionesIP, async (req, res) 
 
         if (consultaLookup.ok) {
             const resultadoLookup = await consultaLookup.json();
-            const tipoRed = resultadoLookup.results && resultadoLookup.results ? resultadoLookup.results.type : null;
+            const tipoRed = resultadoLookup.results && resultadoLookup.results[0] ? resultadoLookup.results[0].type : null;
             
             // Aborta inmediatamente si es un número virtual o VoIP de fraude
             if (tipoRed === "VOIP" || tipoRed === "VIRTUAL") {
@@ -653,7 +645,8 @@ app.post('/api/v1/auth/verify-pin', verificarLimitePeticionesIP, async (req, res
     }
 
     let telefonoLimpio = telefono.trim().replace(/[^a-zA-Z0-9+]/g, '');
-    if (telefonoLinter === "655766134" || telefonoLimpio === "655766134") { telefonoLimpio = "+34655766134"; }
+    // REVISIÓN Y CORRECCIÓN OBLIGATORIA: Se eliminó la variable inexistente 'telefonoLinter'
+    if (telefonoLimpio === "655766134") { telefonoLimpio = "+34655766134"; }
 
     // Comprobación de la existencia de la sesión en la memoria protegida
     if (!pinesTemporales.has(telefonoLimpio)) {
