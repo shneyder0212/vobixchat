@@ -66,7 +66,7 @@ const upload = multer({
     storage: almacenamientoConfig,
     limits: { fileSize: 10 * 1024 * 1024 },
     fileFilter: (req, file, cb) => {
-        if (file.mimetype === 'application/pdf' || file.mimetype.startsWith('image/') || file.mimetype.startsWith('audio/')) {
+        if (file.mimetype === 'application/pdf' || file.mimetype.startsWith('image/') || file.mimetype.startsWith('audio/') || file.mimetype.startsWith('video/')) {
             cb(null, true);
         } else {
             cb(new Error('SECURITY_FILE_TYPE_REJECTED'), false);
@@ -91,7 +91,7 @@ app.get('/', (req, res) => {
         '<head>\n' +
         '    <meta charset="UTF-8">\n' +
         '    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">\n' +
-        '    <title>VOBIXCHAT // Transfronterizo & Permisos Seguros</title>\n' +
+        '    <title>VOBIXCHAT // Transfronterizo & Llamadas HD con Colgar</title>\n' +
         '    <style>\n' +
         '        * { box-sizing: border-box; margin: 0; padding: 0; }\n' +
         '        body { font-family: "Consolas", monospace; background: #030508; color: #00ffcc; display: flex; justify-content: center; align-items: center; min-height: 100vh; min-height: 100dvh; overflow: hidden; }\n' +
@@ -117,11 +117,11 @@ app.get('/', (req, res) => {
         '        .wa-user-info { display: flex; flex-direction: column; text-align: left; }\n' +
         '        .wa-username { font-weight: bold; font-size: 14px; color: #00ffcc; text-transform: uppercase; }\n' +
         '        .wa-status { font-size: 11px; color: #527575; }\n' +
-        '        .wa-actions { display: flex; gap: 18px; align-items: center; position: relative; }\n' +
+        '        .wa-actions { display: flex; gap: 12px; align-items: center; position: relative; }\n' +
         '        .wa-icon-btn { background: transparent; border: none; color: #00ffcc; cursor: pointer; font-size: 18px; }\n' +
-        '        .dropdown-menu { display: none; position: absolute; top: 35px; right: 0; background: #0a111a; border: 1px solid #00ffcc; border-radius: 8px; width: 250px; max-height: 250px; overflow-y: auto; box-shadow: 0 4px 15px rgba(0,0,0,0.8); z-index: 100; flex-direction: column; }\n' +
+        '        .dropdown-menu { display: none; position: absolute; top: 35px; right: 0; background: #0a111a; border: 1px solid #00ffcc; border-radius: 8px; width: 260px; max-height: 250px; overflow-y: auto; box-shadow: 0 4px 15px rgba(0,0,0,0.8); z-index: 100; flex-direction: column; }\n' +
         '        .dropdown-menu.active { display: flex; }\n' +
-        '        .dropdown-item { padding: 12px 16px; color: #fff; text-align: left; font-size: 12px; background: transparent; border: none; cursor: pointer; text-transform: uppercase; border-bottom: 1px solid rgba(0, 255, 204, 0.1); display: flex; align-items: center; gap: 8px; }\n' +
+        '        .dropdown-item { padding: 12px 16px; color: #fff; text-align: left; font-size: 11px; background: transparent; border: none; cursor: pointer; text-transform: uppercase; border-bottom: 1px solid rgba(0, 255, 204, 0.1); display: flex; align-items: center; gap: 8px; }\n' +
         '        .dropdown-item:hover { background: rgba(0, 255, 204, 0.1); color: #00ffcc; }\n' +
         '        .webrtc-video-grid { display: none; grid-template-columns: 1fr 1fr; gap: 8px; padding: 10px; background: #070b12; border-bottom: 1px solid rgba(0, 255, 204, 0.2); }\n' +
         '        .webrtc-video-grid.active { display: grid; }\n' +
@@ -143,10 +143,16 @@ app.get('/', (req, res) => {
         '        .wa-bubble.system { background: #0c1524; color: #527575; font-size: 11px; align-self: center; text-align: center; width: 90%; text-transform: uppercase; }\n' +
         '        .wa-bubble.inbound { background: #0d1622; color: #ffffff; align-self: flex-start; }\n' +
         '        .wa-bubble.outbound { background: #002e25; color: #00ffcc; align-self: flex-end; border-color: rgba(0, 255, 204, 0.3); }\n' +
-        '        .wa-footer { padding: 10px 14px; display: flex; align-items: center; gap: 10px; background: #060b12; border-top: 1px solid rgba(0, 255, 204, 0.15); }\n' +
-        '        .wa-input-capsule { flex: 1; background: #0d1520; border: 1px solid rgba(0, 255, 204, 0.25); border-radius: 25px; padding: 4px 16px; display: flex; align-items: center; gap: 8px; }\n' +
-        '        .wa-input-capsule input { flex: 1; background: transparent; border: none; color: #fff; padding: 10px 0; font-size: 16px; outline: none; }\n' +
-        '        .wa-mic-btn { width: 46px; height: 46px; background: #00ffcc; border: none; border-radius: 50%; color: #030508; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 18px; }\n' +
+        '        .wa-footer { padding: 10px 14px; display: flex; align-items: center; gap: 8px; background: #060b12; border-top: 1px solid rgba(0, 255, 204, 0.15); }\n' +
+        '        .wa-input-capsule { flex: 1; background: #0d1520; border: 1px solid rgba(0, 255, 204, 0.25); border-radius: 25px; padding: 4px 12px; display: flex; align-items: center; gap: 6px; }\n' +
+        '        .wa-input-capsule input { flex: 1; background: transparent; border: none; color: #fff; padding: 8px 0; font-size: 15px; outline: none; }\n' +
+        '        .tool-btn { background: transparent; border: none; color: #00ffcc; cursor: pointer; font-size: 16px; padding: 4px; display: flex; align-items: center; justify-content: center; }\n' +
+        '        .tool-btn:hover { opacity: 0.7; }\n' +
+        '        .wa-mic-btn { width: 42px; height: 42px; background: #00ffcc; border: none; border-radius: 50%; color: #030508; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 16px; }\n' +
+        '        .emoji-picker { display: none; position: absolute; bottom: 65px; left: 14px; background: #0a111a; border: 1px solid #00ffcc; border-radius: 8px; padding: 10px; width: 220px; z-index: 100; grid-template-columns: repeat(5, 1fr); gap: 6px; text-align: center; }\n' +
+        '        .emoji-picker.active { display: grid; }\n' +
+        '        .emoji-item { background: transparent; border: none; font-size: 18px; cursor: pointer; padding: 4px; }\n' +
+        '        .emoji-item:hover { background: rgba(0,255,204,0.1); border-radius: 4px; }\n' +
         '    </style>\n' +
         '    <script src="/socket.io/socket.io.js"></script>\n' +
         '</head>\n' +
@@ -202,7 +208,10 @@ app.get('/', (req, res) => {
         '                    </div>\n' +
         '                </div>\n' +
         '                <div class="wa-actions">\n' +
+        '                    <!-- Controles de llamadas superior con botón Colgar -->\n' +
         '                    <button class="wa-icon-btn" onclick="inicializarTransmisionMultimedia(\'video\')" title="Videollamada HD">📹</button>\n' +
+        '                    <button class="wa-icon-btn" onclick="inicializarTransmisionMultimedia(\'audio\')" title="Llamada de Voz de Datos">📞</button>\n' +
+        '                    <button class="wa-icon-btn" id="btnColgarLlamada" onclick="colgarLlamada()" title="Colgar Llamada" style="color: #ff3333; display: none;">❌📞</button>\n' +
         '                    <button class="wa-icon-btn" onclick="toggleMenuTresPuntos()">⁝</button>\n' +
         '                    <div class="dropdown-menu" id="menuTresPuntos">\n' +
         '                        <button class="dropdown-item" onclick="generarInvitacionSalaPrivada()">🔗 Invitar a Sala Privada</button>\n' +
@@ -232,12 +241,30 @@ app.get('/', (req, res) => {
         '                </div>\n' +
         '            </div>\n' +
         '            <div class="wa-chat-area" id="pantallaChat">\n' +
-        '                <div class="wa-bubble system">[SISTEMA] Conectado con cifrado E2EE y WebRTC Activo.</div>\n' +
+        '                <div class="wa-bubble system">[SISTEMA] Conectado con cifrado E2EE y WebRTC HD Activo.</div>\n' +
         '            </div>\n' +
         '            <div class="wa-footer">\n' +
+        '                <div class="emoji-picker" id="emojiPicker">\n' +
+        '                    <button class="emoji-item" onclick="insertarEmoji(\'😊\')">😊</button>\n' +
+        '                    <button class="emoji-item" onclick="insertarEmoji(\'😂\')">😂</button>\n' +
+        '                    <button class="emoji-item" onclick="insertarEmoji(\'👍\')">👍</button>\n' +
+        '                    <button class="emoji-item" onclick="insertarEmoji(\'🔥\')">🔥</button>\n' +
+        '                    <button class="emoji-item" onclick="insertarEmoji(\'🔒\')">🔒</button>\n' +
+        '                    <button class="emoji-item" onclick="insertarEmoji(\'📄\')">📄</button>\n' +
+        '                    <button class="emoji-item" onclick="insertarEmoji(\'✍️\')">✍️</button>\n' +
+        '                    <button class="emoji-item" onclick="insertarEmoji(\'❤️\')">❤️</button>\n' +
+        '                    <button class="emoji-item" onclick="insertarEmoji(\'🎉\')">🎉</button>\n' +
+        '                    <button class="emoji-item" onclick="insertarEmoji(\'🚀\')">🚀</button>\n' +
+        '                </div>\n' +
+        '                <button type="button" class="tool-btn" onclick="toggleEmojiPicker()" title="Emojis">😊</button>\n' +
+        '                <button type="button" class="tool-btn" onclick="document.getElementById(\'inputArchivoGeneral\').click()" title="Adjuntar Archivo o Trabajo">📎</button>\n' +
+        '                <input type="file" id="inputArchivoGeneral" style="display:none" onchange="manejarArchivoAdjunto(this)">\n' +
+        '                <button type="button" class="tool-btn" onclick="document.getElementById(\'inputCamaraGeneral\').click()" title="Tomar Foto o Video">📷</button>\n' +
+        '                <input type="file" id="inputCamaraGeneral" style="display:none" accept="image/*,video/*" capture="environment" onchange="manejarArchivoAdjunto(this)">\n' +
         '                <div class="wa-input-capsule">\n' +
         '                    <input type="text" id="mensajeChat" placeholder="Mensaje cifrado..." autocomplete="off">\n' +
         '                </div>\n' +
+        '                <button type="button" class="tool-btn" id="btnGrabarVoz" title="Nota de Voz" onmousedown="iniciarGrabacionVoz()" onmouseup="detenerGrabacionVoz()">🎤</button>\n' +
         '                <button class="wa-mic-btn" onclick="procesarTransmisionTextoUrgente()">➤</button>\n' +
         '            </div>\n' +
         '        </div>\n' +
@@ -251,33 +278,41 @@ app.get('/', (req, res) => {
         '        let dibujandoEnLienzo = false;\n' +
         '        let ultimoX = 0, ultimoY = 0;\n' +
         '        let rtcConexionPeer = null;\n' +
+        '        let flujoLocalGlobal = null;\n' +
+        '        let mediaRecorder = null;\n' +
+        '        let audioChunks = [];\n' +
         '        const confServidoresIce = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };\n' +
         '\n' +
         '        function toggleMenuTresPuntos() {\n' +
         '            document.getElementById("menuTresPuntos").classList.toggle("active");\n' +
         '        }\n' +
         '\n' +
+        '        function toggleEmojiPicker() {\n' +
+        '            document.getElementById("emojiPicker").classList.toggle("active");\n' +
+        '        }\n' +
+        '\n' +
+        '        function insertarEmoji(emoji) {\n' +
+        '            const input = document.getElementById("mensajeChat");\n' +
+        '            input.value += emoji;\n' +
+        '            input.focus();\n' +
+        '            toggleEmojiPicker();\n' +
+        '        }\n' +
+        '\n' +
         '        function generarInvitacionSalaPrivada() {\n' +
         '            document.getElementById("menuTresPuntos").classList.remove("active");\n' +
         '            const urlPrivada = window.location.origin + "/?canal=" + salaToken;\n' +
         '            navigator.clipboard.writeText(urlPrivada);\n' +
-        '            alert("🔗 ¡ENLACE PRIVADO COPIADO!\\n\\nEnvíalo a tu contraparte en Estados Unidos o España para llamadas y firmas en tiempo real.");\n' +
+        '            alert("🔗 ¡ENLACE PRIVADO COPIADO!\\n\\nEnvíalo a tu contraparte para llamadas, archivos y firmas en tiempo real.");\n' +
         '        }\n' +
         '\n' +
-        '        // AUTORIZACIÓN SEGURA Y ADAPTATIVA DE CÁMARA Y MICRÓFONO\n' +
         '        async function solicitarPermisosCamaraMic() {\n' +
         '            document.getElementById("menuTresPuntos").classList.remove("active");\n' +
-        '            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {\n' +
-        '                alert("⚠️ Tu navegador no soporta acceso multimedia o requiere obligatoriamente HTTPS.");\n' +
-        '                return;\n' +
-        '            }\n' +
         '            try {\n' +
         '                const flujoPrueba = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });\n' +
         '                flujoPrueba.getTracks().forEach(track => track.stop());\n' +
         '                alert("✅ ¡PERMISOS CONCEDIDOS! Cámara y micrófono listos.");\n' +
         '            } catch (err) {\n' +
-        '                console.error("Error de permisos:", err);\n' +
-        '                alert("⚠️ ACCESO DENEGADO:\\n\\n1. Toca el candado 🔒 en la barra de direcciones de tu navegador.\\n2. Permite el uso de Cámara y Micrófono.\\n3. Recarga la página.");\n' +
+        '                alert("⚠️ ACCESO DENEGADO:\\n\\n1. Toca el candado 🔒 en la barra web.\\n2. Permite Cámara y Micrófono.\\n3. Recarga la página.");\n' +
         '            }\n' +
         '        }\n' +
         '\n' +
@@ -300,39 +335,88 @@ app.get('/', (req, res) => {
         '            } catch (e) { alert("Error de red al subir documento."); }\n' +
         '        }\n' +
         '\n' +
+        '        async function manejarArchivoAdjunto(input) {\n' +
+        '            if (!input.files || !input.files[0]) return;\n' +
+        '            const formData = new FormData();\n' +
+        '            formData.append("contratoArchivo", input.files[0]);\n' +
+        '            try {\n' +
+        '                const res = await fetch("/api/v1/contrato/subir", { method: "POST", body: formData });\n' +
+        '                const data = await res.json();\n' +
+        '                if (data.success) {\n' +
+        '                    if (socket) {\n' +
+        '                        socket.emit("canal_mensaje_usuario", { \n' +
+        '                            sala: salaToken, \n' +
+        '                            texto: "📎 [ARCHIVO / TRABAJO]: <a href=\'" + data.archivoUrl + "\' target=\'_blank\' style=\'color:#00ffcc;\'>Descargar Archivo</a>", \n' +
+        '                            usuario: miNombreUsuario \n' +
+        '                        });\n' +
+        '                    }\n' +
+        '                    alert("✅ Archivo enviado con éxito.");\n' +
+        '                }\n' +
+        '            } catch (e) { alert("Error al subir el archivo."); }\n' +
+        '        }\n' +
+        '\n' +
+        '        async function iniciarGrabacionVoz() {\n' +
+        '            try {\n' +
+        '                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });\n' +
+        '                mediaRecorder = new MediaRecorder(stream);\n' +
+        '                audioChunks = [];\n' +
+        '                mediaRecorder.ondataavailable = e => audioChunks.push(e.data);\n' +
+        '                mediaRecorder.onstop = async () => {\n' +
+        '                    const audioBlob = new Blob(audioChunks, { type: "audio/webm" });\n' +
+        '                    const formData = new FormData();\n' +
+        '                    formData.append("contratoArchivo", audioBlob, "nota_voz.webm");\n' +
+        '                    const res = await fetch("/api/v1/contrato/subir", { method: "POST", body: formData });\n' +
+        '                    const data = await res.json();\n' +
+        '                    if (data.success && socket) {\n' +
+        '                        socket.emit("canal_mensaje_usuario", {\n' +
+        '                            sala: salaToken,\n' +
+        '                            texto: "🎤 [NOTA DE VOZ]:<br><audio controls src=\'" + data.archivoUrl + "\'></audio>",\n' +
+        '                            usuario: miNombreUsuario\n' +
+        '                        });\n' +
+        '                    }\n' +
+        '                };\n' +
+        '                mediaRecorder.start();\n' +
+        '                document.getElementById("btnGrabarVoz").style.color = "#ff3333";\n' +
+        '            } catch (err) { alert("No se pudo acceder al micrófono."); }\n' +
+        '        }\n' +
+        '\n' +
+        '        function detenerGrabacionVoz() {\n' +
+        '            if (mediaRecorder && mediaRecorder.state === "recording") {\n' +
+        '                mediaRecorder.stop();\n' +
+        '                mediaRecorder.stream.getTracks().forEach(t => t.stop());\n' +
+        '                document.getElementById("btnGrabarVoz").style.color = "#00ffcc";\n' +
+        '            }\n' +
+        '        }\n' +
+        '\n' +
         '        function cargarContratoEnVisor(url) {\n' +
         '            const img = document.getElementById("imagenContratoFondo");\n' +
         '            img.src = url;\n' +
         '            img.style.display = "block";\n' +
         '        }\n' +
         '\n' +
-        '        // INICIALIZACIÓN MULTIMEDIA ADAPTATIVA Y TOLERANTE A FALLOS\n' +
+        '        // INICIALIZAR LLAMADA (VIDEO O VOZ DE DATOS) CON BOTÓN DE COLGAR ACTIVO\n' +
         '        async function inicializarTransmisionMultimedia(tipo) {\n' +
-        '            document.getElementById("parrillaVideos").classList.add("active");\n' +
-        '            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {\n' +
-        '                alert("⚠️ Tu navegador no soporta WebRTC o no estás usando una conexión segura HTTPS.");\n' +
-        '                return;\n' +
+        '            const activarVideo = (tipo === \'video\');\n' +
+        '            if (activarVideo) {\n' +
+        '                document.getElementById("parrillaVideos").classList.add("active");\n' +
         '            }\n' +
         '            try {\n' +
-        '                let flujoLocal = null;\n' +
-        '                try {\n' +
-        '                    // Intento 1: Alta calidad con restricciones ideales\n' +
-        '                    flujoLocal = await navigator.mediaDevices.getUserMedia({\n' +
-        '                        audio: { echoCancellation: true, noiseSuppression: true },\n' +
-        '                        video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: "user" }\n' +
-        '                    });\n' +
-        '                } catch (e1) {\n' +
-        '                    console.warn("Aviso: Reintentando con restricciones básicas...", e1);\n' +
-        '                    // Intento 2: Restricciones estándar universales por compatibilidad de hardware\n' +
-        '                    flujoLocal = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });\n' +
+        '                const restricciones = {\n' +
+        '                    audio: { echoCancellation: true, noiseSuppression: true },\n' +
+        '                    video: activarVideo ? { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: "user" } : false\n' +
+        '                };\n' +
+        '                flujoLocalGlobal = await navigator.mediaDevices.getUserMedia(restricciones);\n' +
+        '                if (activarVideo) {\n' +
+        '                    document.getElementById("videoLocal").srcObject = flujoLocalGlobal;\n' +
         '                }\n' +
-        '                \n' +
-        '                document.getElementById("videoLocal").srcObject = flujoLocal;\n' +
         '                estructurarLlamadaPeerWebRTC(true);\n' +
-        '                flujoLocal.getTracks().forEach(track => rtcConexionPeer.addTrack(track, flujoLocal));\n' +
+        '                flujoLocalGlobal.getTracks().forEach(track => rtcConexionPeer.addTrack(track, flujoLocalGlobal));\n' +
+        '                \n' +
+        '                // Mostrar botón de colgar\n' +
+        '                document.getElementById("btnColgarLlamada").style.display = "inline-block";\n' +
+        '                alert(activarVideo ? "📹 Videollamada HD activa" : "📞 Llamada de Voz de Datos activa");\n' +
         '            } catch(err) { \n' +
-        '                console.error("Error crítico multimedia:", err);\n' +
-        '                alert("⚠️ No se pudo acceder a la cámara o micrófono. Asegúrate de dar permisos en el menú de tres puntos o en el icono de candado 🔒 de tu navegador."); \n' +
+        '                alert("⚠️ No se pudo iniciar la llamada. Verifique permisos."); \n' +
         '            }\n' +
         '        }\n' +
         '\n' +
@@ -341,7 +425,10 @@ app.get('/', (req, res) => {
         '            rtcConexionPeer.onicecandidate = (event) => {\n' +
         '                if (event.candidate && socket) { socket.emit("wa_multimedia_signaling", { sala: salaToken, candidate: event.candidate }); }\n' +
         '            };\n' +
-        '            rtcConexionPeer.ontrack = (event) => { document.getElementById("videoRemoto").srcObject = event.streams[0]; };\n' +
+        '            rtcConexionPeer.ontrack = (event) => { \n' +
+        '                const vRemoto = document.getElementById("videoRemoto");\n' +
+        '                vRemoto.srcObject = event.streams[0]; \n' +
+        '            };\n' +
         '            if (esEmisor) {\n' +
         '                rtcConexionPeer.onnegotiationneeded = async () => {\n' +
         '                    const offer = await rtcConexionPeer.createOffer();\n' +
@@ -349,6 +436,26 @@ app.get('/', (req, res) => {
         '                    socket.emit("wa_multimedia_signaling", { sala: salaToken, sdp: rtcConexionPeer.localDescription });\n' +
         '                };\n' +
         '            }\n' +
+        '        }\n' +
+        '\n' +
+        '        // FUNCIÓN DE COLGAR / DESCONECTAR LLAMADA\n' +
+        '        function colgarLlamada() {\n' +
+        '            if (flujoLocalGlobal) {\n' +
+        '                flujoLocalGlobal.getTracks().forEach(track => track.stop());\n' +
+        '                flujoLocalGlobal = null;\n' +
+        '            }\n' +
+        '            if (rtcConexionPeer) {\n' +
+        '                rtcConexionPeer.close();\n' +
+        '                rtcConexionPeer = null;\n' +
+        '            }\n' +
+        '            document.getElementById("parrillaVideos").classList.remove("active");\n' +
+        '            document.getElementById("videoLocal").srcObject = null;\n' +
+        '            document.getElementById("videoRemoto").srcObject = null;\n' +
+        '            document.getElementById("btnColgarLlamada").style.display = "none";\n' +
+        '            if (socket) {\n' +
+        '                socket.emit("wa_multimedia_signaling", { sala: salaToken, colgar: true });\n' +
+        '            }\n' +
+        '            alert("❌ Llamada finalizada y desconectada.");\n' +
         '        }\n' +
         '\n' +
         '        function abrirLienzoFirmaEspejo() {\n' +
@@ -516,6 +623,12 @@ app.get('/', (req, res) => {
         '            });\n' +
         '\n' +
         '            socket.on("wa_multimedia_signaling_stream", async (trama) => {\n' +
+        '                if (trama.colgar) {\n' +
+        '                    document.getElementById("parrillaVideos").classList.remove("active");\n' +
+        '                    document.getElementById("btnColgarLlamada").style.display = "none";\n' +
+        '                    if (rtcConexionPeer) { rtcConexionPeer.close(); rtcConexionPeer = null; }\n' +
+        '                    return;\n' +
+        '                }\n' +
         '                if (trama.sdp) {\n' +
         '                    if (!rtcConexionPeer) estructurarLlamadaPeerWebRTC(false);\n' +
         '                    await rtcConexionPeer.setRemoteDescription(new RTCSessionDescription(trama.sdp));\n' +
