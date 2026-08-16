@@ -90,23 +90,23 @@ app.get('/', (req, res) => {
         '<head>\n' +
         '    <meta charset="UTF-8">\n' +
         '    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">\n' +
-        '    <title>VOBIXCHAT // Canal Seguro & Blindaje Total</title>\n' +
+        '    <title>VOBIXCHAT // Canal Seguro & Notificaciones Activas</title>\n' +
         '    <style>\n' +
         '        * { box-sizing: border-box; margin: 0; padding: 0; }\n' +
         '        html, body { height: 100%; height: 100dvh; background: #030508; color: #00ffcc; font-family: "Consolas", monospace; overflow: hidden; display: flex; justify-content: center; align-items: center; }\n' +
-        '        .app-container { background: #070b12; border: 2px solid #00ffcc; width: 100%; max-width: 440px; height: 100dvh; display: flex; flex-direction: column; position: relative; box-shadow: 0 0 25px rgba(0, 255, 204, 0.15); }\n' +
-        '        .view { display: none; flex-direction: column; height: 100%; width: 100%; padding: 30px 20px; justify-content: center; text-align: center; }\n' +
+        '        .app-container { background: #070b12; border: 2px solid #00ffcc; width: 100%; max-width: 440px; height: 100dvh; display: flex; flex-direction: column; position: relative; box-shadow: 0 0 25px rgba(0, 255, 204, 0.15); overflow: hidden; }\n' +
+        '        .view { display: none; flex-direction: column; height: 100%; width: 100%; padding: 20px; justify-content: center; text-align: center; overflow-y: auto; }\n' +
         '        .view.active { display: flex; }\n' +
-        '        .radar-circle { width: 130px; height: 130px; border: 2px dashed rgba(0, 255, 204, 0.25); border-radius: 50%; margin: 0 auto 25px auto; position: relative; display: flex; justify-content: center; align-items: center; font-size: 11px; font-weight: bold; letter-spacing: 1.5px; text-transform: uppercase; }\n' +
+        '        .radar-circle { width: 110px; height: 110px; border: 2px dashed rgba(0, 255, 204, 0.25); border-radius: 50%; margin: 0 auto 15px auto; position: relative; display: flex; justify-content: center; align-items: center; font-size: 11px; font-weight: bold; letter-spacing: 1.5px; text-transform: uppercase; }\n' +
         '        .radar-circle::after { content: ""; position: absolute; width: 100%; height: 100%; border: 2px solid #00ffcc; border-radius: 50%; border-left-color: transparent; border-bottom-color: transparent; animation: spinRadar 1.5s linear infinite; }\n' +
         '        @keyframes spinRadar { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }\n' +
-        '        .status-log { font-size: 11px; color: #527575; margin-bottom: 25px; text-transform: uppercase; letter-spacing: 1px; }\n' +
-        '        .input-box { margin-bottom: 20px; text-align: left; }\n' +
-        '        .input-box label { display: block; font-size: 11px; color: #527575; margin-bottom: 8px; text-transform: uppercase; font-weight: bold; }\n' +
-        '        .input-group-row { display: flex; gap: 8px; }\n' +
-        '        .flag-select { background: #0d1520; border: 1px solid rgba(0, 255, 204, 0.3); color: #fff; border-radius: 8px; font-size: 16px; padding: 0 10px; outline: none; }\n' +
-        '        .input-box input { width: 100%; padding: 14px; background: #0d1520; border: 1px solid rgba(0, 255, 204, 0.3); border-radius: 8px; color: #fff; font-size: 16px; outline: none; }\n' +
-        '        .btn-quantum { width: 100%; padding: 15px; background: transparent; color: #00ffcc; border: 1px solid #00ffcc; font-weight: bold; font-size: 13px; cursor: pointer; text-transform: uppercase; border-radius: 8px; }\n' +
+        '        .status-log { font-size: 11px; color: #527575; margin-bottom: 15px; text-transform: uppercase; letter-spacing: 1px; }\n' +
+        '        .input-box { margin-bottom: 15px; text-align: left; width: 100%; }\n' +
+        '        .input-box label { display: block; font-size: 11px; color: #527575; margin-bottom: 6px; text-transform: uppercase; font-weight: bold; }\n' +
+        '        .input-group-row { display: flex; gap: 6px; width: 100%; }\n' +
+        '        .flag-select { background: #0d1520; border: 1px solid rgba(0, 255, 204, 0.3); color: #fff; border-radius: 8px; font-size: 13px; padding: 0 4px; outline: none; width: 110px; flex-shrink: 0; }\n' +
+        '        .input-box input { width: 100%; padding: 12px; background: #0d1520; border: 1px solid rgba(0, 255, 204, 0.3); border-radius: 8px; color: #fff; font-size: 15px; outline: none; }\n' +
+        '        .btn-quantum { width: 100%; padding: 14px; background: transparent; color: #00ffcc; border: 1px solid #00ffcc; font-weight: bold; font-size: 13px; cursor: pointer; text-transform: uppercase; border-radius: 8px; }\n' +
         '        .lnk-recovery { color: #00bcff; font-size: 12px; background: transparent; border: none; cursor: pointer; margin-top: 15px; text-decoration: underline; text-transform: uppercase; }\n' +
         '        .wa-view { padding: 0 !important; background: #04070c; display: none; flex-direction: column; height: 100%; position: relative; }\n' +
         '        .wa-view.active { display: flex; }\n' +
@@ -127,11 +127,11 @@ app.get('/', (req, res) => {
         '        .search-bar-overlay.active { display: flex; }\n' +
         '        .search-bar-overlay input { flex: 1; background: #04070c; border: 1px solid #00ffcc; border-radius: 6px; padding: 6px 10px; color: #fff; font-size: 14px; outline: none; }\n' +
         '        .btn-search-go { background: #00ffcc; color: #030508; border: none; border-radius: 6px; padding: 6px 12px; font-weight: bold; font-size: 11px; cursor: pointer; text-transform: uppercase; }\n' +
-        '        .webrtc-container { display: none; position: absolute; top: 55px; left: 0; width: 100%; height: calc(100% - 115px); background: #000; z-index: 20; overflow: hidden; }\n' +
-        '        .webrtc-container.active { display: block; }\n' +
-        '        #videoRemoto { width: 100%; height: 100%; object-fit: cover; }\n' +
-        '        .video-local-pip { position: absolute; bottom: 20px; right: 20px; width: 100px; height: 140px; background: #111; border: 2px solid #00ffcc; border-radius: 8px; overflow: hidden; z-index: 25; box-shadow: 0 4px 12px rgba(0,0,0,0.7); cursor: pointer; }\n' +
-        '        #videoLocal { width: 100%; height: 100%; object-fit: cover; }\n' +
+        '        .webrtc-container { display: none; position: absolute; top: 55px; left: 0; width: 100%; height: calc(100% - 115px); background: #000; z-index: 20; overflow-y: auto; padding: 10px; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); align-content: center; }\n' +
+        '        .webrtc-container.active { display: grid; }\n' +
+        '        .video-box { width: 100%; height: 160px; background: #111; border: 2px solid #00ffcc; border-radius: 8px; overflow: hidden; position: relative; }\n' +
+        '        .video-box video { width: 100%; height: 100%; object-fit: cover; }\n' +
+        '        .video-box span { position: absolute; bottom: 5px; left: 5px; background: rgba(0,0,0,0.6); color: #00ffcc; font-size: 10px; padding: 2px 6px; border-radius: 4px; }\n' +
         '        .mirror-signature-overlay { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(3, 5, 8, 0.96); z-index: 50; flex-direction: column; padding: 15px; }\n' +
         '        .mirror-signature-overlay.active { display: flex; }\n' +
         '        .signature-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 1px solid #e91e63; padding-bottom: 8px; }\n' +
@@ -171,10 +171,10 @@ app.get('/', (req, res) => {
         '                <label>Terminal Telefónico (Sin VoIP)</label>\n' +
         '                <div class="input-group-row">\n' +
         '                    <select id="countrySelect" class="flag-select">\n' +
-        '                        <option value="+34">🇪🇸 España (+34)</option>\n' +
-        '                        <option value="+1">🇩🇴 Rep. Dominicana (+1)</option>\n' +
-        '                        <option value="+52">🇲🇽 México (+52)</option>\n' +
-        '                        <option value="+1">🇺🇸 EE.UU. (+1)</option>\n' +
+        '                        <option value="+34">🇪🇸 (+34)</option>\n' +
+        '                        <option value="+1">🇩🇴 (+1)</option>\n' +
+        '                        <option value="+52">🇲🇽 (+52)</option>\n' +
+        '                        <option value="+1">🇺🇸 (+1)</option>\n' +
         '                    </select>\n' +
         '                    <input type="tel" id="telefono" placeholder="Número móvil" autocomplete="off">\n' +
         '                </div>\n' +
@@ -210,8 +210,8 @@ app.get('/', (req, res) => {
         '                    </div>\n' +
         '                </div>\n' +
         '                <div class="wa-actions">\n' +
-        '                    <button class="wa-icon-btn" onclick="inicializarTransmisionMultimedia(\'video\')" title="Videollamada">📹</button>\n' +
-        '                    <button class="wa-icon-btn" onclick="inicializarTransmisionMultimedia(\'audio\')" title="Llamada de Voz">📞</button>\n' +
+        '                    <button class="wa-icon-btn" onclick="iniciarConferencia(\'video\')" title="Videollamada Grupal">📹</button>\n' +
+        '                    <button class="wa-icon-btn" onclick="iniciarConferencia(\'audio\')" title="Llamada de Voz Grupal">📞</button>\n' +
         '                    <button class="btn-quantum-hangup" id="btnColgarLlamada" onclick="colgarLlamada()" title="Colgar">❌</button>\n' +
         '                    <button class="wa-icon-btn" onclick="toggleMenuTresPuntos()">⁝</button>\n' +
         '                    <div class="dropdown-menu" id="menuTresPuntos">\n' +
@@ -229,8 +229,7 @@ app.get('/', (req, res) => {
         '                <button class="wa-icon-btn" style="font-size: 14px;" onclick="toggleBuscadorArroba()">❌</button>\n' +
         '            </div>\n' +
         '            <div class="webrtc-container" id="parrillaVideos">\n' +
-        '                <video id="videoRemoto" autoplay playsinline></video>\n' +
-        '                <div class="video-local-pip" onclick="intercambiarVideos()"><video id="videoLocal" autoplay playsinline muted></video></div>\n' +
+        '                <div class="video-box"><video id="videoLocal" autoplay playsinline muted></video><span>Tú (Local)</span></div>\n' +
         '            </div>\n' +
         '            <div class="mirror-signature-overlay" id="overlayFirma">\n' +
         '                <div class="signature-header">\n' +
@@ -283,11 +282,24 @@ app.get('/', (req, res) => {
         '        let ctxLienzo = null;\n' +
         '        let dibujandoEnLienzo = false;\n' +
         '        let ultimoX = 0, ultimoY = 0;\n' +
-        '        let rtcConexionPeer = null;\n' +
         '        let flujoLocalGlobal = null;\n' +
         '        let mediaRecorder = null;\n' +
         '        let audioChunks = [];\n' +
+        '        const peersConexiones = {};\n' +
         '        const confServidoresIce = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };\n' +
+        '\n' +
+        '        // ACTIVACIÓN PERMANENTE DE AUDIO CONTEXT PARA NOTIFICACIONES EN SEGUNDO PLANO\n' +
+        '        let globalAudioCtx = null;\n' +
+        '        function iniciarAudioContextPersistente() {\n' +
+        '            if (!globalAudioCtx) {\n' +
+        '                globalAudioCtx = new (window.AudioContext || window.webkitAudioContext)();\n' +
+        '            }\n' +
+        '            if (globalAudioCtx.state === "suspended") {\n' +
+        '                globalAudioCtx.resume();\n' +
+        '            }\n' +
+        '        }\n' +
+        '        window.addEventListener("click", iniciarAudioContextPersistente, { once: true });\n' +
+        '        window.addEventListener("touchstart", iniciarAudioContextPersistente, { once: true });\n' +
         '\n' +
         '        if (window.visualViewport) {\n' +
         '            window.visualViewport.addEventListener("resize", () => {\n' +
@@ -299,16 +311,16 @@ app.get('/', (req, res) => {
         '\n' +
         '        function reproducirSonidoNotificacion(esLlamada = false) {\n' +
         '            try {\n' +
-        '                const ctxAudio = new (window.AudioContext || window.webkitAudioContext)();\n' +
-        '                const osc = ctxAudio.createOscillator();\n' +
-        '                const gain = ctxAudio.createGain();\n' +
+        '                if (!globalAudioCtx) globalAudioCtx = new (window.AudioContext || window.webkitAudioContext)();\n' +
+        '                const osc = globalAudioCtx.createOscillator();\n' +
+        '                const gain = globalAudioCtx.createGain();\n' +
         '                osc.type = esLlamada ? "triangle" : "sine";\n' +
-        '                osc.frequency.setValueAtTime(esLlamada ? 440 : 880, ctxAudio.currentTime);\n' +
-        '                gain.gain.setValueAtTime(0.15, ctxAudio.currentTime);\n' +
+        '                osc.frequency.setValueAtTime(esLlamada ? 440 : 880, globalAudioCtx.currentTime);\n' +
+        '                gain.gain.setValueAtTime(0.2, globalAudioCtx.currentTime);\n' +
         '                osc.connect(gain);\n' +
-        '                gain.connect(ctxAudio.destination);\n' +
+        '                gain.connect(globalAudioCtx.destination);\n' +
         '                osc.start();\n' +
-        '                osc.stop(ctxAudio.currentTime + (esLlamada ? 0.4 : 0.15));\n' +
+        '                osc.stop(globalAudioCtx.currentTime + (esLlamada ? 0.5 : 0.2));\n' +
         '            } catch(e) {}\n' +
         '        }\n' +
         '\n' +
@@ -361,7 +373,7 @@ app.get('/', (req, res) => {
         '            const urlBase = window.location.origin + window.location.pathname;\n' +
         '            const urlPrivada = urlBase + "?canal=" + salaToken;\n' +
         '            navigator.clipboard.writeText(urlPrivada);\n' +
-        '            alert("🔗 ¡ENLACE DE SALA PRIVADA COPIADO!\\n\\nTodo invitado que abra este enlace SERÁ OBLIGADO A REGISTRARSE.");\n' +
+        '            alert("🔗 ¡ENLACE DE SALA PRIVADA COPIADO!\\n\\nTodo invitado que abra este enlace SERÁ OBLIGADO A REGISTRARSE antes de unirse.");\n' +
         '        }\n' +
         '\n' +
         '        async function subirContratoServidor(input) {\n' +
@@ -460,7 +472,7 @@ app.get('/', (req, res) => {
         '            img.style.display = "block";\n' +
         '        }\n' +
         '\n' +
-        '        async function inicializarTransmisionMultimedia(tipo) {\n' +
+        '        async function iniciarConferencia(tipo) {\n' +
         '            const activarVideo = (tipo === \'video\');\n' +
         '            document.getElementById("parrillaVideos").classList.add("active");\n' +
         '            try {\n' +
@@ -470,28 +482,53 @@ app.get('/', (req, res) => {
         '                };\n' +
         '                flujoLocalGlobal = await navigator.mediaDevices.getUserMedia(restricciones);\n' +
         '                document.getElementById("videoLocal").srcObject = flujoLocalGlobal;\n' +
-        '                estructurarLlamadaPeerWebRTC(true);\n' +
-        '                flujoLocalGlobal.getTracks().forEach(track => rtcConexionPeer.addTrack(track, flujoLocalGlobal));\n' +
         '                document.getElementById("btnColgarLlamada").style.display = "flex";\n' +
-        '                if(socket) socket.emit("wa_multimedia_signaling", { sala: salaToken, llamadaEntrante: true, remitente: miNombreUsuario });\n' +
-        '            } catch(err) { alert("⚠️ Permisos requeridos. Verifica que la cámara y el mic estén permitidos."); }\n' +
+        '\n' +
+        '                if (socket) {\n' +
+        '                    socket.emit("unir_multiconferencia", { sala: salaToken, usuario: miNombreUsuario });\n' +
+        '                    socket.emit("wa_multimedia_signaling", { sala: salaToken, llamadaEntrante: true, remitente: miNombreUsuario });\n' +
+        '                }\n' +
+        '            } catch (err) {\n' +
+        '                alert("⚠️ Error de permisos de cámara o micrófono.");\n' +
+        '            }\n' +
         '        }\n' +
         '\n' +
-        '        function estructurarLlamadaPeerWebRTC(esEmisor) {\n' +
-        '            rtcConexionPeer = new RTCPeerConnection(confServidoresIce);\n' +
-        '            rtcConexionPeer.onicecandidate = (event) => {\n' +
-        '                if (event.candidate && socket) { socket.emit("wa_multimedia_signaling", { sala: salaToken, candidate: event.candidate }); }\n' +
+        '        function crearPeerRemoto(idSocketRemoto, nombreRemoto, esOferente) {\n' +
+        '            const pc = new RTCPeerConnection(confServidoresIce);\n' +
+        '            peersConexiones[idSocketRemoto] = pc;\n' +
+        '\n' +
+        '            if (flujoLocalGlobal) {\n' +
+        '                flujoLocalGlobal.getTracks().forEach(track => pc.addTrack(track, flujoLocalGlobal));\n' +
+        '            }\n' +
+        '\n' +
+        '            pc.onicecandidate = (event) => {\n' +
+        '                if (event.candidate && socket) {\n' +
+        '                    socket.emit("multiconferencia_senal", { destino: idSocketRemoto, candidate: event.candidate, sala: salaToken });\n' +
+        '                }\n' +
         '            };\n' +
-        '            rtcConexionPeer.ontrack = (event) => { \n' +
-        '                document.getElementById("videoRemoto").srcObject = event.streams[0]; \n' +
+        '\n' +
+        '            pc.ontrack = (event) => {\n' +
+        '                let cajaVideo = document.getElementById("box_" + idSocketRemoto);\n' +
+        '                if (!cajaVideo) {\n' +
+        '                    cajaVideo = document.createElement("div");\n' +
+        '                    cajaVideo.className = "video-box";\n' +
+        '                    cajaVideo.id = "box_" + idSocketRemoto;\n' +
+        '                    cajaVideo.innerHTML = \'<video autoplay playsinline id="v_\' + idSocketRemoto + \'"></video><span>\' + nombreRemoto + \'</span>\';\n' +
+        '                    document.getElementById("parrillaVideos").appendChild(cajaVideo);\n' +
+        '                }\n' +
+        '                document.getElementById("v_" + idSocketRemoto).srcObject = event.streams[0];\n' +
         '            };\n' +
-        '            if (esEmisor) {\n' +
-        '                rtcConexionPeer.onnegotiationneeded = async () => {\n' +
-        '                    const offer = await rtcConexionPeer.createOffer();\n' +
-        '                    await rtcConexionPeer.setLocalDescription(offer);\n' +
-        '                    socket.emit("wa_multimedia_signaling", { sala: salaToken, sdp: rtcConexionPeer.localDescription });\n' +
+        '\n' +
+        '            if (esOferente) {\n' +
+        '                pc.onnegotiationneeded = async () => {\n' +
+        '                    try {\n' +
+        '                        const offer = await pc.createOffer();\n' +
+        '                        await pc.setLocalDescription(offer);\n' +
+        '                        socket.emit("multiconferencia_senal", { destino: idSocketRemoto, sdp: pc.localDescription, sala: salaToken, remitente: miNombreUsuario });\n' +
+        '                    } catch (e) {}\n' +
         '                };\n' +
         '            }\n' +
+        '            return pc;\n' +
         '        }\n' +
         '\n' +
         '        function colgarLlamada() {\n' +
@@ -499,26 +536,18 @@ app.get('/', (req, res) => {
         '                flujoLocalGlobal.getTracks().forEach(track => track.stop());\n' +
         '                flujoLocalGlobal = null;\n' +
         '            }\n' +
-        '            if (rtcConexionPeer) {\n' +
-        '                rtcConexionPeer.close();\n' +
-        '                rtcConexionPeer = null;\n' +
-        '            }\n' +
+        '            Object.keys(peersConexiones).forEach(id => {\n' +
+        '                peersConexiones[id].close();\n' +
+        '                delete peersConexiones[id];\n' +
+        '                const caja = document.getElementById("box_" + id);\n' +
+        '                if (caja) caja.remove();\n' +
+        '            });\n' +
         '            document.getElementById("parrillaVideos").classList.remove("active");\n' +
-        '            document.getElementById("videoLocal").srcObject = null;\n' +
-        '            document.getElementById("videoRemoto").srcObject = null;\n' +
         '            document.getElementById("btnColgarLlamada").style.display = "none";\n' +
-        '            if (socket) {\n' +
-        '                socket.emit("wa_multimedia_signaling", { sala: salaToken, colgar: true });\n' +
-        '            }\n' +
+        '            if (socket) socket.emit("colgar_multiconferencia", { sala: salaToken });\n' +
         '        }\n' +
         '\n' +
-        '        function intercambiarVideos() {\n' +
-        '            const vLocal = document.getElementById("videoLocal");\n' +
-        '            const vRemoto = document.getElementById("videoRemoto");\n' +
-        '            let temp = vLocal.srcObject;\n' +
-        '            vLocal.srcObject = vRemoto.srcObject;\n' +
-        '            vRemoto.srcObject = temp;\n' +
-        '        }\n' +
+        '        function intercambiarVideos() {}\n' +
         '\n' +
         '        function abrirLienzoFirmaEspejo() {\n' +
         '            document.getElementById("menuTresPuntos").classList.remove("active");\n' +
@@ -581,12 +610,12 @@ app.get('/', (req, res) => {
         '            const paramsUrl = new URLSearchParams(window.location.search);\n' +
         '            if(paramsUrl.has("canal")) {\n' +
         '                salaToken = paramsUrl.get("canal");\n' +
-        '                // BLINDAJE: Si el invitado no está registrado, se le EXIGE registrarse antes de entrar\n' +
+        '                // BLINDAJE ABSOLUTO: SI NO ESTÁ REGISTRADO, SE QUEDA OBLIGATORIAMENTE EN EL SCANNER.\n' +
         '                if(localStorage.getItem("vobix_dispositivo_autorizado") !== "true") {\n' +
         '                    document.getElementById("statusField").innerText = "ACCESO RESTRINGIDO // REGISTRESE CON SMS...";\n' +
         '                    return;\n' +
         '                }\n' +
-        '                miNombreUsuario = localStorage.getItem("vobix_nombre") || "Invitado";\n' +
+        '                miNombreUsuario = localStorage.getItem("vobix_nombre") || "Usuario";\n' +
         '                document.getElementById("waContactoNombre").innerText = miNombreUsuario;\n' +
         '                document.getElementById("vistaScanner").classList.remove("active");\n' +
         '                document.getElementById("mainWrapper").style.maxWidth = "600px";\n' +
@@ -631,7 +660,7 @@ app.get('/', (req, res) => {
         '                        document.getElementById("codigoPin").value = "777777";\n' +
         '                    }\n' +
         '                } else if(data.error === "VOIP_REJECTED") {\n' +
-        '                    alert("⛔ ACCESO DENEGADO: Los números VoIP están prohibidos en esta plataforma.");\n' +
+        '                    alert("⛔ ACCESO DENEGADO: Los números VoIP no están permitidos.");\n' +
         '                }\n' +
         '            } catch(e) { alert("Error de red"); }\n' +
         '        }\n' +
@@ -665,7 +694,6 @@ app.get('/', (req, res) => {
         '            document.getElementById("mainWrapper").style.maxWidth = "600px";\n' +
         '            document.getElementById("vistaChat").classList.add("active");\n' +
         '            \n' +
-        '            // Si entró por enlace de invitación, redirigir automáticamente a la sala privada tras registrarse\n' +
         '            const paramsUrl = new URLSearchParams(window.location.search);\n' +
         '            if(paramsUrl.has("canal")) {\n' +
         '                window.location.href = window.location.origin + window.location.pathname + "?canal=" + salaToken;\n' +
@@ -709,6 +737,31 @@ app.get('/', (req, res) => {
         '                alert("📄 NUEVO CONTRATO CARGADO POR LA OTRA PARTE.");\n' +
         '            });\n' +
         '\n' +
+        '            socket.on("lista_usuarios_sala", (usuarios) => {\n' +
+        '                usuarios.forEach(u => {\n' +
+        '                    if (u.id !== socket.id && !peersConexiones[u.id]) {\n' +
+        '                        crearPeerRemoto(u.id, u.nombre, true);\n' +
+        '                    }\n' +
+        '                });\n' +
+        '            });\n' +
+        '\n' +
+        '            socket.on("multiconferencia_senal", async (data) => {\n' +
+        '                let pc = peersConexiones[data.remitenteId];\n' +
+        '                if (!pc) {\n' +
+        '                    pc = crearPeerRemoto(data.remitenteId, data.remitenteNombre || "Participante", false);\n' +
+        '                }\n' +
+        '                if (data.sdp) {\n' +
+        '                    await pc.setRemoteDescription(new RTCSessionDescription(data.sdp));\n' +
+        '                    if (data.sdp.type === "offer") {\n' +
+        '                        const answer = await pc.createAnswer();\n' +
+        '                        await pc.setLocalDescription(answer);\n' +
+        '                        socket.emit("multiconferencia_senal", { destino: data.remitenteId, sdp: pc.localDescription, sala: salaToken, remitenteNombre: miNombreUsuario });\n' +
+        '                    }\n' +
+        '                } else if (data.candidate) {\n' +
+        '                    await pc.addIceCandidate(new RTCIceCandidate(data.candidate));\n' +
+        '                }\n' +
+        '            });\n' +
+        '\n' +
         '            socket.on("wa_multimedia_signaling_stream", async (trama) => {\n' +
         '                if (trama.llamadaEntrante) {\n' +
         '                    if (trama.remitente) {\n' +
@@ -716,24 +769,6 @@ app.get('/', (req, res) => {
         '                    }\n' +
         '                    reproducirSonidoNotificacion(true);\n' +
         '                    return;\n' +
-        '                }\n' +
-        '                if (trama.colgar) {\n' +
-        '                    document.getElementById("parrillaVideos").classList.remove("active");\n' +
-        '                    document.getElementById("btnColgarLlamada").style.display = "none";\n' +
-        '                    if (rtcConexionPeer) { rtcConexionPeer.close(); rtcConexionPeer = null; }\n' +
-        '                    return;\n' +
-        '                }\n' +
-        '                if (trama.sdp) {\n' +
-        '                    if (!rtcConexionPeer) estructurarLlamadaPeerWebRTC(false);\n' +
-        '                    await rtcConexionPeer.setRemoteDescription(new RTCSessionDescription(trama.sdp));\n' +
-        '                    if (trama.sdp.type === "offer") {\n' +
-        '                        const answer = await rtcConexionPeer.createAnswer();\n' +
-        '                        await rtcConexionPeer.setLocalDescription(answer);\n' +
-        '                        socket.emit("wa_multimedia_signaling", { sala: salaToken, sdp: rtcConexionPeer.localDescription });\n' +
-        '                    }\n' +
-        '                } else if (trama.candidate) {\n' +
-        '                    if (!rtcConexionPeer) estructurarLlamadaPeerWebRTC(false);\n' +
-        '                    await rtcConexionPeer.addIceCandidate(new RTCIceCandidate(trama.candidate));\n' +
         '                }\n' +
         '            });\n' +
         '        }\n' +
@@ -759,7 +794,6 @@ app.post('/api/v1/auth/register', verificarLimitePeticionesIP, async (req, res) 
     
     const telefonoLimpio = telefono.trim().replace(/[^a-zA-Z0-9+]/g, '');
     
-    // FILTRO ANTI-VOIP ESTRICTO
     if (telefonoLimpio.startsWith("+1800") || telefonoLimpio.startsWith("+1888") || telefonoLimpio.startsWith("+1877") || telefonoLimpio.includes("voip")) {
         return res.status(400).json({ success: false, error: "VOIP_REJECTED" });
     }
@@ -803,9 +837,39 @@ app.post('/api/v1/auth/verify-pin', verificarLimitePeticionesIP, async (req, res
     return res.status(200).json({ success: true });
 });
 
+const salasUsuarios = new Map();
+
 io.on("connection", (socket) => {
     socket.on("unir_sala_privada", (sala) => {
         socket.join(sala);
+    });
+
+    socket.on("unir_multiconferencia", (data) => {
+        socket.join(data.sala);
+        if (!salasUsuarios.has(data.sala)) salasUsuarios.set(data.sala, []);
+        const lista = salasUsuarios.get(data.sala);
+        if (!lista.some(u => u.id === socket.id)) {
+            lista.push({ id: socket.id, nombre: data.usuario });
+        }
+        io.to(data.sala).emit("lista_usuarios_sala", lista);
+    });
+
+    socket.on("multiconferencia_senal", (data) => {
+        io.to(data.destino).emit("multiconferencia_senal", {
+            sender: socket.id,
+            remitenteId: socket.id,
+            remitenteNombre: data.remitente,
+            sdp: data.sdp,
+            candidate: data.candidate
+        });
+    });
+
+    socket.on("colgar_multiconferencia", (data) => {
+        if (salasUsuarios.has(data.sala)) {
+            const lista = salasUsuarios.get(data.sala).filter(u => u.id !== socket.id);
+            salasUsuarios.set(data.sala, lista);
+            io.to(data.sala).emit("lista_usuarios_sala", lista);
+        }
     });
 
     socket.on("canal_mensaje_usuario", (datos) => {
@@ -830,6 +894,16 @@ io.on("connection", (socket) => {
 
     socket.on("wa_multimedia_signaling", (tramaCifrada) => {
         socket.to(tramaCifrada.sala).emit("wa_multimedia_signaling_stream", tramaCifrada);
+    });
+
+    socket.on("disconnect", () => {
+        salasUsuarios.forEach((lista, sala) => {
+            const nuevaLista = lista.filter(u => u.id !== socket.id);
+            if (nuevaLista.length !== lista.length) {
+                salasUsuarios.set(sala, nuevaLista);
+                io.to(sala).emit("lista_usuarios_sala", nuevaLista);
+            }
+        });
     });
 });
 
