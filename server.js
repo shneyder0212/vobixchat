@@ -90,7 +90,7 @@ app.get('/', (req, res) => {
         '<head>\n' +
         '    <meta charset="UTF-8">\n' +
         '    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">\n' +
-        '    <title>VOBIXCHAT // Canal Seguro & Minimalista</title>\n' +
+        '    <title>VOBIXCHAT // Canal Seguro & Llamadas Sincronizadas</title>\n' +
         '    <style>\n' +
         '        * { box-sizing: border-box; margin: 0; padding: 0; }\n' +
         '        html, body { height: 100%; height: 100dvh; background: #030508; color: #00ffcc; font-family: "Consolas", monospace; overflow: hidden; display: flex; justify-content: center; align-items: center; }\n' +
@@ -155,7 +155,6 @@ app.get('/', (req, res) => {
         '        .wa-bubble.system { background: #0c1524; color: #527575; font-size: 11px; align-self: center; text-align: center; width: 90%; text-transform: uppercase; }\n' +
         '        .wa-bubble.inbound { background: #0d1622; color: #ffffff; align-self: flex-start; }\n' +
         '        .wa-bubble.outbound { background: #002e25; color: #00ffcc; align-self: flex-end; border-color: rgba(0, 255, 204, 0.3); }\n' +
-        '        /* PIE DE PÁGINA ULTRA LIMPIO: SOLO "Tocar para escribir..." Y BOTÓN DE ENVIAR SEGURO */\n' +
         '        .wa-footer { padding: 10px 14px; padding-bottom: max(14px, env(safe-area-inset-bottom)); display: flex; align-items: center; background: #060b12; border-top: 1px solid rgba(0, 255, 204, 0.15); flex-shrink: 0; }\n' +
         '        .wa-input-capsule { flex: 1; background: #0d1520; border: 1px solid rgba(0, 255, 204, 0.3); border-radius: 25px; padding: 4px 10px 4px 16px; display: flex; align-items: center; gap: 8px; }\n' +
         '        .wa-input-capsule input { flex: 1; background: transparent; border: none; color: #fff; padding: 8px 0; font-size: 15px; outline: none; min-width: 0; }\n' +
@@ -263,7 +262,6 @@ app.get('/', (req, res) => {
         '            <div class="wa-chat-area" id="pantallaChat">\n' +
         '                <div class="wa-bubble system">[SISTEMA] Candado de seguridad activo. Conversación hiper-cifrada de extremo a extremo (E2EE).</div>\n' +
         '            </div>\n' +
-        '            <!-- BARRA INFERIOR MINIMALISTA -->\n' +
         '            <div class="wa-footer">\n' +
         '                <div class="wa-input-capsule">\n' +
         '                    <input type="text" id="mensajeChat" placeholder="Tocar para escribir..." autocomplete="off" onkeydown="if(event.key===\'Enter\') procesarTransmisionTextoUrgente()">\n' +
@@ -412,9 +410,29 @@ app.get('/', (req, res) => {
         '            }\n' +
         '        }\n' +
         '\n' +
-        '        function aceptarLlamadaEntrante() {\n' +
+        '        // CORRECCIÓN CLAVE: AL ACEPTAR, SE CIERRA EL OVERLAY Y SE CONECTA LA MULTICONFERENCIA BIDIRECCIONAL\n' +
+        '        async function aceptarLlamadaEntrante() {\n' +
         '            document.getElementById("modalLlamadaEntrante").classList.remove("active");\n' +
-        '            iniciarConferencia(tipoLlamadaActual);\n' +
+        '            tipoLlamadaActual = window.tipoLlamadaPendiente || "video";\n' +
+        '            const activarVideo = (tipoLlamadaActual === \'video\');\n' +
+        '            if (activarVideo) document.getElementById("parrillaVideos").classList.add("active");\n' +
+        '            try {\n' +
+        '                const restricciones = {\n' +
+        '                    audio: { echoCancellation: true, noiseSuppression: true },\n' +
+        '                    video: activarVideo ? { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: "user" } : false\n' +
+        '                };\n' +
+        '                flujoLocalGlobal = await navigator.mediaDevices.getUserMedia(restricciones);\n' +
+        '                if (activarVideo) {\n' +
+        '                    document.getElementById("videoLocal").srcObject = flujoLocalGlobal;\n' +
+        '                }\n' +
+        '                document.getElementById("btnColgarLlamada").style.display = "flex";\n' +
+        '\n' +
+        '                if (socket) {\n' +
+        '                    socket.emit("unir_multiconferencia", { sala: salaToken, usuario: miNombreUsuario });\n' +
+        '                }\n' +
+        '            } catch (err) {\n' +
+        '                alert("⚠️ Error al activar la cámara o el micrófono para la llamada.");\n' +
+        '            }\n' +
         '        }\n' +
         '\n' +
         '        function rechazarLlamadaEntrante() {\n' +
@@ -438,6 +456,7 @@ app.get('/', (req, res) => {
         '\n' +
         '            pc.ontrack = (event) => {\n' +
         '                if (tipoLlamadaActual === "video") {\n' +
+        '                    document.getElementById("parrillaVideos").classList.add("active");\n' +
         '                    let cajaVideo = document.getElementById("box_" + idSocketRemoto);\n' +
         '                    if (!cajaVideo) {\n' +
         '                        cajaVideo = document.createElement("div");\n' +
@@ -485,6 +504,7 @@ app.get('/', (req, res) => {
         '                if (aud) aud.remove();\n' +
         '            });\n' +
         '            document.getElementById("parrillaVideos").classList.remove("active");\n' +
+        '            document.getElementById("modalLlamadaEntrante").classList.remove("active");\n' +
         '            document.getElementById("btnColgarLlamada").style.display = "none";\n' +
         '            if (socket) socket.emit("colgar_multiconferencia", { sala: salaToken });\n' +
         '        }\n' +
@@ -705,13 +725,13 @@ app.get('/', (req, res) => {
         '\n' +
         '            socket.on("wa_multimedia_signaling_stream", async (trama) => {\n' +
         '                if (trama.llamadaEntrante) {\n' +
-        '                    tipoLlamadaActual = trama.tipo || "video";\n' +
+        '                    window.tipoLlamadaPendiente = trama.tipo || "video";\n' +
         '                    if (trama.remitente) {\n' +
         '                        document.getElementById("remitenteLlamada").innerText = "Llamada de " + trama.remitente;\n' +
         '                        document.getElementById("waContactoNombre").innerText = trama.remitente;\n' +
         '                    }\n' +
-        '                    document.getElementById("tituloLlamadaEntrante").innerText = (tipoLlamadaActual === "video") ? "Videollamada Entrante" : "Llamada de Voz Entrante";\n' +
-        '                    document.getElementById("avatarLlamada").innerText = (tipoLlamadaActual === "video") ? "📹" : "📞";\n' +
+        '                    document.getElementById("tituloLlamadaEntrante").innerText = (window.tipoLlamadaPendiente === "video") ? "Videollamada Entrante" : "Llamada de Voz Entrante";\n' +
+        '                    document.getElementById("avatarLlamada").innerText = (window.tipoLlamadaPendiente === "video") ? "📹" : "📞";\n' +
         '                    document.getElementById("modalLlamadaEntrante").classList.add("active");\n' +
         '                    reproducirSonidoNotificacion(true);\n' +
         '                    return;\n' +
