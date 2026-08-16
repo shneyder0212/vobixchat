@@ -127,11 +127,18 @@ app.get('/', (req, res) => {
         '        .search-bar-overlay.active { display: flex; }\n' +
         '        .search-bar-overlay input { flex: 1; background: #04070c; border: 1px solid #00ffcc; border-radius: 6px; padding: 6px 10px; color: #fff; font-size: 14px; outline: none; }\n' +
         '        .btn-search-go { background: #00ffcc; color: #030508; border: none; border-radius: 6px; padding: 6px 12px; font-weight: bold; font-size: 11px; cursor: pointer; text-transform: uppercase; }\n' +
-        '        .webrtc-container { display: none; position: absolute; top: 55px; left: 0; width: 100%; height: calc(100% - 115px); background: #000; z-index: 20; overflow-y: auto; padding: 10px; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); align-content: center; }\n' +
-        '        .webrtc-container.active { display: grid; }\n' +
-        '        .video-box { width: 100%; height: 160px; background: #111; border: 2px solid #00ffcc; border-radius: 8px; overflow: hidden; position: relative; }\n' +
-        '        .video-box video { width: 100%; height: 100%; object-fit: cover; }\n' +
-        '        .video-box span { position: absolute; bottom: 5px; left: 5px; background: rgba(0,0,0,0.6); color: #00ffcc; font-size: 10px; padding: 2px 6px; border-radius: 4px; }\n' +
+        '        \n' +
+        '        /* ESTILO WHATSAPP PARA VIDEOLLAMADAS PANTALLA COMPLETA Y PIP FLUIDO */\n' +
+        '        .webrtc-container { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 25; flex-direction: column; justify-content: center; align-items: center; overflow: hidden; }\n' +
+        '        .webrtc-container.active { display: flex; }\n' +
+        '        .video-box-remoto { width: 100%; height: 100%; position: absolute; top: 0; left: 0; background: #000; }\n' +
+        '        .video-box-remoto video { width: 100%; height: 100%; object-fit: cover; }\n' +
+        '        .video-box-local { width: 110px; height: 160px; background: #111; border: 2px solid #00ffcc; border-radius: 10px; overflow: hidden; position: absolute; top: 70px; right: 15px; z-index: 30; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.7); transition: all 0.3s ease; }\n' +
+        '        .video-box-local video { width: 100%; height: 100%; object-fit: cover; }\n' +
+        '        .video-box-local.fullscreen { width: 100%; height: 100%; top: 0; right: 0; border: none; border-radius: 0; z-index: 24; }\n' +
+        '        .video-box-remoto.small { width: 110px; height: 160px; top: 70px; right: 15px; left: auto; border: 2px solid #ff3333; border-radius: 10px; z-index: 30; cursor: pointer; position: absolute; }\n' +
+        '        .video-overlay-controls { position: absolute; bottom: 30px; left: 0; width: 100%; display: flex; justify-content: center; gap: 20px; z-index: 35; }\n' +
+        '\n' +
         '        .incoming-call-overlay { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(3, 5, 8, 0.95); z-index: 200; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 20px; }\n' +
         '        .incoming-call-overlay.active { display: flex; }\n' +
         '        .incoming-avatar { width: 100px; height: 100px; border: 3px solid #00ffcc; border-radius: 50%; background: #0a111a; display: flex; justify-content: center; align-items: center; font-size: 40px; margin-bottom: 20px; animation: pulseRing 1.5s infinite; }\n' +
@@ -246,9 +253,18 @@ app.get('/', (req, res) => {
         '                <button class="btn-search-go" onclick="ejecutarBusquedaArroba()">Buscar</button>\n' +
         '                <button class="wa-icon-btn" style="font-size: 14px;" onclick="toggleBuscadorArroba()">❌</button>\n' +
         '            </div>\n' +
+        '            \n' +
+        '            <!-- CONTENEDOR DE VIDEO TIPO WHATSAPP (PANTALLA COMPLETA + PIP INTERCAMBIABLE) -->\n' +
         '            <div class="webrtc-container" id="parrillaVideos">\n' +
-        '                <div class="video-box"><video id="videoLocal" autoplay playsinline muted></video><span>Tú (Local)</span></div>\n' +
+        '                <div class="video-box-remoto" id="boxRemotoPrincipal"></div>\n' +
+        '                <div class="video-box-local" id="boxLocalPiP" onclick="intercambiarVideosPiP()">\n' +
+        '                    <video id="videoLocal" autoplay playsinline muted></video>\n' +
+        '                </div>\n' +
+        '                <div class="video-overlay-controls">\n' +
+        '                    <button class="btn-call-action btn-reject" onclick="colgarLlamada()" title="Colgar">❌</button>\n' +
+        '                </div>\n' +
         '            </div>\n' +
+        '\n' +
         '            <div class="mirror-signature-overlay" id="overlayFirma">\n' +
         '                <div class="signature-header">\n' +
         '                    <span class="signature-title">Firma Espejo (España ⇄ EE.UU.)</span>\n' +
@@ -305,6 +321,7 @@ app.get('/', (req, res) => {
         '        let audioChunks = [];\n' +
         '        let tipoLlamadaActual = "video";\n' +
         '        let grabandoAudio = false;\n' +
+        '        let modoPiPInvertido = false;\n' +
         '        const peersConexiones = {};\n' +
         '        const confServidoresIce = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };\n' +
         '\n' +
@@ -361,6 +378,20 @@ app.get('/', (req, res) => {
         '            const input = document.getElementById("mensajeChat");\n' +
         '            input.value += emoji;\n' +
         '            input.focus();\n' +
+        '        }\n' +
+        '\n' +
+        '        // INTERCAMBIAR VIDEO GRANDE Y PEQUEÑO AL TOCAR (ESTILO WHATSAPP)\n' +
+        '        function intercambiarVideosPiP() {\n' +
+        '            modoPiPInvertido = !modoPiPInvertido;\n' +
+        '            const boxLocal = document.getElementById("boxLocalPiP");\n' +
+        '            const boxRemoto = document.getElementById("boxRemotoPrincipal");\n' +
+        '            if (modoPiPInvertido) {\n' +
+        '                boxLocal.classList.add("fullscreen");\n' +
+        '                boxRemoto.classList.add("small");\n' +
+        '            } else {\n' +
+        '                boxLocal.classList.remove("fullscreen");\n' +
+        '                boxRemoto.classList.remove("small");\n' +
+        '            }\n' +
         '        }\n' +
         '\n' +
         '        async function subirArchivoChatDirecto(input) {\n' +
@@ -491,7 +522,6 @@ app.get('/', (req, res) => {
         '            }\n' +
         '        }\n' +
         '\n' +
-        '        // CORRECCIÓN CLAVE PARA LAS LLAMADAS: Al aceptar, activamos medios y nos unimos a la multiconferencia disparando la oferta PeerConnection\n' +
         '        async function aceptarLlamadaEntrante() {\n' +
         '            document.getElementById("modalLlamadaEntrante").classList.remove("active");\n' +
         '            tipoLlamadaActual = window.tipoLlamadaPendiente || "video";\n' +
@@ -539,15 +569,15 @@ app.get('/', (req, res) => {
         '            pc.ontrack = (event) => {\n' +
         '                if (tipoLlamadaActual === "video") {\n' +
         '                    document.getElementById("parrillaVideos").classList.add("active");\n' +
-        '                    let cajaVideo = document.getElementById("box_" + idSocketRemoto);\n' +
-        '                    if (!cajaVideo) {\n' +
-        '                        cajaVideo = document.createElement("div");\n' +
-        '                        cajaVideo.className = "video-box";\n' +
-        '                        cajaVideo.id = "box_" + idSocketRemoto;\n' +
-        '                        cajaVideo.innerHTML = \'<video autoplay playsinline id="v_\' + idSocketRemoto + \'"></video><span>\' + nombreRemoto + \'</span>\';\n' +
-        '                        document.getElementById("parrillaVideos").appendChild(cajaVideo);\n' +
+        '                    let videoRemoto = document.getElementById("videoRemotoElemento");\n' +
+        '                    if (!videoRemoto) {\n' +
+        '                        videoRemoto = document.createElement("video");\n' +
+        '                        videoRemoto.autoplay = true;\n' +
+        '                        videoRemoto.playsInline = true;\n' +
+        '                        videoRemoto.id = "videoRemotoElemento";\n' +
+        '                        document.getElementById("boxRemotoPrincipal").appendChild(videoRemoto);\n' +
         '                    }\n' +
-        '                    document.getElementById("v_" + idSocketRemoto).srcObject = event.streams[0];\n' +
+        '                    videoRemoto.srcObject = event.streams[0];\n' +
         '                } else {\n' +
         '                    let audioRemoto = document.getElementById("audio_" + idSocketRemoto);\n' +
         '                    if (!audioRemoto) {\n' +
@@ -580,14 +610,17 @@ app.get('/', (req, res) => {
         '            Object.keys(peersConexiones).forEach(id => {\n' +
         '                peersConexiones[id].close();\n' +
         '                delete peersConexiones[id];\n' +
-        '                const caja = document.getElementById("box_" + id);\n' +
-        '                if (caja) caja.remove();\n' +
         '                const aud = document.getElementById("audio_" + id);\n' +
         '                if (aud) aud.remove();\n' +
         '            });\n' +
+        '            const vRem = document.getElementById("videoRemotoElemento");\n' +
+        '            if (vRem) vRem.remove();\n' +
         '            document.getElementById("parrillaVideos").classList.remove("active");\n' +
         '            document.getElementById("modalLlamadaEntrante").classList.remove("active");\n' +
         '            document.getElementById("btnColgarLlamada").style.display = "none";\n' +
+        '            modoPiPInvertido = false;\n' +
+        '            document.getElementById("boxLocalPiP").classList.remove("fullscreen");\n' +
+        '            document.getElementById("boxRemotoPrincipal").classList.remove("small");\n' +
         '            if (socket) socket.emit("colgar_multiconferencia", { sala: salaToken });\n' +
         '        }\n' +
         '\n' +
