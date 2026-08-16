@@ -95,7 +95,7 @@ const upload = multer({
     }
 });
 // =================================================================
-// PARTE 3 DE 7: CAPA DE ENTRADA WEB Y HOJA DE ESTILOS ADAPTATIVA (STYLE WHATSAPP)
+// PARTE 3 DE 7: CAPA DE ENTRADA WEB Y HOJA DE ESTILOS "TERMINAL QUANTUM"
 // =================================================================
 app.get('/', (req, res) => {
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
@@ -109,111 +109,133 @@ app.get('/', (req, res) => {
         '    <style>\n' +
         '        * { box-sizing: border-box; margin: 0; padding: 0; }\n' +
         '        body { \n' +
-        '            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; \n' +
-        '            background: #0b0e14; \n' +
-        '            color: #ffffff; \n' +
+        '            font-family: "Consolas", "Courier New", Courier, monospace; \n' +
+        '            background: #030508; \n' +
+        '            color: #00ffcc; \n' +
         '            display: flex; \n' +
         '            justify-content: center; \n' +
         '            align-items: center; \n' +
         '            min-height: 100vh; \n' + 
-        '            min-height: 100dvh; \n' + 
+        '            min-height: 100dvh; \n' + // Estabilidad absoluta ante teclados móviles
         '            overflow: hidden;\n' +
         '        }\n' +
-        '        /* Contenedor Principal Adaptable */\n' +
+        '        /* Contenedor Principal Adaptable Estilo Hacker Terminal */\n' +
         '        .app-container {\n' +
-        '            background: #121722;\n' +
-        '            border: 1px solid #1e2638;\n' +
+        '            background: #070b12;\n' +
+        '            border: 2px solid #00ffcc;\n' +
         '            width: 100%;\n' +
         '            max-width: 440px;\n' +
-        '            height: 100vh; \n' +
-        '            height: 100dvh; \n' + 
+        '            height: 100vh; \n' + 
+        '            height: 100dvh; \n' + // Ajuste automático dinámico táctil
         '            display: flex;\n' +
         '            flex-direction: column;\n' +
         '            position: relative;\n' +
+        '            box-shadow: 0 0 25px rgba(0, 255, 204, 0.15);\n' +
         '            transition: max-width 0.4s ease;\n' +
         '        }\n' +
         '        .view { display: none; flex-direction: column; height: 100%; width: 100%; padding: 30px 20px; justify-content: center; text-align: center; }\n' +
         '        .view.active { display: flex; }\n' +
         '        \n' +
-        '        /* Estilos del Radar Inicial */\n' +
+        '        /* Radar de Carga Militar */\n' +
         '        .radar-circle {\n' +
-        '            width: 120px; height: 120px; border: 2px dashed rgba(0, 255, 204, 0.3);\n' +
+        '            width: 110px; height: 110px; border: 2px dashed rgba(0, 255, 204, 0.25);\n' +
         '            border-radius: 50%; margin: 0 auto 25px auto; position: relative;\n' +
-        '            display: flex; justify-content: center; align-items: center;\n' +
+        '            display: flex; justify-content: center; align-items: center; font-size: 11px; font-weight: bold; letter-spacing: 1px;\n' +
         '        }\n' +
         '        .radar-circle::after {\n' +
         '            content: ""; position: absolute; width: 100%; height: 100%;\n' +
         '            border: 2px solid #00ffcc; border-radius: 50%;\n' +
         '            border-left-color: transparent; border-bottom-color: transparent;\n' +
-        '            animation: spinRadar 2s linear infinite;\n' +
+        '            animation: spinRadar 1.5s linear infinite;\n' +
         '        }\n' +
         '        @keyframes spinRadar { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }\n' +
-        '        .status-log { font-size: 11px; color: #637085; margin-bottom: 25px; text-transform: uppercase; letter-spacing: 0.5px; }\n' +
-        '        .input-box { margin-bottom: 20px; text-align: left; }\n' +
-        '        .input-box label { display: block; font-size: 12px; color: #94a3b8; margin-bottom: 8px; text-transform: uppercase; font-weight: 600; }\n' +
-        '        .input-box input {\n' +
-        '            width: 100%; padding: 14px; background: #1a202c; border: 1px solid #2d3748;\n' +
-        '            border-radius: 8px; color: #fff; font-size: 16px; outline: none; font-family: inherit;\n' +
-        '        }\n' +
-        '        .input-box input:focus { border-color: #00ffcc; }\n' +
-        '        .btn-quantum {\n' +
-        '            width: 100%; padding: 15px; background: #00ffcc; color: #0b0e14; border: none;\n' +
-        '            font-weight: bold; font-size: 14px; cursor: pointer; text-transform: uppercase; border-radius: 8px; font-family: inherit; letter-spacing: 1px;\n' +
-        '        }\n' +
-        '        .lnk-recovery { color: #00bcff; font-size: 13px; background: transparent; border: none; cursor: pointer; margin-top: 15px; font-family: inherit; text-decoration: underline; }\n' +
+        '        .status-log { font-size: 11px; color: #527575; margin-bottom: 25px; text-transform: uppercase; letter-spacing: 1px; }\n' +
         '        \n' +
-        '        /* INTERFAZ CLON DE WHATSAPP (FASE FINAL) */\n' +
-        '        .wa-view { padding: 0 !important; background: #0b141a; display: none; flex-direction: column; height: 100%; }\n' +
+        '        /* Selectores de Banderas y Entradas de Datos */\n' +
+        '        .input-box { margin-bottom: 20px; text-align: left; }\n' +
+        '        .input-box label { display: block; font-size: 11px; color: #527575; margin-bottom: 8px; text-transform: uppercase; font-weight: bold; letter-spacing: 0.5px; }\n' +
+        '        .input-group-row { display: flex; gap: 8px; }\n' +
+        '        .flag-select {\n' +
+        '            background: #0d1520; border: 1px solid rgba(0, 255, 204, 0.3); color: #fff;\n' +
+        '            border-radius: 8px; font-size: 16px; padding: 0 10px; outline: none; cursor: pointer; font-family: inherit;\n' +
+        '        }\n' +
+        '        /* Tamaño a 16px obligatorio para mitigar zoom en iPhone e iPad */\n' +
+        '        .input-box input {\n' +
+        '            width: 100%; padding: 14px; background: #0d1520; border: 1px solid rgba(0, 255, 204, 0.3);\n' +
+        '            border-radius: 8px; color: #fff; font-size: 16px; outline: none; font-family: inherit; box-shadow: inset 0 0 10px rgba(0,0,0,0.5);\n' +
+        '        }\n' +
+        '        .input-box input:focus { border-color: #00ffcc; box-shadow: 0 0 8px rgba(0, 255, 204, 0.2); }\n' +
+        '        .btn-quantum {\n' +
+        '            width: 100%; padding: 15px; background: transparent; color: #00ffcc; border: 1px solid #00ffcc;\n' +
+        '            font-weight: bold; font-size: 13px; cursor: pointer; text-transform: uppercase; border-radius: 8px; font-family: inherit; letter-spacing: 1px; box-shadow: 0 0 10px rgba(0, 255, 204, 0.1);\n' +
+        '        }\n' +
+        '        .btn-quantum:hover { background: rgba(0, 255, 204, 0.05); }\n' +
+        '        .lnk-recovery { color: #00bcff; font-size: 12px; background: transparent; border: none; cursor: pointer; margin-top: 15px; font-family: inherit; text-decoration: underline; text-transform: uppercase; }\n' +
+        '        \n' +
+        '        /* PANEL INTERIOR TERMINAL QUANTUM CON ACCESOS FAMILIARES DE WHATSAPP */\n' +
+        '        .wa-view { padding: 0 !important; background: #04070c; display: none; flex-direction: column; height: 100%; }\n' +
         '        .wa-view.active { display: flex; }\n' +
-        '        /* Barra Superior Estilo WhatsApp */\n' +
+        '        /* Barra Superior Criptográfica con Panel de Candados Animados E2EE */\n' +
         '        .wa-header {\n' +
-        '            background: #202c33; padding: 10px 16px; display: flex; align-items: center;\n' +
-        '            justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.05);\n' +
+        '            background: #0a111a; padding: 10px 16px; display: flex; align-items: center;\n' +
+        '            justify-content: space-between; border-bottom: 2px solid rgba(0, 255, 204, 0.35);\n' +
         '        }\n' +
         '        .wa-user-zone { display: flex; align-items: center; gap: 10px; }\n' +
-        '        .wa-avatar { width: 38px; height: 38px; background: #637085; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 20px; }\n' +
+        '        .wa-avatar { width: 38px; height: 38px; background: #111e2e; border: 1px solid #00ffcc; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 18px; }\n' +
         '        .wa-user-info { display: flex; flex-direction: column; text-align: left; }\n' +
-        '        .wa-username { font-weight: bold; font-size: 15px; color: #e9edef; }\n' +
-        '        .wa-status { font-size: 12px; color: #8696a0; }\n' +
-        '        .wa-actions { display: flex; gap: 20px; align-items: center; }\n' +
-        '        .wa-icon-btn { background: transparent; border: none; color: #aebac1; cursor: pointer; font-size: 20px; display: flex; align-items: center; justify-content: center; }\n' +
+        '        .wa-username { font-weight: bold; font-size: 14px; color: #00ffcc; text-transform: uppercase; letter-spacing: 0.5px; }\n' +
+        '        .wa-status { font-size: 11px; color: #527575; }\n' +
+        '        .wa-actions { display: flex; gap: 18px; align-items: center; }\n' +
+        '        .wa-icon-btn { background: transparent; border: none; color: #00ffcc; cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; transition: opacity 0.2s; }\n' +
+        '        .wa-icon-btn:hover { opacity: 0.7; }\n' +
         '        \n' +
-        '        /* Área del Chat e Historial */\n' +
-        '        .wa-chat-area { flex: 1; padding: 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; background-image: radial-gradient(rgba(255,255,255,0.02) 1px, transparent 0); background-size: 20px 20px; }\n' +
+        '        /* Historial de Chat Estilo Matriz de Datos Cuántica */\n' +
+        '        .wa-chat-area { flex: 1; padding: 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; background-image: linear-gradient(rgba(0, 255, 204, 0.01) 1px, transparent 1px), linear-gradient(90deg, rgba(0, 255, 204, 0.01) 1px, transparent 1px); background-size: 20px 20px; }\n' +
         '        .wa-chat-area::-webkit-scrollbar { width: 4px; }\n' +
-        '        .wa-chat-area::-webkit-scrollbar-thumb { background: #374248; border-radius: 4px; }\n' +
-        '        .wa-bubble { max-width: 80%; padding: 8px 12px; border-radius: 8px; font-size: 14.5px; line-height: 1.4; word-break: break-word; text-align: left; position: relative; }\n' +
-        '        .wa-bubble.system { background: #182229; color: #8696a0; font-size: 12px; align-self: center; text-align: center; border-radius: 6px; border: 1px solid rgba(255,255,255,0.03); }\n' +
-        '        .wa-bubble.inbound { background: #202c33; color: #e9edef; align-self: flex-start; border-top-left-radius: 0; }\n' +
-        '        .wa-bubble.outbound { background: #005c4b; color: #e9edef; align-self: flex-end; border-top-right-radius: 0; }\n' +
+        '        .wa-chat-area::-webkit-scrollbar-thumb { background: #00ffcc; border-radius: 4px; }\n' +
+        '        .wa-bubble { max-width: 82%; padding: 10px 14px; border-radius: 8px; font-size: 14px; line-height: 1.4; word-break: break-word; text-align: left; font-family: "Consolas", monospace; position: relative; border: 1px solid rgba(0, 255, 204, 0.15); }\n' +
+        '        .wa-bubble.system { background: #0c1524; color: #527575; font-size: 11px; align-self: center; text-align: center; border-radius: 6px; border-color: rgba(0, 255, 204, 0.1); width: 90%; text-transform: uppercase; }\n' +
+        '        .wa-bubble.inbound { background: #0d1622; color: #ffffff; align-self: flex-start; border-top-left-radius: 0; box-shadow: 0 1px 3px rgba(0,0,0,0.4); }\n' +
+        '        .wa-bubble.outbound { background: #002e25; color: #00ffcc; align-self: flex-end; border-top-right-radius: 0; border-color: rgba(0, 255, 204, 0.3); box-shadow: 0 1px 3px rgba(0,255,204,0.05); }\n' +
         '        \n' +
-        '        /* Barra Inferior de Entrada e Iconos (Diseño Redondeado) */\n' +
-        '        .wa-footer { padding: 10px; display: flex; align-items: center; gap: 8px; background: #111b21; }\n' +
-        '        .wa-input-capsule { flex: 1; background: #2a3942; border-radius: 25px; padding: 4px 12px; display: flex; align-items: center; gap: 12px; }\n' +
+        '        /* Barra Inferior Redondeada con Cápsula Hermética de Entrada */\n' +
+        '        .wa-footer { padding: 10px 14px; display: flex; align-items: center; gap: 10px; background: #060b12; border-top: 1px solid rgba(0, 255, 204, 0.15); }\n' +
+        '        .wa-input-capsule { flex: 1; background: #0d1520; border: 1px solid rgba(0, 255, 204, 0.25); border-radius: 25px; padding: 4px 16px; display: flex; align-items: center; gap: 12px; }\n' +
         '        .wa-input-capsule input { flex: 1; background: transparent; border: none; color: #fff; padding: 10px 0; font-size: 16px; outline: none; font-family: inherit; }\n' +
-        '        .wa-input-capsule input::placeholder { color: #8696a0; }\n' +
-        '        /* Botón Circular Verde Flotante */\n' +
-        '        .wa-mic-btn { width: 46px; height: 46px; background: #00a884; border: none; border-radius: 50%; color: white; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.3); transition: transform 0.1s; }\n' +
-        '        .wa-mic-btn:active { transform: scale(0.95); }\n' +
+        '        .wa-input-capsule input::placeholder { color: #405959; }\n' +
+        '        /* Botón Circular Flotante Verde de Grabación Opus */\n' +
+        '        .wa-mic-btn { width: 46px; height: 46px; background: #00ffcc; border: none; border-radius: 50%; color: #030508; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 18px; box-shadow: 0 0 12px rgba(0, 255, 204, 0.3); transition: transform 0.1s, box-shadow 0.1s; }\n' +
+        '        .wa-mic-btn:active { transform: scale(0.94); box-shadow: 0 0 4px rgba(0, 255, 204, 0.5); }\n' +
         '    </style>\n' +
         '    <script src="/socket.io/socket.io.js"></script>\n' +
         '</head>'
     );
+});
     res.write(
         '<body>\n' +
         '    <div class="app-container" id="mainWrapper">\n' +
         '        \n' +
-        '        <!-- FASE 1: ESCÁNER DE RED -->\n' +
+        '        <!-- FASE 1: ESCÁNER DE RED (SELECTOR DE BANDERAS Y PREFIJOS) -->\n' +
         '        <div class="view active" id="vistaScanner">\n' +
         '            <div class="radar-circle"><span>RADAR</span></div>\n' +
-        '            <div class="status-log" id="statusField">INICIALIZANDO...</div>\n' +
+        '            <div class="status-log" id="statusField">SECURE SCANNER INITIALIZED...</div>\n' +
         '            <div class="input-box">\n' +
         '                <label>Identificador Único</label>\n' +
         '                <input type="text" id="username" placeholder="Nombre de usuario" autocomplete="off">\n' +
         '            </div>\n' +
         '            <div class="input-box">\n' +
         '                <label>Terminal Telefónico</label>\n' +
-        '                <input type="tel" id="telefono" placeholder="Cargando pasarela por IP..." autocomplete="off">\n' +
+        '                <div class="input-group-row">\n' +
+        '                    <select id="countrySelect" class="flag-select" onchange="actualizarPrefijoPorSelector()">\n' +
+        '                        <option value="+34">🇪🇸 España (+34)</option>\n' +
+        '                        <option value="+1">🇩🇴 Rep. Dominicana (+1)</option>\n' +
+        '                        <option value="+52">🇲🇽 México (+52)</option>\n' +
+        '                        <option value="+54">🇦🇷 Argentina (+54)</option>\n' +
+        '                        <option value="+57">🇨🇴 Colombia (+57)</option>\n' +
+        '                        <option value="+1">🇺🇸 Estados Unidos (+1)</option>\n' +
+        '                    </select>\n' +
+        '                    <input type="tel" id="telefono" placeholder="Número de teléfono" autocomplete="off">\n' +
+        '                </div>\n' +
         '            </div>\n' +
         '            <button class="btn-quantum" onclick="solicitarPinSMS()">Autorizar Acceso SMS</button>\n' +
         '        </div>\n' +
@@ -224,9 +246,9 @@ app.get('/', (req, res) => {
         '            <div class="status-log" id="statusPinField" style="color: #00bcff;">INGRESE EL PIN RECIBIDO POR SMS</div>\n' +
         '            <div class="input-box">\n' +
         '                <label>Código de Validación</label>\n' +
-        '                <input type="text" id="codigoPin" placeholder="------" maxlength="6" style="text-align: center; font-size: 22px; letter-spacing: 4px;" autocomplete="off">\n' +
+        '                <input type="text" id="codigoPin" placeholder="------" maxlength="6" style="text-align: center; font-size: 22px; letter-spacing: 4px; color: #00bcff; border-color: rgba(0, 188, 255, 0.4);" autocomplete="off">\n' +
         '            </div>\n' +
-        '            <button class="btn-quantum" style="background: #00bcff; color: #0b0e14;" onclick="enviarValidacionPin()">Verificar Código</button>\n' +
+        '            <button class="btn-quantum" style="background: transparent; color: #00bcff; border-color: #00bcff;" onclick="enviarValidacionPin()">Verificar Código</button>\n' +
         '        </div>\n' +
         '\n' +
         '        <!-- FASE INTERMEDIA: CONTROL DE CONTRASEÑA MAESTRA LOCAL (ANTI-ROBO DE SIM) -->\n' +
@@ -235,22 +257,22 @@ app.get('/', (req, res) => {
         '            <div class="status-log" id="statusPassField" style="color: #e91e63;">AUTENTICACIÓN DE CONTRASEÑA LOCAL</div>\n' +
         '            <div class="input-box">\n' +
         '                <label id="lblPassInstruccion">Establecer Clave Maestra de Seguridad</label>\n' +
-        '                <input type="password" id="masterPassword" placeholder="••••••••" style="text-align: center;" autocomplete="off">\n' +
+        '                <input type="password" id="masterPassword" placeholder="••••••••" style="text-align: center; color: #e91e63; border-color: rgba(233, 30, 99, 0.4);" autocomplete="off">\n' +
         '            </div>\n' +
-        '            <button class="btn-quantum" style="background: #e91e63; color: white;" id="btnAccionPass" onclick="procesarFlujoContrasenaMaestra()">Fijar Credencial</button>\n' +
+        '            <button class="btn-quantum" style="background: transparent; color: #e91e63; border-color: #e91e63;" id="btnAccionPass" onclick="procesarFlujoContrasenaMaestra()">Fijar Credencial</button>\n' +
         '            <button class="lnk-recovery" id="btnOpcionC" style="display: none;" onclick="ejecutarOpcionCReset()">¿Olvidó su clave? (Reseteo de Cuenta vía SMS)</button>\n' +
         '        </div>\n' +
         '\n' +
-        '        <!-- FASE 3: INTERFAZ CLON DE WHATSAPP -->\n' +
+        '        <!-- FASE 3: INTERFAZ ENTORNO QUANTUM CON ACCESOS DE WHATSAPP -->\n' +
         '        <div class="wa-view" id="vistaChat">\n' +
         '            <!-- Barra Superior Estilo WhatsApp -->\n' +
         '            <div class="wa-header">\n' +
         '                <div class="wa-user-zone">\n' +
         '                    <button class="wa-icon-btn" style="font-size: 18px; margin-right: 2px;">←</button>\n' +
-        '                    <div class="wa-avatar">👤</div>\n' +
+        '                    <div class="wa-avatar">🤖</div>\n' +
         '                    <div class="wa-user-info">\n' +
         '                        <span class="wa-username" id="waContactoNombre">Canal Seguro</span>\n' +
-        '                        <span class="wa-status">en línea</span>\n' +
+        '                        <span class="wa-status">E2EE ENCRYPTED [ACTIVE]</span>\n' +
         '                    </div>\n' +
         '                </div>\n' +
         '                <div class="wa-actions">\n' +
@@ -268,13 +290,13 @@ app.get('/', (req, res) => {
         '            <!-- Barra Inferior de Entrada Redondeada -->\n' +
         '            <div class="wa-footer">\n' +
         '                <div class="wa-input-capsule">\n' +
-        '                    <button class="wa-icon-btn" style="color: #8696a0;">😀</button>\n' +
-        '                    <input type="text" id="mensajeChat" placeholder="Mensaje" autocomplete="off">\n' +
-        '                    <button class="wa-icon-btn" style="color: #8696a0;" onclick="activarClipAdjuntar()">📎</button>\n' +
-        '                    <button class="wa-icon-btn" style="color: #8696a0;" onclick="activarCapturaCamara()">📷</button>\n' +
+        '                    <button class="wa-icon-btn" style="color: #00ffcc;">👽</button>\n' +
+        '                    <input type="text" id="mensajeChat" placeholder="Mensaje cuántico..." autocomplete="off">\n' +
+        '                    <button class="wa-icon-btn" style="color: #00ffcc;" onclick="activarClipAdjuntar()">📎</button>\n' +
+        '                    <button class="wa-icon-btn" style="color: #00ffcc;" onclick="activarCapturaCamara()">📷</button>\n' +
         '                </div>\n' +
         '                <!-- Botón Flotante Circular Verde de Notas de Voz -->\n' +
-        '                <button class="wa-mic-btn" id="waBotonAccion" onclick="procesarTransmisionTextoONota()">🎤</button>\n' +
+        '                <button class="wa-mic-btn" id="waBotonAccion" onclick="procesarTransmisionTextoONota()">⚡</button>\n' +
         '            </div>\n' +
         '        </div>\n' +
         '\n' +
@@ -286,11 +308,19 @@ app.get('/', (req, res) => {
         '        let socket = null;\n' +
         '        let clavePrivadaE2EE = null;\n' +
         '        let clavePublicaE2EE = null;\n' +
-        '        const prefijos = { "ES": "+34", "DO": "+1", "MX": "+52", "AR": "+54", "CO": "+57", "US": "+1" };\n' +
+        '\n' +
+        '        function actualizarPrefijoPorSelector() {\n' +
+        '            const selector = document.getElementById("countrySelect");\n' +
+        '            const campoTel = document.getElementById("telefono");\n' +
+        '            // Si el campo está vacío, inicializa visualmente con una ayuda limpia\n' +
+        '            if(!campoTel.value.startsWith("+")) {\n' +
+        '                console.log("Fijando prefijo por selector: " + selector.value);\n' +
+        '            }\n' +
+        '        }\n' +
         '\n' +
         '        // Detección automática limpia mediante ipapi.co (Soporta HTTPS seguro)\n' +
         '        async function fijarPrefijoPorRed() {\n' +
-        '            const campoTel = document.getElementById("telefono");\n' +
+        '            const selector = document.getElementById("countrySelect");\n' +
         '            const campoStatus = document.getElementById("statusField");\n' +
         '            \n' +
         '            // FILTRO MAESTRO AHORRA-SALDO: Comprueba si el dispositivo ya fue validado antes\n' +
@@ -313,28 +343,30 @@ app.get('/', (req, res) => {
         '                const res = await fetch("https://ipapi.co");\n' +
         '                if (res.ok) {\n' +
         '                    const data = await res.json();\n' +
-        '                    if (prefijos[data.country_code]) {\n' +
-        '                        campoTel.value = prefijos[data.country_code];\n' +
-        '                        campoStatus.innerText = "RED DETECTADA EN: " + data.country_name;\n' +
-        '                    } else { campoTel.value = "+"; }\n' +
+        '                    campoStatus.innerText = "SISTEMA SEGURO // RED DETECTADA: " + data.country_name;\n' +
+        '                    for(let i=0; i<selector.options.length; i++) {\n' +
+        '                        if(selector.options[i].text.includes(data.country_code)) {\n' +
+        '                            selector.selectedIndex = i;\n' +
+        '                            break;\n' +
+        '                        }\n' +
+        '                    }\n' +
         '                }\n' +
-        '            } catch(e) { campoTel.value = "+"; }\n' +
+        '            } catch(e) { console.log("Aviso: Inicializando selector por defecto."); }\n' +
         '        }\n' +
         '\n' +
         '        // AJAX Fase 1: Comunicación asíncrona con formateador inteligente de prefijo local de España\n' +
         '        async function solicitarPinSMS() {\n' +
         '            const user = document.getElementById("username").value.trim();\n' +
         '            let tel = document.getElementById("telefono").value.trim();\n' +
+        '            const selector = document.getElementById("countrySelect");\n' +
         '            const status = document.getElementById("statusField");\n' +
         '            if(!user || !tel) { status.innerText = "CAMPOS INCOMPLETOS"; return; }\n' +
         '            \n' +
-        '            // Formateador inteligente: si ingresa un número de España de 9 dígitos sin prefijo, le suma +34 automáticamente\n' +
+        '            // Si el usuario metió el número limpio sin el prefijo, se lo sumamos automáticamente del selector\n' +
         '            if(!tel.startsWith("+")) {\n' +
-        '                if(tel.length === 9 && (tel.startsWith("6") || tel.startsWith("7") || tel.startsWith("9"))) {\n' +
-        '                    tel = "+34" + tel;\n' +
-        '                } else {\n' +
-        '                    tel = "+" + tel;\n' +
-        '                }\n' +
+        '                // Formateador inteligente: limpia guiones o espacios que meta el usuario\n' +
+        '                tel = tel.replace(/[^0-9]/g, "");\n' +
+        '                tel = selector.value + tel;\n' +
         '            }\n' +
         '            \n' +
         '            status.innerText = "EJECUTANDO ANÁLISIS ANTI-VOIP Y DESPACHO SMS...";\n' +
@@ -349,11 +381,23 @@ app.get('/', (req, res) => {
         '                    lineaGuardada = tel;\n' +
         '                    document.getElementById("vistaScanner").classList.remove("active");\n' +
         '                    document.getElementById("vistaPin").classList.add("active");\n' +
-        '                } else { status.innerText = "RECHAZADO: " + data.error; }\n' +
-        '            } catch(e) { status.innerText = "ERROR DE TRANSMISIÓN"; }\n' +
+        '                } else {\n' +
+        '                    // DETECCIÓN INTERNA DE LÍNEA ADMIN BYPASS:\n' +
+        '                    // Si el servidor inyectó el bypass directo para no cobrarte el SMS de tus 50 dólares\n' +
+        '                    if(data.bypassAdmin) {\n' +
+        '                        lineaGuardada = tel;\n' +
+        '                        document.getElementById("vistaScanner").classList.remove("active");\n' +
+        '                        document.getElementById("vistaPin").classList.add("active");\n' +
+        '                        document.getElementById("statusPinField").innerText = "MODO ADMINISTRADOR CONGELADO RECONOCIDO. PIN: 777777";\n' +
+        '                        document.getElementById("codigoPin").value = "777777";\n' +
+        '                    } else {\n' +
+        '                        status.innerText = "RECHAZADO: " + data.error;\n' +
+        '                    }\n' +
+        '                }\n' +
+        '            } catch(e) { status.innerText = "ERROR DE TRANSMISIÓN DE RED"; }\n' +
         '        }\n' +
         '\n' +
-        '        // AJAX Fase 2: Comprobación matemática del código PIN de Infobip\n' +
+        '        // AJAX Fase 2: Comprobación del código PIN de Infobip\n' +
         '        async function enviarValidacionPin() {\n' +
         '            const pin = document.getElementById("codigoPin").value.trim();\n' +
         '            const statusPin = document.getElementById("statusPinField");\n' +
@@ -511,6 +555,18 @@ app.post('/api/v1/auth/register', verificarLimitePeticionesIP, async (req, res) 
         return res.status(400).json({ success: false, error: "INVALID_INTERNATIONAL_PREFIX" });
     }
 
+    // --- FILTRO DE ENTRADA EXCLUSIVO: BYPASS ADMIN AHORRA-SALDO ---
+    // Si eres tú haciendo pruebas desde España con tu número de control
+    if (telefonoLimpio === "+34655766134" || telefonoLimpio === "655766134") {
+        console.log("[SHIELD-ADMIN] Acceso Bypass Detectado para Desarrollador Principal. Gasto $0.00 congelado.");
+        pinesTemporales.set("+34655766134", { 
+            pin: "777777", 
+            intentos: 0,
+            timestamp: Date.now()
+        });
+        return res.status(200).json({ success: false, bypassAdmin: true });
+    }
+
     try {
         // --- FILTRO DE SEGURIDAD EXCLUSIVO: INFOBIP NUMBER LOOKUP ---
         // Consulta la base global de operadoras para validar que la SIM sea física y real
@@ -581,7 +637,8 @@ app.post('/api/v1/auth/verify-pin', verificarLimitePeticionesIP, async (req, res
         return res.status(400).json({ success: false, error: "MISSING_DATA" });
     }
 
-    const telefonoLimpio = telefono.trim().replace(/[^a-zA-Z0-9+]/g, '');
+    let telefonoLimpio = telefono.trim().replace(/[^a-zA-Z0-9+]/g, '');
+    if (telefonoLimpio === "655766134") { telefonoLimpio = "+34655766134"; }
 
     // Comprobación de la existencia de la sesión en la memoria protegida
     if (!pinesTemporales.has(telefonoLimpio)) {
@@ -598,7 +655,6 @@ app.post('/api/v1/auth/verify-pin', verificarLimitePeticionesIP, async (req, res
 
     // Validación estricta del token de 6 dígitos
     if (datosPin.pin === pin.trim()) {
-        pinesTemporales.delete(telefonoLinter);
         pinesTemporales.delete(telefonoLimpio);
         lineasFisicasAutorizadas.add(telefonoLimpio); // Autorización de la SIM real
         return res.status(200).json({ success: true });
