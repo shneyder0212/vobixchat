@@ -91,7 +91,7 @@ app.get('/', (req, res) => {
         '<head>\n' +
         '    <meta charset="UTF-8">\n' +
         '    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">\n' +
-        '    <title>VOBIXCHAT // Transfronterizo & Cámara Adaptativa</title>\n' +
+        '    <title>VOBIXCHAT // Transfronterizo & Permisos Seguros</title>\n' +
         '    <style>\n' +
         '        * { box-sizing: border-box; margin: 0; padding: 0; }\n' +
         '        body { font-family: "Consolas", monospace; background: #030508; color: #00ffcc; display: flex; justify-content: center; align-items: center; min-height: 100vh; min-height: 100dvh; overflow: hidden; }\n' +
@@ -232,7 +232,7 @@ app.get('/', (req, res) => {
         '                </div>\n' +
         '            </div>\n' +
         '            <div class="wa-chat-area" id="pantallaChat">\n' +
-        '                <div class="wa-bubble system">[SISTEMA] Conectado con cifrado E2EE y WebRTC HD Activo.</div>\n' +
+        '                <div class="wa-bubble system">[SISTEMA] Conectado con cifrado E2EE y WebRTC Activo.</div>\n' +
         '            </div>\n' +
         '            <div class="wa-footer">\n' +
         '                <div class="wa-input-capsule">\n' +
@@ -264,20 +264,20 @@ app.get('/', (req, res) => {
         '            alert("🔗 ¡ENLACE PRIVADO COPIADO!\\n\\nEnvíalo a tu contraparte en Estados Unidos o España para llamadas y firmas en tiempo real.");\n' +
         '        }\n' +
         '\n' +
-        '        // AUTORIZACIÓN ADAPTATIVA DE CÁMARA Y MICRÓFONO\n' +
+        '        // AUTORIZACIÓN SEGURA Y ADAPTATIVA DE CÁMARA Y MICRÓFONO\n' +
         '        async function solicitarPermisosCamaraMic() {\n' +
         '            document.getElementById("menuTresPuntos").classList.remove("active");\n' +
         '            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {\n' +
-        '                alert("⚠️ Tu navegador no soporta acceso a cámara y micrófono por restricciones de seguridad (HTTPS requerido).");\n' +
+        '                alert("⚠️ Tu navegador no soporta acceso multimedia o requiere obligatoriamente HTTPS.");\n' +
         '                return;\n' +
         '            }\n' +
         '            try {\n' +
         '                const flujoPrueba = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });\n' +
         '                flujoPrueba.getTracks().forEach(track => track.stop());\n' +
-        '                alert("✅ ¡PERMISOS CONCEDIDOS! Cámara y micrófono listos para llamadas HD.");\n' +
+        '                alert("✅ ¡PERMISOS CONCEDIDOS! Cámara y micrófono listos.");\n' +
         '            } catch (err) {\n' +
         '                console.error("Error de permisos:", err);\n' +
-        '                alert("⚠️ ACCESO DENEGADO O BLOQUEADO:\\n\\n1. Toca el candado 🔒 en la barra web.\\n2. Permite Cámara y Micrófono.\\n3. Recarga la página.");\n' +
+        '                alert("⚠️ ACCESO DENEGADO:\\n\\n1. Toca el candado 🔒 en la barra de direcciones de tu navegador.\\n2. Permite el uso de Cámara y Micrófono.\\n3. Recarga la página.");\n' +
         '            }\n' +
         '        }\n' +
         '\n' +
@@ -306,21 +306,33 @@ app.get('/', (req, res) => {
         '            img.style.display = "block";\n' +
         '        }\n' +
         '\n' +
+        '        // INICIALIZACIÓN MULTIMEDIA ADAPTATIVA Y TOLERANTE A FALLOS\n' +
         '        async function inicializarTransmisionMultimedia(tipo) {\n' +
         '            document.getElementById("parrillaVideos").classList.add("active");\n' +
+        '            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {\n' +
+        '                alert("⚠️ Tu navegador no soporta WebRTC o no estás usando una conexión segura HTTPS.");\n' +
+        '                return;\n' +
+        '            }\n' +
         '            try {\n' +
-        '                // Restricciones adaptativas universales para evitar fallos en móviles y PCs\n' +
-        '                const restricciones = {\n' +
-        '                    audio: { echoCancellation: true, noiseSuppression: true },\n' +
-        '                    video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: "user" }\n' +
-        '                };\n' +
-        '                const flujoLocal = await navigator.mediaDevices.getUserMedia(restricciones);\n' +
+        '                let flujoLocal = null;\n' +
+        '                try {\n' +
+        '                    // Intento 1: Alta calidad con restricciones ideales\n' +
+        '                    flujoLocal = await navigator.mediaDevices.getUserMedia({\n' +
+        '                        audio: { echoCancellation: true, noiseSuppression: true },\n' +
+        '                        video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: "user" }\n' +
+        '                    });\n' +
+        '                } catch (e1) {\n' +
+        '                    console.warn("Aviso: Reintentando con restricciones básicas...", e1);\n' +
+        '                    // Intento 2: Restricciones estándar universales por compatibilidad de hardware\n' +
+        '                    flujoLocal = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });\n' +
+        '                }\n' +
+        '                \n' +
         '                document.getElementById("videoLocal").srcObject = flujoLocal;\n' +
         '                estructurarLlamadaPeerWebRTC(true);\n' +
         '                flujoLocal.getTracks().forEach(track => rtcConexionPeer.addTrack(track, flujoLocal));\n' +
         '            } catch(err) { \n' +
-        '                console.error("Error getUserMedia:", err);\n' +
-        '                alert("⚠️ No se pudo acceder a la cámara o micrófono. Ve al menú de tres puntos y pulsa \\'Habilitar Cámara / Micrófono\\'."); \n' +
+        '                console.error("Error crítico multimedia:", err);\n' +
+        '                alert("⚠️ No se pudo acceder a la cámara o micrófono. Asegúrate de dar permisos en el menú de tres puntos o en el icono de candado 🔒 de tu navegador."); \n' +
         '            }\n' +
         '        }\n' +
         '\n' +
