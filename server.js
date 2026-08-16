@@ -1,6 +1,6 @@
 require('dotenv').config();
 const express = require('express');
-const http = http = require('http');
+const http = require('http');
 const path = require('path');
 const fs = require('fs');
 const multer = require('multer');
@@ -74,7 +74,6 @@ const upload = multer({
     }
 });
 
-// Endpoint para recibir contratos subidos por los usuarios
 app.post('/api/v1/contrato/subir', upload.single('contratoArchivo'), (req, res) => {
     if (!req.file) {
         return res.status(400).json({ success: false, error: "NO_FILE_UPLOADED" });
@@ -322,7 +321,6 @@ app.get('/', (req, res) => {
         '            ctxLienzo.lineTo(x, y);\n' +
         '            ctxLienzo.stroke();\n' +
         '            if (socket) {\n' +
-        '                // Normalización porcentual para sincronización perfecta entre España y EE.UU.\n' +
         '                socket.emit("trama_trazo_espejo", {\n' +
         '                    sala: salaToken,\n' +
         '                    xInicial: ultimoX / c.width, yInicial: ultimoY / c.height,\n' +
