@@ -119,18 +119,15 @@ app.get('/', (req, res) => {
         '        .wa-status { font-size: 11px; color: #527575; }\n' +
         '        .wa-actions { display: flex; gap: 18px; align-items: center; position: relative; }\n' +
         '        .wa-icon-btn { background: transparent; border: none; color: #00ffcc; cursor: pointer; font-size: 18px; }\n' +
-        '        /* MENÚ DESPLEGABLE CON DESPLAZAMIENTO FLUIDO */\n' +
         '        .dropdown-menu { display: none; position: absolute; top: 35px; right: 0; background: #0a111a; border: 1px solid #00ffcc; border-radius: 8px; width: 250px; max-height: 250px; overflow-y: auto; box-shadow: 0 4px 15px rgba(0,0,0,0.8); z-index: 100; flex-direction: column; }\n' +
         '        .dropdown-menu.active { display: flex; }\n' +
         '        .dropdown-item { padding: 12px 16px; color: #fff; text-align: left; font-size: 12px; background: transparent; border: none; cursor: pointer; text-transform: uppercase; border-bottom: 1px solid rgba(0, 255, 204, 0.1); display: flex; align-items: center; gap: 8px; }\n' +
         '        .dropdown-item:hover { background: rgba(0, 255, 204, 0.1); color: #00ffcc; }\n' +
-        '        /* WEBRTC VIDEO GRID (LLAMADAS HD) */\n' +
         '        .webrtc-video-grid { display: none; grid-template-columns: 1fr 1fr; gap: 8px; padding: 10px; background: #070b12; border-bottom: 1px solid rgba(0, 255, 204, 0.2); }\n' +
         '        .webrtc-video-grid.active { display: grid; }\n' +
         '        .video-box { width: 100%; height: 120px; background: #000; border: 1px solid #00ffcc; border-radius: 6px; overflow: hidden; position: relative; }\n' +
         '        .video-box video { width: 100%; height: 100%; object-fit: cover; }\n' +
         '        .video-label { position: absolute; bottom: 4px; left: 6px; background: rgba(0,0,0,0.7); font-size: 9px; padding: 2px 6px; color: #00ffcc; text-transform: uppercase; border-radius: 3px; }\n' +
-        '        /* LIENZO DE FIRMA EN TIEMPO REAL */\n' +
         '        .mirror-signature-overlay { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(3, 5, 8, 0.96); z-index: 50; flex-direction: column; padding: 15px; }\n' +
         '        .mirror-signature-overlay.active { display: flex; }\n' +
         '        .signature-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 1px solid #e91e63; padding-bottom: 8px; }\n' +
@@ -155,7 +152,6 @@ app.get('/', (req, res) => {
         '</head>\n' +
         '<body>\n' +
         '    <div class="app-container" id="mainWrapper">\n' +
-        '        <!-- FASE 1 -->\n' +
         '        <div class="view active" id="vistaScanner">\n' +
         '            <div class="radar-circle"><span>VOBIXCHAT</span></div>\n' +
         '            <div class="status-log" id="statusField">SECURE SCANNER INITIALIZED...</div>\n' +
@@ -177,7 +173,6 @@ app.get('/', (req, res) => {
         '            </div>\n' +
         '            <button class="btn-quantum" onclick="solicitarPinSMS()">Autorizar Acceso SMS</button>\n' +
         '        </div>\n' +
-        '        <!-- FASE 2 -->\n' +
         '        <div class="view" id="vistaPin">\n' +
         '            <div class="radar-circle" style="border-color: #00bcff;"><span>PIN</span></div>\n' +
         '            <div class="status-log" id="statusPinField" style="color: #00bcff;">INGRESE EL PIN POR SMS</div>\n' +
@@ -187,7 +182,6 @@ app.get('/', (req, res) => {
         '            </div>\n' +
         '            <button class="btn-quantum" style="background: transparent; color: #00bcff; border-color: #00bcff;" onclick="enviarValidacionPin()">Verificar Código</button>\n' +
         '        </div>\n' +
-        '        <!-- FASE 3 -->\n' +
         '        <div class="view" id="vistaContrasenaMaestra">\n' +
         '            <div class="radar-circle" style="border-color: #e91e63;"><span>SHIELD</span></div>\n' +
         '            <div class="status-log" id="statusPassField" style="color: #e91e63;">CLAVE MAESTRA LOCAL</div>\n' +
@@ -198,7 +192,6 @@ app.get('/', (req, res) => {
         '            <button class="btn-quantum" style="background: transparent; color: #e91e63; border-color: #e91e63;" id="btnAccionPass" onclick="procesarFlujoContrasenaMaestra()">Fijar Credencial</button>\n' +
         '            <button class="lnk-recovery" id="btnOpcionC" style="display: none;" onclick="ejecutarOpcionCReset()">Resetear Cuenta</button>\n' +
         '        </div>\n' +
-        '        <!-- FASE 4: CHAT CON MULTIMEDIA HD, PERMISOS FÁCILES Y FIRMA -->\n' +
         '        <div class="wa-view" id="vistaChat">\n' +
         '            <div class="wa-header">\n' +
         '                <div class="wa-user-zone">\n' +
@@ -220,12 +213,10 @@ app.get('/', (req, res) => {
         '                    <input type="file" id="inputSubirContrato" style="display:none" accept=".pdf,image/*" onchange="subirContratoServidor(this)">\n' +
         '                </div>\n' +
         '            </div>\n' +
-        '            <!-- PARRILLA WEBRTC DE VIDEOLLAMADAS HD -->\n' +
         '            <div class="webrtc-video-grid" id="parrillaVideos">\n' +
         '                <div class="video-box"><video id="videoLocal" autoplay playsinline muted></video><div class="video-label">Tú (1080p 60fps)</div></div>\n' +
         '                <div class="video-box"><video id="videoRemoto" autoplay playsinline></video><div class="video-label">Remoto (HD Cristalino)</div></div>\n' +
         '            </div>\n' +
-        '            <!-- MODAL DE FIRMA Y CONTRATO EN TIEMPO REAL -->\n' +
         '            <div class="mirror-signature-overlay" id="overlayFirma">\n' +
         '                <div class="signature-header">\n' +
         '                    <span class="signature-title">Firma Espejo (España ⇄ EE.UU.)</span>\n' +
@@ -273,7 +264,6 @@ app.get('/', (req, res) => {
         '            alert("🔗 ¡ENLACE PRIVADO COPIADO!\\n\\nEnvíalo a tu contraparte en Estados Unidos o España para llamadas y firmas en tiempo real.");\n' +
         '        }\n' +
         '\n' +
-        '        // AUTORIZACIÓN FÁCIL Y RÁPIDA DE CÁMARA Y MICRÓFONO\n' +
         '        async function solicitarPermisosCamaraMic() {\n' +
         '            document.getElementById("menuTresPuntos").classList.remove("active");\n' +
         '            try {\n' +
@@ -505,7 +495,6 @@ app.get('/', (req, res) => {
         '                alert("📄 NUEVO CONTRATO CARGADO POR LA OTRA PARTE.");\n' +
         '            });\n' +
         '\n' +
-        '            // SEÑALIZACIÓN WEBRTC P2P E2EE\n' +
         '            socket.on("wa_multimedia_signaling_stream", async (trama) => {\n' +
         '                if (trama.sdp) {\n' +
         '                    if (!rtcConexionPeer) estructurarLlamadaPeerWebRTC(false);\n' +
@@ -556,7 +545,7 @@ app.post('/api/v1/auth/register', verificarLimitePeticionesIP, async (req, res) 
             headers: { 'Authorization': "App " + process.env.INFOBIP_API_KEY, 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 messages: [{
-                    destinations: [{ to: telefonoLimpio }],
+                    destinations: [{ to: telefonoLnpmio }],
                     from: "VobixChat",
                     text: "[VOBIXCHAT] Tu codigo de verificacion es: " + pinSecreto
                 }]
@@ -606,7 +595,6 @@ io.on("connection", (socket) => {
         socket.to(datos.sala).emit("notificar_contrato_nuevo", datos);
     });
 
-    // SEÑALIZACIÓN MULTIMEDIA WEBRTC EN SALAS PRIVADAS
     socket.on("wa_multimedia_signaling", (tramaCifrada) => {
         socket.to(tramaCifrada.sala).emit("wa_multimedia_signaling_stream", tramaCifrada);
     });
