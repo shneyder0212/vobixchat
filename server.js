@@ -205,9 +205,9 @@ app.get('/', (req, res) => {
         '        /* Botón de Envío Fijo permanentemente */\n' +
         '        .wa-mic-btn { width: 46px; height: 46px; background: #00ffcc; border: none; border-radius: 50%; color: #030508; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 18px; box-shadow: 0 0 12px rgba(0, 255, 204, 0.3); transition: transform 0.1s; }\n' +
         '        .wa-mic-btn:active { transform: scale(0.94); }\n' +
-    '    </style>\n' +
-    '    <script src="/socket.io/socket.io.js"></script>\n' +
-    '</head>'
+        '    </style>\n' +
+        '    <script src="/socket.io/socket.io.js"></script>\n' +
+        '</head>'
     );
 });
     res.write(
@@ -427,7 +427,7 @@ app.get('/', (req, res) => {
         '                } else { statusPin.innerText = "PIN RECHAZADO: ACCESO BLOQUEADO"; }\n' +
         '            } catch(e) { statusPin.innerText = "ERROR DE VALIDACIÓN"; }\n' +
         '        }\n' +
-        '    </script>'
+    '    </script>'
     );
     res.end(
         '    <script>\n' +
