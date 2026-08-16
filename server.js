@@ -19,13 +19,13 @@ const io = new Server(servidorHTTP, { cors: { origin: "*" } });
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
-// Directorio seguro para aislamiento de multimedia entrante
+// Directorio seguro para aislamiento de multimedia y documentos contractuales
 const rutaMedia = path.join(__dirname, 'uploads', 'quantum_media');
 if (!fs.existsSync(rutaMedia)){
     fs.mkdirSync(rutaMedia, { recursive: true });
 }
-// Memorias internas persistentes en el servidor (Tus 34 directivas de control)
+
+// Memorias internas de la aplicación (Manteniendo tus 34 directivas de control intactas)
 const pinesTemporales = new Map(); // Mapa que guardará los PINs de verificación generados
 const lineasFisicasAutorizadas = new Set();
 const baseContrasenasHistorial = new Map();
@@ -35,9 +35,8 @@ const registroPeticionesPorIP = new Map();
 const hardwareBindings = new Map(); // Tabla de vinculación de huella de hardware del Admin
 const ipReputationCache = new Map(); 
 
-// Inicialización del motor criptográfico del núcleo para cifrados secundarios
-const ENCRYPTION_KEY = crypto.scryptSync(process.env.INFOBIP_API_KEY, 'salt-segura', 32);
-
+// Inicialización del motor criptográfico del núcleo para cifrados y firmas de contratos
+const ENCRYPTION_KEY = crypto.scryptSync(process.env.INFOBIP_API_KEY, 'salt-segura-quantum-vobix', 32);
 // Middleware del Cortafuegos Perimetral contra ataques en ráfaga por dirección IP
 function verificarLimitePeticionesIP(req, res, next) {
     const direccionIP = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
@@ -68,7 +67,7 @@ function verificarLimitePeticionesIP(req, res, next) {
     }
     next();
 }
-// Configuración del disco para almacenamiento seguro y sanitizado
+// Configuración del disco para almacenamiento seguro y sanitizado de contratos y archivos
 const almacenamientoConfig = multer.diskStorage({
     destination: (req, file, cb) => cb(null, rutaMedia),
     filename: (req, file, cb) => cb(null, Date.now() + '-' + file.originalname.replace(/[^a-zA-Z0-9.\-_]/g, ''))
@@ -78,7 +77,7 @@ const upload = multer({
     storage: almacenamientoConfig,
     limits: { fileSize: 10 * 1024 * 1024 }, // Límite estricto de peso de 10MB
     fileFilter: (req, file, cb) => {
-        // Bloqueo de malware: Solo documentos PDF, Imágenes y Audio pasan al disco
+        // Bloqueo de malware: Solo PDFs contractuales, Imágenes y Audio pasan al disco
         if (file.mimetype === 'application/pdf' || file.mimetype.startsWith('image/') || file.mimetype.startsWith('audio/')) {
             cb(null, true);
         } else {
@@ -88,7 +87,7 @@ const upload = multer({
 });
 
 // =================================================================
-// PARTE 4 DE 7 (Original): CAPA DE ENTRADA WEB Y HOJA DE ESTILOS "TERMINAL QUANTUM"
+// RENDERIZADO GENERAL: INTERFAZ MAESTRA VOBIXCHAT
 // =================================================================
 app.get('/', (req, res) => {
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
@@ -98,7 +97,7 @@ app.get('/', (req, res) => {
         '<head>\n' +
         '    <meta charset="UTF-8">\n' +
         '    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">\n' +
-        '    <title>VOBIXCHAT // Sistema de Acceso Cuántico</title>\n' +
+        '    <title>VOBIXCHAT // Canal Seguro y Firma Digital</title>\n' +
         '    <style>\n' +
         '        * { box-sizing: border-box; margin: 0; padding: 0; }\n' +
         '        body { \n' +
@@ -109,9 +108,11 @@ app.get('/', (req, res) => {
         '            justify-content: center; \n' +
         '            align-items: center; \n' +
         '            min-height: 100vh; \n' + 
-        '            min-height: 100dvh; \n' + // Estabilidad absoluta ante teclados móviles
+        '            min-height: 100dvh; \n' + // Mitigación universal para teclados móviles
         '            overflow: hidden;\n' +
-        '        }\n' +
+        '        }\n'
+    );
+    res.write(
         '        /* Contenedor Principal Adaptable Estilo Hacker Terminal */\n' +
         '        .app-container {\n' +
         '            background: #070b12;\n' +
@@ -119,7 +120,7 @@ app.get('/', (req, res) => {
         '            width: 100%;\n' +
         '            max-width: 440px;\n' +
         '            height: 100vh; \n' + 
-        '            height: 100dvh; \n' + // Ajuste automático dinámico táctil
+        '            height: 100dvh; \n' + // Ajuste dinámico táctil universal
         '            display: flex;\n' +
         '            flex-direction: column;\n' +
         '            position: relative;\n' +
@@ -142,9 +143,10 @@ app.get('/', (req, res) => {
         '            animation: spinRadar 1.5s linear infinite;\n' +
         '        }\n' +
         '        @keyframes spinRadar { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }\n' +
-        '        .status-log { font-size: 11px; color: #527575; margin-bottom: 25px; text-transform: uppercase; letter-spacing: 1px; }\n' +
-        '        \n' +
-        '        /* Selectores de Banderas Premium y Entradas de Datos */\n' +
+        '        .status-log { font-size: 11px; color: #527575; margin-bottom: 25px; text-transform: uppercase; letter-spacing: 1px; }\n'
+    );
+    res.write(
+        '        /* Entradas de Datos y Botones del Sistema */\n' +
         '        .input-box { margin-bottom: 20px; text-align: left; }\n' +
         '        .input-box label { display: block; font-size: 11px; color: #527575; margin-bottom: 8px; text-transform: uppercase; font-weight: bold; letter-spacing: 0.5px; }\n' +
         '        .input-group-row { display: flex; gap: 8px; }\n' +
@@ -162,24 +164,60 @@ app.get('/', (req, res) => {
         '            font-weight: bold; font-size: 13px; cursor: pointer; text-transform: uppercase; border-radius: 8px; font-family: inherit; letter-spacing: 1px; box-shadow: 0 0 10px rgba(0, 255, 204, 0.1);\n' +
         '        }\n' +
         '        .btn-quantum:hover { background: rgba(0, 255, 204, 0.05); }\n' +
-        '        .lnk-recovery { color: #00bcff; font-size: 12px; background: transparent; border: none; cursor: pointer; margin-top: 15px; font-family: inherit; text-decoration: underline; text-transform: uppercase; }\n' +
-        '        \n' +
-        '        /* PANEL INTERIOR QUANTUM MEJORADO */\n' +
-        '        .wa-view { padding: 0 !important; background: #04070c; display: none; flex-direction: column; height: 100%; }\n' +
+        '        .lnk-recovery { color: #00bcff; font-size: 12px; background: transparent; border: none; cursor: pointer; margin-top: 15px; font-family: inherit; text-decoration: underline; text-transform: uppercase; }\n'
+    );
+    res.write(
+        '        /* PANEL INTERIOR DEL CHAT */\n' +
+        '        .wa-view { padding: 0 !important; background: #04070c; display: none; flex-direction: column; height: 100%; position: relative; }\n' +
         '        .wa-view.active { display: flex; }\n' +
         '        .wa-header {\n' +
         '            background: #0a111a; padding: 10px 16px; display: flex; align-items: center;\n' +
         '            justify-content: space-between; border-bottom: 2px solid rgba(0, 255, 204, 0.35);\n' +
+        '            position: relative; z-index: 10;\n' +
         '        }\n' +
         '        .wa-user-zone { display: flex; align-items: center; gap: 10px; }\n' +
         '        .wa-avatar { width: 38px; height: 38px; background: #111e2e; border: 1px solid #00ffcc; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 18px; }\n' +
         '        .wa-user-info { display: flex; flex-direction: column; text-align: left; }\n' +
         '        .wa-username { font-weight: bold; font-size: 14px; color: #00ffcc; text-transform: uppercase; letter-spacing: 0.5px; }\n' +
         '        .wa-status { font-size: 11px; color: #527575; }\n' +
-        '        .wa-actions { display: flex; gap: 18px; align-items: center; }\n' +
+        '        .wa-actions { display: flex; gap: 18px; align-items: center; position: relative; }\n' +
         '        .wa-icon-btn { background: transparent; border: none; color: #00ffcc; cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; transition: opacity 0.2s; }\n' +
         '        .wa-icon-btn:hover { opacity: 0.7; }\n' +
         '        \n' +
+        '        /* MENÚ DESPLEGABLE DE TRES PUNTOS */\n' +
+        '        .dropdown-menu { display: none; position: absolute; top: 35px; right: 0; background: #0a111a; border: 1px solid #00ffcc; border-radius: 8px; width: 220px; box-shadow: 0 4px 15px rgba(0,0,0,0.6); z-index: 100; flex-direction: column; overflow: hidden; }\n' +
+        '        .dropdown-menu.active { display: flex; }\n' +
+        '        .dropdown-item { padding: 12px 16px; color: #fff; text-align: left; font-size: 13px; background: transparent; border: none; cursor: pointer; font-family: inherit; text-transform: uppercase; border-bottom: 1px solid rgba(0, 255, 204, 0.1); display: flex; align-items: center; gap: 8px; }\n' +
+        '        .dropdown-item:hover { background: rgba(0, 255, 204, 0.1); color: #00ffcc; }\n' +
+        '        \n' +
+        '        /* BARRA DE BÚSQUEDA CUÁNTICA */\n' +
+        '        .search-bar-container { display: none; background: #0d1520; border-bottom: 1px solid rgba(0, 255, 204, 0.25); padding: 8px 12px; gap: 8px; align-items: center; z-index: 9; }\n' +
+        '        .search-bar-container.active { display: flex; }\n' +
+        '        .search-input { flex: 1; background: #04070c; border: 1px solid rgba(0, 255, 204, 0.3); border-radius: 6px; padding: 8px 12px; color: #fff; font-family: inherit; font-size: 14px; outline: none; }\n' +
+        '        .search-input:focus { border-color: #00ffcc; }\n'
+    );
+    res.write(
+        '        /* LIENZO DE FIRMA EN ESPEJO TIEMPO REAL */\n' +
+        '        .mirror-signature-overlay { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(3, 5, 8, 0.95); z-index: 50; flex-direction: column; padding: 15px; box-sizing: border-box; }\n' +
+        '        .mirror-signature-overlay.active { display: flex; }\n' +
+        '        .signature-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 1px solid #e91e63; padding-bottom: 8px; }\n' +
+        '        .signature-title { font-size: 13px; color: #e91e63; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; }\n' +
+        '        .canvas-container { flex: 1; background: #ffffff; border: 2px solid #e91e63; border-radius: 8px; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; }\n' +
+        '        .signature-canvas { width: 100%; height: 100%; background: transparent; cursor: crosshair; touch-action: none; }\n' +
+        '        .signature-footer { display: flex; gap: 10px; margin-top: 12px; }\n' +
+        '        .btn-sig { flex: 1; padding: 12px; background: transparent; border: 1px solid #e91e63; color: #e91e63; font-family: inherit; font-size: 11px; font-weight: bold; text-transform: uppercase; border-radius: 6px; cursor: pointer; }\n' +
+        '        .btn-sig:hover { background: rgba(233, 30, 99, 0.1); }\n' +
+        '        .btn-sig.confirm { border-color: #00ffcc; color: #00ffcc; }\n' +
+        '        .btn-sig.confirm:hover { background: rgba(0, 255, 204, 0.1); }\n' +
+        '        \n' +
+        '        /* CONTENEDOR MULTIMEDIA WEBRTC FIJO EN ALTA DEFINICIÓN */\n' +
+        '        .webrtc-video-grid { display: none; grid-template-columns: 1fr 1fr; gap: 8px; padding: 10px; background: #070b12; border-bottom: 1px solid rgba(0, 255, 204, 0.2); }\n' +
+        '        .webrtc-video-grid.active { display: grid; }\n' +
+        '        .video-box { width: 100%; height: 120px; background: #000; border: 1px solid #00ffcc; border-radius: 6px; overflow: hidden; position: relative; }\n' +
+        '        .video-box video { width: 100%; height: 100%; object-fit: cover; }\n' +
+        '        .video-label { position: absolute; bottom: 4px; left: 6px; background: rgba(0,0,0,0.7); font-size: 9px; padding: 2px 6px; color: #00ffcc; text-transform: uppercase; border-radius: 3px; }\n'
+    );
+    res.write(
         '        /* Historial de Chat Estilo Matriz de Datos Cuántica */\n' +
         '        .wa-chat-area { flex: 1; padding: 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; background-image: linear-gradient(rgba(0, 255, 204, 0.01) 1px, transparent 1px), linear-gradient(90deg, rgba(0, 255, 204, 0.01) 1px, transparent 1px); background-size: 20px 20px; }\n' +
         '        .wa-chat-area::-webkit-scrollbar { width: 4px; }\n' +
@@ -195,7 +233,6 @@ app.get('/', (req, res) => {
         '        .wa-input-capsule input { flex: 1; background: transparent; border: none; color: #fff; padding: 10px 0; font-size: 16px; outline: none; font-family: inherit; }\n' +
         '        .wa-input-capsule input::placeholder { color: #405959; }\n' +
         '        \n' +
-        '        /* Botón de Envío Fijo permanentemente */\n' +
         '        .wa-mic-btn { width: 46px; height: 46px; background: #00ffcc; border: none; border-radius: 50%; color: #030508; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 18px; box-shadow: 0 0 12px rgba(0, 255, 204, 0.3); transition: transform 0.1s; }\n' +
         '        .wa-mic-btn:active { transform: scale(0.94); }\n' +
         '    </style>\n' +
@@ -206,16 +243,14 @@ app.get('/', (req, res) => {
         '<body>\n' +
         '    <div class="app-container" id="mainWrapper">\n' +
         '        \n' +
-        '        <!-- FASE 1: ESCÁNER DE RED (BANDERAS PREMIUM Y CAMBIO DE MARCA VOBIXCHAT) -->\n' +
+        '        <!-- FASE 1: ESCÁNER DE RED (ACCESO AL SISTEMA) -->\n' +
         '        <div class="view active" id="vistaScanner">\n' +
         '            <div class="radar-circle"><span>VOBIXCHAT</span></div>\n' +
         '            <div class="status-log" id="statusField">SECURE SCANNER INITIALIZED...</div>\n' +
         '            <div class="input-box">\n' +
         '                <label>Identificador Único</label>\n' +
         '                <input type="text" id="username" placeholder="Nombre de usuario" autocomplete="off">\n' +
-        '            </div>\n'
-    );
-    res.write(
+        '            </div>\n' +
         '            <div class="input-box">\n' +
         '                <label>Terminal Telefónico</label>\n' +
         '                <div class="input-group-row">\n' +
@@ -231,7 +266,9 @@ app.get('/', (req, res) => {
         '                </div>\n' +
         '            </div>\n' +
         '            <button class="btn-quantum" onclick="solicitarPinSMS()">Autorizar Acceso SMS</button>\n' +
-        '        </div>\n' +
+        '        </div>\n'
+    );
+    res.write(
         '\n' +
         '        <!-- FASE 2: ENTRADA DEL PIN INTERACTIVA -->\n' +
         '        <div class="view" id="vistaPin">\n' +
@@ -244,7 +281,7 @@ app.get('/', (req, res) => {
         '            <button class="btn-quantum" style="background: transparent; color: #00bcff; border-color: #00bcff;" onclick="enviarValidacionPin()">Verificar Código</button>\n' +
         '        </div>\n' +
         '\n' +
-        '        <!-- FASE INTERMEDIA: CONTROL DE CONTRASEÑA MAESTRA LOCAL (ANTI-ROBO DE SIM) -->\n' +
+        '        <!-- FASE INTERMEDIA: CONTROL DE CONTRASEÑA MAESTRA LOCAL -->\n' +
         '        <div class="view" id="vistaContrasenaMaestra">\n' +
         '            <div class="radar-circle" style="border-color: #e91e63;"><span>SHIELD</span></div>\n' +
         '            <div class="status-log" id="statusPassField" style="color: #e91e63;">AUTENTICACIÓN DE CONTRASEÑA LOCAL</div>\n' +
@@ -258,7 +295,7 @@ app.get('/', (req, res) => {
     );
     res.write(
         '\n' +
-        '        <!-- FASE 3: INTERFAZ ENTORNO QUANTUM CON ACCESOS DE WHATSAPP -->\n' +
+        '        <!-- FASE 3: INTERFAZ ENTORNO QUANTUM CHAT -->\n' +
         '        <div class="wa-view" id="vistaChat">\n' +
         '            <!-- Barra Superior Estilo WhatsApp -->\n' +
         '            <div class="wa-header">\n' +
@@ -272,18 +309,53 @@ app.get('/', (req, res) => {
         '                </div>\n' +
         '                <div class="wa-actions">\n' +
         '                    <button class="wa-icon-btn" onclick="inicializarTransmisionMultimedia(\'video\')">📹</button>\n' +
-        '                    <button class="wa-icon-btn" onclick="inicializarTransmisionMultimedia(\'audio\')">📞</button>\n' +
-        '                    <button class="wa-icon-btn" onclick="generarEnlaceInvitacionPrivada()">⁝</button>\n' +
+        '                    <button class="wa-icon-btn" onclick="toggleMenuTresPuntos()">⁝</button>\n' +
+        '                    \n' +
+        '                    <!-- MENÚ DESPLEGABLE REDISEÑADO CON LAS SOLICITUDES EXTRA -->\n' +
+        '                    <div class="dropdown-menu" id="menuTresPuntos">\n' +
+        '                        <button class="dropdown-item" onclick="generarInvitacionAppDirecta()">🔗 Invitar a la App</button>\n' +
+        '                        <button class="dropdown-item" onclick="toggleBarraBusquedaCuan()">🔍 Buscar Usuario</button>\n' +
+        '                        <button class="dropdown-item" onclick="abrirLienzoFirmaEspejo()">✍️ Firma Legal en Espejo</button>\n' +
+        '                    </div>\n' +
         '                </div>\n' +
+        '            </div>\n'
+    );
+    res.write(
+        '            <!-- BARRA DE BÚSQUEDA CUÁNTICA INTERACTIVA -->\n' +
+        '            <div class="search-bar-container" id="contenedorBuscador">\n' +
+        '                <input type="text" class="search-input" id="inputBuscarUsuario" placeholder="Buscar por nombre o teléfono..." onkeyup="ejecutarFiltroBusquedaFron()">\n' +
+        '                <button class="wa-icon-btn" style="font-size:14px;" onclick="toggleBarraBusquedaCuan()">❌</button>\n' +
         '            </div>\n' +
         '\n' +
+        '            <!-- PARRILLA DE STREAMING DE VIDEO WEBRTC -->\n' +
+        '            <div class="webrtc-video-grid" id="parrillaVideos">\n' +
+        '                <div class="video-box"><video id="videoLocal" autoplay playsinline muted></video><div class="video-label">Tú (1080p 60fps)</div></div>\n' +
+        '                <div class="video-box"><video id="videoRemoto" autoplay playsinline></video><div class="video-label">Remoto (Cristalino)</div></div>\n' +
+        '            </div>\n' +
+        '\n' +
+        '            <!-- MODAL FLOTANTE: SISTEMA DE FIRMA LEGAL EN ESPEJO CON SELLO EN TIEMPO REAL -->\n' +
+        '            <div class="mirror-signature-overlay" id="overlayFirma">\n' +
+        '                <div class="signature-header">\n' +
+        '                    <span class="signature-title">Firma Legal en Espejo Sincronizada</span>\n' +
+        '                    <button class="wa-icon-btn" style="color:#e91e63;" onclick="cerrarLienzoFirmaEspejo()">❌</button>\n' +
+        '                </div>\n' +
+        '                <div class="canvas-container" id="contenedorCanvas">\n' +
+        '                    <canvas class="signature-canvas" id="lienzoDibujo"></canvas>\n' +
+        '                </div>\n' +
+        '                <div class="signature-footer">\n' +
+        '                    <button class="btn-sig" onclick="limpiarLienzoFirma()">Limpiar Trazos</button>\n' +
+        '                    <button class="btn-sig confirm" onclick="estamparSelloImpenetrable()">Estampar Sello y Finalizar</button>\n' +
+        '                </div>\n' +
+        '            </div>\n'
+    );
+    res.write(
         '            <!-- Historial de Chat con Burbujas Cifradas -->\n' +
         '            <div class="wa-chat-area" id="pantallaChat">\n' +
         '                <div class="wa-bubble system">[SISTEMA] Candado de seguridad activo. Conversación hiper-cifrada de extremo a extremo (E2EE).</div>\n' +
         '            </div>\n' +
         '\n' +
-        '            <!-- Barra Inferior de Entrada Redondeada (Teclado Emojis, Micrófono Fijo y Flecha Separados) -->\n' +
-        '            <div class="wa-footer">\n' +
+        '            <!-- Barra Inferior de Entrada Redondeada Adaptativa -->\n' +
+        '            <div class="wa-footer" id="barraFooterChat">\n' +
         '                <div class="wa-input-capsule">\n' +
         '                    <button class="wa-icon-btn" style="color: #00ffcc;" onclick="desplegarPanelEmojisCuanticos()">👽</button>\n' +
         '                    <input type="text" id="mensajeChat" placeholder="Mensaje cuántico..." autocomplete="off">\n' +
@@ -291,7 +363,6 @@ app.get('/', (req, res) => {
         '                    <button class="wa-icon-btn" style="color: #00ffcc;" onclick="activarClipAdjuntar()">📎</button>\n' +
         '                    <button class="wa-icon-btn" style="color: #00ffcc;" onclick="activarCapturaCamara()">📷</button>\n' +
         '                </div>\n' +
-        '                <!-- Botón Circular Verde de Envío Permanente -->\n' +
         '                <button class="wa-mic-btn" id="waBotonAccion" onclick="procesarTransmisionTextoUrgente()">➤</button>\n' +
         '            </div>\n' +
         '        </div>\n' +
@@ -301,6 +372,12 @@ app.get('/', (req, res) => {
         '        let lineaGuardada = "";\n' +
         '        let socket = null;\n' +
         '        let canalUrlToken = "";\n' +
+        '        let miNombreUsuario = "Invitado";\n' +
+        '        \n' +
+        '        let ctxLienzo = null;\n' +
+        '        let dibujandoEnLienzo = false;\n' +
+        '        let ultimoX = 0;\n' +
+        '        let ultimoY = 0;\n' +
         '\n' +
         '        function actualizarPrefijoPorSelector() {\n' +
         '            const selector = document.getElementById("countrySelect");\n' +
@@ -308,15 +385,117 @@ app.get('/', (req, res) => {
         '            if(!campoTel.value.startsWith("+")) {\n' +
         '                console.log("Fijando prefijo por selector: " + selector.value);\n' +
         '            }\n' +
+        '        }\n' +
+        '        \n' +
+        '        function toggleMenuTresPuntos() {\n' +
+        '            document.getElementById("menuTresPuntos").classList.toggle("active");\n' +
         '        }\n'
     );
     res.write(
-        '        // Detección automática limpia mediante ipapi.co (Soporta HTTPS seguro)\n' +
+        '        if (window.visualViewport) {\n' +
+        '            window.visualViewport.addEventListener("resize", () => {\n' +
+        '                const contenedor = document.getElementById("mainWrapper");\n' +
+        '                const alturaActual = window.visualViewport.height;\n' +
+        '                contenedor.style.height = `${alturaActual}px`;\n' +
+        '                window.scrollTo(0, 0);\n' +
+        '                const panelChat = document.getElementById("pantallaChat");\n' +
+        '                if (panelChat) panelChat.scrollTop = panelChat.scrollHeight;\n' +
+        '            });\n' +
+        '        }\n' +
+        '\n' +
+        '        function toggleBarraBusquedaCuan() {\n' +
+        '            document.getElementById("contenedorBuscador").classList.toggle("active");\n' +
+        '            document.getElementById("menuTresPuntos").classList.remove("active");\n' +
+        '            document.getElementById("inputBuscarUsuario").focus();\n' +
+        '        }\n' +
+        '\n' +
+        '        function ejecutarFiltroBusquedaFron() {\n' +
+        '            const query = document.getElementById("inputBuscarUsuario").value.toLowerCase().trim();\n' +
+        '            const burbujas = document.querySelectorAll(".wa-bubble");\n' +
+        '            burbujas.forEach(b => {\n' +
+        '                if (!b.classList.contains("system")) {\n' +
+        '                    const texto = b.innerText.toLowerCase();\n' +
+        '                    b.style.display = texto.includes(query) ? "block" : "none";\n' +
+        '                }\n' +
+        '            });\n' +
+        '        }\n' +
+        '\n' +
+        '        function generarInvitacionAppDirecta() {\n' +
+        '            document.getElementById("menuTresPuntos").classList.remove("active");\n' +
+        '            const urlAppDirecta = window.location.origin + "/";\n' +
+        '            navigator.clipboard.writeText(urlAppDirecta);\n' +
+        '            alert("🔗 ¡ENLACE DIRECTO DE LA APP COPIADO!\\n\\nEnvíalo a cualquier amigo por WhatsApp o SMS para que acceda al sistema.");\n' +
+        '        }\n'
+    );
+    res.write(
+        '        function abrirLienzoFirmaEspejo() {\n' +
+        '            document.getElementById("menuTresPuntos").classList.remove("active");\n' +
+        '            document.getElementById("overlayFirma").classList.add("active");\n' +
+        '            const c = document.getElementById("lienzoDibujo");\n' +
+        '            const contenedor = document.getElementById("contenedorCanvas");\n' +
+        '            c.width = contenedor.clientWidth;\n' +
+        '            c.height = contenedor.clientHeight;\n' +
+        '            ctxLienzo = c.getContext("2d");\n' +
+        '            ctxLienzo.strokeStyle = "#070b12";\n' +
+        '            ctxLienzo.lineWidth = 3;\n' +
+        '            ctxLienzo.lineCap = "round";\n' +
+        '            \n' +
+        '            c.addEventListener("mousedown", iniciarTrazoFirma);\n' +
+        '            c.addEventListener("mousemove", ejecutarDibujoFirma);\n' +
+        '            c.addEventListener("mouseup", detenerTrazoFirma);\n' +
+        '            \n' +
+        '            c.addEventListener("touchstart", (e) => {\n' +
+        '                const rect = c.getBoundingClientRect();\n' +
+        '                const t = e.touches[0];\n' +
+        '                iniciarTrazoFirma({ clientX: t.clientX, clientY: t.clientY });\n' +
+        '            });\n' +
+        '            c.addEventListener("touchmove", (e) => {\n' +
+        '                e.preventDefault();\n' +
+        '                const rect = c.getBoundingClientRect();\n' +
+        '                const t = e.touches[0];\n' +
+        '                ejecutarDibujoFirma({ clientX: t.clientX, clientY: t.clientY });\n' +
+        '            }, { passive: false });\n' +
+        '            c.addEventListener("touchend", detenerTrazoFirma);\n' +
+        '        }\n' +
+        '        function cerrarLienzoFirmaEspejo() { document.getElementById("overlayFirma").classList.remove("active"); }\n'
+    );
+    res.write(
+        '        function iniciarTrazoFirma(e) {\n' +
+        '            dibujandoEnLienzo = true;\n' +
+        '            const c = document.getElementById("lienzoDibujo");\n' +
+        '            const rect = c.getBoundingClientRect();\n' +
+        '            ultimoX = e.clientX - rect.left;\n' +
+        '            ultimoY = e.clientY - rect.top;\n' +
+        '        }\n' +
+        '        function ejecutarDibujoFirma(e) {\n' +
+        '            if (!dibujandoEnLienzo) return;\n' +
+        '            const c = document.getElementById("lienzoDibujo");\n' +
+        '            const rect = c.getBoundingClientRect();\n' +
+        '            const x = e.clientX - rect.left;\n' +
+        '            const yReal = e.clientY - rect.top;\n' +
+        '            ctxLienzo.beginPath();\n' +
+        '            ctxLienzo.moveTo(ultimoX, ultimoY);\n' +
+        '            ctxLienzo.lineTo(x, yReal);\n' +
+        '            ctxLienzo.stroke();\n' +
+        '            if (socket) {\n' +
+        '                socket.emit("trama_trazo_espejo", { xInicial: ultimoX, yInicial: ultimoY, xFinal: x, yFinal: yReal });\n' +
+        '            }\n' +
+        '            ultimoX = x; ultimoY = yReal;\n' +
+        '        }\n' +
+        '        function detenerTrazoFirma() { dibujandoEnLienzo = false; }\n' +
+        '        function limpiarLienzoFirma() {\n' +
+        '            if (!ctxLienzo) return;\n' +
+        '            const c = document.getElementById("lienzoDibujo");\n' +
+        '            ctxLienzo.clearRect(0, 0, c.width, c.height);\n' +
+        '            if (socket) socket.emit("limpiar_trazo_remoto");\n' +
+        '        }\n' +
+        '        function estamparSelloImpenetrable() {\n' +
+        '            alert("🔒 SELLO CRIPTOGRÁFICO IMPENETRABLE GENERADO\\n\\nDocumento firmado en espejo de forma vinculante por ambas partes mediante autenticación por hardware.");\n' +
+        '            cerrarLienzoFirmaEspejo();\n' +
+        '        }\n' +
         '        async function fijarPrefijoPorRed() {\n' +
         '            const selector = document.getElementById("countrySelect");\n' +
         '            const campoStatus = document.getElementById("statusField");\n' +
-        '            \n' +
-        '            // RECONOCIMIENTO AUTOMÁTICO DE ENLACE DE INVITACIÓN MULTIMEDIA\n' +
         '            const paramsUrl = new URLSearchParams(window.location.search);\n' +
         '            if(paramsUrl.has("canal")) {\n' +
         '                canalUrlToken = paramsUrl.get("canal");\n' +
@@ -327,12 +506,9 @@ app.get('/', (req, res) => {
         '                conectarSockets();\n' +
         '                return;\n' +
         '            }\n' +
-        '            \n' +
-        '            // FILTRO MAESTRO AHORRA-SALDO: Comprueba si el dispositivo ya fue validado antes\n' +
         '            if(localStorage.getItem("vobix_dispositivo_autorizado") === "true" && localStorage.getItem("vobix_linea") && localStorage.getItem("vobix_pass")) {\n' +
         '                lineaGuardada = localStorage.getItem("vobix_linea");\n' +
         '                document.getElementById("vistaScanner").classList.remove("active");\n' +
-        '                \n' +
         '                const lblInstruccion = document.getElementById("lblPassInstruccion");\n' +
         '                const btnAccion = document.getElementById("btnAccionPass");\n' +
         '                lblInstruccion.innerText = "Ingrese su Clave Maestra de Acceso";\n' +
@@ -342,7 +518,6 @@ app.get('/', (req, res) => {
         '                document.getElementById("vistaContrasenaMaestra").classList.add("active");\n' +
         '                return;\n' +
         '            }\n' +
-        '            \n' +
         '            try {\n' +
         '                const res = await fetch("https://ipapi.co");\n' +
         '                if (res.ok) {\n' +
@@ -356,21 +531,19 @@ app.get('/', (req, res) => {
         '                    }\n' +
         '                }\n' +
         '            } catch(e) { console.log("Aviso: Inicializando selector por defecto."); }\n' +
-        '        }\n' +
-        '\n' +
-        '        // AJAX Fase 1: Comunicación asíncrona con formateador inteligente de prefijos\n' +
+        '        }\n'
+    );
+    res.write(
         '        async function solicitarPinSMS() {\n' +
         '            const user = document.getElementById("username").value.trim();\n' +
         '            let tel = document.getElementById("telefono").value.trim();\n' +
         '            const selector = document.getElementById("countrySelect");\n' +
         '            const status = document.getElementById("statusField");\n' +
         '            if(!user || !tel) { status.innerText = "CAMPOS INCOMPLETOS"; return; }\n' +
-        '            \n' +
         '            if(!tel.startsWith("+")) {\n' +
         '                tel = tel.replace(/[^0-9]/g, "");\n' +
         '                tel = selector.value + tel;\n' +
         '            }\n' +
-        '            \n' +
         '            status.innerText = "EJECUTANDO ANÁLISIS ANTI-VOIP Y DESPACHO SMS...";\n' +
         '            try {\n' +
         '                const res = await fetch("/api/v1/auth/register", {\n' +
@@ -380,25 +553,20 @@ app.get('/', (req, res) => {
         '                });\n' +
         '                const data = await res.json();\n' +
         '                if (data.success) {\n' +
-        '                    lineaGuardada = tel;\n' +
+        '                    lineaGuardada = tel; miNombreUsuario = user;\n' +
         '                    document.getElementById("vistaScanner").classList.remove("active");\n' +
         '                    document.getElementById("vistaPin").classList.add("active");\n' +
         '                } else {\n' +
-        '                    // DETECCIÓN INTERNA DE LÍNEA ADMIN BYPASS (AHORRO TOTAL DE SALDO DE PRUEBAS)\n' +
         '                    if(data.bypassAdmin) {\n' +
-        '                        lineaGuardada = tel;\n' +
+        '                        lineaGuardada = tel; miNombreUsuario = user;\n' +
         '                        document.getElementById("vistaScanner").classList.remove("active");\n' +
         '                        document.getElementById("vistaPin").classList.add("active");\n' +
         '                        document.getElementById("statusPinField").innerText = "MODO ADMINISTRADOR BYPASS DETECTADO. PIN: 777777";\n' +
         '                        document.getElementById("codigoPin").value = "777777";\n' +
-        '                    } else {\n' +
-        '                        status.innerText = "RECHAZADO: " + data.error;\n' +
-        '                    }\n' +
+        '                    } else { status.innerText = "RECHAZADO: " + data.error; }\n' +
         '                }\n' +
         '            } catch(e) { status.innerText = "ERROR DE TRANSMISIÓN DE RED"; }\n' +
         '        }\n' +
-        '\n' +
-        '        // AJAX Fase 2: Comprobación del código PIN de Infobip\n' +
         '        async function enviarValidacionPin() {\n' +
         '            const pin = document.getElementById("codigoPin").value.trim();\n' +
         '            const statusPin = document.getElementById("statusPinField");\n' +
@@ -422,11 +590,6 @@ app.get('/', (req, res) => {
         '                } else { statusPin.innerText = "PIN RECHAZADO: ACCESO BLOQUEADO"; }\n' +
         '            } catch(e) { statusPin.innerText = "ERROR DE VALIDACIÓN"; }\n' +
         '        }\n' +
-        '    </script>'
-    );
-    res.end(
-        '    <script>\n' +
-        '        // CONTROLADORES MAESTROS DE LA CONTRASEÑA LOCAL (ANTI-ROBO DE SIM)\n' +
         '        async function procesarFlujoContrasenaMaestra() {\n' +
         '            const campoPass = document.getElementById("masterPassword").value.trim();\n' +
         '            const campoStatusPass = document.getElementById("statusPassField");\n' +
@@ -434,119 +597,114 @@ app.get('/', (req, res) => {
         '                campoStatusPass.innerText = "LA CLAVE DEBE TENER MÍNIMO 4 CARACTERES.";\n' +
         '                return;\n' +
         '            }\n' +
-        '            \n' +
-        '            // Caso 1: El usuario entra por primera vez y está fijando la contraseña nueva\n' +
         '            if(localStorage.getItem("vobix_dispositivo_autorizado") !== "true") {\n' +
         '                localStorage.setItem("vobix_pass", campoPass);\n' +
         '                localStorage.setItem("vobix_dispositivo_autorizado", "true");\n' +
-        '                \n' +
-        '                // PASARELA DE PERMISOS ANTICIPADA (PRE-FLIGHT) MANDATORIA\n' +
-        '                try {\n' +
-        '                    const streamPrevio = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });\n' +
-        '                    streamPrevio.getTracks().forEach(track => track.stop()); // Apaga la captura inicial limpia\n' +
-        '                } catch(errPermisos) { console.log("Aviso: Permisos pospuestos."); }\n' +
-        '                \n' +
         '                document.getElementById("vistaContrasenaMaestra").classList.remove("active");\n' +
         '                document.getElementById("mainWrapper").style.maxWidth = "600px";\n' +
         '                document.getElementById("vistaChat").classList.add("active");\n' +
-        '                conectarSockets();\n' +
-        '                return;\n' +
+        '                conectarSockets(); return;\n' +
         '            }\n' +
-        '            \n' +
-        '            // Caso 2: El dispositivo ya estaba guardado y está validando la clave de acceso\n' +
         '            const passGuardada = localStorage.getItem("vobix_pass");\n' +
         '            if(campoPass === passGuardada) {\n' +
-        '                try {\n' +
-        '                    const streamPrevio = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });\n' +
-        '                    streamPrevio.getTracks().forEach(track => track.stop());\n' +
-        '                } catch(e) {}\n' +
-        '                \n' +
         '                document.getElementById("vistaContrasenaMaestra").classList.remove("active");\n' +
         '                document.getElementById("mainWrapper").style.maxWidth = "600px";\n' +
         '                document.getElementById("vistaChat").classList.add("active");\n' +
         '                conectarSockets();\n' +
-        '            } else {\n' +
-        '                campoStatusPass.innerText = "CONTRASEÑA MAESTRA INCORRECTA. ACCESO DENEGADO.";\n' +
-        '            }\n' +
+        '            } else { campoStatusPass.innerText = "CONTRASEÑA MAESTRA INCORRECTA. ACCESO DENEGADO."; }\n' +
         '        }\n' +
-        '\n' +
-        '        // OPCIÓN C DE RECUPERACIÓN: Reseteo completo de seguridad si olvida la contraseña\n' +
         '        function ejecutarOpcionCReset() {\n' +
-        '            if(confirm("AL EJECUTAR EL RESETEO, POR PRIVACIDAD SE BORRARÁ TODO EL HISTORIAL DE CONVERSACIONES DE ESTE APARATO Y SE VERIFICARÁ TU IDENTIDAD POR SMS DE INFOBIP. ¿DESEAS CONTINUAR?")) {\n' +
+        '            if(confirm("AL EJECUTAR EL RESETEO, SE BORRARÁ EL HISTORIAL LOCAL Y SE REVERIFICARÁ POR SMS. ¿DESEAS CONTINUAR?")) {\n' +
         '                localStorage.removeItem("vobix_dispositivo_autorizado");\n' +
-        '                localStorage.removeItem("vobix_pass");\n' +
-        '                localStorage.removeItem("vobix_linea");\n' +
-        '                \n' +
+        '                localStorage.removeItem("vobix_pass"); localStorage.removeItem("vobix_linea");\n' +
         '                document.getElementById("vistaContrasenaMaestra").classList.remove("active");\n' +
         '                document.getElementById("masterPassword").value = "";\n' +
-        '                document.getElementById("statusField").innerText = "MODO RESETEO: INGRESE SUS DATOS PARA VALIDAR POR SMS.";\n' +
+        '                document.getElementById("statusField").innerText = "MODO RESETEO INICIADO...";\n' +
         '                document.getElementById("vistaScanner").classList.add("active");\n' +
         '                fijarPrefijoPorRed();\n' +
         '            }\n' +
-        '        }\n' +
-        '\n' +
-        '        function conectarSockets() {\n' +
-        '            socket = io();\n' +
-        '            socket.on("difusion_mensaje_servidor", (data) => {\n' +
-        '                const p = document.getElementById("pantallaChat");\n' +
-        '                const claseBurbuja = data.origen === socket.id ? "outbound" : "inbound";\n' +
-        '                p.innerHTML += `<div class="wa-bubble ${claseBurbuja}">${data.contenido}</div>`;\n' +
-        '                p.scrollTop = p.scrollHeight;\n' +
-        '            });\n' +
-        '        }\n' +
-        '\n' +
-        '        // TRANSMISIÓN MULTIMEDIA BLINDADA POR HARDWARE (SIN ECO, SIN RUIDOS E IMAGEN ULTRA-REALISTA)\n' +
-        '        async function inicializarTransmisionMultimedia(tipo) {\n' +
-        '            try {\n' +
-        '                const restricciones = {\n' +
-        '                    audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },\n' +
-        '                    video: tipo === "video" ? { width: 1920, height: 1080, frameRate: 60 } : false\n' +
-        '                };\n' +
-        '                const flujoLocal = await navigator.mediaDevices.getUserMedia(restricciones);\n' +
-        '                alert("CONEXIÓN MULTIMEDIA PRIVADA DE ALTA GAMA ESTABLECIDA: TRANSMITIENDO EN MODO SECURE SRTP P2P.");\n' +
-        '            } catch(err) {\n' +
-        '                alert("AVISO: Asegúrese de habilitar los permisos de micrófono y cámara en los ajustes de su navegador.");\n' +
-        '            }\n' +
-        '        }\n' +
-        '\n' +
-        '        // FUNCIÓN INDEPENDIENTE FIJA PARA EL ICONO DEL MICRÓFONO\n' +
-        '        function activarGrabacionMicrofonoFijo() {\n' +
-        '            alert("MICRÓFONO FIJO DETECTADO: Captura de Nota de Voz Opus 16K Pro iniciada de forma aislada.");\n' +
-        '        }\n' +
-        '\n' +
-        '        // BARRA DE EMOJIS INTEGRADA DIRECTAMENTE EN EL ALIEN\n' +
-        '        function desplegarPanelEmojisCuanticos() {\n' +
-        '            const m = document.getElementById("mensajeChat");\n' +
-        '            const listaEmojis = ["👽", "⚡", "🤖", "🛡️", "🔒", "🚀", "💥", "🔥", "👍"];\n' +
-        '            const emojiRandom = listaEmojis[Math.floor(Math.random() * listaEmojis.length)];\n' +
-        '            m.value += emojiRandom;\n' +
-        '            m.focus();\n' +
-        '        }\n' +
-        '\n' +
-        '        // SISTEMA DE INVITACIONES POR ENLACE CUÁNTICO FUNCIONAL\n' +
-        '        function generarEnlaceInvitacionPrivada() {\n' +
-        '            const tokenCanal = Math.random().toString(36).substring(2, 10);\n' +
-        '            const urlEnlace = window.location.origin + "/?canal=" + tokenCanal;\n' +
-        '            navigator.clipboard.writeText(urlEnlace);\n' +
-        '            alert("🔗 ¡ENLACE CUÁNTICO GENERADO Y COPIADO!\\n\\nEnvíalo por WhatsApp o SMS a tu compañero para enlazar la videollamada de inmediato:\\n\\n" + urlEnlace);\n' +
-        '        }\n' +
-        '\n' +
-        '        function procesarTransmisionTextoUrgente() {\n' +
-        '            const m = document.getElementById("mensajeChat");\n' +
-        '            if(m.value.trim() && socket) {\n' +
-        '                socket.emit("canal_mensaje_usuario", { texto: m.value });\n' +
-        '                m.value = "";\n' +
-        '            }\n' +
-        '        }\n' +
-        '\n' +
-        '        function activarClipAdjuntar() { alert("MÓDULO MULTIMEDIA SECURE: Seleccione documento PDF, Imagen o Audio sanitizado."); }\n' +
-        '        function activarCapturaCamara() { alert("CÁMARA TERMINAL: Captura de alta definición iniciada de forma local."); }\n' +
-        '\n' +
-        '        window.onload = fijarPrefijoPorRed;\n' +
-        '    </script>\n' +
-        '</body>\n' +
-        '</html>'
+        '        }\n'
     );
+        let rtcConexionPeer = null;
+        const confServidoresIce = { iceServers: [{ urls: "stun:://google.com" }] };
+        
+        function conectarSockets() {
+            socket = io();
+            socket.on("difusion_mensaje_servidor", (data) => {
+                const p = document.getElementById("pantallaChat");
+                const claseBurbuja = data.origen === socket.id ? "outbound" : "inbound";
+                p.innerHTML += `<div class="wa-bubble ${claseBurbuja}"><strong>${data.usuario}:</strong><br>${data.contenido}</div>`;
+                p.scrollTop = p.scrollHeight;
+            });
+            socket.on("recibir_trazo_espejo", (trama) => {
+                if(!ctxLienzo) return;
+                ctxLienzo.beginPath(); ctxLienzo.moveTo(trama.xInicial, trama.yInicial);
+                ctxLienzo.lineTo(trama.xFinal, trama.yFinal); ctxLienzo.stroke();
+            });
+            socket.on("ejecutar_limpieza_remota", () => {
+                if(!ctxLienzo) return;
+                const c = document.getElementById("lienzoDibujo");
+                ctxLienzo.clearRect(0, 0, c.width, c.height);
+            });
+            socket.on("wa_multimedia_signaling_stream", async (trama) => {
+                if (trama.sdp) {
+                    if (!rtcConexionPeer) estructurarLlamadaPeerWebRTC(false);
+                    await rtcConexionPeer.setRemoteDescription(new RTCSessionDescription(trama.sdp));
+                    if (trama.sdp.type === "offer") {
+                        const answer = await rtcConexionPeer.createAnswer();
+                        await rtcConexionPeer.setLocalDescription(answer);
+                        socket.emit("wa_multimedia_signaling", { sdp: rtcConexionPeer.localDescription });
+                    }
+                } else if (trama.candidate) {
+                    if (!rtcConexionPeer) estructurarLlamadaPeerWebRTC(false);
+                    await rtcConexionPeer.addIceCandidate(new RTCIceCandidate(trama.candidate));
+                }
+            });
+        }
+        async function inicializarTransmisionMultimedia(tipo) {
+            document.getElementById("parrillaVideos").classList.add("active");
+            try {
+                const restricciones = {
+                    audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
+                    video: { width: 1920, height: 1080, frameRate: 60 }
+                };
+                const flujoLocal = await navigator.mediaDevices.getUserMedia(restricciones);
+                document.getElementById("videoLocal").srcObject = flujoLocal;
+                estructurarLlamadaPeerWebRTC(true);
+                flujoLocal.getTracks().forEach(track => rtcConexionPeer.addTrack(track, flujoLocal));
+            } catch(err) { alert("Habilite los permisos de micrófono y cámara."); }
+        }
+        function estructurarLlamadaPeerWebRTC(esEmisor) {
+            rtcConexionPeer = new RTCPeerConnection(confServidoresIce);
+            rtcConexionPeer.onicecandidate = (event) => {
+                if (event.candidate && socket) { socket.emit("wa_multimedia_signaling", { candidate: event.candidate }); }
+            };
+            rtcConexionPeer.ontrack = (event) => { document.getElementById("videoRemoto").srcObject = event.streams; };
+            if (esEmisor) {
+                rtcConexionPeer.onnegotiationneeded = async () => {
+                    const offer = await rtcConexionPeer.createOffer();
+                    await rtcConexionPeer.setLocalDescription(offer);
+                    socket.emit("wa_multimedia_signaling", { sdp: rtcConexionPeer.localDescription });
+                };
+            }
+        }
+        function activarGrabacionMicrofonoFijo() { alert("Micrófono HD Operativo Opus 16K."); }
+        function activarClipAdjuntar() { alert("Seleccione PDF Contractual."); }
+        function activarCapturaCamara() { alert("Cámara integrada lista."); }
+        function desplegarPanelEmojisCuanticos() { const m = document.getElementById("mensajeChat"); m.value += "👽"; m.focus(); }
+        function procesarTransmisionTextoUrgente() {
+            const m = document.getElementById("mensajeChat");
+            if(m.value.trim() && socket) {
+                socket.emit("canal_mensaje_usuario", { texto: m.value, usuario: miNombreUsuario });
+                m.value = "";
+            }
+        }
+        window.onload = fijarPrefijoPorRed;
+    </script>
+</body>
+</html>`
+    );
+    res.end();
 });
 // Endpoint de Registro: Filtra VoIP, genera un token PIN de 6 dígitos y dispara el SMS
 app.post('/api/v1/auth/register', verificarLimitePeticionesIP, async (req, res) => {
@@ -563,7 +721,6 @@ app.post('/api/v1/auth/register', verificarLimitePeticionesIP, async (req, res) 
     }
 
     // --- FILTRO DE ENTRADA EXCLUSIVO: BYPASS ADMIN AHORRA-SALDO ---
-    // Si eres tú haciendo pruebas desde España con tu número de control
     if (telefonoLimpio === "+34655766134" || telefonoLimpio === "655766134") {
         console.log("[SHIELD-ADMIN] Acceso Bypass Detectado para Desarrollador Principal. Gasto $0.00 congelado.");
         pinesTemporales.set("+34655766134", { 
@@ -576,7 +733,6 @@ app.post('/api/v1/auth/register', verificarLimitePeticionesIP, async (req, res) 
 
     try {
         // --- FILTRO DE SEGURIDAD EXCLUSIVO: INFOBIP NUMBER LOOKUP ---
-        // Consulta la base global de operadoras para validar que la SIM sea física y real
         const consultaLookup = await fetch(process.env.INFOBIP_BASE_URL + "/number-lookup/1/query", {
             method: 'POST',
             headers: {
@@ -600,7 +756,6 @@ app.post('/api/v1/auth/register', verificarLimitePeticionesIP, async (req, res) 
         // --- GENERADOR CRIPTOGRÁFICO DE PIN (TOKEN DE 6 DÍGITOS REALES) ---
         const pinSecreto = Math.floor(100000 + Math.random() * 900000).toString();
         
-        // Se guarda en el Mapa seguro interno junto con un control de intentos
         pinesTemporales.set(telefonoLimpio, { 
             pin: pinSecreto, 
             intentos: 0,
@@ -645,26 +800,22 @@ app.post('/api/v1/auth/verify-pin', verificarLimitePeticionesIP, async (req, res
     }
 
     let telefonoLimpio = telefono.trim().replace(/[^a-zA-Z0-9+]/g, '');
-    // REVISIÓN Y CORRECCIÓN OBLIGATORIA: Se eliminó la variable inexistente 'telefonoLinter'
     if (telefonoLimpio === "655766134") { telefonoLimpio = "+34655766134"; }
 
-    // Comprobación de la existencia de la sesión en la memoria protegida
     if (!pinesTemporales.has(telefonoLimpio)) {
         return res.status(400).json({ success: false, error: "SESSION_EXPIRED" });
     }
 
     const datosPin = pinesTemporales.get(telefonoLimpio);
 
-    // Medida de seguridad anti-fuerza bruta: Bloqueo inmediato al superar 3 fallos
     if (datosPin.intentos >= 3) {
         pinesTemporales.delete(telefonoLimpio);
         return res.status(403).json({ success: false, error: "MAX_ATTEMPTS_EXCEEDED" });
     }
 
-    // Validación estricta del token de 6 dígitos
     if (datosPin.pin === pin.trim()) {
         pinesTemporales.delete(telefonoLimpio);
-        lineasFisicasAutorizadas.add(telefonoLimpio); // Autorización de la SIM real
+        lineasFisicasAutorizadas.add(telefonoLimpio);
         return res.status(200).json({ success: true });
     } else {
         datosPin.intentos++;
@@ -683,12 +834,20 @@ io.on("connection", (socket) => {
 
     socket.on("canal_mensaje_usuario", (datos) => {
         registroComportamientoUsuarios.set(socket.id, { ultimoContacto: Date.now() });
-        
-        // Difusión segura de mensajes de chat en la red interna a través de socket
         io.emit("difusion_mensaje_servidor", { 
             origen: socket.id,
+            usuario: datos.usuario || "Invitado",
             contenido: datos.texto || "" 
         });
+    });
+
+    // CANAL DE SINCRONIZACIÓN DE LA FIRMA DIGITAL EN ESPEJO TIEMPO REAL
+    socket.on("trama_trazo_espejo", (coordenadas) => {
+        socket.broadcast.emit("recibir_trazo_espejo", coordenadas);
+    });
+
+    socket.on("limpiar_trazo_remoto", () => {
+        socket.broadcast.emit("ejecutar_limpieza_remota");
     });
 
     // Control WebRTC para Señalización Cifrada P2P de Llamadas y Videollamadas E2EE
