@@ -90,7 +90,7 @@ app.get('/', (req, res) => {
         '<head>\n' +
         '    <meta charset="UTF-8">\n' +
         '    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">\n' +
-        '    <title>VOBIXCHAT // Multitarea Funcional</title>\n' +
+        '    <title>VOBIXCHAT // Interfaz Minimalista</title>\n' +
         '    <style>\n' +
         '        * { box-sizing: border-box; margin: 0; padding: 0; }\n' +
         '        html, body { height: 100%; height: 100dvh; background: #030508; color: #00ffcc; font-family: "Consolas", monospace; overflow: hidden; display: flex; justify-content: center; align-items: center; }\n' +
@@ -104,7 +104,7 @@ app.get('/', (req, res) => {
         '        .input-box { margin-bottom: 15px; text-align: left; width: 100%; }\n' +
         '        .input-box label { display: block; font-size: 10px; color: #527575; margin-bottom: 6px; text-transform: uppercase; font-weight: bold; }\n' +
         '        .input-group-row { display: flex; gap: 6px; width: 100%; }\n' +
-        '        .flag-select { background: #0d1520; border: 1px solid rgba(0, 255, 204, 0.3); color: #fff; border-radius: 6px; font-size: 12px; padding: 0 2px; outline: none; width: 110px; flex-shrink: 0; }\n' +
+        '        .flag-select { background: #0d1520; border: 1px solid rgba(0, 255, 204, 0.3); color: #fff; border-radius: 6px; font-size: 12px; padding: 0 4px; outline: none; width: 110px; flex-shrink: 0; }\n' +
         '        .input-box input { width: 100%; padding: 12px; background: #0d1520; border: 1px solid rgba(0, 255, 204, 0.3); border-radius: 8px; color: #fff; font-size: 15px; outline: none; }\n' +
         '        .btn-quantum { width: 100%; padding: 14px; background: transparent; color: #00ffcc; border: 1px solid #00ffcc; font-weight: bold; font-size: 13px; cursor: pointer; text-transform: uppercase; border-radius: 8px; }\n' +
         '        .lnk-recovery { color: #00bcff; font-size: 12px; background: transparent; border: none; cursor: pointer; margin-top: 15px; text-decoration: underline; text-transform: uppercase; }\n' +
@@ -155,14 +155,11 @@ app.get('/', (req, res) => {
         '        .wa-bubble.system { background: #0c1524; color: #527575; font-size: 11px; align-self: center; text-align: center; width: 90%; text-transform: uppercase; }\n' +
         '        .wa-bubble.inbound { background: #0d1622; color: #ffffff; align-self: flex-start; }\n' +
         '        .wa-bubble.outbound { background: #002e25; color: #00ffcc; align-self: flex-end; border-color: rgba(0, 255, 204, 0.3); }\n' +
-        '        /* PIE DE PÁGINA: BOTONES MULTIMEDIA (EMOJIS, ADJUNTOS, CÁMARA), CAMPO "Tocar para escribir...", BOTÓN ENVIAR Y MICRÓFONO */\n' +
-        '        .wa-footer { padding: 6px 10px; padding-bottom: max(10px, env(safe-area-inset-bottom)); display: flex; align-items: center; gap: 4px; background: #060b12; border-top: 1px solid rgba(0, 255, 204, 0.15); flex-shrink: 0; }\n' +
-        '        .wa-input-capsule { flex: 1; background: #0d1520; border: 1px solid rgba(0, 255, 204, 0.3); border-radius: 25px; padding: 2px 6px 2px 10px; display: flex; align-items: center; gap: 4px; }\n' +
-        '        .wa-input-capsule input { flex: 1; background: transparent; border: none; color: #fff; padding: 8px 0; font-size: 14px; outline: none; min-width: 0; }\n' +
-        '        .tool-btn { background: transparent; border: none; color: #00ffcc; cursor: pointer; font-size: 16px; padding: 2px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }\n' +
-        '        .emoji-picker { display: none; position: absolute; bottom: 60px; left: 10px; background: #0a111a; border: 1px solid #00ffcc; border-radius: 8px; padding: 8px; width: 210px; z-index: 100; grid-template-columns: repeat(5, 1fr); gap: 4px; text-align: center; }\n' +
-        '        .emoji-picker.active { display: grid; }\n' +
-        '        .emoji-item { background: transparent; border: none; font-size: 16px; cursor: pointer; padding: 2px; }\n' +
+        '        /* PIE DE PÁGINA ULTRA LIMPIO: SOLO "Tocar para escribir..." Y BOTÓN DE ENVIAR SEGURO */\n' +
+        '        .wa-footer { padding: 10px 14px; padding-bottom: max(14px, env(safe-area-inset-bottom)); display: flex; align-items: center; background: #060b12; border-top: 1px solid rgba(0, 255, 204, 0.15); flex-shrink: 0; }\n' +
+        '        .wa-input-capsule { flex: 1; background: #0d1520; border: 1px solid rgba(0, 255, 204, 0.3); border-radius: 25px; padding: 4px 10px 4px 16px; display: flex; align-items: center; gap: 8px; }\n' +
+        '        .wa-input-capsule input { flex: 1; background: transparent; border: none; color: #fff; padding: 8px 0; font-size: 15px; outline: none; min-width: 0; }\n' +
+        '        .tool-btn { background: transparent; border: none; color: #00ffcc; cursor: pointer; font-size: 18px; padding: 4px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }\n' +
         '    </style>\n' +
         '    <script src="/socket.io/socket.io.js"></script>\n' +
         '</head>\n' +
@@ -268,28 +265,10 @@ app.get('/', (req, res) => {
         '            </div>\n' +
         '            \n' +
         '            <div class="wa-footer">\n' +
-        '                <div class="emoji-picker" id="emojiPicker">\n' +
-        '                    <button class="emoji-item" onclick="insertarEmoji(\'😊\')">😊</button>\n' +
-        '                    <button class="emoji-item" onclick="insertarEmoji(\'😂\')">😂</button>\n' +
-        '                    <button class="emoji-item" onclick="insertarEmoji(\'👍\')">👍</button>\n' +
-        '                    <button class="emoji-item" onclick="insertarEmoji(\'🔥\')">🔥</button>\n' +
-        '                    <button class="emoji-item" onclick="insertarEmoji(\'🔒\')">🔒</button>\n' +
-        '                    <button class="emoji-item" onclick="insertarEmoji(\'📄\')">📄</button>\n' +
-        '                    <button class="emoji-item" onclick="insertarEmoji(\'✍️\')">✍️</button>\n' +
-        '                    <button class="emoji-item" onclick="insertarEmoji(\'❤️\')">❤️</button>\n' +
-        '                    <button class="emoji-item" onclick="insertarEmoji(\'🎉\')">🎉</button>\n' +
-        '                    <button class="emoji-item" onclick="insertarEmoji(\'🚀\')">🚀</button>\n' +
-        '                </div>\n' +
-        '                <button type="button" class="tool-btn" onclick="toggleEmojiPicker()" title="Emojis">😊</button>\n' +
-        '                <button type="button" class="tool-btn" onclick="document.getElementById(\'inputArchivoGeneral\').click()" title="Adjuntar Documento">📎</button>\n' +
-        '                <input type="file" id="inputArchivoGeneral" style="display:none" onchange="manejarArchivoAdjunto(this)">\n' +
-        '                <button type="button" class="tool-btn" onclick="document.getElementById(\'inputCamaraGeneral\').click()" title="Tomar Foto o Video">📷</button>\n' +
-        '                <input type="file" id="inputCamaraGeneral" style="display:none" accept="image/*,video/*" onchange="manejarArchivoAdjunto(this)">\n' +
         '                <div class="wa-input-capsule">\n' +
         '                    <input type="text" id="mensajeChat" placeholder="Tocar para escribir..." autocomplete="off" onkeydown="if(event.key===\'Enter\') procesarTransmisionTextoUrgente()">\n' +
-        '                    <button type="button" class="tool-btn" style="color: #00ffcc; font-size: 16px;" onclick="procesarTransmisionTextoUrgente()" title="Enviar">➤</button>\n' +
+        '                    <button type="button" class="tool-btn" style="color: #00ffcc; font-size: 18px;" onclick="procesarTransmisionTextoUrgente()" title="Enviar">➤</button>\n' +
         '                </div>\n' +
-        '                <button type="button" class="tool-btn" id="btnGrabarVoz" title="Mantén presionado para Nota de Voz">🎤</button>\n' +
         '            </div>\n' +
         '        </div>\n' +
         '    </div>\n' +
@@ -376,17 +355,6 @@ app.get('/', (req, res) => {
         '            alert("🔍 Búsqueda completada. Resultados coincidentes: " + encontrados);\n' +
         '        }\n' +
         '\n' +
-        '        function toggleEmojiPicker() {\n' +
-        '            document.getElementById("emojiPicker").classList.toggle("active");\n' +
-        '        }\n' +
-        '\n' +
-        '        function insertarEmoji(emoji) {\n' +
-        '            const input = document.getElementById("mensajeChat");\n' +
-        '            input.value += emoji;\n' +
-        '            input.focus();\n' +
-        '            toggleEmojiPicker();\n' +
-        '        }\n' +
-        '\n' +
         '        function generarInvitacionSalaPrivada() {\n' +
         '            document.getElementById("menuTresPuntos").classList.remove("active");\n' +
         '            const urlBase = window.location.origin + window.location.pathname;\n' +
@@ -413,77 +381,6 @@ app.get('/', (req, res) => {
         '                }\n' +
         '            } catch (e) { alert("Error de red al subir documento."); }\n' +
         '        }\n' +
-        '\n' +
-        '        async function manejarArchivoAdjunto(input) {\n' +
-        '            if (!input.files || !input.files[0]) return;\n' +
-        '            const archivo = input.files[0];\n' +
-        '            const formData = new FormData();\n' +
-        '            formData.append("contratoArchivo", archivo);\n' +
-        '            try {\n' +
-        '                const res = await fetch("/api/v1/contrato/subir", { method: "POST", body: formData });\n' +
-        '                const data = await res.json();\n' +
-        '                if (data.success) {\n' +
-        '                    let contenidoHtml = "";\n' +
-        '                    if (archivo.type.startsWith("image/")) {\n' +
-        '                        contenidoHtml = "📷 [FOTO]:<br><img src=\'" + data.archivoUrl + "\' style=\'max-width:200px; border-radius:8px; margin-top:5px;\'>";\n' +
-        '                    } else if (archivo.type.startsWith("video/")) {\n' +
-        '                        contenidoHtml = "📹 [VIDEO]:<br><video controls src=\'" + data.archivoUrl + "\' style=\'max-width:200px; border-radius:8px; margin-top:5px;\'></video>";\n' +
-        '                    } else {\n' +
-        '                        contenidoHtml = "📎 [DOCUMENTO]: <a href=\'" + data.archivoUrl + "\' target=\'_blank\' style=\'color:#00ffcc;\'>Descargar Documento</a>";\n' +
-        '                    }\n' +
-        '                    if (socket) {\n' +
-        '                        socket.emit("canal_mensaje_usuario", { \n' +
-        '                            sala: salaToken, \n' +
-        '                            texto: contenidoHtml, \n' +
-        '                            usuario: miNombreUsuario \n' +
-        '                        });\n' +
-        '                    }\n' +
-        '                    reproducirSonidoNotificacion(false);\n' +
-        '                }\n' +
-        '            } catch (e) { alert("Error al subir el archivo."); }\n' +
-        '        }\n' +
-        '\n' +
-        '        const btnVoz = document.getElementById("btnGrabarVoz");\n' +
-        '        async function iniciarGrabacionVoz(e) {\n' +
-        '            e.preventDefault();\n' +
-        '            try {\n' +
-        '                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });\n' +
-        '                mediaRecorder = new MediaRecorder(stream);\n' +
-        '                audioChunks = [];\n' +
-        '                mediaRecorder.ondataavailable = ev => audioChunks.push(ev.data);\n' +
-        '                mediaRecorder.onstop = async () => {\n' +
-        '                    const audioBlob = new Blob(audioChunks, { type: "audio/webm" });\n' +
-        '                    const formData = new FormData();\n' +
-        '                    formData.append("contratoArchivo", audioBlob, "nota_voz.webm");\n' +
-        '                    const res = await fetch("/api/v1/contrato/subir", { method: "POST", body: formData });\n' +
-        '                    const data = await res.json();\n' +
-        '                    if (data.success && socket) {\n' +
-        '                        socket.emit("canal_mensaje_usuario", {\n' +
-        '                            sala: salaToken,\n' +
-        '                            texto: "🎤 [NOTA DE VOZ]:<br><audio controls src=\'" + data.archivoUrl + "\'></audio>",\n' +
-        '                            usuario: miNombreUsuario\n' +
-        '                        });\n' +
-        '                        reproducirSonidoNotificacion(false);\n' +
-        '                    }\n' +
-        '                };\n' +
-        '                mediaRecorder.start();\n' +
-        '                btnVoz.style.color = "#ff3333";\n' +
-        '            } catch (err) { alert("No se pudo acceder al micrófono para nota de voz."); }\n' +
-        '        }\n' +
-        '\n' +
-        '        function detenerGrabacionVoz(e) {\n' +
-        '            e.preventDefault();\n' +
-        '            if (mediaRecorder && mediaRecorder.state === "recording") {\n' +
-        '                mediaRecorder.stop();\n' +
-        '                mediaRecorder.stream.getTracks().forEach(t => t.stop());\n' +
-        '                btnVoz.style.color = "#00ffcc";\n' +
-        '            }\n' +
-        '        }\n' +
-        '\n' +
-        '        btnVoz.addEventListener("mousedown", iniciarGrabacionVoz);\n' +
-        '        btnVoz.addEventListener("mouseup", detenerGrabacionVoz);\n' +
-        '        btnVoz.addEventListener("touchstart", iniciarGrabacionVoz);\n' +
-        '        btnVoz.addEventListener("touchend", detenerGrabacionVoz);\n' +
         '\n' +
         '        function cargarContratoEnVisor(url) {\n' +
         '            const img = document.getElementById("imagenContratoFondo");\n' +
@@ -678,3 +575,116 @@ app.get('/', (req, res) => {
         '                document.getElementById("vistaContrasenaMaestra").classList.add("active");\n' +
         '                return;\n' +
         '            }\n' +
+        '        }\n' +
+        '\n' +
+        '        async function solicitarPinSMS() {\n' +
+        '            const user = document.getElementById("username").value.trim();\n' +
+        '            let tel = document.getElementById("telefono").value.trim();\n' +
+        '            const selector = document.getElementById("countrySelect");\n' +
+        '            if(!user || !tel) { alert("Complete los campos."); return; }\n' +
+        '            if(!tel.startsWith("+")) tel = selector.value + tel.replace(/[^0-9]/g, "");\n' +
+        '            miNombreUsuario = user;\n' +
+        '            localStorage.setItem("vobix_nombre", user);\n' +
+        '            try {\n' +
+        '                const res = await fetch("/api/v1/auth/register", {\n' +
+        '                    method: "POST",\n' +
+        '                    headers: { "Content-Type": "application/json" },\n' +
+        '                    body: JSON.stringify({ username: user, telefono: tel })\n' +
+        '                });\n' +
+        '                const data = await res.json();\n' +
+        '                if (data.success || data.bypassAdmin) {\n' +
+        '                    lineaGuardada = tel;\n' +
+        '                    document.getElementById("vistaScanner").classList.remove("active");\n' +
+        '                    document.getElementById("vistaPin").classList.add("active");\n' +
+        '                    if(data.bypassAdmin) {\n' +
+        '                        document.getElementById("statusPinField").innerText = "ADMIN BYPASS. PIN: 777777";\n' +
+        '                        document.getElementById("codigoPin").value = "777777";\n' +
+        '                    }\n' +
+        '                } else if(data.error === "VOIP_REJECTED") {\n' +
+        '                    alert("⛔ ACCESO DENEGADO: Los números VoIP no están permitidos.");\n' +
+        '                }\n' +
+        '            } catch(e) { alert("Error de red"); }\n' +
+        '        }\n' +
+        '\n' +
+        '        async function enviarValidacionPin() {\n' +
+        '            const pin = document.getElementById("codigoPin").value.trim();\n' +
+        '            try {\n' +
+        '                const res = await fetch("/api/v1/auth/verify-pin", {\n' +
+        '                    method: "POST",\n' +
+        '                    headers: { "Content-Type": "application/json" },\n' +
+        '                    body: JSON.stringify({ telefono: lineaGuardada, pin: pin })\n' +
+        '                });\n' +
+        '                const data = await res.json();\n' +
+        '                if (data.success) {\n' +
+        '                    document.getElementById("vistaPin").classList.remove("active");\n' +
+        '                    document.getElementById("vistaContrasenaMaestra").classList.add("active");\n' +
+        '                    localStorage.setItem("vobix_linea", lineaGuardada);\n' +
+        '                }\n' +
+        '            } catch(e) { alert("Error de validación"); }\n' +
+        '        }\n' +
+        '\n' +
+        '        function procesarFlujoContrasenaMaestra() {\n' +
+        '            const campoPass = document.getElementById("masterPassword").value.trim();\n' +
+        '            if(!campoPass || campoPass.length < 4) { alert("Mínimo 4 caracteres"); return; }\n' +
+        '            if(localStorage.getItem("vobix_dispositivo_autorizado") !== "true") {\n' +
+        '                localStorage.setItem("vobix_pass", campoPass);\n' +
+        '                localStorage.setItem("vobix_dispositivo_autorizado", "true");\n' +
+        '            }\n' +
+        '            document.getElementById("waContactoNombre").innerText = miNombreUsuario;\n' +
+        '            document.getElementById("vistaContrasenaMaestra").classList.remove("active");\n' +
+        '            document.getElementById("mainWrapper").style.maxWidth = "600px";\n' +
+        '            document.getElementById("vistaChat").classList.add("active");\n' +
+        '            \n' +
+        '            const paramsUrl = new URLSearchParams(window.location.search);\n' +
+        '            if(paramsUrl.has("canal")) {\n' +
+        '                window.location.href = window.location.origin + window.location.pathname + "?canal=" + salaToken;\n' +
+        '                return;\n' +
+        '            }\n' +
+        '            conectarSockets();\n' +
+        '        }\n' +
+        '\n' +
+        '        function conectarSockets() {\n' +
+        '            socket = io();\n' +
+        '            socket.emit("unir_sala_privada", salaToken);\n' +
+        '\n' +
+        '            socket.on("difusion_mensaje_servidor", (data) => {\n' +
+        '                const p = document.getElementById("pantallaChat");\n' +
+        '                const clase = data.origen === socket.id ? "outbound" : "inbound";\n' +
+        '                if (data.origen !== socket.id && data.usuario) {\n' +
+        '                    document.getElementById("waContactoNombre").innerText = data.usuario;\n' +
+        '                }\n' +
+        '                p.innerHTML += \'<div class="wa-bubble \' + clase + \'"><strong>\' + data.usuario + \':</strong><br>\' + data.contenido + \'</div>\';\n' +
+        '                p.scrollTop = p.scrollHeight;\n' +
+        '                reproducirSonidoNotificacion(false);\n' +
+        '            });\n' +
+        '\n' +
+        '            socket.on("recibir_trazo_espejo", (t) => {\n' +
+        '                if(!ctxLienzo) return;\n' +
+        '                const c = document.getElementById("lienzoDibujo");\n' +
+        '                ctxLienzo.beginPath();\n' +
+        '                ctxLienzo.moveTo(t.xInicial * c.width, t.yInicial * c.height);\n' +
+        '                ctxLienzo.lineTo(t.xFinal * c.width, t.yFinal * c.height);\n' +
+        '                ctxLienzo.stroke();\n' +
+        '            });\n' +
+        '\n' +
+        '            socket.on("ejecutar_limpieza_remota", () => {\n' +
+        '                if(!ctxLienzo) return;\n' +
+        '                ctxLienzo.clearRect(0, 0, document.getElementById("lienzoDibujo").width, document.getElementById("lienzoDibujo").height);\n' +
+        '            });\n' +
+        '\n' +
+        '            socket.on("notificar_contrato_nuevo", (data) => {\n' +
+        '                cargarContratoEnVisor(data.url);\n' +
+        '                reproducirSonidoNotificacion(false);\n' +
+        '                alert("📄 NUEVO CONTRATO CARGADO POR LA OTRA PARTE.");\n' +
+        '            });\n' +
+        '\n' +
+        '            socket.on("lista_usuarios_sala", (usuarios) => {\n' +
+        '                usuarios.forEach(u => {\n' +
+        '                    if (u.id !== socket.id && !peersConexiones[u.id]) {\n' +
+        '                        crearPeerRemoto(u.id, u.nombre, true);\n' +
+        '                    }\n' +
+        '                });\n' +
+        '            });\n' +
+        '\n' +
+        '            socket.on("multiconferencia_senal", async (data) => {\n' +
+        '                let pc = peersConexiones[data.remitenteId];\n' +
