@@ -117,20 +117,24 @@ app.get('/', (req, res) => {
         '        .wa-user-info { display: flex; flex-direction: column; text-align: left; }\n' +
         '        .wa-username { font-weight: bold; font-size: 14px; color: #00ffcc; text-transform: uppercase; }\n' +
         '        .wa-status { font-size: 11px; color: #527575; }\n' +
-        '        .wa-actions { display: flex; gap: 12px; align-items: center; position: relative; }\n' +
+        '        .wa-actions { display: flex; gap: 10px; align-items: center; position: relative; }\n' +
         '        .wa-icon-btn { background: transparent; border: none; color: #00ffcc; cursor: pointer; font-size: 18px; }\n' +
-        '        /* BOTÓN DE COLGAR TECNOLÓGICO Y DINÁMICO */\n' +
-        '        .btn-quantum-hangup { background: radial-gradient(circle, #ff3333 0%, #990000 100%); border: 1px solid #ff6666; color: #fff; border-radius: 50%; width: 36px; height: 36px; display: none; align-items: center; justify-content: center; cursor: pointer; font-size: 16px; box-shadow: 0 0 12px rgba(255, 51, 51, 0.7); animation: pulseHangup 1.5s infinite; }\n' +
-        '        @keyframes pulseHangup { 0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 51, 51, 0.7); } 70% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(255, 51, 51, 0); } 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 51, 51, 0); } }\n' +
+        '        /* BOTÓN DE COLGAR ESTILO WHATSAPP (NEÓN ROJO) */\n' +
+        '        .btn-quantum-hangup { background: #ff3333; border: none; color: #fff; border-radius: 50%; width: 36px; height: 36px; display: none; align-items: center; justify-content: center; cursor: pointer; font-size: 16px; box-shadow: 0 0 10px rgba(255, 51, 51, 0.7); }\n' +
         '        .dropdown-menu { display: none; position: absolute; top: 35px; right: 0; background: #0a111a; border: 1px solid #00ffcc; border-radius: 8px; width: 260px; max-height: 250px; overflow-y: auto; box-shadow: 0 4px 15px rgba(0,0,0,0.8); z-index: 100; flex-direction: column; }\n' +
         '        .dropdown-menu.active { display: flex; }\n' +
         '        .dropdown-item { padding: 12px 16px; color: #fff; text-align: left; font-size: 11px; background: transparent; border: none; cursor: pointer; text-transform: uppercase; border-bottom: 1px solid rgba(0, 255, 204, 0.1); display: flex; align-items: center; gap: 8px; }\n' +
         '        .dropdown-item:hover { background: rgba(0, 255, 204, 0.1); color: #00ffcc; }\n' +
-        '        .webrtc-video-grid { display: none; grid-template-columns: 1fr 1fr; gap: 8px; padding: 10px; background: #070b12; border-bottom: 1px solid rgba(0, 255, 204, 0.2); }\n' +
-        '        .webrtc-video-grid.active { display: grid; }\n' +
-        '        .video-box { width: 100%; height: 120px; background: #000; border: 1px solid #00ffcc; border-radius: 6px; overflow: hidden; position: relative; }\n' +
-        '        .video-box video { width: 100%; height: 100%; object-fit: cover; }\n' +
-        '        .video-label { position: absolute; bottom: 4px; left: 6px; background: rgba(0,0,0,0.7); font-size: 9px; padding: 2px 6px; color: #00ffcc; text-transform: uppercase; border-radius: 3px; }\n' +
+        '        /* BARRA DE BÚSQUEDA POR @ */\n' +
+        '        .search-bar-overlay { display: none; background: #0d1520; border-bottom: 1px solid rgba(0, 255, 204, 0.3); padding: 8px 12px; gap: 8px; align-items: center; z-index: 9; }\n' +
+        '        .search-bar-overlay.active { display: flex; }\n' +
+        '        .search-bar-overlay input { flex: 1; background: #04070c; border: 1px solid #00ffcc; border-radius: 6px; padding: 6px 10px; color: #fff; font-size: 14px; outline: none; }\n' +
+        '        /* ESTILO VIDEOLLAMADA: PANTALLA COMPLETA + MINIATURA FLOTANTE */\n' +
+        '        .webrtc-container { display: none; position: absolute; top: 55px; left: 0; width: 100%; height: calc(100% - 115px); background: #000; z-index: 20; overflow: hidden; }\n' +
+        '        .webrtc-container.active { display: block; }\n' +
+        '        #videoRemoto { width: 100%; height: 100%; object-fit: cover; }\n' +
+        '        .video-local-pip { position: absolute; bottom: 20px; right: 20px; width: 100px; height: 140px; background: #111; border: 2px solid #00ffcc; border-radius: 8px; overflow: hidden; z-index: 25; box-shadow: 0 4px 12px rgba(0,0,0,0.7); cursor: pointer; }\n' +
+        '        #videoLocal { width: 100%; height: 100%; object-fit: cover; }\n' +
         '        .mirror-signature-overlay { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(3, 5, 8, 0.96); z-index: 50; flex-direction: column; padding: 15px; }\n' +
         '        .mirror-signature-overlay.active { display: flex; }\n' +
         '        .signature-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 1px solid #e91e63; padding-bottom: 8px; }\n' +
@@ -150,12 +154,10 @@ app.get('/', (req, res) => {
         '        .wa-input-capsule { flex: 1; background: #0d1520; border: 1px solid rgba(0, 255, 204, 0.25); border-radius: 25px; padding: 4px 12px; display: flex; align-items: center; gap: 6px; }\n' +
         '        .wa-input-capsule input { flex: 1; background: transparent; border: none; color: #fff; padding: 8px 0; font-size: 15px; outline: none; }\n' +
         '        .tool-btn { background: transparent; border: none; color: #00ffcc; cursor: pointer; font-size: 16px; padding: 4px; display: flex; align-items: center; justify-content: center; }\n' +
-        '        .tool-btn:hover { opacity: 0.7; }\n' +
         '        .wa-mic-btn { width: 42px; height: 42px; background: #00ffcc; border: none; border-radius: 50%; color: #030508; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 16px; }\n' +
         '        .emoji-picker { display: none; position: absolute; bottom: 65px; left: 14px; background: #0a111a; border: 1px solid #00ffcc; border-radius: 8px; padding: 10px; width: 220px; z-index: 100; grid-template-columns: repeat(5, 1fr); gap: 6px; text-align: center; }\n' +
         '        .emoji-picker.active { display: grid; }\n' +
         '        .emoji-item { background: transparent; border: none; font-size: 18px; cursor: pointer; padding: 4px; }\n' +
-        '        .emoji-item:hover { background: rgba(0,255,204,0.1); border-radius: 4px; }\n' +
         '    </style>\n' +
         '    <script src="/socket.io/socket.io.js"></script>\n' +
         '</head>\n' +
@@ -166,7 +168,7 @@ app.get('/', (req, res) => {
         '            <div class="status-log" id="statusField">SECURE SCANNER INITIALIZED...</div>\n' +
         '            <div class="input-box">\n' +
         '                <label>Identificador Único</label>\n' +
-        '                <input type="text" id="username" placeholder="Nombre de usuario" autocomplete="off">\n' +
+        '                <input type="text" id="username" placeholder="Nombre de usuario (@)" autocomplete="off">\n' +
         '            </div>\n' +
         '            <div class="input-box">\n' +
         '                <label>Terminal Telefónico</label>\n' +
@@ -211,12 +213,13 @@ app.get('/', (req, res) => {
         '                    </div>\n' +
         '                </div>\n' +
         '                <div class="wa-actions">\n' +
-        '                    <button class="wa-icon-btn" onclick="inicializarTransmisionMultimedia(\'video\')" title="Videollamada HD">📹</button>\n' +
-        '                    <button class="wa-icon-btn" onclick="inicializarTransmisionMultimedia(\'audio\')" title="Llamada de Voz HD">📞</button>\n' +
-        '                    <button class="btn-quantum-hangup" id="btnColgarLlamada" onclick="colgarLlamada()" title="Colgar Llamada">❌</button>\n' +
+        '                    <button class="wa-icon-btn" onclick="inicializarTransmisionMultimedia(\'video\')" title="Videollamada">📹</button>\n' +
+        '                    <button class="wa-icon-btn" onclick="inicializarTransmisionMultimedia(\'audio\')" title="Llamada de Voz">📞</button>\n' +
+        '                    <button class="btn-quantum-hangup" id="btnColgarLlamada" onclick="colgarLlamada()" title="Colgar">❌</button>\n' +
         '                    <button class="wa-icon-btn" onclick="toggleMenuTresPuntos()">⁝</button>\n' +
         '                    <div class="dropdown-menu" id="menuTresPuntos">\n' +
         '                        <button class="dropdown-item" onclick="generarInvitacionSalaPrivada()">🔗 Invitar a Sala Privada</button>\n' +
+        '                        <button class="dropdown-item" onclick="toggleBuscadorArroba()">🔍 Buscar Usuario (@)</button>\n' +
         '                        <button class="dropdown-item" onclick="solicitarPermisosCamaraMic()">🔓 Habilitar Cámara / Micrófono</button>\n' +
         '                        <button class="dropdown-item" onclick="document.getElementById(\'inputSubirContrato\').click()">📄 Subir Contrato a Firmar</button>\n' +
         '                        <button class="dropdown-item" onclick="abrirLienzoFirmaEspejo()">✍️ Firma en Espejo (Tiempo Real)</button>\n' +
@@ -224,9 +227,13 @@ app.get('/', (req, res) => {
         '                    <input type="file" id="inputSubirContrato" style="display:none" accept=".pdf,image/*" onchange="subirContratoServidor(this)">\n' +
         '                </div>\n' +
         '            </div>\n' +
-        '            <div class="webrtc-video-grid" id="parrillaVideos">\n' +
-        '                <div class="video-box"><video id="videoLocal" autoplay playsinline muted></video><div class="video-label">Tú (HD)</div></div>\n' +
-        '                <div class="video-box"><video id="videoRemoto" autoplay playsinline></video><div class="video-label">Remoto (HD)</div></div>\n' +
+        '            <div class="search-bar-overlay" id="barraBusquedaArroba">\n' +
+        '                <input type="text" id="inputBusquedaArroba" placeholder="Buscar por @nombre o número..." onkeyup="filtrarMensajesChat(this.value)">\n' +
+        '                <button class="wa-icon-btn" style="font-size: 14px;" onclick="toggleBuscadorArroba()">❌</button>\n' +
+        '            </div>\n' +
+        '            <div class="webrtc-container" id="parrillaVideos">\n' +
+        '                <video id="videoRemoto" autoplay playsinline></video>\n' +
+        '                <div class="video-local-pip" onclick="intercambiarVideos()"><video id="videoLocal" autoplay playsinline muted></video></div>\n' +
         '            </div>\n' +
         '            <div class="mirror-signature-overlay" id="overlayFirma">\n' +
         '                <div class="signature-header">\n' +
@@ -285,7 +292,6 @@ app.get('/', (req, res) => {
         '        let audioChunks = [];\n' +
         '        const confServidoresIce = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };\n' +
         '\n' +
-        '        // CORRECCIÓN VIEWPORT ANDROID (ANTISOLAPAMIENTO DE TECLADO)\n' +
         '        if (window.visualViewport) {\n' +
         '            window.visualViewport.addEventListener("resize", () => {\n' +
         '                const contenedor = document.getElementById("mainWrapper");\n' +
@@ -294,24 +300,40 @@ app.get('/', (req, res) => {
         '            });\n' +
         '        }\n' +
         '\n' +
-        '        // SONIDO NATIVO DE NOTIFICACIÓN (AUDIO CONTEXT BEEP)\n' +
-        '        function reproducirSonidoNotificacion() {\n' +
+        '        function reproducirSonidoNotificacion(esLlamada = false) {\n' +
         '            try {\n' +
         '                const ctxAudio = new (window.AudioContext || window.webkitAudioContext)();\n' +
         '                const osc = ctxAudio.createOscillator();\n' +
         '                const gain = ctxAudio.createGain();\n' +
-        '                osc.type = "sine";\n' +
-        '                osc.frequency.setValueAtTime(880, ctxAudio.currentTime);\n' +
-        '                gain.gain.setValueAtTime(0.1, ctxAudio.currentTime);\n' +
+        '                osc.type = esLlamada ? "triangle" : "sine";\n' +
+        '                osc.frequency.setValueAtTime(esLlamada ? 440 : 880, ctxAudio.currentTime);\n' +
+        '                gain.gain.setValueAtTime(0.15, ctxAudio.currentTime);\n' +
         '                osc.connect(gain);\n' +
         '                gain.connect(ctxAudio.destination);\n' +
         '                osc.start();\n' +
-        '                osc.stop(ctxAudio.currentTime + 0.15);\n' +
-        '            } catch(e) { console.log("Audio omitido por restricciones del navegador"); }\n' +
+        '                osc.stop(ctxAudio.currentTime + (esLlamada ? 0.4 : 0.15));\n' +
+        '            } catch(e) {}\n' +
         '        }\n' +
         '\n' +
         '        function toggleMenuTresPuntos() {\n' +
         '            document.getElementById("menuTresPuntos").classList.toggle("active");\n' +
+        '        }\n' +
+        '\n' +
+        '        function toggleBuscadorArroba() {\n' +
+        '            document.getElementById("menuTresPuntos").classList.remove("active");\n' +
+        '            document.getElementById("barraBusquedaArroba").classList.toggle("active");\n' +
+        '            document.getElementById("inputBusquedaArroba").focus();\n' +
+        '        }\n' +
+        '\n' +
+        '        function filtrarMensajesChat(query) {\n' +
+        '            const q = query.toLowerCase().trim();\n' +
+        '            const burbujas = document.querySelectorAll(".wa-bubble");\n' +
+        '            burbujas.forEach(b => {\n' +
+        '                if (!b.classList.contains("system")) {\n' +
+        '                    const txt = b.innerText.toLowerCase();\n' +
+        '                    b.style.display = txt.includes(q) ? "block" : "none";\n' +
+        '                }\n' +
+        '            });\n' +
         '        }\n' +
         '\n' +
         '        function toggleEmojiPicker() {\n' +
@@ -330,7 +352,7 @@ app.get('/', (req, res) => {
         '            const urlBase = window.location.origin + window.location.pathname;\n' +
         '            const urlPrivada = urlBase + "?canal=" + salaToken;\n' +
         '            navigator.clipboard.writeText(urlPrivada);\n' +
-        '            alert("🔗 ¡ENLACE DE SALA PRIVADA COPIADO!\\n\\nCompártelo con tu contacto para acceder directamente.");\n' +
+        '            alert("🔗 ¡ENLACE DE SALA PRIVADA COPIADO!\\n\\nCompártelo para que la otra persona ingrese y se registre.");\n' +
         '        }\n' +
         '\n' +
         '        async function solicitarPermisosCamaraMic() {\n' +
@@ -338,9 +360,10 @@ app.get('/', (req, res) => {
         '            try {\n' +
         '                const flujoPrueba = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });\n' +
         '                flujoPrueba.getTracks().forEach(track => track.stop());\n' +
-        '                alert("✅ ¡PERMISOS CONCEDIDOS! Cámara y micrófono listos.");\n' +
+        '                localStorage.setItem("vobix_permisos_ok", "true");\n' +
+        '                alert("✅ ¡PERMISOS CONCEDIDOS Y GUARDADOS!");\n' +
         '            } catch (err) {\n' +
-        '                alert("⚠️ ACCESO DENEGADO:\\n\\n1. Toca el candado 🔒 en la barra web.\\n2. Permite Cámara y Micrófono.\\n3. Recarga la página.");\n' +
+        '                alert("⚠️ ACCESO DENEGADO:\\n\\n1. Toca el candado 🔒 en la barra web.\\n2. Permite Cámara y Micrófono.\\n3. Recarga.");\n' +
         '            }\n' +
         '        }\n' +
         '\n' +
@@ -378,15 +401,13 @@ app.get('/', (req, res) => {
         '                            usuario: miNombreUsuario \n' +
         '                        });\n' +
         '                    }\n' +
-        '                    reproducirSonidoNotificacion();\n' +
+        '                    reproducirSonidoNotificacion(false);\n' +
         '                    alert("✅ Archivo enviado con éxito.");\n' +
         '                }\n' +
         '            } catch (e) { alert("Error al subir el archivo."); }\n' +
         '        }\n' +
         '\n' +
-        '        // GRABACIÓN DE NOTAS DE VOZ COMPATIBLE CON MÓVILES (TOUCH + MOUSE)\n' +
         '        const btnVoz = document.getElementById("btnGrabarVoz");\n' +
-        '        \n' +
         '        async function iniciarGrabacionVoz(e) {\n' +
         '            e.preventDefault();\n' +
         '            try {\n' +
@@ -406,12 +427,12 @@ app.get('/', (req, res) => {
         '                            texto: "🎤 [NOTA DE VOZ]:<br><audio controls src=\'" + data.archivoUrl + "\'></audio>",\n' +
         '                            usuario: miNombreUsuario\n' +
         '                        });\n' +
-        '                        reproducirSonidoNotificacion();\n' +
+        '                        reproducirSonidoNotificacion(false);\n' +
         '                    }\n' +
         '                };\n' +
         '                mediaRecorder.start();\n' +
         '                btnVoz.style.color = "#ff3333";\n' +
-        '            } catch (err) { alert("No se pudo acceder al micrófono."); }\n' +
+        '            } catch (err) { alert("No se pudo acceder al micrófono para nota de voz."); }\n' +
         '        }\n' +
         '\n' +
         '        function detenerGrabacionVoz(e) {\n' +
@@ -436,21 +457,18 @@ app.get('/', (req, res) => {
         '\n' +
         '        async function inicializarTransmisionMultimedia(tipo) {\n' +
         '            const activarVideo = (tipo === \'video\');\n' +
-        '            if (activarVideo) {\n' +
-        '                document.getElementById("parrillaVideos").classList.add("active");\n' +
-        '            }\n' +
+        '            document.getElementById("parrillaVideos").classList.add("active");\n' +
         '            try {\n' +
         '                const restricciones = {\n' +
         '                    audio: { echoCancellation: true, noiseSuppression: true },\n' +
         '                    video: activarVideo ? { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: "user" } : false\n' +
         '                };\n' +
         '                flujoLocalGlobal = await navigator.mediaDevices.getUserMedia(restricciones);\n' +
-        '                if (activarVideo) {\n' +
-        '                    document.getElementById("videoLocal").srcObject = flujoLocalGlobal;\n' +
-        '                }\n' +
+        '                document.getElementById("videoLocal").srcObject = flujoLocalGlobal;\n' +
         '                estructurarLlamadaPeerWebRTC(true);\n' +
         '                flujoLocalGlobal.getTracks().forEach(track => rtcConexionPeer.addTrack(track, flujoLocalGlobal));\n' +
         '                document.getElementById("btnColgarLlamada").style.display = "flex";\n' +
+        '                if(socket) socket.emit("wa_multimedia_signaling", { sala: salaToken, llamadaEntrante: true });\n' +
         '            } catch(err) { alert("⚠️ No se pudo iniciar la llamada."); }\n' +
         '        }\n' +
         '\n' +
@@ -460,8 +478,7 @@ app.get('/', (req, res) => {
         '                if (event.candidate && socket) { socket.emit("wa_multimedia_signaling", { sala: salaToken, candidate: event.candidate }); }\n' +
         '            };\n' +
         '            rtcConexionPeer.ontrack = (event) => { \n' +
-        '                const vRemoto = document.getElementById("videoRemoto");\n' +
-        '                vRemoto.srcObject = event.streams[0]; \n' +
+        '                document.getElementById("videoRemoto").srcObject = event.streams[0]; \n' +
         '            };\n' +
         '            if (esEmisor) {\n' +
         '                rtcConexionPeer.onnegotiationneeded = async () => {\n' +
@@ -488,6 +505,14 @@ app.get('/', (req, res) => {
         '            if (socket) {\n' +
         '                socket.emit("wa_multimedia_signaling", { sala: salaToken, colgar: true });\n' +
         '            }\n' +
+        '        }\n' +
+        '\n' +
+        '        function intercambiarVideos() {\n' +
+        '            const vLocal = document.getElementById("videoLocal");\n' +
+        '            const vRemoto = document.getElementById("videoRemoto");\n' +
+        '            let temp = vLocal.srcObject;\n' +
+        '            vLocal.srcObject = vRemoto.srcObject;\n' +
+        '            vRemoto.srcObject = temp;\n' +
         '        }\n' +
         '\n' +
         '        function abrirLienzoFirmaEspejo() {\n' +
@@ -551,7 +576,10 @@ app.get('/', (req, res) => {
         '            const paramsUrl = new URLSearchParams(window.location.search);\n' +
         '            if(paramsUrl.has("canal")) {\n' +
         '                salaToken = paramsUrl.get("canal");\n' +
-        '                document.getElementById("statusField").innerText = "SALA PRIVADA DETECTADA...";\n' +
+        '                document.getElementById("statusField").innerText = "SALA PRIVADA DETECTADA // REGISTRESE...";\n' +
+        '                if(localStorage.getItem("vobix_dispositivo_autorizado") !== "true") {\n' +
+        '                    return;\n' +
+        '                }\n' +
         '                document.getElementById("vistaScanner").classList.remove("active");\n' +
         '                document.getElementById("mainWrapper").style.maxWidth = "600px";\n' +
         '                document.getElementById("vistaChat").classList.add("active");\n' +
@@ -575,6 +603,7 @@ app.get('/', (req, res) => {
         '            const selector = document.getElementById("countrySelect");\n' +
         '            if(!user || !tel) { alert("Complete los campos."); return; }\n' +
         '            if(!tel.startsWith("+")) tel = selector.value + tel.replace(/[^0-9]/g, "");\n' +
+        '            miNombreUsuario = user;\n' +
         '            try {\n' +
         '                const res = await fetch("/api/v1/auth/register", {\n' +
         '                    method: "POST",\n' +
@@ -583,7 +612,7 @@ app.get('/', (req, res) => {
         '                });\n' +
         '                const data = await res.json();\n' +
         '                if (data.success || data.bypassAdmin) {\n' +
-        '                    lineaGuardada = tel; miNombreUsuario = user;\n' +
+        '                    lineaGuardada = tel;\n' +
         '                    document.getElementById("vistaScanner").classList.remove("active");\n' +
         '                    document.getElementById("vistaPin").classList.add("active");\n' +
         '                    if(data.bypassAdmin) {\n' +
@@ -633,7 +662,7 @@ app.get('/', (req, res) => {
         '                const clase = data.origen === socket.id ? "outbound" : "inbound";\n' +
         '                p.innerHTML += \'<div class="wa-bubble \' + clase + \'"><strong>\' + data.usuario + \':</strong><br>\' + data.contenido + \'</div>\';\n' +
         '                p.scrollTop = p.scrollHeight;\n' +
-        '                reproducirSonidoNotificacion();\n' +
+        '                reproducirSonidoNotificacion(false);\n' +
         '            });\n' +
         '\n' +
         '            socket.on("recibir_trazo_espejo", (t) => {\n' +
@@ -652,11 +681,15 @@ app.get('/', (req, res) => {
         '\n' +
         '            socket.on("notificar_contrato_nuevo", (data) => {\n' +
         '                cargarContratoEnVisor(data.url);\n' +
-        '                reproducirSonidoNotificacion();\n' +
+        '                reproducirSonidoNotificacion(false);\n' +
         '                alert("📄 NUEVO CONTRATO CARGADO POR LA OTRA PARTE.");\n' +
         '            });\n' +
         '\n' +
         '            socket.on("wa_multimedia_signaling_stream", async (trama) => {\n' +
+        '                if (trama.llamadaEntrante) {\n' +
+        '                    reproducirSonidoNotificacion(true);\n' +
+        '                    return;\n' +
+        '                }\n' +
         '                if (trama.colgar) {\n' +
         '                    document.getElementById("parrillaVideos").classList.remove("active");\n' +
         '                    document.getElementById("btnColgarLlamada").style.display = "none";\n' +
