@@ -116,7 +116,7 @@ app.get('/', (req, res) => {
         '            justify-content: center; \n' +
         '            align-items: center; \n' +
         '            min-height: 100vh; \n' + 
-        '            min-height: 100dvh; \n' + // Estabilidad absoluta ante teclados móviles
+        '            min-height: 100dvh; \n' + 
         '            overflow: hidden;\n' +
         '        }\n' +
         '        /* Contenedor Principal Adaptable Estilo Hacker Terminal */\n' +
@@ -126,7 +126,7 @@ app.get('/', (req, res) => {
         '            width: 100%;\n' +
         '            max-width: 440px;\n' +
         '            height: 100vh; \n' + 
-        '            height: 100dvh; \n' + // Ajuste automático dinámico táctil
+        '            height: 100dvh; \n' + 
         '            display: flex;\n' +
         '            flex-direction: column;\n' +
         '            position: relative;\n' +
@@ -159,7 +159,6 @@ app.get('/', (req, res) => {
         '            background: #0d1520; border: 1px solid rgba(0, 255, 204, 0.3); color: #fff;\n' +
         '            border-radius: 8px; font-size: 16px; padding: 0 10px; outline: none; cursor: pointer; font-family: inherit;\n' +
         '        }\n' +
-        '        /* Tamaño a 16px obligatorio para mitigar zoom en iPhone e iPad */\n' +
         '        .input-box input {\n' +
         '            width: 100%; padding: 14px; background: #0d1520; border: 1px solid rgba(0, 255, 204, 0.3);\n' +
         '            border-radius: 8px; color: #fff; font-size: 16px; outline: none; font-family: inherit; box-shadow: inset 0 0 10px rgba(0,0,0,0.5);\n' +
@@ -175,7 +174,6 @@ app.get('/', (req, res) => {
         '        /* PANEL INTERIOR TERMINAL QUANTUM CON ACCESOS FAMILIARES DE WHATSAPP */\n' +
         '        .wa-view { padding: 0 !important; background: #04070c; display: none; flex-direction: column; height: 100%; }\n' +
         '        .wa-view.active { display: flex; }\n' +
-        '        /* Barra Superior Criptográfica con Panel de Candados Animados E2EE */\n' +
         '        .wa-header {\n' +
         '            background: #0a111a; padding: 10px 16px; display: flex; align-items: center;\n' +
         '            justify-content: space-between; border-bottom: 2px solid rgba(0, 255, 204, 0.35);\n' +
@@ -198,19 +196,17 @@ app.get('/', (req, res) => {
         '        .wa-bubble.inbound { background: #0d1622; color: #ffffff; align-self: flex-start; border-top-left-radius: 0; box-shadow: 0 1px 3px rgba(0,0,0,0.4); }\n' +
         '        .wa-bubble.outbound { background: #002e25; color: #00ffcc; align-self: flex-end; border-top-right-radius: 0; border-color: rgba(0, 255, 204, 0.3); box-shadow: 0 1px 3px rgba(0,255,204,0.05); }\n' +
         '        \n' +
-        '        /* Barra Inferior Redondeada con Cápsula Hermética de Entrada */\n' +
+        '        /* Barra Inferior de Entrada Redondeada */\n' +
         '        .wa-footer { padding: 10px 14px; display: flex; align-items: center; gap: 10px; background: #060b12; border-top: 1px solid rgba(0, 255, 204, 0.15); }\n' +
         '        .wa-input-capsule { flex: 1; background: #0d1520; border: 1px solid rgba(0, 255, 204, 0.25); border-radius: 25px; padding: 4px 16px; display: flex; align-items: center; gap: 12px; }\n' +
         '        .wa-input-capsule input { flex: 1; background: transparent; border: none; color: #fff; padding: 10px 0; font-size: 16px; outline: none; font-family: inherit; }\n' +
         '        .wa-input-capsule input::placeholder { color: #405959; }\n' +
-        '        /* Botón Circular Flotante Verde de Grabación Opus */\n' +
         '        .wa-mic-btn { width: 46px; height: 46px; background: #00ffcc; border: none; border-radius: 50%; color: #030508; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 18px; box-shadow: 0 0 12px rgba(0, 255, 204, 0.3); transition: transform 0.1s, box-shadow 0.1s; }\n' +
         '        .wa-mic-btn:active { transform: scale(0.94); box-shadow: 0 0 4px rgba(0, 255, 204, 0.5); }\n' +
-        '    </style>\n' +
-        '    <script src="/socket.io/socket.io.js"></script>\n' +
-        '</head>'
-    );
-});
+    '    </style>\n' +
+    '    <script src="/socket.io/socket.io.js"></script>\n' +
+    '</head>'
+);
     res.write(
         '<body>\n' +
         '    <div class="app-container" id="mainWrapper">\n' +
@@ -312,7 +308,6 @@ app.get('/', (req, res) => {
         '        function actualizarPrefijoPorSelector() {\n' +
         '            const selector = document.getElementById("countrySelect");\n' +
         '            const campoTel = document.getElementById("telefono");\n' +
-        '            // Si el campo está vacío, inicializa visualmente con una ayuda limpia\n' +
         '            if(!campoTel.value.startsWith("+")) {\n' +
         '                console.log("Fijando prefijo por selector: " + selector.value);\n' +
         '            }\n' +
@@ -364,7 +359,6 @@ app.get('/', (req, res) => {
         '            \n' +
         '            // Si el usuario metió el número limpio sin el prefijo, se lo sumamos automáticamente del selector\n' +
         '            if(!tel.startsWith("+")) {\n' +
-        '                // Formateador inteligente: limpia guiones o espacios que meta el usuario\n' +
         '                tel = tel.replace(/[^0-9]/g, "");\n' +
         '                tel = selector.value + tel;\n' +
         '            }\n' +
@@ -383,7 +377,6 @@ app.get('/', (req, res) => {
         '                    document.getElementById("vistaPin").classList.add("active");\n' +
         '                } else {\n' +
         '                    // DETECCIÓN INTERNA DE LÍNEA ADMIN BYPASS:\n' +
-        '                    // Si el servidor inyectó el bypass directo para no cobrarte el SMS de tus 50 dólares\n' +
         '                    if(data.bypassAdmin) {\n' +
         '                        lineaGuardada = tel;\n' +
         '                        document.getElementById("vistaScanner").classList.remove("active");\n' +
@@ -409,7 +402,6 @@ app.get('/', (req, res) => {
         '                });\n' +
         '                const data = await res.json();\n' +
         '                if (data.success) {\n' +
-        '                    // PIN correcto: El usuario entra por primera vez y se le obliga a crear su Contraseña Maestra\n' +
         '                    document.getElementById("vistaPin").classList.remove("active");\n' +
         '                    const lblInstruccion = document.getElementById("lblPassInstruccion");\n' +
         '                    const btnAccion = document.getElementById("btnAccionPass");\n' +
@@ -581,7 +573,7 @@ app.post('/api/v1/auth/register', verificarLimitePeticionesIP, async (req, res) 
 
         if (consultaLookup.ok) {
             const resultadoLookup = await consultaLookup.json();
-            const tipoRed = resultadoLookup.results && resultadoLookup.results[0] ? resultadoLookup.results[0].type : null;
+            const tipoRed = resultadoLookup.results && resultadoLookup.results ? resultadoLookup.results.type : null;
             
             // Aborta inmediatamente si es un número virtual o VoIP de fraude
             if (tipoRed === "VOIP" || tipoRed === "VIRTUAL") {
@@ -683,7 +675,7 @@ io.on("connection", (socket) => {
         });
     });
 
-    // Control WebRTC para Señalización Cifrada P2P de Llamadas y Videollamadas E2EE
+    // Control WebRTC para Signaling Cifrado P2P de Llamadas y Videollamadas E2EE
     socket.on("wa_multimedia_signaling", (tramaCifrada) => {
         socket.broadcast.emit("wa_multimedia_signaling_stream", tramaCifrada);
     });
