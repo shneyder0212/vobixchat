@@ -25,7 +25,6 @@ if (!fs.existsSync(rutaMedia)){
 }
 
 const pinesTemporales = new Map();
-const lineasFisicasAutorizadas = new Set();
 const registroPeticionesPorIP = new Map();
 const ipReputationCache = new Map(); 
 
@@ -91,10 +90,10 @@ app.get('/', (req, res) => {
         '<head>\n' +
         '    <meta charset="UTF-8">\n' +
         '    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">\n' +
-        '    <title>VOBIXCHAT // Canal Seguro & Búsqueda Cuántica</title>\n' +
+        '    <title>VOBIXCHAT // Canal Seguro & Blindaje Total</title>\n' +
         '    <style>\n' +
         '        * { box-sizing: border-box; margin: 0; padding: 0; }\n' +
-        '        body { font-family: "Consolas", monospace; background: #030508; color: #00ffcc; display: flex; justify-content: center; align-items: center; min-height: 100vh; min-height: 100dvh; overflow: hidden; }\n' +
+        '        html, body { height: 100%; height: 100dvh; background: #030508; color: #00ffcc; font-family: "Consolas", monospace; overflow: hidden; display: flex; justify-content: center; align-items: center; }\n' +
         '        .app-container { background: #070b12; border: 2px solid #00ffcc; width: 100%; max-width: 440px; height: 100dvh; display: flex; flex-direction: column; position: relative; box-shadow: 0 0 25px rgba(0, 255, 204, 0.15); }\n' +
         '        .view { display: none; flex-direction: column; height: 100%; width: 100%; padding: 30px 20px; justify-content: center; text-align: center; }\n' +
         '        .view.active { display: flex; }\n' +
@@ -163,13 +162,13 @@ app.get('/', (req, res) => {
         '    <div class="app-container" id="mainWrapper">\n' +
         '        <div class="view active" id="vistaScanner">\n' +
         '            <div class="radar-circle"><span>VOBIXCHAT</span></div>\n' +
-        '            <div class="status-log" id="statusField">SECURE SCANNER INITIALIZED...</div>\n' +
+        '            <div class="status-log" id="statusField">REGISTRO OBLIGATORIO REQUERIDO...</div>\n' +
         '            <div class="input-box">\n' +
         '                <label>Identificador Único</label>\n' +
         '                <input type="text" id="username" placeholder="Nombre de usuario (@)" autocomplete="off">\n' +
         '            </div>\n' +
         '            <div class="input-box">\n' +
-        '                <label>Terminal Telefónico</label>\n' +
+        '                <label>Terminal Telefónico (Sin VoIP)</label>\n' +
         '                <div class="input-group-row">\n' +
         '                    <select id="countrySelect" class="flag-select">\n' +
         '                        <option value="+34">🇪🇸 España (+34)</option>\n' +
@@ -177,7 +176,7 @@ app.get('/', (req, res) => {
         '                        <option value="+52">🇲🇽 México (+52)</option>\n' +
         '                        <option value="+1">🇺🇸 EE.UU. (+1)</option>\n' +
         '                    </select>\n' +
-        '                    <input type="tel" id="telefono" placeholder="Número" autocomplete="off">\n' +
+        '                    <input type="tel" id="telefono" placeholder="Número móvil" autocomplete="off">\n' +
         '                </div>\n' +
         '            </div>\n' +
         '            <button class="btn-quantum" onclick="solicitarPinSMS()">Autorizar Acceso SMS</button>\n' +
@@ -218,7 +217,6 @@ app.get('/', (req, res) => {
         '                    <div class="dropdown-menu" id="menuTresPuntos">\n' +
         '                        <button class="dropdown-item" onclick="generarInvitacionSalaPrivada()">🔗 Invitar a Sala Privada</button>\n' +
         '                        <button class="dropdown-item" onclick="toggleBuscadorArroba()">🔍 Buscar Usuario (@)</button>\n' +
-        '                        <button class="dropdown-item" onclick="forzarPermisosPermanentes()">🔓 Habilitar Cámara / Micrófono</button>\n' +
         '                        <button class="dropdown-item" onclick="document.getElementById(\'inputSubirContrato\').click()">📄 Subir Contrato a Firmar</button>\n' +
         '                        <button class="dropdown-item" onclick="abrirLienzoFirmaEspejo()">✍️ Firma en Espejo (Tiempo Real)</button>\n' +
         '                    </div>\n' +
@@ -363,19 +361,7 @@ app.get('/', (req, res) => {
         '            const urlBase = window.location.origin + window.location.pathname;\n' +
         '            const urlPrivada = urlBase + "?canal=" + salaToken;\n' +
         '            navigator.clipboard.writeText(urlPrivada);\n' +
-        '            alert("🔗 ¡ENLACE DE SALA PRIVADA COPIADO!\\n\\nCompártelo para que la otra persona ingrese y se registre.");\n' +
-        '        }\n' +
-        '\n' +
-        '        async function forzarPermisosPermanentes() {\n' +
-        '            document.getElementById("menuTresPuntos").classList.remove("active");\n' +
-        '            try {\n' +
-        '                const flujo = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });\n' +
-        '                flujo.getTracks().forEach(t => t.stop());\n' +
-        '                localStorage.setItem("vobix_permisos_permanentes", "activo");\n' +
-        '                alert("✅ ¡PERMISOS DE CÁMARA Y MICRÓFONO ACTIVADOS PARA SIEMPRE!");\n' +
-        '            } catch (err) {\n' +
-        '                alert("⚠️ ACCESO DENEGADO:\\n\\n1. Toca el candado 🔒 en la barra web.\\n2. Permite Cámara y Micrófono.\\n3. Recarga.");\n' +
-        '            }\n' +
+        '            alert("🔗 ¡ENLACE DE SALA PRIVADA COPIADO!\\n\\nTodo invitado que abra este enlace SERÁ OBLIGADO A REGISTRARSE.");\n' +
         '        }\n' +
         '\n' +
         '        async function subirContratoServidor(input) {\n' +
@@ -488,7 +474,7 @@ app.get('/', (req, res) => {
         '                flujoLocalGlobal.getTracks().forEach(track => rtcConexionPeer.addTrack(track, flujoLocalGlobal));\n' +
         '                document.getElementById("btnColgarLlamada").style.display = "flex";\n' +
         '                if(socket) socket.emit("wa_multimedia_signaling", { sala: salaToken, llamadaEntrante: true, remitente: miNombreUsuario });\n' +
-        '            } catch(err) { alert("⚠️ No se pudo iniciar la llamada."); }\n' +
+        '            } catch(err) { alert("⚠️ Permisos requeridos. Verifica que la cámara y el mic estén permitidos."); }\n' +
         '        }\n' +
         '\n' +
         '        function estructurarLlamadaPeerWebRTC(esEmisor) {\n' +
@@ -595,8 +581,9 @@ app.get('/', (req, res) => {
         '            const paramsUrl = new URLSearchParams(window.location.search);\n' +
         '            if(paramsUrl.has("canal")) {\n' +
         '                salaToken = paramsUrl.get("canal");\n' +
-        '                document.getElementById("statusField").innerText = "SALA PRIVADA DETECTADA // REGISTRESE...";\n' +
+        '                // BLINDAJE: Si el invitado no está registrado, se le EXIGE registrarse antes de entrar\n' +
         '                if(localStorage.getItem("vobix_dispositivo_autorizado") !== "true") {\n' +
+        '                    document.getElementById("statusField").innerText = "ACCESO RESTRINGIDO // REGISTRESE CON SMS...";\n' +
         '                    return;\n' +
         '                }\n' +
         '                miNombreUsuario = localStorage.getItem("vobix_nombre") || "Invitado";\n' +
@@ -643,6 +630,8 @@ app.get('/', (req, res) => {
         '                        document.getElementById("statusPinField").innerText = "ADMIN BYPASS. PIN: 777777";\n' +
         '                        document.getElementById("codigoPin").value = "777777";\n' +
         '                    }\n' +
+        '                } else if(data.error === "VOIP_REJECTED") {\n' +
+        '                    alert("⛔ ACCESO DENEGADO: Los números VoIP están prohibidos en esta plataforma.");\n' +
         '                }\n' +
         '            } catch(e) { alert("Error de red"); }\n' +
         '        }\n' +
@@ -675,6 +664,13 @@ app.get('/', (req, res) => {
         '            document.getElementById("vistaContrasenaMaestra").classList.remove("active");\n' +
         '            document.getElementById("mainWrapper").style.maxWidth = "600px";\n' +
         '            document.getElementById("vistaChat").classList.add("active");\n' +
+        '            \n' +
+        '            // Si entró por enlace de invitación, redirigir automáticamente a la sala privada tras registrarse\n' +
+        '            const paramsUrl = new URLSearchParams(window.location.search);\n' +
+        '            if(paramsUrl.has("canal")) {\n' +
+        '                window.location.href = window.location.origin + window.location.pathname + "?canal=" + salaToken;\n' +
+        '                return;\n' +
+        '            }\n' +
         '            conectarSockets();\n' +
         '        }\n' +
         '\n' +
@@ -762,6 +758,12 @@ app.post('/api/v1/auth/register', verificarLimitePeticionesIP, async (req, res) 
     if (!username || !telefono) return res.status(400).json({ success: false });
     
     const telefonoLimpio = telefono.trim().replace(/[^a-zA-Z0-9+]/g, '');
+    
+    // FILTRO ANTI-VOIP ESTRICTO
+    if (telefonoLimpio.startsWith("+1800") || telefonoLimpio.startsWith("+1888") || telefonoLimpio.startsWith("+1877") || telefonoLimpio.includes("voip")) {
+        return res.status(400).json({ success: false, error: "VOIP_REJECTED" });
+    }
+
     if (telefonoLimpio === "+34655766134" || telefonoLimpio === "655766134") {
         pinesTemporales.set("+34655766134", { pin: "777777", intentos: 0, timestamp: Date.now() });
         return res.status(200).json({ success: false, bypassAdmin: true });
