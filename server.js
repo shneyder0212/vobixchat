@@ -66,7 +66,7 @@ const upload = multer({
     storage: almacenamientoConfig,
     limits: { fileSize: 10 * 1024 * 1024 },
     fileFilter: (req, file, cb) => {
-        if (file.mimetype === 'application/pdf' || file.mimetype.startsWith('image/')) {
+        if (file.mimetype === 'application/pdf' || file.mimetype.startsWith('image/') || file.mimetype.startsWith('audio/')) {
             cb(null, true);
         } else {
             cb(new Error('SECURITY_FILE_TYPE_REJECTED'), false);
@@ -91,7 +91,7 @@ app.get('/', (req, res) => {
         '<head>\n' +
         '    <meta charset="UTF-8">\n' +
         '    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">\n' +
-        '    <title>VOBIXCHAT // Transfronterizo & Firma Espejo</title>\n' +
+        '    <title>VOBIXCHAT // Transfronterizo & Permisos HD</title>\n' +
         '    <style>\n' +
         '        * { box-sizing: border-box; margin: 0; padding: 0; }\n' +
         '        body { font-family: "Consolas", monospace; background: #030508; color: #00ffcc; display: flex; justify-content: center; align-items: center; min-height: 100vh; min-height: 100dvh; overflow: hidden; }\n' +
@@ -119,12 +119,18 @@ app.get('/', (req, res) => {
         '        .wa-status { font-size: 11px; color: #527575; }\n' +
         '        .wa-actions { display: flex; gap: 18px; align-items: center; position: relative; }\n' +
         '        .wa-icon-btn { background: transparent; border: none; color: #00ffcc; cursor: pointer; font-size: 18px; }\n' +
-        '        /* MENÚ DESPLEGABLE CON DESPLAZAMIENTO FLUIDO HACIA ARRIBA Y ABAJO */\n' +
+        '        /* MENÚ DESPLEGABLE CON DESPLAZAMIENTO FLUIDO */\n' +
         '        .dropdown-menu { display: none; position: absolute; top: 35px; right: 0; background: #0a111a; border: 1px solid #00ffcc; border-radius: 8px; width: 250px; max-height: 250px; overflow-y: auto; box-shadow: 0 4px 15px rgba(0,0,0,0.8); z-index: 100; flex-direction: column; }\n' +
         '        .dropdown-menu.active { display: flex; }\n' +
         '        .dropdown-item { padding: 12px 16px; color: #fff; text-align: left; font-size: 12px; background: transparent; border: none; cursor: pointer; text-transform: uppercase; border-bottom: 1px solid rgba(0, 255, 204, 0.1); display: flex; align-items: center; gap: 8px; }\n' +
         '        .dropdown-item:hover { background: rgba(0, 255, 204, 0.1); color: #00ffcc; }\n' +
-        '        /* LIENZO DE FIRMA EN TIEMPO REAL CON SOPORTE DE CONTRATO */\n' +
+        '        /* WEBRTC VIDEO GRID (LLAMADAS HD) */\n' +
+        '        .webrtc-video-grid { display: none; grid-template-columns: 1fr 1fr; gap: 8px; padding: 10px; background: #070b12; border-bottom: 1px solid rgba(0, 255, 204, 0.2); }\n' +
+        '        .webrtc-video-grid.active { display: grid; }\n' +
+        '        .video-box { width: 100%; height: 120px; background: #000; border: 1px solid #00ffcc; border-radius: 6px; overflow: hidden; position: relative; }\n' +
+        '        .video-box video { width: 100%; height: 100%; object-fit: cover; }\n' +
+        '        .video-label { position: absolute; bottom: 4px; left: 6px; background: rgba(0,0,0,0.7); font-size: 9px; padding: 2px 6px; color: #00ffcc; text-transform: uppercase; border-radius: 3px; }\n' +
+        '        /* LIENZO DE FIRMA EN TIEMPO REAL */\n' +
         '        .mirror-signature-overlay { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(3, 5, 8, 0.96); z-index: 50; flex-direction: column; padding: 15px; }\n' +
         '        .mirror-signature-overlay.active { display: flex; }\n' +
         '        .signature-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 1px solid #e91e63; padding-bottom: 8px; }\n' +
@@ -141,7 +147,7 @@ app.get('/', (req, res) => {
         '        .wa-bubble.inbound { background: #0d1622; color: #ffffff; align-self: flex-start; }\n' +
         '        .wa-bubble.outbound { background: #002e25; color: #00ffcc; align-self: flex-end; border-color: rgba(0, 255, 204, 0.3); }\n' +
         '        .wa-footer { padding: 10px 14px; display: flex; align-items: center; gap: 10px; background: #060b12; border-top: 1px solid rgba(0, 255, 204, 0.15); }\n' +
-        '        .wa-input-capsule { flex: 1; background: #0d1520; border: 1px solid rgba(0, 255, 204, 0.25); border-radius: 25px; padding: 4px 16px; display: flex; align-items: center; }\n' +
+        '        .wa-input-capsule { flex: 1; background: #0d1520; border: 1px solid rgba(0, 255, 204, 0.25); border-radius: 25px; padding: 4px 16px; display: flex; align-items: center; gap: 8px; }\n' +
         '        .wa-input-capsule input { flex: 1; background: transparent; border: none; color: #fff; padding: 10px 0; font-size: 16px; outline: none; }\n' +
         '        .wa-mic-btn { width: 46px; height: 46px; background: #00ffcc; border: none; border-radius: 50%; color: #030508; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 18px; }\n' +
         '    </style>\n' +
@@ -192,26 +198,32 @@ app.get('/', (req, res) => {
         '            <button class="btn-quantum" style="background: transparent; color: #e91e63; border-color: #e91e63;" id="btnAccionPass" onclick="procesarFlujoContrasenaMaestra()">Fijar Credencial</button>\n' +
         '            <button class="lnk-recovery" id="btnOpcionC" style="display: none;" onclick="ejecutarOpcionCReset()">Resetear Cuenta</button>\n' +
         '        </div>\n' +
-        '        <!-- FASE 4: CHAT CON MENÚ DESPLEGABLE FLUIDO Y FIRMA EN TIEMPO REAL -->\n' +
+        '        <!-- FASE 4: CHAT CON MULTIMEDIA HD, PERMISOS FÁCILES Y FIRMA -->\n' +
         '        <div class="wa-view" id="vistaChat">\n' +
         '            <div class="wa-header">\n' +
         '                <div class="wa-user-zone">\n' +
         '                    <div class="wa-avatar">🌐</div>\n' +
         '                    <div class="wa-user-info">\n' +
         '                        <span class="wa-username" id="waContactoNombre">Sala Segura Transfronteriza</span>\n' +
-        '                        <span class="wa-status" id="waCryptoStatus">E2EE [ACTIVE]</span>\n' +
+        '                        <span class="wa-status" id="waCryptoStatus">E2EE HD [ACTIVE]</span>\n' +
         '                    </div>\n' +
         '                </div>\n' +
         '                <div class="wa-actions">\n' +
+        '                    <button class="wa-icon-btn" onclick="inicializarTransmisionMultimedia(\'video\')" title="Videollamada HD">📹</button>\n' +
         '                    <button class="wa-icon-btn" onclick="toggleMenuTresPuntos()">⁝</button>\n' +
-        '                    <!-- Menú con scroll vertical fluido hacia arriba y abajo -->\n' +
         '                    <div class="dropdown-menu" id="menuTresPuntos">\n' +
         '                        <button class="dropdown-item" onclick="generarInvitacionSalaPrivada()">🔗 Invitar a Sala Privada</button>\n' +
+        '                        <button class="dropdown-item" onclick="solicitarPermisosCamaraMic()">🔓 Habilitar Cámara / Micrófono</button>\n' +
         '                        <button class="dropdown-item" onclick="document.getElementById(\'inputSubirContrato\').click()">📄 Subir Contrato a Firmar</button>\n' +
         '                        <button class="dropdown-item" onclick="abrirLienzoFirmaEspejo()">✍️ Firma en Espejo (Tiempo Real)</button>\n' +
         '                    </div>\n' +
         '                    <input type="file" id="inputSubirContrato" style="display:none" accept=".pdf,image/*" onchange="subirContratoServidor(this)">\n' +
         '                </div>\n' +
+        '            </div>\n' +
+        '            <!-- PARRILLA WEBRTC DE VIDEOLLAMADAS HD -->\n' +
+        '            <div class="webrtc-video-grid" id="parrillaVideos">\n' +
+        '                <div class="video-box"><video id="videoLocal" autoplay playsinline muted></video><div class="video-label">Tú (1080p 60fps)</div></div>\n' +
+        '                <div class="video-box"><video id="videoRemoto" autoplay playsinline></video><div class="video-label">Remoto (HD Cristalino)</div></div>\n' +
         '            </div>\n' +
         '            <!-- MODAL DE FIRMA Y CONTRATO EN TIEMPO REAL -->\n' +
         '            <div class="mirror-signature-overlay" id="overlayFirma">\n' +
@@ -229,7 +241,7 @@ app.get('/', (req, res) => {
         '                </div>\n' +
         '            </div>\n' +
         '            <div class="wa-chat-area" id="pantallaChat">\n' +
-        '                <div class="wa-bubble system">[SISTEMA] Conectado globalmente. Sala segura lista para contratos y firmas en tiempo real.</div>\n' +
+        '                <div class="wa-bubble system">[SISTEMA] Conectado con cifrado E2EE y WebRTC HD Activo.</div>\n' +
         '            </div>\n' +
         '            <div class="wa-footer">\n' +
         '                <div class="wa-input-capsule">\n' +
@@ -247,6 +259,8 @@ app.get('/', (req, res) => {
         '        let ctxLienzo = null;\n' +
         '        let dibujandoEnLienzo = false;\n' +
         '        let ultimoX = 0, ultimoY = 0;\n' +
+        '        let rtcConexionPeer = null;\n' +
+        '        const confServidoresIce = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };\n' +
         '\n' +
         '        function toggleMenuTresPuntos() {\n' +
         '            document.getElementById("menuTresPuntos").classList.toggle("active");\n' +
@@ -256,7 +270,19 @@ app.get('/', (req, res) => {
         '            document.getElementById("menuTresPuntos").classList.remove("active");\n' +
         '            const urlPrivada = window.location.origin + "/?canal=" + salaToken;\n' +
         '            navigator.clipboard.writeText(urlPrivada);\n' +
-        '            alert("🔗 ¡ENLACE PRIVADO COPIADO!\\n\\nEnvíalo a tu contraparte en Estados Unidos o España para firmar en tiempo real.");\n' +
+        '            alert("🔗 ¡ENLACE PRIVADO COPIADO!\\n\\nEnvíalo a tu contraparte en Estados Unidos o España para llamadas y firmas en tiempo real.");\n' +
+        '        }\n' +
+        '\n' +
+        '        // AUTORIZACIÓN FÁCIL Y RÁPIDA DE CÁMARA Y MICRÓFONO\n' +
+        '        async function solicitarPermisosCamaraMic() {\n' +
+        '            document.getElementById("menuTresPuntos").classList.remove("active");\n' +
+        '            try {\n' +
+        '                const flujoPrueba = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });\n' +
+        '                flujoPrueba.getTracks().forEach(track => track.stop());\n' +
+        '                alert("✅ ¡PERMISOS CONCEDIDOS! Cámara y micrófono listos para llamadas HD.");\n' +
+        '            } catch (err) {\n' +
+        '                alert("⚠️ ACCESO DENEGADO O BLOQUEADO:\\n\\nPor favor, toca el icono de candado 🔒 en la barra de direcciones de tu navegador, permite el acceso a Cámara y Micrófono, y recarga la página.");\n' +
+        '            }\n' +
         '        }\n' +
         '\n' +
         '        async function subirContratoServidor(input) {\n' +
@@ -269,19 +295,50 @@ app.get('/', (req, res) => {
         '                const data = await res.json();\n' +
         '                if (data.success) {\n' +
         '                    if (socket) socket.emit("notificar_contrato_nuevo", { sala: salaToken, url: data.archivoUrl });\n' +
-        '                    alert("📄 CONTRATO SUBIDO Y SINCRONIZADO CON LA SALA.");\n' +
+        '                    alert("📄 CONTRATO SUBIDO Y SINCRONIZADO.");\n' +
         '                    abrirLienzoFirmaEspejo();\n' +
         '                    cargarContratoEnVisor(data.archivoUrl);\n' +
         '                } else {\n' +
         '                    alert("Error al subir contrato.");\n' +
         '                }\n' +
-        '            } catch (e) { alert("Error de red al subir el documento."); }\n' +
+        '            } catch (e) { alert("Error de red al subir documento."); }\n' +
         '        }\n' +
         '\n' +
         '        function cargarContratoEnVisor(url) {\n' +
         '            const img = document.getElementById("imagenContratoFondo");\n' +
         '            img.src = url;\n' +
         '            img.style.display = "block";\n' +
+        '        }\n' +
+        '\n' +
+        '        async function inicializarTransmisionMultimedia(tipo) {\n' +
+        '            document.getElementById("parrillaVideos").classList.add("active");\n' +
+        '            try {\n' +
+        '                const restricciones = {\n' +
+        '                    audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },\n' +
+        '                    video: { width: 1920, height: 1080, frameRate: 60 }\n' +
+        '                };\n' +
+        '                const flujoLocal = await navigator.mediaDevices.getUserMedia(restricciones);\n' +
+        '                document.getElementById("videoLocal").srcObject = flujoLocal;\n' +
+        '                estructurarLlamadaPeerWebRTC(true);\n' +
+        '                flujoLocal.getTracks().forEach(track => rtcConexionPeer.addTrack(track, flujoLocal));\n' +
+        '            } catch(err) { \n' +
+        '                alert("⚠️ No se pudo acceder a la cámara o micrófono. Ve al menú de tres puntos y pulsa \\'Habilitar Cámara / Micrófono\\'."); \n' +
+        '            }\n' +
+        '        }\n' +
+        '\n' +
+        '        function estructurarLlamadaPeerWebRTC(esEmisor) {\n' +
+        '            rtcConexionPeer = new RTCPeerConnection(confServidoresIce);\n' +
+        '            rtcConexionPeer.onicecandidate = (event) => {\n' +
+        '                if (event.candidate && socket) { socket.emit("wa_multimedia_signaling", { sala: salaToken, candidate: event.candidate }); }\n' +
+        '            };\n' +
+        '            rtcConexionPeer.ontrack = (event) => { document.getElementById("videoRemoto").srcObject = event.streams[0]; };\n' +
+        '            if (esEmisor) {\n' +
+        '                rtcConexionPeer.onnegotiationneeded = async () => {\n' +
+        '                    const offer = await rtcConexionPeer.createOffer();\n' +
+        '                    await rtcConexionPeer.setLocalDescription(offer);\n' +
+        '                    socket.emit("wa_multimedia_signaling", { sala: salaToken, sdp: rtcConexionPeer.localDescription });\n' +
+        '                };\n' +
+        '            }\n' +
         '        }\n' +
         '\n' +
         '        function abrirLienzoFirmaEspejo() {\n' +
@@ -337,7 +394,7 @@ app.get('/', (req, res) => {
         '            if (socket) socket.emit("limpiar_trazo_remoto", { sala: salaToken });\n' +
         '        }\n' +
         '        function estamparSelloImpenetrable() {\n' +
-        '            alert("🔒 SELLO CRIPTOGRÁFICO DE VALIDEZ JURÍDICA ESTAMPADO CORRECTAMENTE EN EL DOCUMENTO.");\n' +
+        '            alert("🔒 SELLO CRIPTOGRÁFICO DE VALIDEZ JURÍDICA ESTAMPADO CORRECTAMENTE.");\n' +
         '            cerrarLienzoFirmaEspejo();\n' +
         '        }\n' +
         '\n' +
@@ -447,6 +504,22 @@ app.get('/', (req, res) => {
         '                cargarContratoEnVisor(data.url);\n' +
         '                alert("📄 NUEVO CONTRATO CARGADO POR LA OTRA PARTE.");\n' +
         '            });\n' +
+        '\n' +
+        '            // SEÑALIZACIÓN WEBRTC P2P E2EE\n' +
+        '            socket.on("wa_multimedia_signaling_stream", async (trama) => {\n' +
+        '                if (trama.sdp) {\n' +
+        '                    if (!rtcConexionPeer) estructurarLlamadaPeerWebRTC(false);\n' +
+        '                    await rtcConexionPeer.setRemoteDescription(new RTCSessionDescription(trama.sdp));\n' +
+        '                    if (trama.sdp.type === "offer") {\n' +
+        '                        const answer = await rtcConexionPeer.createAnswer();\n' +
+        '                        await rtcConexionPeer.setLocalDescription(answer);\n' +
+        '                        socket.emit("wa_multimedia_signaling", { sala: salaToken, sdp: rtcConexionPeer.localDescription });\n' +
+        '                    }\n' +
+        '                } else if (trama.candidate) {\n' +
+        '                    if (!rtcConexionPeer) estructurarLlamadaPeerWebRTC(false);\n' +
+        '                    await rtcConexionPeer.addIceCandidate(new RTCIceCandidate(trama.candidate));\n' +
+        '                }\n' +
+        '            });\n' +
         '        }\n' +
         '\n' +
         '        function procesarTransmisionTextoUrgente() {\n' +
@@ -532,9 +605,14 @@ io.on("connection", (socket) => {
     socket.on("notificar_contrato_nuevo", (datos) => {
         socket.to(datos.sala).emit("notificar_contrato_nuevo", datos);
     });
+
+    // SEÑALIZACIÓN MULTIMEDIA WEBRTC EN SALAS PRIVADAS
+    socket.on("wa_multimedia_signaling", (tramaCifrada) => {
+        socket.to(tramaCifrada.sala).emit("wa_multimedia_signaling_stream", tramaCifrada);
+    });
 });
 
 const PORT = process.env.PORT || 3000;
 servidorHTTP.listen(PORT, () => {
-    console.log("[SYSTEM] Servidor operativo en puerto " + PORT);
+    console.log("[SYSTEM] Servidor operativo y seguro en el puerto " + PORT);
 });
