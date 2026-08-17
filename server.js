@@ -183,6 +183,9 @@ app.get('/', (req, res) => {
         '    <script src="/socket.io/socket.io.js"></script>\n' +
         '</head>\n' +
         '<body>\n' +
+        '    <!-- AUDIO REMOTO GLOBAL PERMANENTE -->\n' +
+        '    <audio id="audioRemotoGlobal" autoplay playsinline style="display:none;"></audio>\n' +
+        '\n' +
         '    <div class="app-container" id="mainWrapper">\n' +
         '        <div class="incoming-call-overlay" id="modalLlamadaEntrante">\n' +
         '            <div class="incoming-avatar" id="avatarLlamada">📞</div>\n' +
@@ -365,15 +368,16 @@ app.get('/', (req, res) => {
         '        function reproducirSonidoNotificacion(esLlamada = false) {\n' +
         '            try {\n' +
         '                if (!globalAudioCtx) globalAudioCtx = new (window.AudioContext || window.webkitAudioContext)();\n' +
+        '                if (globalAudioCtx.state === "suspended") globalAudioCtx.resume();\n' +
         '                const osc = globalAudioCtx.createOscillator();\n' +
         '                const gain = globalAudioCtx.createGain();\n' +
         '                osc.type = esLlamada ? "triangle" : "sine";\n' +
-        '                osc.frequency.setValueAtTime(esLlamada ? 440 : 880, globalAudioCtx.currentTime);\n' +
-        '                gain.gain.setValueAtTime(0.2, globalAudioCtx.currentTime);\n' +
+        '                osc.frequency.setValueAtTime(esLlamada ? 520 : 880, globalAudioCtx.currentTime);\n' +
+        '                gain.gain.setValueAtTime(0.3, globalAudioCtx.currentTime);\n' +
         '                osc.connect(gain);\n' +
         '                gain.connect(globalAudioCtx.destination);\n' +
         '                osc.start();\n' +
-        '                osc.stop(globalAudioCtx.currentTime + (esLlamada ? 0.5 : 0.2));\n' +
+        '                osc.stop(globalAudioCtx.currentTime + (esLlamada ? 0.6 : 0.2));\n' +
         '            } catch(e) {}\n' +
         '        }\n' +
         '\n' +
@@ -382,7 +386,7 @@ app.get('/', (req, res) => {
         '            reproducirSonidoNotificacion(true);\n' +
         '            timbreInterval = setInterval(() => {\n' +
         '                reproducirSonidoNotificacion(true);\n' +
-        '            }, 1500);\n' +
+        '            }, 1200);\n' +
         '        }\n' +
         '\n' +
         '        function detenerTimbreContinuo() {\n' +
@@ -592,7 +596,7 @@ app.get('/', (req, res) => {
         '                }\n' +
         '            };\n' +
         '\n' +
-        '            // CORRECCIÓN ABSOLUTA: Inyección dual de video y audio remoto con elemento <audio> dedicado para voz\n' +
+        '            // CORRECCIÓN ABSOLUTA PARA AUDIO Y VIDEO BIDIRECCIONAL INMEDIATO\n' +
         '            pc.ontrack = (event) => {\n' +
         '                if (tipoLlamadaActual === "video") {\n' +
         '                    document.getElementById("parrillaVideos").classList.add("active");\n' +
@@ -606,19 +610,15 @@ app.get('/', (req, res) => {
         '                        document.getElementById("boxRemotoPrincipal").appendChild(videoRemoto);\n' +
         '                    }\n' +
         '                    videoRemoto.srcObject = event.streams[0];\n' +
-        '                    videoRemoto.play().catch(e => console.log("Play error:", e));\n' +
+        '                    videoRemoto.play().catch(e => console.log("Video Play Error:", e));\n' +
         '                }\n' +
         '                \n' +
-        '                // Canal de audio independiente garantizado para que se escuche siempre la voz\n' +
-        '                let audioRemoto = document.getElementById("audio_" + idSocketRemoto);\n' +
-        '                if (!audioRemoto) {\n' +
-        '                    audioRemoto = document.createElement("audio");\n' +
-        '                    audioRemoto.autoplay = true;\n' +
-        '                    audioRemoto.id = "audio_" + idSocketRemoto;\n' +
-        '                    document.body.appendChild(audioRemoto);\n' +
+        '                // Conectar al elemento global de audio permanente para garantizar escucha de voz\n' +
+        '                const audioGlobal = document.getElementById("audioRemotoGlobal");\n' +
+        '                if (audioGlobal) {\n' +
+        '                    audioGlobal.srcObject = event.streams[0];\n' +
+        '                    audioGlobal.play().catch(e => console.log("Audio Play Error:", e));\n' +
         '                }\n' +
-        '                audioRemoto.srcObject = event.streams[0];\n' +
-        '                audioRemoto.play().catch(e => console.log("Audio play error:", e));\n' +
         '            };\n' +
         '\n' +
         '            if (esOferente) {\n' +
@@ -642,11 +642,11 @@ app.get('/', (req, res) => {
         '            Object.keys(peersConexiones).forEach(id => {\n' +
         '                peersConexiones[id].close();\n' +
         '                delete peersConexiones[id];\n' +
-        '                const aud = document.getElementById("audio_" + id);\n' +
-        '                if (aud) aud.remove();\n' +
         '            });\n' +
         '            const vRem = document.getElementById("videoRemotoElemento");\n' +
         '            if (vRem) vRem.remove();\n' +
+        '            const audioGlobal = document.getElementById("audioRemotoGlobal");\n' +
+        '            if (audioGlobal) audioGlobal.srcObject = null;\n' +
         '            document.getElementById("parrillaVideos").classList.remove("active");\n' +
         '            document.getElementById("modalLlamadaEntrante").classList.remove("active");\n' +
         '            document.getElementById("btnColgarLlamada").style.display = "none";\n' +
