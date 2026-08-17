@@ -592,6 +592,7 @@ app.get('/', (req, res) => {
         '                }\n' +
         '            };\n' +
         '\n' +
+        '            // CORRECCIÓN ABSOLUTA: Inyección dual de video y audio remoto con elemento <audio> dedicado para voz\n' +
         '            pc.ontrack = (event) => {\n' +
         '                if (tipoLlamadaActual === "video") {\n' +
         '                    document.getElementById("parrillaVideos").classList.add("active");\n' +
@@ -601,22 +602,23 @@ app.get('/', (req, res) => {
         '                        videoRemoto.autoplay = true;\n' +
         '                        videoRemoto.playsInline = true;\n' +
         '                        videoRemoto.id = "videoRemotoElemento";\n' +
+        '                        document.getElementById("boxRemotoPrincipal").innerHTML = "";\n' +
         '                        document.getElementById("boxRemotoPrincipal").appendChild(videoRemoto);\n' +
         '                    }\n' +
-        '                    // SOLUCIÓN CLAVE: Asignar correctamente el stream y forzar reproducción\n' +
         '                    videoRemoto.srcObject = event.streams[0];\n' +
         '                    videoRemoto.play().catch(e => console.log("Play error:", e));\n' +
-        '                } else {\n' +
-        '                    let audioRemoto = document.getElementById("audio_" + idSocketRemoto);\n' +
-        '                    if (!audioRemoto) {\n' +
-        '                        audioRemoto = document.createElement("audio");\n' +
-        '                        audioRemoto.autoplay = true;\n' +
-        '                        audioRemoto.id = "audio_" + idSocketRemoto;\n' +
-        '                        document.body.appendChild(audioRemoto);\n' +
-        '                    }\n' +
-        '                    audioRemoto.srcObject = event.streams[0];\n' +
-        '                    audioRemoto.play().catch(e => console.log("Audio play error:", e));\n' +
         '                }\n' +
+        '                \n' +
+        '                // Canal de audio independiente garantizado para que se escuche siempre la voz\n' +
+        '                let audioRemoto = document.getElementById("audio_" + idSocketRemoto);\n' +
+        '                if (!audioRemoto) {\n' +
+        '                    audioRemoto = document.createElement("audio");\n' +
+        '                    audioRemoto.autoplay = true;\n' +
+        '                    audioRemoto.id = "audio_" + idSocketRemoto;\n' +
+        '                    document.body.appendChild(audioRemoto);\n' +
+        '                }\n' +
+        '                audioRemoto.srcObject = event.streams[0];\n' +
+        '                audioRemoto.play().catch(e => console.log("Audio play error:", e));\n' +
         '            };\n' +
         '\n' +
         '            if (esOferente) {\n' +
