@@ -74,9 +74,6 @@ const upload = multer({
     }
 });
 
-// ==========================================
-// RUTAS API REST
-// ==========================================
 app.post('/api/seguridad/verificar-usuario', verificarLimitePeticionesIP, async (req, res) => {
     const { numeroCrudo, codigoPais } = req.body;
     if (!numeroCrudo) return res.status(400).json({ success: false, error: "NUMERO_REQUERIDO" });
@@ -100,10 +97,9 @@ app.post('/api/seguridad/verificar-usuario', verificarLimitePeticionesIP, async 
         return res.status(400).json({ success: false, error: "VOIP_REJECTED" });
     }
 
-    // Bypass especial para pruebas de administrador
     if (telefonoLimpio === "+34655766134" || telefonoLimpio === "+1655766134") {
         pinesTemporales.set(telefonoLimpio, { pin: "777777", timestamp: Date.now() });
-        return.status(200).json({ success: true, message: "ACCESSO ADMIN BYPASS. PIN: 777777" });
+        return res.status(200).json({ success: true, message: "ACCESO ADMIN BYPASS. PIN: 777777" });
     }
 
     try {
@@ -160,9 +156,6 @@ app.post('/api/multimedia/subir-archivo', upload.single('archivo_multimedia'), (
     return res.status(200).json({ success: true, archivoUrl: '/uploads/quantum_media/' + req.file.filename });
 });
 
-// ==========================================
-// GESTIÓN DE WEBSOCKETS Y SEÑALIZACIÓN WEBRTC
-// ==========================================
 const mapaCanalesUsuarios = new Map();
 
 io.on("connection", (socket) => {
@@ -171,11 +164,9 @@ io.on("connection", (socket) => {
         if (idUsuario) {
             mapaCanalesUsuarios.set(idUsuario, socket.id);
             socket.idUsuarioVobix = idUsuario;
-            console.log(`[SYS]: Usuario registrado en canales de señalización: ${idUsuario} (${socket.id})`);
         }
     });
 
-    // Retransmisión de Oferta WebRTC (P2P Directo)
     socket.on("enviar-oferta-webrtc", (datos) => {
         const socketDestinoId = mapaCanalesUsuarios.get(datos.destinatario);
         if (socketDestinoId) {
@@ -186,7 +177,6 @@ io.on("connection", (socket) => {
         }
     });
 
-    // Retransmisión de Respuesta WebRTC (P2P Directo)
     socket.on("enviar-respuesta-webrtc", (datos) => {
         const socketDestinoId = mapaCanalesUsuarios.get(datos.destinatario);
         if (socketDestinoId) {
@@ -196,7 +186,6 @@ io.on("connection", (socket) => {
         }
     });
 
-    // Retransmisión de Candidatos ICE para atravesar routers y NAT
     socket.on("enviar-candidato-ice", (datos) => {
         const socketDestinoId = mapaCanalesUsuarios.get(datos.destinatario);
         if (socketDestinoId) {
@@ -207,7 +196,6 @@ io.on("connection", (socket) => {
     });
 
     socket.on("reportar-usuario-fraude", (datos) => {
-        console.log(`[SECURITY-ALERT]: Usuario reportado por fraude: ${datos.numeroSospechoso}`);
         const socketSospechosoId = mapaCanalesUsuarios.get(datos.numeroSospechoso);
         if (socketSospechosoId) {
             io.to(socketSospechosoId).emit("error-canal", { mensaje: "Su canal ha sido revocado por reporte de seguridad." });
@@ -217,7 +205,6 @@ io.on("connection", (socket) => {
     socket.on("disconnect", () => {
         if (socket.idUsuarioVobix) {
             mapaCanalesUsuarios.delete(socket.idUsuarioVobix);
-            console.log(`[SYS]: Canal cerrado para usuario: ${socket.idUsuarioVobix}`);
         }
     });
 });
