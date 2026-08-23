@@ -2,9 +2,17 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>VOBIXCHAT // Quantum Mobile Pro</title>
   <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: #05050a;
+      color: #00ffcc;
+      font-family: 'Courier New', monospace;
+      padding: 15px;
+      padding-bottom: 90px; /* Espacio para que la barra flotante no tape contenido */
+    }
     .neon-theme {
       background-color: #05050a;
       color: #00ffcc;
@@ -69,6 +77,123 @@
     @keyframes blink {
       50% { opacity: 0.4; }
     }
+
+    /* ESTILOS DE LA BARRA MODERNA Y BURBUJA FLOTANTE (ESTILO WHATSAPP) */
+    .wa-footer-moderno {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        background: #0a111a;
+        border-top: 1px solid rgba(0, 255, 204, 0.3);
+        padding: 8px 12px;
+        padding-bottom: max(12px, env(safe-area-inset-bottom));
+        display: flex;
+        flex-direction: column;
+        z-index: 100;
+    }
+    .wa-input-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        width: 100%;
+    }
+    .wa-action-btn {
+        background: transparent;
+        border: none;
+        color: #00ffcc;
+        font-size: 22px;
+        cursor: pointer;
+        padding: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+    .wa-input-capsule {
+        flex: 1;
+        background: #0d1520;
+        border: 1px solid rgba(0, 255, 204, 0.3);
+        border-radius: 24px;
+        padding: 6px 14px;
+        display: flex;
+        align-items: center;
+    }
+    .wa-input-capsule input {
+        flex: 1;
+        background: transparent;
+        border: none;
+        color: #fff;
+        font-size: 15px;
+        outline: none;
+        min-width: 0;
+        font-family: inherit;
+    }
+    .tools-popup-bubble {
+        display: none;
+        position: absolute;
+        bottom: 65px;
+        left: 12px;
+        right: 12px;
+        background: #0a111a;
+        border: 1px solid #00ffcc;
+        border-radius: 16px;
+        padding: 16px;
+        box-shadow: 0 8px 25px rgba(0, 255, 204, 0.2);
+        z-index: 110;
+    }
+    .tools-popup-bubble.active {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+    .tools-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 12px;
+        text-align: center;
+    }
+    .tool-item {
+        background: #0d1520;
+        border: 1px solid rgba(0, 255, 204, 0.2);
+        border-radius: 12px;
+        padding: 12px 8px;
+        color: #00ffcc;
+        font-size: 20px;
+        cursor: pointer;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+    }
+    .tool-item span {
+        font-size: 10px;
+        text-transform: uppercase;
+        color: #8fa3b8;
+    }
+    .emoji-picker-panel {
+        display: none;
+        grid-template-columns: repeat(8, 1fr);
+        gap: 6px;
+        background: #050b12;
+        border: 1px solid rgba(0,255,204,0.2);
+        border-radius: 10px;
+        padding: 8px;
+        max-height: 120px;
+        overflow-y: auto;
+    }
+    .emoji-picker-panel.active {
+        display: grid;
+    }
+    .emoji-btn {
+        background: transparent;
+        border: none;
+        font-size: 20px;
+        cursor: pointer;
+        text-align: center;
+        padding: 4px;
+        border-radius: 6px;
+    }
   </style>
   <script src="/socket.io/socket.io.js"></script>
 </head>
@@ -94,6 +219,7 @@
     </div>
     <button id="btn-enviar-datos" class="btn-confirmar" style="margin-top: 15px;" onclick="enviarIdentidadUsuario()">ENLAZAR Y GENERAR PIN</button>
   </div>
+
   <!-- HUD DE LOGS Y CONFIRMACIÓN DE ACCESO -->
   <div id="vobixchat-hud" class="neon-theme">
     <div class="sys-logs">
@@ -104,7 +230,7 @@
     <!-- SECCIÓN DE CONFIRMACIÓN CON CANDADO DE CONTRASEÑA OBLIGATORIO -->
     <div id="seccion-confirmacion" style="display: none; margin-top: 15px; border-top: 1px dashed #00ffcc; padding-top: 10px;">
       <h3>CONFIRMAR ENLACE SEGURO</h3>
-      <p>Introduzca el PIN recibido por SMS y su contraseña personal de desbloqueo de Historial:</p>
+      <p>Introduzca el PIN recibido por SMS y su contraseña personal de desbloqueo:</p>
       
       <div style="display: flex; flex-direction: column; gap: 10px; max-width: 300px; margin-bottom: 10px;">
         <input type="text" id="sms-pin-input" placeholder="PIN de SMS (4 dígitos)" maxlength="4">
@@ -116,7 +242,8 @@
         <button class="btn-abortar" onclick="window.interrumpirYApagarCanales()">ABORTAR</button>
       </div>
     </div>
-    <!-- PANELES OCULTOS MULTIMEDIA (DESBLOQUEADOS POST-PIN Y POST-CONTRASEÑA) -->
+
+    <!-- PANELES MULTIMEDIA -->
     <div id="modulo-marcado-cuantico" style="display: none; margin-top: 15px; border-top: 1px solid #00ffcc; padding-top: 10px;">
       <label for="numero-destino-input">Establecer Conexión Directa Privada:</label>
       <div class="input-container">
@@ -133,6 +260,7 @@
         <button class="btn-abortar" onclick="limpiarConsolaLogsLocal()">❌ Borrar Logs</button>
       </div>
     </div>
+
     <div class="paneles-video-cuantico">
       <div class="pantalla-media">
         <p class="tag-video">VISTA LOCAL (TÚ):</p>
@@ -145,19 +273,53 @@
     </div>
   </div>
 
-  <!-- BARRA DE CONTROL DE NOTAS DE VOZ -->
-  <div id="barra-mensajeria-inferior" class="neon-theme" style="display: none; align-items: center; justify-content: space-between; padding: 10px;">
-    <div style="font-size: 20px; cursor: pointer;">😊</div>
-    <div id="contenedor-grabando-status" style="display: none; align-items: center; gap: 10px;">
-      <span style="color: #ff3366; font-weight: bold; animation: blink 1s infinite;">🔴 GRABANDO:</span>
-      <span id="contador-tiempo-voz" style="color: #00ffcc; font-weight: bold;">00:00</span>
+  <!-- BARRA MODERNA INTEGRADA TIPO WHATSAPP (CON BURBUJA FLOTANTE Y NOTAS DE VOZ) -->
+  <div class="wa-footer-moderno" id="barra-mensajeria-inferior" style="display: none;">
+    <div class="tools-popup-bubble" id="burbujaHerramientas">
+        <div class="tools-grid">
+            <div class="tool-item" onclick="document.getElementById('input-archivo-cuantico').click(); toggleBurbujaHerramientas();">
+                📷<span>Cámara</span>
+            </div>
+            <div class="tool-item" onclick="document.getElementById('input-documento-extra').click(); toggleBurbujaHerramientas();">
+                📎<span>Doc/PDF</span>
+            </div>
+            <div class="tool-item" onclick="togglePanelEmojis()">
+                😊<span>Emojis</span>
+            </div>
+            <div class="tool-item" onclick="alert('Ubicación cifrada lista'); toggleBurbujaHerramientas();">
+                📍<span>GPS</span>
+            </div>
+        </div>
+        <div class="emoji-picker-panel" id="panelEmojis">
+            <button class="emoji-btn" onclick="insertarEmoji('😊')">😊</button>
+            <button class="emoji-btn" onclick="insertarEmoji('😂')">😂</button>
+            <button class="emoji-btn" onclick="insertarEmoji('👍')">👍</button>
+            <button class="emoji-btn" onclick="insertarEmoji('❤️')">❤️</button>
+            <button class="emoji-btn" onclick="insertarEmoji('🔥')">🔥</button>
+            <button class="emoji-btn" onclick="insertarEmoji('🎉')">🎉</button>
+            <button class="emoji-btn" onclick="insertarEmoji('🙏')">🙏</button>
+            <button class="emoji-btn" onclick="insertarEmoji('🚀')">🚀</button>
+        </div>
     </div>
-    <div style="display: flex; align-items: center; gap: 10px;">
-      <button id="btn-borrar-nota" class="btn-abortar" style="display: none; padding: 5px 10px; font-size: 12px;" onclick="window.cancelarYBorrarNotaVoz()">BORRAR</button>
-      <div id="btn-microfono-disparador" style="background-color: #00ffcc; color: #000; padding: 10px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: bold;" onclick="window.alternarEstadoNotaVoz()">
-        🎤
-      </div>
+
+    <div class="wa-input-row">
+        <button type="button" class="wa-action-btn" onclick="toggleBurbujaHerramientas()" title="Adjuntar">➕</button>
+        
+        <div class="wa-input-capsule">
+            <input type="text" id="mensajeChatInput" placeholder="Escribe un mensaje seguro..." autocomplete="off">
+        </div>
+
+        <button type="button" class="wa-action-btn" style="color: #00ffcc;" onclick="enviarMensajeChatTexto()" title="Enviar">➤</button>
+        
+        <!-- CONTROL DE VOZ INTEGRADO CON EL SCRIPT -->
+        <div id="contenedor-grabando-status" style="display: none; align-items: center; gap: 6px;">
+          <span style="color: #ff3366; font-weight: bold; animation: blink 1s infinite; font-size: 11px;">REC:</span>
+          <span id="contador-tiempo-voz" style="color: #00ffcc; font-weight: bold; font-size: 11px;">00:00</span>
+        </div>
+        <button id="btn-borrar-nota" class="btn-abortar" style="display: none; padding: 4px 8px; font-size: 10px;" onclick="window.cancelarYBorrarNotaVoz()">X</button>
+        <button type="button" class="wa-action-btn" id="btn-microfono-disparador" onclick="window.alternarEstadoNotaVoz()" title="Nota de Voz">🎤</button>
     </div>
+    <input type="file" id="input-documento-extra" style="display:none" accept=".pdf,image/*,audio/*,video/*" onchange="procesarArchivoExtraSeleccionado(this)">
   </div>
 
   <script src="cliente-comunicaciones.js"></script>
