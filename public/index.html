@@ -1,4 +1,84 @@
-/* ESTILOS DE LA BARRA MODERNA Y BURBUJA FLOTANTE CORREGIDOS */
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>VOBIXCHAT // Quantum Mobile Pro</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: #05050a;
+      color: #00ffcc;
+      font-family: 'Courier New', monospace;
+      padding: 15px;
+      padding-bottom: 90px;
+    }
+    .neon-theme {
+      background-color: #05050a;
+      color: #00ffcc;
+      font-family: 'Courier New', monospace;
+      padding: 20px;
+      border: 1px solid #00ffcc;
+      box-shadow: 0 0 15px #00ffcc;
+      margin-bottom: 15px;
+    }
+    .input-container {
+      display: flex;
+      gap: 10px;
+      margin-top: 5px;
+    }
+    #country-code, #phone-number, #sms-pin-input, #historial-pin-input, #numero-destino-input {
+      background: #111;
+      color: #00ffcc;
+      border: 1px solid #00ffcc;
+      padding: 8px;
+    }
+    .btn-confirmar {
+      background: #00ffcc;
+      color: #000;
+      border: none;
+      font-weight: bold;
+      cursor: pointer;
+      padding: 10px;
+    }
+    .btn-abortar {
+      background: #ff3366;
+      color: #fff;
+      border: none;
+      font-weight: bold;
+      cursor: pointer;
+      padding: 10px;
+    }
+    .log-line-alert {
+      color: #ff3366;
+    }
+    .paneles-video-cuantico {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+      margin-top: 20px;
+    }
+    .pantalla-media {
+      border: 1px dashed #00ffcc;
+      background-color: #000;
+      padding: 5px;
+    }
+    .tag-video {
+      font-size: 11px;
+      color: #00ffcc;
+      margin: 0 0 5px 0;
+    }
+    video {
+      width: 100%;
+      height: auto;
+      border: 1px solid #00ffcc;
+      background: #020205;
+    }
+    @keyframes blink {
+      50% { opacity: 0.4; }
+    }
+
+    /* BARRA INFERIOR MODERNA Y BURBUJA FLOTANTE */
     .wa-footer-moderno {
         position: fixed;
         bottom: 0;
@@ -52,3 +132,198 @@
         min-width: 0;
         font-family: inherit;
     }
+    .tools-popup-bubble {
+        display: none;
+        position: absolute;
+        bottom: 65px;
+        left: 12px;
+        right: 12px;
+        background: #0a111a;
+        border: 1px solid #00ffcc;
+        border-radius: 16px;
+        padding: 16px;
+        box-shadow: 0 8px 25px rgba(0, 255, 204, 0.2);
+        z-index: 110;
+    }
+    .tools-popup-bubble.active {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+    .tools-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 12px;
+        text-align: center;
+    }
+    .tool-item {
+        background: #0d1520;
+        border: 1px solid rgba(0,255,204,0.2);
+        border-radius: 12px;
+        padding: 12px 8px;
+        color: #00ffcc;
+        font-size: 20px;
+        cursor: pointer;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+    }
+    .tool-item span {
+        font-size: 10px;
+        text-transform: uppercase;
+        color: #8fa3b8;
+    }
+    .emoji-picker-panel {
+        display: none;
+        grid-template-columns: repeat(8, 1fr);
+        gap: 6px;
+        background: #050b12;
+        border: 1px solid rgba(0,255,204,0.2);
+        border-radius: 10px;
+        padding: 8px;
+        max-height: 120px;
+        overflow-y: auto;
+    }
+    .emoji-picker-panel.active {
+        display: grid;
+    }
+    .emoji-btn {
+        background: transparent;
+        border: none;
+        font-size: 20px;
+        cursor: pointer;
+        text-align: center;
+        padding: 4px;
+        border-radius: 6px;
+    }
+  </style>
+  <script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+  <!-- TERMINAL DE REGISTRO INICIAL -->
+  <div id="vobixchat-terminal" class="neon-theme">
+    <h2>VOBIXCHAT // MAIN TERMINAL</h2>
+    <div class="form-group">
+      <label for="phone-number">Identidad Usuario:</label>
+      <div class="input-container">
+        <select id="country-code">
+          <option value="US">US +1</option>
+          <option value="ES" selected>ES +34</option>
+          <option value="MX">MX +52</option>
+          <option value="AR">AR +54</option>
+          <option value="CO">CO +57</option>
+          <option value="VE">VE +58</option>
+          <option value="PE">PE +51</option>
+          <option value="DO">DO +1</option>
+        </select>
+        <input type="tel" id="phone-number" placeholder="Número de teléfono móvil">
+      </div>
+    </div>
+    <button id="btn-enviar-datos" class="btn-confirmar" style="margin-top: 15px;" onclick="enviarIdentidadUsuario()">ENLAZAR Y GENERAR PIN</button>
+  </div>
+
+  <!-- HUD DE LOGS Y CONFIRMACIÓN DE ACCESO -->
+  <div id="vobixchat-hud" class="neon-theme">
+    <div class="sys-logs">
+      <p>[SYS]: CANAL CUÁNTICO INICIALIZADO...</p>
+      <p id="sys-status" class="log-line-alert">[SYS]: ESPERANDO CREDENCIALES DE USUARIO...</p>
+    </div>
+
+    <!-- SECCIÓN DE CONFIRMACIÓN CON CANDADO DE CONTRASEÑA OBLIGATORIO -->
+    <div id="seccion-confirmacion" style="display: none; margin-top: 15px; border-top: 1px dashed #00ffcc; padding-top: 10px;">
+      <h3>CONFIRMAR ENLACE SEGURO</h3>
+      <p>Introduzca el PIN recibido por SMS y su contraseña personal de desbloqueo:</p>
+      
+      <div style="display: flex; flex-direction: column; gap: 10px; max-width: 300px; margin-bottom: 10px;">
+        <input type="text" id="sms-pin-input" placeholder="PIN de SMS (4 dígitos)" maxlength="4">
+        <input type="password" id="historial-pin-input" placeholder="Contraseña de Historial (4-6 dígitos)">
+      </div>
+
+      <div class="botones-accion">
+        <button class="btn-confirmar" onclick="confirmarEnlaceSeguro()">SÍ, ENLAZAR CANAL</button>
+        <button class="btn-abortar" onclick="window.interrumpirYApagarCanales()">ABORTAR</button>
+      </div>
+    </div>
+
+    <!-- PANELES MULTIMEDIA -->
+    <div id="modulo-marcado-cuantico" style="display: none; margin-top: 15px; border-top: 1px solid #00ffcc; padding-top: 10px;">
+      <label for="numero-destino-input">Establecer Conexión Directa Privada:</label>
+      <div class="input-container">
+        <input type="tel" id="numero-destino-input" placeholder="Número destino internacional">
+        <button id="btn-conectar-llamada" class="btn-confirmar" onclick="ejecutarMarcadoFromHUD()">LLAMAR</button>
+      </div>
+    </div>
+
+    <div id="modulo-captura-multimedia" style="display: none; margin-top: 15px; border-top: 1px dashed #00ffcc; padding-top: 10px;">
+      <p class="tag-video">ALMACENAMIENTO MÓVIL LOCAL Y CÁMARA:</p>
+      <div class="controles-archivos">
+        <input type="file" id="input-archivo-cuantico" accept="image/*" capture="environment" style="display: none;" onchange="detectarSeleccionArchivo()">
+        <button class="btn-confirmar" onclick="document.getElementById('input-archivo-cuantico').click()">📎 DISPARAR CÁMARA / CARGAR FOTO</button>
+        <button class="btn-abortar" onclick="limpiarConsolaLogsLocal()">❌ Borrar Logs</button>
+      </div>
+    </div>
+
+    <div class="paneles-video-cuantico">
+      <div class="pantalla-media">
+        <p class="tag-video">VISTA LOCAL (TÚ):</p>
+        <video id="local-video-preview" autoplay playsinline muted></video>
+      </div>
+      <div class="pantalla-media">
+        <p class="tag-video">VISTA REMOTA:</p>
+        <video id="remote-video-display" autoplay playsinline></video>
+      </div>
+    </div>
+  </div>
+
+  <!-- BARRA MODERNA INTEGRADA TIPO WHATSAPP -->
+  <div class="wa-footer-moderno" id="barra-mensajeria-inferior" style="display: none;">
+    <div class="tools-popup-bubble" id="burbujaHerramientas">
+        <div class="tools-grid">
+            <div class="tool-item" onclick="document.getElementById('input-archivo-cuantico').click(); toggleBurbujaHerramientas();">
+                📷<span>Cámara</span>
+            </div>
+            <div class="tool-item" onclick="document.getElementById('input-documento-extra').click(); toggleBurbujaHerramientas();">
+                📎<span>Doc/PDF</span>
+            </div>
+            <div class="tool-item" onclick="togglePanelEmojis()">
+                😊<span>Emojis</span>
+            </div>
+            <div class="tool-item" onclick="alert('Ubicación cifrada lista'); toggleBurbujaHerramientas();">
+                📍<span>GPS</span>
+            </div>
+        </div>
+        <div class="emoji-picker-panel" id="panelEmojis">
+            <button class="emoji-btn" onclick="insertarEmoji('😊')">😊</button>
+            <button class="emoji-btn" onclick="insertarEmoji('😂')">😂</button>
+            <button class="emoji-btn" onclick="insertarEmoji('👍')">👍</button>
+            <button class="emoji-btn" onclick="insertarEmoji('❤️')">❤️</button>
+            <button class="emoji-btn" onclick="insertarEmoji('🔥')">🔥</button>
+            <button class="emoji-btn" onclick="insertarEmoji('🎉')">🎉</button>
+            <button class="emoji-btn" onclick="insertarEmoji('🙏')">🙏</button>
+            <button class="emoji-btn" onclick="insertarEmoji('🚀')">🚀</button>
+        </div>
+    </div>
+
+    <div class="wa-input-row">
+        <button type="button" class="wa-action-btn" onclick="toggleBurbujaHerramientas()" title="Adjuntar">➕</button>
+        
+        <div class="wa-input-capsule">
+            <input type="text" id="mensajeChatInput" placeholder="Escribe un mensaje seguro..." autocomplete="off">
+        </div>
+
+        <button type="button" class="wa-action-btn" style="color: #00ffcc;" onclick="enviarMensajeChatTexto()" title="Enviar">➤</button>
+        
+        <div id="contenedor-grabando-status" style="display: none; align-items: center; gap: 6px;">
+          <span style="color: #ff3366; font-weight: bold; animation: blink 1s infinite; font-size: 11px;">REC:</span>
+          <span id="contador-tiempo-voz" style="color: #00ffcc; font-weight: bold; font-size: 11px;">00:00</span>
+        </div>
+        <button id="btn-borrar-nota" class="btn-abortar" style="display: none; padding: 4px 8px; font-size: 10px;" onclick="window.cancelarYBorrarNotaVoz()">X</button>
+        <button type="button" class="wa-action-btn" id="btn-microfono-disparador" onclick="window.alternarEstadoNotaVoz()" title="Nota de Voz">🎤</button>
+    </div>
+    <input type="file" id="input-documento-extra" style="display:none" accept=".pdf,image/*,audio/*,video/*" onchange="procesarArchivoExtraSeleccionado(this)">
+  </div>
+
+  <script src="cliente-comunicaciones.js"></script>
+</body>
+</html>
