@@ -27,6 +27,7 @@
             justify-content: center;
             align-items: center;
             height: 100vh;
+            height: 100dvh;
             overflow: hidden;
         }
 
@@ -35,8 +36,8 @@
             max-width: 480px;
             background: var(--card-bg);
             height: 100vh;
-            max-height: 100%;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6), 0 0 30px rgba(16, 185, 129, 0.1);
+            height: 100dvh;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
             display: flex;
             flex-direction: column;
             overflow: hidden;
@@ -56,56 +57,47 @@
             display: none;
             flex-direction: column;
             height: 100%;
-            padding: 30px;
+            padding: 20px;
             box-sizing: border-box;
             justify-content: center;
             align-items: center;
             text-align: center;
-            animation: fadeIn 0.4s ease-in-out;
         }
         .screen.active { display: flex; }
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
         .logo-box {
-            width: 80px;
-            height: 80px;
+            width: 70px;
+            height: 70px;
             background: linear-gradient(135deg, #10b981 0%, #047857 100%);
-            border-radius: 24px;
+            border-radius: 20px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 40px;
-            margin-bottom: 20px;
+            font-size: 35px;
+            margin-bottom: 15px;
             box-shadow: 0 10px 25px rgba(16, 185, 129, 0.4);
-            border: 2px solid rgba(255, 255, 255, 0.2);
         }
 
         h2 { 
             color: var(--text-main); 
-            margin-bottom: 8px; 
-            font-size: 26px; 
+            margin-bottom: 5px; 
+            font-size: 24px; 
             font-weight: 800;
-            letter-spacing: -0.5px;
         }
-        p.subtitle { color: var(--text-muted); font-size: 14px; margin-bottom: 30px; }
+        p.subtitle { color: var(--text-muted); font-size: 13px; margin-bottom: 20px; }
 
         .input-group {
             width: 100%;
-            margin-bottom: 18px;
+            margin-bottom: 14px;
             text-align: left;
         }
         .input-group label {
-            font-size: 12px;
+            font-size: 11px;
             font-weight: 700;
             color: var(--text-muted);
             display: block;
-            margin-bottom: 6px;
+            margin-bottom: 4px;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
         }
         
         .phone-input-wrapper {
@@ -115,155 +107,144 @@
         }
 
         select.prefix-select {
-            width: 110px;
-            padding: 14px 10px;
+            width: 105px;
+            padding: 12px 8px;
             background: rgba(15, 23, 42, 0.9);
             border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 12px;
-            font-size: 15px;
+            font-size: 14px;
             color: white;
             outline: none;
             cursor: pointer;
             text-align: center;
         }
-        select.prefix-select option {
-            background: #0f172a;
-            color: white;
-        }
+        select.prefix-select option { background: #0f172a; color: white; }
 
         input {
             width: 100%;
-            padding: 14px 16px;
+            padding: 12px 14px;
             box-sizing: border-box;
             background: rgba(15, 23, 42, 0.7);
             border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 12px;
-            font-size: 16px;
+            font-size: 16px; /* Evita zoom automático en iPhone */
             color: white;
             outline: none;
-            transition: all 0.3s ease;
         }
         input:focus, select.prefix-select:focus { 
             border-color: var(--accent-green); 
-            box-shadow: 0 0 15px rgba(16, 185, 129, 0.3);
             background: rgba(15, 23, 42, 0.9);
         }
 
         button.btn-imponente {
             width: 100%;
-            padding: 15px;
+            padding: 14px;
             background: linear-gradient(135deg, #10b981 0%, #059669 100%);
             color: white;
             border: none;
             border-radius: 12px;
-            font-size: 16px;
+            font-size: 15px;
             font-weight: 700;
             cursor: pointer;
-            margin-top: 10px;
-            box-shadow: 0 8px 20px rgba(16, 185, 129, 0.3);
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-        button.btn-imponente:hover { 
-            transform: translateY(-2px);
-            box-shadow: 0 12px 25px rgba(16, 185, 129, 0.5);
+            margin-top: 5px;
+            box-shadow: 0 6px 15px rgba(16, 185, 129, 0.3);
         }
 
+        /* Pantalla Principal Chat */
         .app-header {
             background: linear-gradient(90deg, #0f172a 0%, #1e293b 100%);
             color: white;
-            padding: 16px 20px;
+            padding: 12px 16px;
             display: flex;
             justify-content: space-between;
             align-items: center;
             border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            flex-shrink: 0;
         }
         
         .app-body {
             flex: 1;
-            padding: 16px;
+            padding: 12px;
             overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
             display: flex;
             flex-direction: column;
-            gap: 14px;
+            gap: 10px;
             background: #090d16;
-            padding-bottom: 80px; 
+            /* Espacio dinámico para que el contenido no quede oculto bajo la barra flotante */
+            padding-bottom: 75px; 
         }
 
         .card-panel {
             background: var(--card-bg);
-            padding: 16px;
-            border-radius: 14px;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+            padding: 12px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
             text-align: left;
             border: 1px solid rgba(255, 255, 255, 0.05);
         }
-        .card-panel h3 { margin-top: 0; font-size: 15px; color: #34d399; font-weight: 700; }
+        .card-panel h3 { margin-top: 0; font-size: 13px; color: #34d399; font-weight: 700; }
 
         .video-grid-container {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            gap: 8px;
-            max-height: 220px;
+            gap: 6px;
+            max-height: 180px;
             overflow-y: auto;
             background: #000;
-            border-radius: 10px;
-            padding: 6px;
-            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px;
+            padding: 4px;
         }
 
         .video-box {
             position: relative;
             background: #111;
-            border-radius: 8px;
+            border-radius: 6px;
             overflow: hidden;
-            height: 100px;
+            height: 90px;
             cursor: pointer;
             border: 2px solid transparent;
-            transition: border-color 0.2s;
         }
         .video-box.expanded {
             grid-column: span 2;
-            height: 180px;
+            height: 150px;
             border-color: var(--accent-green);
         }
-        .video-box video {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
+        .video-box video { width: 100%; height: 100%; object-fit: cover; }
         .video-label {
             position: absolute;
-            bottom: 4px;
-            left: 4px;
+            bottom: 3px;
+            left: 3px;
             background: rgba(0,0,0,0.7);
             color: white;
-            font-size: 10px;
-            padding: 2px 6px;
-            border-radius: 4px;
-            backdrop-filter: blur(4px);
+            font-size: 9px;
+            padding: 2px 5px;
+            border-radius: 3px;
         }
 
+        /* BARRA INFERIOR / BURBUJA FLOTANTE FIJA Y ADAPTADA */
         .chat-input-bar {
             position: absolute;
             bottom: 0;
             left: 0;
             width: 100%;
             background: #1e293b;
-            padding: 12px 16px;
+            padding: 10px 14px;
             box-sizing: border-box;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
             border-top: 1px solid rgba(255,255,255,0.08);
-            z-index: 100;
-            padding-bottom: calc(12px + env(safe-area-inset-bottom));
+            z-index: 200;
+            /* Solución definitiva para barra gestual de iPhone y teclado Android */
+            padding-bottom: calc(10px + env(safe-area-inset-bottom));
         }
 
         .chat-bubble-input {
             flex: 1;
             background: rgba(15, 23, 42, 0.8);
-            border-radius: 25px;
-            padding: 10px 16px;
+            border-radius: 20px;
+            padding: 8px 14px;
             display: flex;
             align-items: center;
             border: 1px solid rgba(255,255,255,0.1);
@@ -282,20 +263,18 @@
         .icon-btn {
             background: none;
             border: none;
-            font-size: 22px;
+            font-size: 20px;
             cursor: pointer;
             padding: 0;
             color: var(--text-muted);
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: color 0.2s;
         }
-        .icon-btn:hover { color: var(--accent-green); }
 
         .send-mic-btn {
-            width: 45px;
-            height: 45px;
+            width: 40px;
+            height: 40px;
             border-radius: 50%;
             background: linear-gradient(135deg, #10b981 0%, #059669 100%);
             color: white;
@@ -303,11 +282,10 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 18px;
+            font-size: 16px;
             cursor: pointer;
-            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+            box-shadow: 0 3px 10px rgba(16, 185, 129, 0.4);
             flex-shrink: 0;
-            transition: background 0.3s;
         }
         .send-mic-btn.recording {
             background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%) !important;
@@ -315,34 +293,26 @@
         }
         @keyframes pulseRecord {
             0% { transform: scale(1); }
-            50% { transform: scale(1.12); }
+            50% { transform: scale(1.1); }
             100% { transform: scale(1); }
         }
 
         #emojiPickerPanel {
             position: absolute;
-            bottom: 75px;
-            left: 16px;
+            bottom: 65px;
+            left: 12px;
             background: #1e293b;
             border: 1px solid rgba(255,255,255,0.12);
-            border-radius: 14px;
-            padding: 12px;
+            border-radius: 12px;
+            padding: 10px;
             display: none;
             grid-template-columns: repeat(5, 1fr);
-            gap: 10px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            z-index: 105;
+            gap: 8px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            z-index: 205;
         }
         #emojiPickerPanel.active { display: grid; }
-        .emoji-item {
-            font-size: 24px;
-            cursor: pointer;
-            text-align: center;
-            padding: 6px;
-            border-radius: 8px;
-            transition: background 0.2s;
-        }
-        .emoji-item:hover { background: rgba(255,255,255,0.1); }
+        .emoji-item { font-size: 22px; cursor: pointer; text-align: center; padding: 4px; }
 
         #incomingCallModal {
             position: absolute;
@@ -353,7 +323,7 @@
             flex-direction: column;
             justify-content: space-between;
             align-items: center;
-            padding: 60px 20px;
+            padding: 50px 20px;
             box-sizing: border-box;
             color: white;
             text-align: center;
@@ -362,42 +332,29 @@
         #incomingCallModal.active { display: flex; }
 
         .caller-avatar {
-            width: 100px; height: 100px;
+            width: 90px; height: 90px;
             background: linear-gradient(135deg, #10b981 0%, #047857 100%);
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 40px;
-            box-shadow: 0 0 35px rgba(16,185,129,0.6);
+            font-size: 35px;
+            box-shadow: 0 0 30px rgba(16,185,129,0.6);
             animation: pulseGlow 1.5s infinite;
-            border: 3px solid rgba(255,255,255,0.2);
         }
         @keyframes pulseGlow {
-            0% { transform: scale(1); box-shadow: 0 0 20px rgba(16,185,129,0.4); }
-            50% { transform: scale(1.08); box-shadow: 0 0 40px rgba(16,185,129,0.8); }
-            100% { transform: scale(1); box-shadow: 0 0 20px rgba(16,185,129,0.4); }
+            0% { transform: scale(1); }
+            50% { transform: scale(1.08); }
+            100% { transform: scale(1); }
         }
 
-        .call-action-buttons {
-            display: flex;
-            gap: 50px;
-            margin-bottom: 50px;
-        }
+        .call-action-buttons { display: flex; gap: 40px; margin-bottom: 40px; }
         .round-btn {
-            width: 70px; height: 70px;
-            border-radius: 50%;
-            border: none;
-            color: white;
-            font-size: 26px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.5);
-            transition: transform 0.2s;
+            width: 65px; height: 65px;
+            border-radius: 50%; border: none; color: white; font-size: 24px; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.5);
         }
-        .round-btn:hover { transform: scale(1.1); }
         .btn-accept { background: linear-gradient(135deg, #10b981 0%, #047857 100%); }
         .btn-reject { background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%); }
     </style>
@@ -409,13 +366,13 @@
         <!-- MODAL LLAMADA ENTRANTE -->
         <div id="incomingCallModal">
             <div>
-                <p style="text-transform: uppercase; letter-spacing: 2px; font-size: 11px; color: var(--accent-green); font-weight: 700; margin:0;">VobixChat Secure Call</p>
-                <h1 id="incomingCallerName" style="margin: 12px 0; font-size: 28px; font-weight: 800;">658616136</h1>
+                <p style="text-transform: uppercase; letter-spacing: 2px; font-size: 10px; color: var(--accent-green); font-weight: 700; margin:0;">VobixChat Secure Call</p>
+                <h1 id="incomingCallerName" style="margin: 10px 0; font-size: 24px; font-weight: 800;">658616136</h1>
             </div>
             <div class="caller-avatar">📞</div>
             <div class="call-action-buttons">
-                <button class="round-btn btn-reject" onclick="rechazarLlamadaEntrante()" title="Rechazar">✕</button>
-                <button class="round-btn btn-accept" onclick="aceptarLlamadaEntrante()" title="Contestar">📞</button>
+                <button class="round-btn btn-reject" onclick="rechazarLlamadaEntrante()">✕</button>
+                <button class="round-btn btn-accept" onclick="aceptarLlamadaEntrante()">📞</button>
             </div>
         </div>
 
@@ -468,7 +425,7 @@
 
             <div class="input-group">
                 <label>PIN de Acceso</label>
-                <input type="text" id="regPin" placeholder="1234" style="text-align: center; letter-spacing: 6px; font-size: 20px; font-weight: bold;">
+                <input type="text" id="regPin" placeholder="1234" style="text-align: center; letter-spacing: 6px; font-size: 18px; font-weight: bold;">
             </div>
 
             <button class="btn-imponente" onclick="verificarPinYEntrar()">Desbloquear Canal</button>
@@ -478,12 +435,12 @@
         <div id="screen-chat" class="screen" style="padding: 0; text-align: left; position: relative;">
             <div class="app-header">
                 <div>
-                    <h3 id="lblUserSession" style="margin:0; font-size: 15px; font-weight: 700; color: #34d399;">VobixChat</h3>
-                    <span style="font-size: 11px; color: var(--text-muted);" id="lblPhoneSession">Canal Seguro Activo</span>
+                    <h3 id="lblUserSession" style="margin:0; font-size: 14px; font-weight: 700; color: #34d399;">VobixChat</h3>
+                    <span style="font-size: 10px; color: var(--text-muted);" id="lblPhoneSession">Canal Seguro Activo</span>
                 </div>
-                <div style="display: flex; gap: 8px;">
-                    <button onclick="copiarEnlaceInvitacion()" style="background:rgba(16, 185, 129, 0.2); border:1px solid rgba(16, 185, 129, 0.4); color:#34d399; padding:6px 10px; border-radius:8px; cursor:pointer; font-size:11px; font-weight:600;" title="Copiar enlace para invitar">🔗 Invitar</button>
-                    <button onclick="location.reload()" style="background:rgba(239, 68, 68, 0.2); border:1px solid rgba(239, 68, 68, 0.4); color:#fca5a5; padding:6px 10px; border-radius:8px; cursor:pointer; font-size:11px; font-weight:600;">Salir</button>
+                <div style="display: flex; gap: 6px;">
+                    <button onclick="copiarEnlaceInvitacion()" style="background:rgba(16, 185, 129, 0.2); border:1px solid rgba(16, 185, 129, 0.4); color:#34d399; padding:5px 8px; border-radius:6px; cursor:pointer; font-size:10px; font-weight:600;">🔗 Invitar</button>
+                    <button onclick="location.reload()" style="background:rgba(239, 68, 68, 0.2); border:1px solid rgba(239, 68, 68, 0.4); color:#fca5a5; padding:5px 8px; border-radius:6px; cursor:pointer; font-size:10px; font-weight:600;">Salir</button>
                 </div>
             </div>
 
@@ -491,27 +448,27 @@
                 <!-- Llamada Individual -->
                 <div class="card-panel">
                     <h3>📞 Enlace Directo 1 a 1</h3>
-                    <div class="input-group" style="margin-bottom: 8px;">
+                    <div class="input-group" style="margin-bottom: 6px;">
                         <input type="text" id="destinatarioInput" placeholder="Número sin prefijo (ej. 658616136)">
                     </div>
-                    <div style="display: flex; gap: 8px;">
-                        <button class="btn-imponente" onclick="iniciarLlamada(false)" style="margin-top:0; padding:12px; background:linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);">Llamada Voz</button>
-                        <button class="btn-imponente" onclick="iniciarLlamada(true)" style="margin-top:0; padding:12px;">Videollamada</button>
+                    <div style="display: flex; gap: 6px;">
+                        <button class="btn-imponente" onclick="iniciarLlamada(false)" style="margin-top:0; padding:10px; font-size:13px; background:linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);">Llamada Voz</button>
+                        <button class="btn-imponente" onclick="iniciarLlamada(true)" style="margin-top:0; padding:10px; font-size:13px;">Videollamada</button>
                     </div>
                 </div>
 
                 <!-- Videoconferencia Grupal -->
                 <div class="card-panel">
                     <h3>👥 Sala de Videoconferencia</h3>
-                    <div class="input-group" style="margin-bottom: 8px;">
+                    <div class="input-group" style="margin-bottom: 6px;">
                         <input type="text" id="salaInput" placeholder="Nombre de Sala (ej. Familia)">
                     </div>
-                    <button class="btn-imponente" onclick="unirseSalaGrupal()" style="margin-top:0; background:linear-gradient(135deg, #64748b 0%, #475569 100%); box-shadow: 0 8px 20px rgba(100,116,139,0.3);">Conectar a Sala</button>
+                    <button class="btn-imponente" onclick="unirseSalaGrupal()" style="margin-top:0; padding:10px; font-size:13px; background:linear-gradient(135deg, #64748b 0%, #475569 100%);">Conectar a Sala</button>
                 </div>
 
                 <!-- Cuadrícula de Vídeos -->
                 <div class="card-panel" style="flex: 1; display: flex; flex-direction: column;">
-                    <h3 style="margin-bottom: 6px; font-size: 13px;">Monitoreo de Cámaras (Toca para ampliar)</h3>
+                    <h3 style="margin-bottom: 4px; font-size: 12px;">Monitoreo de Cámaras (Toca para ampliar)</h3>
                     <div class="video-grid-container" id="videoGrid">
                         <div class="video-box" id="box-local" onclick="alternarAmpliar('box-local')">
                             <video id="localVideo" autoplay muted playsinline></video>
@@ -519,7 +476,7 @@
                         </div>
                     </div>
 
-                    <button onclick="colgarTodo()" style="background:linear-gradient(135deg, #ef4444 0%, #b91c1c 100%); border:none; color:white; padding:12px; border-radius:10px; margin-top:10px; font-weight:700; cursor:pointer; box-shadow: 0 4px 15px rgba(239,68,68,0.4);">Colgar / Finalizar Conexión</button>
+                    <button onclick="colgarTodo()" style="background:linear-gradient(135deg, #ef4444 0%, #b91c1c 100%); border:none; color:white; padding:10px; border-radius:8px; margin-top:8px; font-weight:700; cursor:pointer; font-size:13px;">Colgar / Finalizar Conexión</button>
                 </div>
             </div>
 
@@ -582,38 +539,30 @@
                         'PE': '+51', 'CL': '+56', 'EC': '+593', 'BR': '+55', 'PT': '+351'
                     };
                     const prefijoDetectado = paisesPrefijos[data.country_code];
-                    if (prefijoDetectado) {
-                        selector.value = prefijoDetectado;
-                    }
+                    if (prefijoDetectado) selector.value = prefijoDetectado;
                 }
-            } catch (e) {
-                console.log("No se pudo detectar el país por IP, usando valor por defecto (+34)");
-            }
+            } catch (e) {}
         }
         detectarPaisYPrefijo();
 
-        // Generar enlace inteligente para invitar a familiares con autocompletado
         function copiarEnlaceInvitacion() {
             if (!identificadorUsuario) return alert("Inicia sesión primero.");
             const enlace = `${window.location.origin}/?llamar=${identificadorUsuario}`;
             navigator.clipboard.writeText(enlace).then(() => {
-                alert(`¡Enlace copiado con éxito!\n\nEnvíalo a tu familia por WhatsApp:\n${enlace}`);
+                alert(`¡Enlace copiado!\n\nEnvíalo a tu familia:\n${enlace}`);
             }).catch(() => {
                 prompt("Copia este enlace de invitación:", enlace);
             });
         }
 
-        // Auto-rellenar destinatario si entra mediante enlace de invitación
         window.addEventListener('DOMContentLoaded', () => {
             const params = new URLSearchParams(window.location.search);
             const numeroInvitacion = params.get('llamar');
             if (numeroInvitacion) {
                 setTimeout(() => {
-                    // Limpia el número quitando el prefijo si ya lo trae para colocarlo limpio
-                    const numeroLimpio = numeroInvitacion.replace(/^\+/, '');
-                    document.getElementById('destinatarioInput').value = numeroLimpio;
-                    alert(`¡Enlace de llamada detectado! Se ha colocado el número automáticamente. Pulsa "Llamada Voz" o "Videollamada".`);
-                }, 1200);
+                    document.getElementById('destinatarioInput').value = numeroInvitacion.replace(/^\+/, '');
+                    alert(`¡Enlace de llamada detectado! Número colocado automáticamente.`);
+                }, 1000);
             }
         });
 
@@ -661,15 +610,11 @@
         }
 
         function detenerTimbre() {
-            if (ringingInterval) {
-                clearInterval(ringingInterval);
-                ringingInterval = null;
-            }
+            if (ringingInterval) { clearInterval(ringingInterval); ringingInterval = null; }
         }
 
         function toggleEmojiPicker() {
-            const panel = document.getElementById('emojiPickerPanel');
-            panel.classList.toggle('active');
+            document.getElementById('emojiPickerPanel').classList.toggle('active');
         }
 
         function insertarEmoji(emoji) {
@@ -681,7 +626,7 @@
 
         function manejarEnvioDocumento(input) {
             if (input.files && input.files[0]) {
-                alert(`Documento adjuntado de forma segura: ${input.files[0].name}`);
+                alert(`Documento adjuntado: ${input.files[0].name}`);
                 reproducirSonidoNotificacion();
             }
         }
@@ -689,13 +634,12 @@
         function enviarMensajeTexto() {
             const input = document.getElementById('mensajeInput');
             if (input.value.trim().length > 0) {
-                alert(`Mensaje seguro enviado: ${input.value}`);
+                alert(`Mensaje enviado: ${input.value}`);
                 input.value = "";
                 reproducirSonidoNotificacion();
             }
         }
 
-        // Lógica de Nota de Voz Idéntica a WhatsApp (Toca para grabar, toca para enviar)
         let grabandoAudio = false;
         function accionMicOrSend() {
             const input = document.getElementById('mensajeInput');
@@ -708,13 +652,12 @@
                     grabandoAudio = true;
                     btn.classList.add('recording');
                     btn.innerText = "⏹️";
-                    // Feedback visual inmediato estilo WhatsApp
-                    alert("🔴 Grabando nota de voz... (Toca de nuevo el botón rojo para detener y enviar)");
+                    alert("🔴 Grabando nota de voz... (Toca de nuevo para enviar)");
                 } else {
                     grabandoAudio = false;
                     btn.classList.remove('recording');
                     btn.innerText = "🎤";
-                    alert("✅ Nota de voz encriptada enviada con éxito.");
+                    alert("✅ Nota de voz enviada.");
                     reproducirSonidoNotificacion();
                 }
             }
@@ -726,10 +669,9 @@
             const telefonoCuerpo = document.getElementById('regTelefono').value.trim();
             const prefijo = document.getElementById('selectPrefijo').value;
             
-            if (!nombre || !telefonoCuerpo) return alert("Por favor, introduce tu nombre y tu número de teléfono.");
+            if (!nombre || !telefonoCuerpo) return alert("Introduce tu nombre y número.");
 
             window.telefonoCompletoGlobal = prefijo + telefonoCuerpo.replace(/[^0-9]/g, '');
-
             document.getElementById('screen-registro').classList.remove('active');
             document.getElementById('screen-pin').classList.add('active');
         }
@@ -768,7 +710,7 @@
                 document.getElementById('localVideo').srcObject = localStream;
                 return localStream;
             } catch (error) {
-                alert("No se pudieron obtener permisos de cámara/micrófono.");
+                alert("Permisos de cámara o micrófono denegados.");
                 throw error;
             }
         }
@@ -784,15 +726,12 @@
         async function unirseSalaGrupal() {
             const salaId = document.getElementById('salaInput').value.trim();
             if (!salaId) return alert("Introduce el nombre de la sala.");
-
             try {
                 await inicializarMediaLocal(true);
                 salaActualId = salaId;
                 socket.emit("unirse-a-sala", { salaId, usuarioId: identificadorUsuario });
-                alert(`Conectado a la sala segura: ${salaId}`);
-            } catch (e) {
-                console.error(e);
-            }
+                alert(`Conectado a la sala: ${salaId}`);
+            } catch (e) {}
         }
 
         socket.on("nuevo-usuario-sala", async (data) => {
@@ -802,13 +741,10 @@
 
         function crearConexionPeerGrupal(remoteId, esIniciador) {
             if (peerConnections[remoteId]) return;
-
             const pc = new RTCPeerConnection(rtcConfig);
             peerConnections[remoteId] = pc;
 
-            if (localStream) {
-                localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
-            }
+            if (localStream) localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
 
             pc.ontrack = (event) => {
                 let box = document.getElementById(`box-${remoteId}`);
@@ -819,41 +755,24 @@
                     box.onclick = () => alternarAmpliar(box.id);
 
                     const video = document.createElement('video');
-                    video.autoplay = true;
-                    video.playsInline = true;
-                    video.srcObject = event.streams[0];
-
+                    video.autoplay = true; video.playsInline = true; video.srcObject = event.streams[0];
                     const label = document.createElement('div');
-                    label.className = 'video-label';
-                    label.innerText = remoteId;
+                    label.className = 'video-label'; label.innerText = remoteId;
 
-                    box.appendChild(video);
-                    box.appendChild(label);
+                    box.appendChild(video); box.appendChild(label);
                     document.getElementById('videoGrid').appendChild(box);
                 }
             };
 
             pc.onicecandidate = (event) => {
                 if (event.candidate) {
-                    socket.emit("senalizacion-grupal", {
-                        salaId: salaActualId,
-                        destinatario: remoteId,
-                        emisor: identificadorUsuario,
-                        tipo: 'candidato-ice',
-                        payload: event.candidate
-                    });
+                    socket.emit("senalizacion-grupal", { salaId: salaActualId, destinatario: remoteId, emisor: identificadorUsuario, tipo: 'candidato-ice', payload: event.candidate });
                 }
             };
 
             if (esIniciador) {
                 pc.createOffer().then(offer => pc.setLocalDescription(offer)).then(() => {
-                    socket.emit("senalizacion-grupal", {
-                        salaId: salaActualId,
-                        destinatario: remoteId,
-                        emisor: identificadorUsuario,
-                        tipo: 'oferta',
-                        payload: pc.localDescription
-                    });
+                    socket.emit("senalizacion-grupal", { salaId: salaActualId, destinatario: remoteId, emisor: identificadorUsuario, tipo: 'oferta', payload: pc.localDescription });
                 });
             }
         }
@@ -861,7 +780,6 @@
         socket.on("recibir-senalizacion-grupal", async (data) => {
             const { emisor, tipo, payload } = data;
             let pc = peerConnections[emisor];
-
             if (!pc) {
                 if (!localStream) await inicializarMediaLocal(true);
                 crearConexionPeerGrupal(emisor, false);
@@ -872,13 +790,7 @@
                 await pc.setRemoteDescription(new RTCSessionDescription(payload));
                 const answer = await pc.createAnswer();
                 await pc.setLocalDescription(answer);
-                socket.emit("senalizacion-grupal", {
-                    salaId: salaActualId,
-                    destinatario: emisor,
-                    emisor: identificadorUsuario,
-                    tipo: 'respuesta',
-                    payload: answer
-                });
+                socket.emit("senalizacion-grupal", { salaId: salaActualId, destinatario: emisor, emisor: identificadorUsuario, tipo: 'respuesta', payload: answer });
             } else if (tipo === 'respuesta') {
                 await pc.setRemoteDescription(new RTCSessionDescription(payload));
             } else if (tipo === 'candidato-ice') {
@@ -897,9 +809,7 @@
                 await inicializarMediaLocal(conVideo);
                 crearConexionPeerGrupal(destinatarioActual, true);
                 alert(`Llamando a ${destinatarioActual}...`);
-            } catch (e) {
-                console.error(e);
-            }
+            } catch (e) {}
         }
 
         socket.on("recibir-oferta-webrtc", async (data) => {
@@ -912,37 +822,25 @@
         async function aceptarLlamadaEntrante() {
             detenerTimbre();
             document.getElementById('incomingCallModal').classList.remove('active');
-
             if (!ofertaPendienteGlobal) return;
             destinatarioActual = ofertaPendienteGlobal.emisor;
 
             try {
                 await inicializarMediaLocal(true);
                 crearConexionPeerGrupal(destinatarioActual, false);
-
                 const pc = peerConnections[destinatarioActual];
                 await pc.setRemoteDescription(new RTCSessionDescription(ofertaPendienteGlobal.sdp));
                 const answer = await pc.createAnswer();
                 await pc.setLocalDescription(answer);
 
-                socket.emit("senalizacion-grupal", {
-                    salaId: null,
-                    destinatario: destinatarioActual,
-                    emisor: identificadorUsuario,
-                    tipo: 'respuesta',
-                    payload: answer
-                });
-            } catch (e) {
-                console.error(e);
-            }
+                socket.emit("senalizacion-grupal", { salaId: null, destinatario: destinatarioActual, emisor: identificadorUsuario, tipo: 'respuesta', payload: answer });
+            } catch (e) {}
         }
 
         function rechazarLlamadaEntrante() {
             detenerTimbre();
             document.getElementById('incomingCallModal').classList.remove('active');
-            if (ofertaPendienteGlobal) {
-                socket.emit("finalizar-llamada", { destinatario: ofertaPendienteGlobal.emisor });
-            }
+            if (ofertaPendienteGlobal) socket.emit("finalizar-llamada", { destinatario: ofertaPendienteGlobal.emisor });
             ofertaPendienteGlobal = null;
         }
 
@@ -950,17 +848,14 @@
             detenerTimbre();
             document.getElementById('incomingCallModal').classList.remove('active');
             resetearLlamadas();
-            alert("La llamada ha finalizado.");
+            alert("Llamada finalizada.");
         });
 
         function colgarTodo() {
             detenerTimbre();
             document.getElementById('incomingCallModal').classList.remove('active');
-            if (salaActualId) {
-                socket.emit("finalizar-llamada", { salaId: salaActualId });
-            } else if (destinatarioActual) {
-                socket.emit("finalizar-llamada", { destinatario: destinatarioActual });
-            }
+            if (salaActualId) socket.emit("finalizar-llamada", { salaId: salaActualId });
+            else if (destinatarioActual) socket.emit("finalizar-llamada", { destinatario: destinatarioActual });
             resetearLlamadas();
             alert("Conexión finalizada.");
         }
@@ -968,19 +863,10 @@
         function resetearLlamadas() {
             Object.values(peerConnections).forEach(pc => pc.close());
             for (let key in peerConnections) delete peerConnections[key];
-
-            if (localStream) {
-                localStream.getTracks().forEach(track => track.stop());
-                localStream = null;
-            }
+            if (localStream) { localStream.getTracks().forEach(track => track.stop()); localStream = null; }
             document.getElementById('localVideo').srcObject = null;
-
-            document.querySelectorAll('.video-box').forEach(box => {
-                if (box.id !== 'box-local') box.remove();
-            });
-            salaActualId = null;
-            destinatarioActual = "";
-            ofertaPendienteGlobal = null;
+            document.querySelectorAll('.video-box').forEach(box => { if (box.id !== 'box-local') box.remove(); });
+            salaActualId = null; destinatarioActual = ""; ofertaPendienteGlobal = null;
         }
     </script>
 </body>
