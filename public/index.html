@@ -3,47 +3,260 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VobixChat - Videollamada</title>
+    <title>VobixChat - Voz y Videollamadas</title>
     <style>
-        body { font-family: Arial, sans-serif; text-align: center; background: #f4f4f9; margin: 0; padding: 20px; }
-        .video-container { display: flex; justify-content: center; gap: 20px; margin-top: 20px; flex-wrap: wrap; }
-        video { width: 400px; max-width: 100%; height: 300px; background: #000; border-radius: 8px; border: 2px solid #ccc; }
-        .controls { margin-top: 20px; }
-        input, button { padding: 10px; font-size: 16px; margin: 5px; border-radius: 5px; border: 1px solid #ccc; }
-        button { background: #007bff; color: white; cursor: pointer; border: none; }
-        button:hover { background: #0056b3; }
-        button.danger { background: #dc3545; }
-        button.danger:hover { background: #a71d2a; }
+        :root {
+            --primary-color: #00a884;
+            --primary-dark: #008069;
+            --bg-light: #f0f2f5;
+            --card-bg: #ffffff;
+            --text-main: #3b4a54;
+            --border-color: #e9edef;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-light);
+            color: var(--text-main);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .app-container {
+            width: 100%;
+            max-width: 480px;
+            background: var(--card-bg);
+            height: 100vh;
+            max-height: 850px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+        }
+
+        @media (min-width: 768px) {
+            .app-container { border: 1px solid var(--border-color); }
+        }
+
+        .screen {
+            display: none;
+            flex-direction: column;
+            height: 100%;
+            padding: 24px;
+            box-sizing: border-box;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+        .screen.active { display: flex; }
+
+        .logo-whatsapp { font-size: 50px; margin-bottom: 20px; }
+        h2 { color: var(--primary-dark); margin-bottom: 10px; }
+        p.subtitle { color: #667781; font-size: 14px; margin-bottom: 30px; }
+
+        .input-group {
+            width: 100%;
+            margin-bottom: 15px;
+            text-align: left;
+        }
+        .input-group label {
+            font-size: 13px;
+            font-weight: bold;
+            color: #555;
+            display: block;
+            margin-bottom: 5px;
+        }
+        input {
+            width: 100%;
+            padding: 12px 15px;
+            box-sizing: border-box;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 16px;
+            outline: none;
+        }
+        input:focus { border-color: var(--primary-color); }
+
+        button.btn-main {
+            width: 100%;
+            padding: 14px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        button.btn-main:hover { background-color: var(--primary-dark); }
+
+        .app-header {
+            background-color: var(--primary-dark);
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .app-body {
+            flex: 1;
+            padding: 15px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            background: #efeae2;
+        }
+
+        .card-panel {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            text-align: left;
+        }
+        .card-panel h3 { margin-top: 0; font-size: 16px; color: var(--primary-dark); }
+
+        /* Contenedor de Videollamadas e Intercambio Estilo WhatsApp */
+        .video-call-container {
+            position: relative;
+            width: 100%;
+            height: 340px;
+            background: #111;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+
+        #mainVideo {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            cursor: pointer;
+        }
+
+        #pipVideo {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            width: 90px;
+            height: 130px;
+            background: #222;
+            border-radius: 8px;
+            border: 2px solid white;
+            object-fit: cover;
+            cursor: pointer;
+            z-index: 10;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+            transition: transform 0.2s ease;
+        }
+        #pipVideo:hover { transform: scale(1.05); }
+
+        .call-controls-bar {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 12px;
+        }
+        
+        button.call-btn {
+            padding: 10px 18px;
+            border-radius: 50px;
+            border: none;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .btn-audio { background-color: #00a884; }
+        .btn-video { background-color: #007bff; }
+        .btn-danger { background-color: #ea4335; }
     </style>
 </head>
 <body>
 
-    <h1>VobixChat - Sistema de Llamadas</h1>
-    <div id="estado-usuario" style="font-weight: bold; color: #555;">No registrado</div>
+    <div class="app-container">
 
-    <div class="controls">
-        <input type="text" id="miIdInput" placeholder="Tu ID o número de usuario">
-        <button onclick="registrarUsuario()">Conectar ID</button>
-    </div>
+        <!-- PASO 1: REGISTRO -->
+        <div id="screen-registro" class="screen active">
+            <div class="logo-whatsapp">💬</div>
+            <h2>VobixChat</h2>
+            <p class="subtitle">Verifica tu número para llamadas y videollamadas</p>
 
-    <div class="controls" style="margin-top: 30px;">
-        <input type="text" id="destinatarioInput" placeholder="ID a quien llamar">
-        <button onclick="llamarUsuario()">Iniciar Llamada</button>
-        <button class="danger" onclick="colgar()">Colgar</button>
-    </div>
+            <div class="input-group">
+                <label>Nombre de usuario</label>
+                <input type="text" id="regNombre" placeholder="Tu Nombre">
+            </div>
 
-    <div class="video-container">
-        <div>
-            <p>Tu Cámara</p>
-            <video id="localVideo" autoplay muted playsinline></video>
+            <div class="input-group">
+                <label>Número de Teléfono</label>
+                <input type="tel" id="regTelefono" placeholder="+34600123456">
+            </div>
+
+            <button class="btn-main" onclick="solicitarPinInfobip()">Continuar</button>
         </div>
-        <div>
-            <p>Videollamada Remota</p>
-            <video id="remoteVideo" autoplay playsinline></video>
+
+        <!-- PASO 1.2: PIN -->
+        <div id="screen-pin" class="screen">
+            <div class="logo-whatsapp">🔒</div>
+            <h2>Código de Verificación</h2>
+            <p class="subtitle">Introduce el PIN enviado por SMS (Infobip).</p>
+
+            <div class="input-group">
+                <label>PIN SMS</label>
+                <input type="text" id="regPin" placeholder="1234" style="text-align: center; letter-spacing: 5px;">
+            </div>
+
+            <button class="btn-main" onclick="verificarPinYEntrar()">Verificar PIN</button>
         </div>
+
+        <!-- PASO 2: PANTALLA PRINCIPAL DE LLAMADAS -->
+        <div id="screen-chat" class="screen" style="padding: 0; text-align: left;">
+            <div class="app-header">
+                <div>
+                    <h3 id="lblUserSession" style="margin:0; font-size: 16px;">VobixChat</h3>
+                    <span style="font-size: 12px; opacity: 0.8;" id="lblPhoneSession">En línea</span>
+                </div>
+                <button onclick="location.reload()" style="background:none; border:none; color:white; cursor:pointer;">Salir</button>
+            </div>
+
+            <div class="app-body">
+                <div class="card-panel">
+                    <h3>Panel de Contacto</h3>
+                    <div class="input-group" style="margin-bottom: 8px;">
+                        <input type="text" id="destinatarioInput" placeholder="Número o ID del destinatario">
+                    </div>
+                    <div style="display: flex; gap: 8px;">
+                        <button class="call-btn btn-audio" onclick="iniciarLlamada(false)" style="flex:1;">Llamada Voz</button>
+                        <button class="call-btn btn-video" onclick="iniciarLlamada(true)" style="flex:1;">Videollamada</button>
+                    </div>
+                </div>
+
+                <!-- Contenedor Estilo WhatsApp para Alternar Pantallas -->
+                <div class="card-panel" style="flex: 1; display: flex; flex-direction: column;">
+                    <h3 style="margin-bottom: 5px;">Pantalla Activa</h3>
+                    <div class="video-call-container">
+                        <video id="mainVideo" autoplay playsinline onclick="intercambiarVistas()"></video>
+                        <video id="pipVideo" autoplay muted playsinline onclick="intercambiarVistas()"></video>
+                    </div>
+
+                    <div class="call-controls-bar">
+                        <button class="call-btn btn-danger" onclick="colgar()">Colgar Llamada</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </div>
 
-    <!-- Script de Socket.io -->
     <script src="/socket.io/socket.io.js"></script>
     <script>
         const socket = io();
@@ -52,6 +265,67 @@
         let peerConnection = null;
         let localStream = null;
         let remoteStream = null;
+        let esVistaPrincipalLocal = false; 
+
+        // Generador de Sonidos Nativo (AudioContext) para Timbre y Notificaciones
+        let audioCtx = null;
+        let ringingInterval = null;
+
+        function getAudioContext() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            return audioCtx;
+        }
+
+        // Sonido de Notificación de Mensaje Corto (Bip tipo WhatsApp)
+        function reproducirSonidoNotificacion() {
+            try {
+                const ctx = getAudioContext();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(800, ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(1200, ctx.currentTime + 0.1);
+                gain.gain.setValueAtTime(0.1, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.15);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start();
+                osc.stop(ctx.currentTime + 0.15);
+            } catch (e) { console.log(e); }
+        }
+
+        // Tono de Llamada Entrante Repetitivo (Bucle continuo hasta contestar o colgar)
+        function iniciarTimbreEntrante() {
+            detenerTimbre(); // Limpiar si ya hay uno
+            ringingInterval = setInterval(() => {
+                try {
+                    const ctx = getAudioContext();
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(440, ctx.currentTime); // Tono agradable de timbre
+                    osc.frequency.setValueAtTime(554.37, ctx.currentTime + 0.15);
+                    gain.gain.setValueAtTime(0.15, ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start();
+                    osc.stop(ctx.currentTime + 0.3);
+                } catch (e) { console.log(e); }
+            }, 1000); // Se repite cada 1 segundo exacto
+        }
+
+        function detenerTimbre() {
+            if (ringingInterval) {
+                clearInterval(ringingInterval);
+                ringingInterval = null;
+            }
+        }
 
         const rtcConfig = {
             iceServers: [
@@ -60,32 +334,86 @@
             ]
         };
 
-        function registrarUsuario() {
-            const input = document.getElementById('miIdInput').value.trim();
-            if (!input) return alert("Introduce un identificador válido.");
+        async function solicitarPinInfobip() {
+            getAudioContext(); // Activar contexto de audio ante la interacción del usuario
+            const nombre = document.getElementById('regNombre').value.trim();
+            const telefono = document.getElementById('regTelefono').value.trim();
+            if (!nombre || !telefono) return alert("Completa los campos.");
+
+            try {
+                const response = await fetch('/api/seguridad/verificar-usuario', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ numeroCrudo: telefono })
+                });
+                const data = await response.json();
+                if (!data.success) return alert(data.error);
+
+                document.getElementById('screen-registro').classList.remove('active');
+                document.getElementById('screen-pin').classList.add('active');
+            } catch (e) {
+                alert("Error de conexión con el servidor.");
+            }
+        }
+
+        function verificarPinYEntrar() {
+            const telefono = document.getElementById('regTelefono').value.trim();
+            const nombre = document.getElementById('regNombre').value.trim();
             
-            identificadorUsuario = input;
+            identificadorUsuario = telefono.replace(/[^0-9]/g, '');
             socket.emit("registrar-canal-llamada", { identificador_usuario: identificadorUsuario });
-            document.getElementById('estado-usuario').innerText = `Conectado como: ${identificadorUsuario}`;
-            alert("¡Registrado correctamente en el servidor!");
+
+            document.getElementById('screen-pin').classList.remove('active');
+            document.getElementById('screen-chat').classList.add('active');
+            document.getElementById('lblUserSession').innerText = nombre;
+            document.getElementById('lblPhoneSession').innerText = telefono;
+            reproducirSonidoNotificacion();
+        }
+
+        function intercambiarVistas() {
+            esVistaPrincipalLocal = !esVistaPrincipalLocal;
+            actualizarAsignacionVideos();
+        }
+
+        function actualizarAsignacionVideos() {
+            const mainVideo = document.getElementById('mainVideo');
+            const pipVideo = document.getElementById('pipVideo');
+
+            if (esVistaPrincipalLocal) {
+                mainVideo.srcObject = localStream;
+                mainVideo.muted = true; 
+                pipVideo.srcObject = remoteStream;
+            } else {
+                mainVideo.srcObject = remoteStream;
+                mainVideo.muted = false;
+                pipVideo.srcObject = localStream;
+                pipVideo.muted = true;
+            }
         }
 
         socket.on("error-llamada", (data) => {
+            detenerTimbre();
             alert(`Aviso: ${data.error}`);
             resetearLlamada();
         });
 
         socket.on("recibir-oferta-webrtc", async (data) => {
-            const aceptar = confirm(`Llamada entrante de: ${data.emisor}. ¿Deseas contestar?`);
+            // Empieza a sonar el timbre de llamada de forma constante hasta que se acepte o rechace
+            iniciarTimbreEntrante();
+
+            const aceptar = confirm(`📞 Llamada entrante de: ${data.emisor}. ¿Deseas contestar?`);
+            
+            // Al responder o rechazar, detenemos inmediatamente el timbre
+            detenerTimbre();
+
             if (!aceptar) {
                 socket.emit("finalizar-llamada", { destinatario: data.emisor });
                 return;
             }
 
             destinatarioActual = data.emisor;
-
             try {
-                await inicializarMediaLocal();
+                await inicializarMediaLocal(true);
                 crearPeerConnection(destinatarioActual);
 
                 await peerConnection.setRemoteDescription(new RTCSessionDescription(data.sdp));
@@ -98,44 +426,39 @@
                     sdp: peerConnection.localDescription
                 });
             } catch (error) {
-                console.error("Error al aceptar la llamada:", error);
+                console.error(error);
             }
         });
 
         socket.on("recibir-respuesta-webrtc", async (data) => {
-            try {
-                if (peerConnection) {
-                    await peerConnection.setRemoteDescription(new RTCSessionDescription(data.sdp));
-                }
-            } catch (error) {
-                console.error("Error al procesar la respuesta remota:", error);
+            detenerTimbre();
+            if (peerConnection) {
+                await peerConnection.setRemoteDescription(new RTCSessionDescription(data.sdp));
             }
         });
 
         socket.on("recibir-candidato-ice", async (data) => {
-            try {
-                if (peerConnection && data.candidato) {
-                    await peerConnection.addIceCandidate(new RTCIceCandidate(data.candidato));
-                }
-            } catch (error) {
-                console.error("Error al añadir candidato ICE:", error);
+            if (peerConnection && data.candidato) {
+                await peerConnection.addIceCandidate(new RTCIceCandidate(data.candidato));
             }
         });
 
         socket.on("llamada-finalizada", () => {
-            alert("La llamada ha finalizado por el otro usuario.");
+            detenerTimbre();
+            alert("La llamada ha finalizado.");
             resetearLlamada();
         });
 
-        async function llamarUsuario() {
+        async function iniciarLlamada(conVideo) {
             const destinatario = document.getElementById('destinatarioInput').value.trim();
-            if (!destinatario) return alert("Introduce el ID del destinatario.");
-            if (!identificadorUsuario) return alert("Primero debes registrar tu propio ID arriba.");
+            if (!destinatario) return alert("Introduce el destinatario.");
 
             destinatarioActual = destinatario;
-
             try {
-                await inicializarMediaLocal();
+                // Al llamar, emitimos sonido de notificación de marcado
+                reproducirSonidoNotificacion();
+
+                await inicializarMediaLocal(conVideo);
                 crearPeerConnection(destinatarioActual);
 
                 const oferta = await peerConnection.createOffer();
@@ -147,31 +470,28 @@
                     sdp: peerConnection.localDescription
                 });
             } catch (error) {
-                console.error("Error al iniciar la llamada:", error);
+                console.error(error);
             }
         }
 
-        async function inicializarMediaLocal() {
-            if (localStream) return; // Ya inicializado
+        async function inicializarMediaLocal(conVideo) {
+            if (localStream) return;
             try {
-                localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-                document.getElementById('localVideo').srcObject = localStream;
+                localStream = await navigator.mediaDevices.getUserMedia({ video: conVideo, audio: true });
+                actualizarAsignacionVideos();
             } catch (error) {
-                alert("No se pudieron obtener permisos de cámara y micrófono.");
+                alert("No se pudieron obtener permisos de cámara/micrófono.");
                 throw error;
             }
         }
 
         function crearPeerConnection(destinatarioId) {
             peerConnection = new RTCPeerConnection(rtcConfig);
-
-            localStream.getTracks().forEach(track => {
-                peerConnection.addTrack(track, localStream);
-            });
+            localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
 
             peerConnection.ontrack = (event) => {
                 remoteStream = event.streams[0];
-                document.getElementById('remoteVideo').srcObject = remoteStream;
+                actualizarAsignacionVideos();
             };
 
             peerConnection.onicecandidate = (event) => {
@@ -186,6 +506,7 @@
         }
 
         function colgar() {
+            detenerTimbre();
             if (destinatarioActual) {
                 socket.emit("finalizar-llamada", { destinatario: destinatarioActual });
             }
@@ -193,6 +514,7 @@
         }
 
         function resetearLlamada() {
+            detenerTimbre();
             if (peerConnection) {
                 peerConnection.close();
                 peerConnection = null;
@@ -201,8 +523,8 @@
                 localStream.getTracks().forEach(track => track.stop());
                 localStream = null;
             }
-            document.getElementById('localVideo').srcObject = null;
-            document.getElementById('remoteVideo').srcObject = null;
+            document.getElementById('mainVideo').srcObject = null;
+            document.getElementById('pipVideo').srcObject = null;
             destinatarioActual = "";
         }
     </script>
