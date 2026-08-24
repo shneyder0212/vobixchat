@@ -212,9 +212,9 @@
                         <span style="font-size:9px; color:#34d399;">🟢 En línea</span>
                     </div>
                 </div>
-                <div style="display: flex; gap: 10px;">
-                    <button onclick="llamarDesdeChatPrivado(false)" style="background:#3b82f6; border:none; color:white; width:32px; height:32px; border-radius:50%; cursor:pointer; font-size:14px;">📞</button>
-                    <button onclick="llamarDesdeChatPrivado(true)" style="background:#10b981; border:none; color:white; width:32px; height:32px; border-radius:50%; cursor:pointer; font-size:14px;">📹</button>
+                <div style="display: flex; gap: 8px;" id="privateCallActionWrapper">
+                    <button id="btnLlamarPrivadoAudio" onclick="toggleLlamarDesdeChatPrivado(false)" style="background:#3b82f6; border:none; color:white; width:32px; height:32px; border-radius:50%; cursor:pointer; font-size:14px;" title="Llamar">📞</button>
+                    <button id="btnLlamarPrivadoVid" onclick="toggleLlamarDesdeChatPrivado(true)" style="background:#10b981; border:none; color:white; width:32px; height:32px; border-radius:50%; cursor:pointer; font-size:14px;" title="Videollamada">📹</button>
                 </div>
             </div>
             <div class="private-chat-messages" id="privateChatMessagesContainer">
@@ -395,6 +395,7 @@
         let localStream = null;
         let ofertaPendienteGlobal = null;
         let tonoLlamadaInterval = null;
+        let estaLlamandoActualmente = false;
         const peerConnections = {};
         const historialChats = {};
 
@@ -407,8 +408,10 @@
 
         function mostrarEstadoLlamada(texto) {
             const banner = document.getElementById('callStatusBanner');
-            banner.innerText = texto;
-            banner.style.display = 'block';
+            if (banner) {
+                banner.innerText = texto;
+                banner.style.display = 'block';
+            }
         }
 
         socket.on('connect', () => {
@@ -494,10 +497,32 @@
             }
         });
 
+        // BOTÓN DINÁMICO DE LLAMAR / COLGAR DESDE EL CHAT PRIVADO (ESTILO WHATSAPP)
+        function toggleLparDesdeChatPrivado(conVideo) {
+            if (!estaLlamandoActualmente) {
+                if (!chatActivoDestinatario) return;
+                destinatarioActual = chatActivoDestinatario;
+                iniciarConexionLlamada(conVideo);
+            } else {
+                colgarTodo();
+            }
+        }
+        // Alias retrocompatible por si el botón HTML llama a la anterior
         function llamarDesdeChatPrivado(conVideo) {
-            if (!chatActivoDestinatario) return;
-            destinatarioActual = chatActivoDestinatario;
-            iniciarConexionLlamada(conVideo);
+            toggleLparDesdeChatPrivado(conVideo);
+        }
+
+        function actualizarBotonLlamadaUI(llamando) {
+            estaLlamandoActualmente = llamando;
+            const btnAudio = document.getElementById('btnLlamarPrivadoAudio');
+            const btnVid = document.getElementById('btnLlamarPrivadoVid');
+            if (llamando) {
+                if(btnAudio) { btnAudio.style.background = "#ef4444"; btnAudio.innerHTML = "🔴"; btnAudio.title = "Colgar llamada"; }
+                if(btnVid) { btnVid.style.display = "none"; }
+            } else {
+                if(btnAudio) { btnAudio.style.background = "#3b82f6"; btnAudio.innerHTML = "📞"; btnAudio.title = "Llamar"; }
+                if(btnVid) { btnVid.style.display = "flex"; btnVid.style.background = "#10b981"; btnVid.innerHTML = "📹"; }
+            }
         }
 
         function copiarEnlaceInvitacion() {
@@ -673,6 +698,7 @@
 
             pc.ontrack = (event) => {
                 detenerTonoMarcacion();
+                actualizarBotonLlamadaUI(true);
                 mostrarEstadoLlamada("🟢 En llamada activa");
                 let box = document.getElementById(`box-${remoteId}`);
                 if (!box) {
@@ -720,12 +746,14 @@
 
         async function iniciarConexionLlamada(conVideo) {
             try {
+                actualizarBotonLlamadaUI(true);
                 iniciarTonoMarcacion();
                 mostrarEstadoLlamada("Llamando (conectando)...");
                 await inicializarMediaLocal(conVideo);
                 crearConexionPeerGrupal(destinatarioActual, true);
             } catch (e) {
                 detenerTonoMarcacion();
+                actualizarBotonLlamadaUI(false);
                 mostrarEstadoLlamada("Error al iniciar llamada");
             }
         }
@@ -744,6 +772,7 @@
             document.getElementById('incomingCallModal').classList.remove('active');
             if (!ofertaPendienteGlobal) return;
             destinatarioActual = ofertaPendienteGlobal.emisor;
+            actualizarBotonLlamadaUI(true);
             try {
                 mostrarEstadoLlamada("Conectando llamada...");
                 await inicializarMediaLocal(true);
@@ -760,6 +789,7 @@
             document.getElementById('incomingCallModal').classList.remove('active');
             if (ofertaPendienteGlobal) socket.emit("finalizar-llamada", { destinatario: ofertaPendienteGlobal.emisor });
             ofertaPendienteGlobal = null;
+            actualizarBotonLlamadaUI(false);
             mostrarEstadoLlamada("Llamada rechazada");
         }
 
@@ -768,6 +798,7 @@
             detenerTimbre();
             document.getElementById('incomingCallModal').classList.remove('active');
             resetearLlamadas();
+            actualizarBotonLlamadaUI(false);
             mostrarEstadoLlamada("Llamada finalizada");
         });
 
@@ -779,9 +810,9 @@
             else if (destinatarioActual) {
                 socket.emit("finalizar-llamada", { destinatario: destinatarioActual });
             }
-            // Forzar limpieza total de la llamada saliente aunque el otro esté apagado
             resetearLlamadas();
-            mostrarEstadoLlamada("Llamada cortada / Listo");
+            actualizarBotonLlamadaUI(false);
+            mostrarEstadoLlamada("Listo para conectar");
         }
 
         function resetearLlamadas() {
@@ -793,6 +824,7 @@
             document.getElementById('localVideo').srcObject = null;
             document.querySelectorAll('.video-box').forEach(box => { if (box.id !== 'box-local') box.remove(); });
             salaActualId = null; destinatarioActual = ""; ofertaPendienteGlobal = null;
+            actualizarBotonLlamadaUI(false);
         }
     </script>
 </body>
