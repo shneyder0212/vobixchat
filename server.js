@@ -35,20 +35,25 @@ const almacenamientoConfig = multer.diskStorage({
 
 const upload = multer({ 
     storage: almacenamientoConfig,
-    limits: { fileSize: 10 * 1024 * 1024 } // 10MB max
+    limits: { fileSize: 10 * 1024 * 1024 } 
 });
 
-// FILTRO ESTRICTO ANTI-VOIP Y ACCESO POR NÚMERO
+// BASE DE DATOS EN MEMORIA DE USUARIOS REGISTRADOS
+const usuariosRegistradosDB = new Map();
+
+// FILTRO ESTRICTO ANTI-VOIP Y VALIDACIÓN DE NÚMERO MÓVIL REAL
 app.post('/api/seguridad/verificar-usuario', (req, res) => {
     const { numeroCrudo } = req.body;
     if (!numeroCrudo) return res.status(400).json({ success: false, error: "NÚMERO REQUERIDO" });
 
     const telefonoLimpio = String(numeroCrudo).trim().replace(/[^0-9]/g, '');
 
+    // Detección estricta de prefijos o rangos VoIP sospechosos / virtuales
     const esVoipSospechoso = (
         telefonoLimpio.startsWith("800") || 
         telefonoLimpio.startsWith("888") || 
         telefonoLimpio.startsWith("900") ||
+        telefonoLimpio.startsWith("1800") ||
         telefonoLimpio.length < 8 || 
         telefonoLimpio.length > 15
     );
@@ -56,25 +61,47 @@ app.post('/api/seguridad/verificar-usuario', (req, res) => {
     if (esVoipSospechoso) {
         return res.status(400).json({ 
             success: false, 
-            error: "CERO NÚMERO VoIP PERMITIDO. Introduzca un número de teléfono móvil real." 
+            error: "DENEGADO: Los números VoIP o virtuales no están permitidos. Ingrese un número de móvil real." 
         });
     }
 
-    return res.status(200).json({ success: true, message: "ACCESO CONCEDIDO" });
+    const yaRegistrado = usuariosRegistradosDB.has(telefonoLimpio);
+
+    return res.status(200).json({ 
+        success: true, 
+        registradoPrevio: yaRegistrado,
+        message: yaRegistrado ? "Usuario reconocido. Ingrese su PIN." : "Nuevo usuario. Proceda a registrarse." 
+    });
 });
 
-// ENDPOINT DE VERIFICACIÓN DE PIN (MODO PRUEBA GRATIS PARA TU FAMILIA)
+// VERIFICACIÓN DE PIN Y REGISTRO / ACCESO DE USUARIOS
 app.post('/api/seguridad/verificar-pin', (req, res) => {
-    const { telefono, pin } = req.body;
+    const { telefono, pin, nombre } = req.body;
     if (!telefono || !pin) return res.status(400).json({ success: false, error: "Datos incompletos" });
 
-    const pinMaestro = "1234"; // PIN universal gratuito para pruebas
+    const telefonoLimpio = String(telefono).trim().replace(/[^0-9]/g, '');
+    const pinMaestro = "1234"; // PIN universal de prueba
 
-    if (pin === pinMaestro) {
-        return res.status(200).json({ success: true, message: "ACCESO CONCEDIDO (SISTEMA SEGURO)" });
+    if (pin !== pinMaestro) {
+        return res.status(400).json({ success: false, error: "PIN incorrecto. Use '1234'." });
     }
 
-    return res.status(400).json({ success: false, error: "PIN incorrecto. Usa '1234' para entrar." });
+    // Registrar o recuperar usuario
+    if (!usuariosRegistradosDB.has(telefonoLimpio)) {
+        usuariosRegistradosDB.set(telefonoLimpio, {
+            nombre: nombre || "Usuario Vobix",
+            telefono: telefonoLimpio,
+            registradoEn: new Date()
+        });
+    }
+
+    const datosUsuario = usuariosRegistradosDB.get(telefonoLimpio);
+
+    return res.status(200).json({ 
+        success: true, 
+        usuario: datosUsuario,
+        message: "ACCESO CONCEDIDO AL SISTEMA SEGURO" 
+    });
 });
 
 app.post('/api/multimedia/subir-archivo', upload.single('archivo_multimedia'), (req, res) => {
@@ -92,16 +119,12 @@ io.on("connection", (socket) => {
         const idUsuario = data.identificador_usuario;
         mapaCanalesUsuarios.set(idUsuario, socket.id);
         socket.idUsuarioVobix = idUsuario;
-        console.log(`[SOCKET] Usuario registrado: ${idUsuario} (${socket.id})`);
     });
 
-    // GESTIÓN DE SALAS PARA VIDEOCONFERENCIAS GRUPALES
     socket.on("unirse-a-sala", (data) => {
         const { salaId, usuarioId } = data;
         socket.join(salaId);
         socket.salaActual = salaId;
-        console.log(`[SOCKET] Usuario ${usuarioId} se unió a la sala grupal: ${salaId}`);
-        
         socket.to(salaId).emit("nuevo-usuario-sala", { emisor: usuarioId });
     });
 
@@ -109,17 +132,7 @@ io.on("connection", (socket) => {
         const { destinatario, emisor, tipo, payload } = datos;
         const socketDestinoId = mapaCanalesUsuarios.get(destinatario);
         if (socketDestinoId) {
-            io.to(socketDestinoId).emit("recibir-senalizacion-grupal", {
-                emisor,
-                tipo,
-                payload
-            });
-        } else {
-            // Compatibilidad hacia llamadas 1 a 1 tradicionales si el destinatario no está en sala grupal
-            io.to(socketDestinoId).emit("recibir-oferta-webrtc", {
-                emisor,
-                sdp: payload
-            });
+            io.to(socketDestinoId).emit("recibir-senalizacion-grupal", { emisor, tipo, payload });
         }
     });
 
@@ -143,7 +156,6 @@ io.on("connection", (socket) => {
                 if (socket.salaActual) {
                     socket.to(socket.salaActual).emit("usuario-salio-sala", { emisor: socket.idUsuarioVobix });
                 }
-                console.log(`[SOCKET] Usuario desconectado: ${socket.idUsuarioVobix}`);
             }
         }
     });
