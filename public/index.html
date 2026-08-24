@@ -90,7 +90,7 @@
         .app-body {
             flex: 1; padding: 8px; overflow-y: auto; -webkit-overflow-scrolling: touch;
             display: flex; flex-direction: column; gap: 6px; background: #0b141a; 
-            padding-bottom: 65px; 
+            padding-bottom: 75px; 
             overscroll-behavior-y: none;
         }
 
@@ -100,7 +100,6 @@
             border: 1px solid rgba(52, 211, 153, 0.3);
         }
 
-        /* ESTILO WHATSAPP PARA LISTA DE CHATS INDIVIDUALES */
         .chat-list-item {
             display: flex; align-items: center; justify-content: space-between;
             background: rgba(15, 23, 42, 0.8); padding: 10px 12px; border-radius: 10px; margin-bottom: 6px;
@@ -115,7 +114,6 @@
         .chat-details h4 { margin: 0; font-size: 13px; color: white; }
         .chat-details span { font-size: 10px; color: var(--text-muted); }
 
-        /* VENTANA DE CHAT PRIVADO ACTIVO */
         #privateChatRoom {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background: #0b141a; z-index: 400; display: none;
@@ -204,7 +202,7 @@
 
     <div class="app-container">
 
-        <!-- SALA DE CHAT PRIVADO INDIVIDUAL (ESTILO WHATSAPP) -->
+        <!-- SALA DE CHAT PRIVADO INDIVIDUAL -->
         <div id="privateChatRoom">
             <div class="private-chat-header">
                 <div style="display: flex; align-items: center; gap: 10px;">
@@ -222,7 +220,7 @@
             <div class="private-chat-messages" id="privateChatMessagesContainer">
                 <div class="burbuja recibida">Canal privado seguro establecido.</div>
             </div>
-            <div class="chat-input-bar" style="position: relative; width: 100%;">
+            <div class="chat-input-bar">
                 <div class="chat-bubble-input">
                     <input type="text" id="privateMessageInput" placeholder="Escribe un mensaje..." onkeypress="if(event.key === 'Enter') enviarMensajePrivado()">
                 </div>
@@ -239,7 +237,7 @@
             <div style="flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:8px; font-size:11px;">
                 <div class="card-panel">
                     <h4 style="margin:0 0 3px 0; color:var(--accent-green);">🔒 Red Cuántica Blindada</h4>
-                    <p style="margin:0; color:var(--text-muted); font-size:10px;">Burbujas de chat independientes activas.</p>
+                    <p style="margin:0; color:var(--text-muted); font-size:10px;">Sesión protegida y anticorte activa.</p>
                 </div>
             </div>
             <button class="btn-imponente" onclick="cerrarModal('settingsModal')">Guardar Cambios</button>
@@ -313,11 +311,10 @@
                 </div>
             </div>
 
-            <div class="app-body" style="padding-bottom: 20px;">
+            <div class="app-body">
                 
                 <div id="callStatusBanner">Listo para conectar</div>
 
-                <!-- LISTA DE CHATS PRIVADOS INDIVIDUALES (ESTILO WHATSAPP) -->
                 <div class="card-panel">
                     <h3>💬 Chats Privados</h3>
                     <div style="margin-top: 6px;" id="chatsListContainer">
@@ -335,7 +332,7 @@
                 </div>
 
                 <div class="card-panel">
-                    <h3>➕ Agregar Nuevo Chat por Número</h3>
+                    <h3>➕ Nuevo Chat por Número</h3>
                     <div class="input-group" style="margin-bottom: 4px;">
                         <input type="text" id="nuevoChatInput" placeholder="Número exacto (ej. 34695746539)">
                     </div>
@@ -367,6 +364,22 @@
 
     <script src="/socket.io/socket.io.js"></script>
     <script>
+        document.addEventListener('touchmove', function(e) {
+            if (e.touches.length > 1) return;
+            let target = e.target;
+            let esScrollable = false;
+            while (target && target !== document.body) {
+                if (target.scrollHeight > target.clientHeight) {
+                    esScrollable = true;
+                    break;
+                }
+                target = target.parentElement;
+            }
+            if (!esScrollable) {
+                e.preventDefault();
+            }
+        }, { passive: false });
+
         const socket = io({
             reconnection: true,
             reconnectionAttempts: Infinity,
@@ -383,7 +396,7 @@
         let ofertaPendienteGlobal = null;
         let tonoLlamadaInterval = null;
         const peerConnections = {};
-        const historialChats = {}; // Almacena los mensajes por cada número
+        const historialChats = {};
 
         const rtcConfig = {
             iceServers: [
@@ -409,7 +422,6 @@
             document.getElementById('privateChatTitle').innerText = `${nombre} (${numero})`;
             document.getElementById('privateChatRoom').classList.add('active');
             
-            // Cargar mensajes previos si existen
             const container = document.getElementById('privateChatMessagesContainer');
             container.innerHTML = "";
             if (historialChats[numero]) {
@@ -764,12 +776,17 @@
             detenerTimbre();
             document.getElementById('incomingCallModal').classList.remove('active');
             if (salaActualId) socket.emit("finalizar-llamada", { salaId: salaActualId });
-            else if (destinatarioActual) socket.emit("finalizar-llamada", { destinatario: destinatarioActual });
+            else if (destinatarioActual) {
+                socket.emit("finalizar-llamada", { destinatario: destinatarioActual });
+            }
+            // Forzar limpieza total de la llamada saliente aunque el otro esté apagado
             resetearLlamadas();
-            mostrarEstadoLlamada("Listo para conectar");
+            mostrarEstadoLlamada("Llamada cortada / Listo");
         }
 
         function resetearLlamadas() {
+            detenerTonoMarcacion();
+            detenerTimbre();
             Object.values(peerConnections).forEach(pc => pc.close());
             for (let key in peerConnections) delete peerConnections[key];
             if (localStream) { localStream.getTracks().forEach(track => track.stop()); localStream = null; }
