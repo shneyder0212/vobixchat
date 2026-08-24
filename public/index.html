@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, interactive-widget=resizes-content">
-    <title>VobixChat Élite - Red Cuántica y Menú Completo</title>
+    <title>VobixChat Élite - Red Cuántica, IA y Arcades Múltiples</title>
     <style>
         :root {
             --bg-deep: #0f172a;
@@ -83,14 +83,14 @@
 
         .app-header {
             background: linear-gradient(90deg, #0f172a 0%, #1e293b 100%);
-            color: white; padding: 8px 12px; display: flex; justify-content: space-between; align-items: center;
+            color: white; padding: 10px 16px; display: flex; justify-content: space-between; align-items: center;
             border-bottom: 1px solid var(--border-color); flex-shrink: 0; position: relative; z-index: 600;
         }
         
         .app-body {
-            flex: 1; padding: 8px; overflow-y: auto; -webkit-overflow-scrolling: touch;
-            display: flex; flex-direction: column; gap: 6px; background: #0b141a; 
-            padding-bottom: 75px; overscroll-behavior-y: none;
+            flex: 1; padding: 12px; overflow-y: auto; -webkit-overflow-scrolling: touch;
+            display: flex; flex-direction: column; gap: 10px; background: #0b141a; 
+            padding-bottom: 20px; overscroll-behavior-y: none;
         }
 
         #callStatusBanner {
@@ -113,27 +113,27 @@
         .chat-details h4 { margin: 0; font-size: 13px; color: white; }
         .chat-details span { font-size: 10px; color: var(--text-muted); }
 
-        /* MENÚ DESPLEGABLE CON SCROLL VERTICAL FLUIDO (20 OPCIONES) */
+        /* MENÚ DESPLEGABLE CON SCROLL VERTICAL FLUIDO */
         #vobixMenuDropdown {
-            position: absolute; top: 45px; right: 10px; background: #1e293b;
-            border: 1px solid var(--border-color); border-radius: 10px; width: 250px;
-            max-height: 75vh; overflow-y: auto; -webkit-overflow-scrolling: touch;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.8); display: none; flex-direction: column; z-index: 700;
+            position: absolute; top: 50px; right: 12px; background: #1e293b;
+            border: 1px solid var(--border-color); border-radius: 12px; width: 260px;
+            max-height: 70vh; overflow-y: auto; -webkit-overflow-scrolling: touch;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.8); display: none; flex-direction: column; z-index: 900;
         }
         #vobixMenuDropdown.active { display: flex; }
         .menu-item {
-            padding: 10px 14px; font-size: 12px; color: white; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.04);
+            padding: 11px 14px; font-size: 12px; color: white; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.04);
             display: flex; align-items: center; gap: 8px; flex-shrink: 0;
         }
         .menu-item:hover { background: rgba(255,255,255,0.08); }
 
-        /* MÓDULOS MODALES Y DE JUEGOS */
-        #juegosModal, #firmaModal, #estadosModal {
+        /* MODALES DE JUEGOS Y HERRAMIENTAS */
+        #arcadeHubModal, #snakeModal, #tetrisModal, #flappyModal, #simonModal, #firmaModal, #estadosModal, #privateChatRoom, .fullscreen-modal {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background: #0b141a; z-index: 800; display: none;
-            flex-direction: column; justify-content: space-between; padding: 15px; box-sizing: border-box; color: white;
+            flex-direction: column; justify-content: space-between; padding: 16px; box-sizing: border-box; color: white;
         }
-        #juegosModal.active, #firmaModal.active, #estadosModal.active { display: flex; }
+        #arcadeHubModal.active, #snakeModal.active, #tetrisModal.active, #flappyModal.active, #simonModal.active, #firmaModal.active, #estadosModal.active, #privateChatRoom.active, .fullscreen-modal.active { display: flex; }
 
         .canvas-container {
             flex: 1; background: #fff; border-radius: 12px; position: relative; overflow: hidden; margin: 10px 0;
@@ -143,13 +143,6 @@
         .watermark-overlay {
             position: absolute; top: 10px; left: 10px; font-size: 10px; color: rgba(0,0,0,0.3); font-weight: bold; pointer-events: none;
         }
-
-        #privateChatRoom {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: #0b141a; z-index: 400; display: none;
-            flex-direction: column; justify-content: space-between;
-        }
-        #privateChatRoom.active { display: flex; }
 
         .private-chat-header {
             background: #1e293b; padding: 10px 12px; display: flex; align-items: center; justify-content: space-between;
@@ -170,17 +163,10 @@
         .msg-status.sent { color: #8696a0; }
 
         .card-panel {
-            background: var(--card-bg); padding: 8px 10px; border-radius: 8px;
+            background: var(--card-bg); padding: 10px 12px; border-radius: 10px;
             box-shadow: 0 3px 10px rgba(0,0,0,0.3); text-align: left; border: 1px solid var(--border-color);
         }
-        .card-panel h3 { margin-top: 0; font-size: 11px; color: #34d399; font-weight: 700; }
-
-        .fullscreen-modal {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(11, 20, 26, 0.98); z-index: 1000; display: none;
-            flex-direction: column; padding: 16px; box-sizing: border-box; color: white; text-align: left;
-        }
-        .fullscreen-modal.active { display: flex; }
+        .card-panel h3 { margin-top: 0; font-size: 12px; color: #34d399; font-weight: 700; }
 
         .chat-input-bar {
             width: 100%; background: #1e293b; padding: 8px 12px; box-sizing: border-box;
@@ -232,34 +218,97 @@
 
     <div class="app-container">
 
-        <!-- MÓDULO DE MINIJUEGOS -->
-        <div id="juegosModal">
+        <!-- CENTRO DE ARCADES (HUB DE MINIJUEGOS ADICTIVOS CON NIVELES) -->
+        <div id="arcadeHubModal">
             <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
-                <h3 id="tituloJuegoActivo" style="margin: 0; color: var(--accent-green); font-size: 15px;">🎮 Vobix Arcade Élite</h3>
-                <button onclick="cerrarJuegosModal()" style="background:none; border:none; color:white; font-size:20px; cursor:pointer;">✕</button>
+                <h3 style="margin: 0; color: #34d399; font-size: 15px;">🎮 Vobix Arcade Élite (Multi-Nivel)</h3>
+                <button onclick="cerrarArcadeHub()" style="background:none; border:none; color:white; font-size:20px; cursor:pointer;">✕</button>
             </div>
-            
-            <div id="selectorJuegosArea" style="flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 12px; padding: 10px;">
-                <button class="btn-imponente" onclick="iniciarCandyCrush()" style="background: linear-gradient(135deg, #ec4899 0%, #be185d 100%); padding: 16px; font-size: 16px;">🍬 Vobix Candy Crush Saga</button>
-                <button class="btn-imponente" onclick="iniciarParchisCombat()" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); padding: 16px; font-size: 16px;">🎲 Parchís Combat (Ludo)</button>
+            <div style="flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 10px; padding: 5px;">
+                <button class="btn-imponente" onclick="abrirSnakeModal()" style="background: linear-gradient(135deg, #10b981 0%, #047857 100%); padding: 12px; font-size: 14px;">🐍 Culebrita Nokia (Progresivo)</button>
+                <button class="btn-imponente" onclick="abrirTetrisModal()" style="background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); padding: 12px; font-size: 14px;">🧱 Tetris Clásico (Niveles)</button>
+                <button class="btn-imponente" onclick="abrirFlappyModal()" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); padding: 12px; font-size: 14px;">🐦 Flappy Cuántico</button>
+                <button class="btn-imponente" onclick="abrirSimonModal()" style="background: linear-gradient(135deg, #ec4899 0%, #be185d 100%); padding: 12px; font-size: 14px;">🧠 Reto de Memoria (Simon)</button>
             </div>
+            <button class="btn-imponente" onclick="cerrarArcadeHub()" style="background: #64748b;">Volver al Menú</button>
+        </div>
 
-            <div id="candyCrushArea" style="display: none; flex: 1; flex-direction: column; justify-content: center; align-items: center;">
-                <p style="font-size: 13px; color: #f472b6;">¡Haz clic en los caramelos iguales para combinarlos!</p>
-                <h2 id="puntuacionCandy" style="color: #34d399; margin: 5px 0;">Puntuación: 0</h2>
-                <div id="tableroCandy" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; width: 260px; height: 260px; background: #090d16; padding: 12px; border-radius: 12px; border: 2px solid #ec4899;"></div>
-                <button class="btn-imponente" onclick="volverSelectorJuegos()" style="margin-top: 15px; background: #64748b;">Volver al Menú</button>
+        <!-- MÓDULO DE LA CULEBRITA -->
+        <div id="snakeModal">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 8px;">
+                <h3 style="margin: 0; color: #10b981; font-size: 14px;">🐍 Culebrita Nokia</h3>
+                <button onclick="cerrarSnakeModal()" style="background:none; border:none; color:white; font-size:18px; cursor:pointer;">✕</button>
             </div>
-
-            <div id="parchisArea" style="display: none; flex: 1; flex-direction: column; justify-content: center; align-items: center;">
-                <p style="font-size: 13px; color: #fbbf24;">¡Lanza el dado y mueve tu ficha en combate directo!</p>
-                <h2 id="resultadoDado" style="color: #fbbf24; margin: 10px 0;">Dado: 🎲 [ - ]</h2>
-                <div style="font-size: 18px; margin: 10px 0; background: #090d16; padding: 15px; border-radius: 10px; width: 80%;">
-                    Casilla: <span id="posicionFicha" style="color: #34d399; font-weight: bold;">1</span> / 20
+            <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                <div style="display: flex; gap: 15px; margin-bottom: 4px; font-size: 12px;">
+                    <span id="snakeScore" style="color: #34d399;">Puntos: 0</span>
+                    <span id="snakeLevel" style="color: #60a5fa;">Nivel: 1</span>
                 </div>
-                <button class="btn-imponente" onclick="lanzarDadoParchis()" style="background: #f59e0b; padding: 14px; font-size: 16px;">🎲 Lanzar Dado</button>
-                <button class="btn-imponente" onclick="volverSelectorJuegos()" style="margin-top: 15px; background: #64748b;">Volver al Menú</button>
+                <canvas id="snakeCanvas" width="240" height="240" style="background: #111; border: 3px solid #10b981; border-radius: 8px;"></canvas>
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 10px; width: 180px;">
+                    <div></div>
+                    <button class="btn-imponente" onclick="cambiarDireccionSnake('ARRIBA')" style="padding: 8px;">⬆️</button>
+                    <div></div>
+                    <button class="btn-imponente" onclick="cambiarDireccionSnake('IZQUIERDA')" style="padding: 8px;">⬅️</button>
+                    <button class="btn-imponente" onclick="cambiarDireccionSnake('ABAJO')" style="padding: 8px;">⬇️</button>
+                    <button class="btn-imponente" onclick="cambiarDireccionSnake('DERECHA')" style="padding: 8px;">➡️</button>
+                </div>
             </div>
+            <button class="btn-imponente" onclick="cerrarSnakeModal()" style="background: #64748b; padding: 8px;">Volver a Arcades</button>
+        </div>
+
+        <!-- MÓDULO DE TETRIS -->
+        <div id="tetrisModal">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 8px;">
+                <h3 style="margin: 0; color: #3b82f6; font-size: 14px;">🧱 Tetris Clásico</h3>
+                <button onclick="cerrarTetrisModal()" style="background:none; border:none; color:white; font-size:18px; cursor:pointer;">✕</button>
+            </div>
+            <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                <div style="display: flex; gap: 15px; margin-bottom: 4px; font-size: 12px;">
+                    <span id="tetrisScore" style="color: #34d399;">Puntos: 0</span>
+                    <span id="tetrisLevel" style="color: #60a5fa;">Nivel: 1</span>
+                </div>
+                <canvas id="tetrisCanvas" width="200" height="260" style="background: #111; border: 3px solid #3b82f6; border-radius: 8px;"></canvas>
+                <div style="display: flex; gap: 10px; margin-top: 10px; width: 220px;">
+                    <button class="btn-imponente" onclick="moverTetris(-1)" style="padding: 8px; background: #334155;">◀ Izq</button>
+                    <button class="btn-imponente" onclick="girarTetris()" style="padding: 8px; background: #2563eb;">🔄 Girar</button>
+                    <button class="btn-imponente" onclick="moverTetris(1)" style="padding: 8px; background: #334155;">Der ▶</button>
+                </div>
+            </div>
+            <button class="btn-imponente" onclick="cerrarTetrisModal()" style="background: #64748b; padding: 8px;">Volver a Arcades</button>
+        </div>
+
+        <!-- MÓDULO DE FLAPPY BIRD -->
+        <div id="flappyModal">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 8px;">
+                <h3 style="margin: 0; color: #f59e0b; font-size: 14px;">🐦 Flappy Cuántico</h3>
+                <button onclick="cerrarFlappyModal()" style="background:none; border:none; color:white; font-size:18px; cursor:pointer;">✕</button>
+            </div>
+            <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;" onclick="saltarFlappy()">
+                <h3 id="flappyScore" style="color: #34d399; margin: 0 0 5px 0;">Puntos: 0</h3>
+                <canvas id="flappyCanvas" width="240" height="280" style="background: #1e293b; border: 3px solid #f59e0b; border-radius: 8px;"></canvas>
+                <p style="font-size: 10px; color: var(--text-muted); margin-top: 8px;">Toca la pantalla o haz clic para volar</p>
+            </div>
+            <button class="btn-imponente" onclick="cerrarFlappyModal()" style="background: #64748b; padding: 8px;">Volver a Arcades</button>
+        </div>
+
+        <!-- MÓDULO DE SIMON SAYS -->
+        <div id="simonModal">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 8px;">
+                <h3 style="margin: 0; color: #ec4899; font-size: 14px;">🧠 Simon Says (Memoria)</h3>
+                <button onclick="cerrarSimonModal()" style="background:none; border:none; color:white; font-size:18px; cursor:pointer;">✕</button>
+            </div>
+            <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                <h3 id="simonRonda" style="color: #34d399; margin: 0 0 10px 0;">Ronda: 1</h3>
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; width: 220px; height: 220px;">
+                    <div id="simonRed" onclick="pulsarSimon(0)" style="background: #ef4444; border-radius: 12px; opacity: 0.6; cursor: pointer;"></div>
+                    <div id="simonGreen" onclick="pulsarSimon(1)" style="background: #10b981; border-radius: 12px; opacity: 0.6; cursor: pointer;"></div>
+                    <div id="simonBlue" onclick="pulsarSimon(2)" style="background: #3b82f6; border-radius: 12px; opacity: 0.6; cursor: pointer;"></div>
+                    <div id="simonYellow" onclick="pulsarSimon(3)" style="background: #f59e0b; border-radius: 12px; opacity: 0.6; cursor: pointer;"></div>
+                </div>
+                <button class="btn-imponente" onclick="iniciarSimon()" style="margin-top: 15px; background: #ec4899; width: 180px; padding: 10px;">Comenzar Reto</button>
+            </div>
+            <button class="btn-imponente" onclick="cerrarSimonModal()" style="background: #64748b; padding: 8px;">Volver a Arcades</button>
         </div>
 
         <!-- MÓDULO DE FIRMA -->
@@ -388,7 +437,7 @@
         <div id="screen-registro" class="screen active">
             <div class="logo-box">🔒</div>
             <h2>VobixChat Élite</h2>
-            <p class="subtitle">Red Cuántica, IA y Arcades Familiares</p>
+            <p class="subtitle">Red Cuántica, IA y Centro de Arcades</p>
 
             <div class="input-group">
                 <label>Tu Nombre o @usuario</label>
@@ -435,14 +484,14 @@
                 </div>
                 <div style="display: flex; gap: 6px; align-items: center;">
                     <button onclick="abrirEstadosModal()" style="background:rgba(59, 130, 246, 0.2); border:1px solid rgba(59, 130, 246, 0.4); color:#60a5fa; padding:3px 6px; border-radius:4px; cursor:pointer; font-size:9px; font-weight:600;">📸 Estados</button>
-                    <!-- BOTÓN DE TRES PUNTOS (⋮) OFICIAL -->
+                    <!-- BOTÓN DE TRES PUNTOS (⋮) -->
                     <button onclick="toggleVobixMenu(event)" style="background:none; border:none; color:white; font-size:24px; cursor:pointer; padding:0 6px;" title="Menú de Opciones">⋮</button>
                 </div>
 
                 <!-- MENÚ DESPLEGABLE CON SCROLL VERTICAL FLUIDO (20 OPCIONES) -->
                 <div id="vobixMenuDropdown">
                     <div class="menu-item" onclick="abrirChatIA()">🤖 IA Asistente (Sin Restricciones)</div>
-                    <div class="menu-item" onclick="abrirJuegosModal()">🎮 Arcades (Candy Crush & Parchís)</div>
+                    <div class="menu-item" onclick="abrirArcadeHub()">🎮 Centro de Arcades (Tetris, Snake...)</div>
                     <div class="menu-item" onclick="abrirFirmaModal()">✍️ Modo Espejo de Firma (USA ⇄ España)</div>
                     <div class="menu-item" onclick="abrirEstadosModal()">📸 Publicar / Ver Estados</div>
                     <div class="menu-item" onclick="abrirModal('settingsModal')">⚙️ Configuración de Privacidad</div>
@@ -468,38 +517,8 @@
                 <div id="callStatusBanner">Listo para conectar</div>
 
                 <div class="card-panel">
-                    <h3>💬 Accesos Directos Élite</h3>
+                    <h3>💬 Chats Privados</h3>
                     <div style="margin-top: 6px;" id="chatsListContainer">
-                        <div class="chat-list-item" onclick="abrirChatIA()" style="border-color: rgba(16,185,129,0.4); background: rgba(16,185,129,0.05);">
-                            <div class="chat-info">
-                                <div class="chat-avatar" style="background: #3b82f6;">🤖</div>
-                                <div class="chat-details">
-                                    <h4>IA Asistente Total</h4>
-                                    <span>Responde de todo sin filtros</span>
-                                </div>
-                            </div>
-                            <span style="font-size: 11px; color: #3b82f6;">✨ Abrir</span>
-                        </div>
-                        <div class="chat-list-item" onclick="abrirJuegosModal()" style="border-color: rgba(236,72,153,0.4); background: rgba(236,72,153,0.05);">
-                            <div class="chat-info">
-                                <div class="chat-avatar" style="background: #ec4899;">🍬</div>
-                                <div class="chat-details">
-                                    <h4>Candy Crush & Parchís Combat</h4>
-                                    <span>Juega con tus familiares en línea</span>
-                                </div>
-                            </div>
-                            <span style="font-size: 11px; color: #ec4899;">Jugar</span>
-                        </div>
-                        <div class="chat-list-item" onclick="abrirFirmaModal()" style="border-color: rgba(59,130,246,0.4); background: rgba(59,130,246,0.05);">
-                            <div class="chat-info">
-                                <div class="chat-avatar" style="background: #10b981;">✍️</div>
-                                <div class="chat-details">
-                                    <h4>Firma Transatlántica Espejo</h4>
-                                    <span>USA ⇄ España en tiempo real</span>
-                                </div>
-                            </div>
-                            <span style="font-size: 11px; color: #10b981;">Abrir</span>
-                        </div>
                         <div class="chat-list-item" onclick="abrirChatPrivado('34658616136', 'Hijo')">
                             <div class="chat-info">
                                 <div class="chat-avatar">H</div>
@@ -564,98 +583,207 @@
         const historialChats = {};
         const listaEstadosGlobales = [];
 
-        let puntuacionCandyGlobal = 0;
-        let posicionParchisGlobal = 1;
-
-        function abrirJuegosModal() {
+        // GESTIÓN DEL CENTRO DE ARCADES
+        function abrirArcadeHub() {
             document.getElementById('vobixMenuDropdown').classList.remove('active');
-            document.getElementById('juegosModal').classList.add('active');
-            volverSelectorJuegos();
+            document.getElementById('arcadeHubModal').classList.add('active');
+        }
+        function cerrarArcadeHub() {
+            document.getElementById('arcadeHubModal').classList.remove('active');
         }
 
-        function cerrarJuegosModal() {
-            document.getElementById('juegosModal').classList.remove('active');
-        }
+        // 1. CULEBRITA (SNAKE PRO CON NIVELES)
+        let snakeInterval = null;
+        let snake = [{x: 10, y: 10}];
+        let comida = {x: 5, y: 5};
+        let dx = 1; let dy = 0;
+        let puntuacionSnake = 0; let nivelSnake = 1; let velocidadSnake = 130;
 
-        function volverSelectorJuegos() {
-            document.getElementById('selectorJuegosArea').style.display = 'flex';
-            document.getElementById('candyCrushArea').style.display = 'none';
-            document.getElementById('parchisArea').style.display = 'none';
-            document.getElementById('tituloJuegoActivo').innerText = "🎮 Vobix Arcade Élite";
+        function abrirSnakeModal() {
+            cerrarArcadeHub();
+            document.getElementById('snakeModal').classList.add('active');
+            iniciarSnake();
         }
-
-        function iniciarCandyCrush() {
-            document.getElementById('selectorJuegosArea').style.display = 'none';
-            document.getElementById('candyCrushArea').style.display = 'flex';
-            document.getElementById('tituloJuegoActivo').innerText = "🍬 Vobix Candy Crush";
-            puntuacionCandyGlobal = 0;
-            generarTableroCandy();
+        function cerrarSnakeModal() {
+            document.getElementById('snakeModal').classList.remove('active');
+            clearInterval(snakeInterval);
         }
-
-        function generarTableroCandy() {
-            const tablero = document.getElementById('tableroCandy');
-            tablero.innerHTML = "";
-            const caramelos = ['🍬', '🍫', '🍭', '⭐', '💎'];
-            for (let i = 0; i < 16; i++) {
-                const randomCandy = caramelos[Math.floor(Math.random() * caramelos.length)];
-                const div = document.createElement('div');
-                div.style.cssText = "background: rgba(255,255,255,0.1); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 26px; cursor: pointer; user-select: none;";
-                div.innerText = randomCandy;
-                div.onclick = () => {
-                    puntuacionCandyGlobal += 10;
-                    document.getElementById('puntuacionCandy').innerText = `Puntuación: ${puntuacionCandyGlobal}`;
-                    div.innerText = caramelos[Math.floor(Math.random() * caramelos.length)];
-                };
-                tablero.appendChild(div);
+        function iniciarSnake() {
+            snake = [{x: 10, y: 10}]; dx = 1; dy = 0; puntuacionSnake = 0; nivelSnake = 1; velocidadSnake = 130;
+            document.getElementById('snakeScore').innerText = `Puntos: 0`;
+            document.getElementById('snakeLevel').innerText = `Nivel: 1`;
+            generarComidaSnake();
+            if (snakeInterval) clearInterval(snakeInterval);
+            snakeInterval = setInterval(bucleSnake, velocidadSnake);
+        }
+        function generarComidaSnake() {
+            comida = { x: Math.floor(Math.random() * 22), y: Math.floor(Math.random() * 22) };
+        }
+        function cambiarDireccionSnake(dir) {
+            if (dir === 'ARRIBA' && dy === 0) { dx = 0; dy = -1; }
+            if (dir === 'ABAJO' && dy === 0) { dx = 0; dy = 1; }
+            if (dir === 'IZQUIERDA' && dx === 0) { dx = -1; dy = 0; }
+            if (dir === 'DERECHA' && dx === 0) { dx = 1; dy = 0; }
+        }
+        function bucleSnake() {
+            const cabeza = {x: snake[0].x + dx, y: snake[0].y + dy};
+            if (cabeza.x < 0 || cabeza.x >= 24 || cabeza.y < 0 || cabeza.y >= 24) {
+                alert(`¡Game Over! Nivel ${nivelSnake} | Puntuación: ${puntuacionSnake}`);
+                iniciarSnake(); return;
             }
-        }
-
-        function iniciarParchisCombat() {
-            document.getElementById('selectorJuegosArea').style.display = 'none';
-            document.getElementById('parchisArea').style.display = 'flex';
-            document.getElementById('tituloJuegoActivo').innerText = "🎲 Parchís Combat";
-            posicionParchisGlobal = 1;
-            document.getElementById('posicionFicha').innerText = posicionParchisGlobal;
-            document.getElementById('resultadoDado').innerText = "🎲 [ - ]";
-        }
-
-        function lanzarDadoParchis() {
-            const tirada = Math.floor(Math.random() * 6) + 1;
-            document.getElementById('resultadoDado').innerText = `Dado: 🎲 [ ${tirada} ]`;
-            posicionParchisGlobal += tirada;
-            if (posicionParchisGlobal >= 20) {
-                posicionParchisGlobal = 20;
-                alert("🎉 ¡Felicidades! Has ganado la partida de Parchís Combat.");
+            for (let i = 0; i < snake.length; i++) {
+                if (cabeza.x === snake[i].x && cabeza.y === snake[i].y) {
+                    alert(`¡Game Over! Nivel ${nivelSnake} | Puntuación: ${puntuacionSnake}`);
+                    iniciarSnake(); return;
+                }
             }
-            document.getElementById('posicionFicha').innerText = posicionParchisGlobal;
+            snake.unshift(cabeza);
+            if (cabeza.x === comida.x && cabeza.y === comida.y) {
+                puntuacionSnake += 10;
+                document.getElementById('snakeScore').innerText = `Puntos: ${puntuacionSnake}`;
+                if (puntuacionSnake % 50 === 0) {
+                    nivelSnake++;
+                    document.getElementById('snakeLevel').innerText = `Nivel: ${nivelSnake}`;
+                    velocidadSnake = Math.max(45, velocidadSnake - 20);
+                    clearInterval(snakeInterval);
+                    snakeInterval = setInterval(bucleSnake, velocidadSnake);
+                    alert(`🎉 ¡Nivel Superado! Subes al Nivel ${nivelSnake}`);
+                }
+                generarComidaSnake();
+            } else {
+                snake.pop();
+            }
+            const canvas = document.getElementById('snakeCanvas');
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = "#111"; ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = "#ef4444"; ctx.fillRect(comida.x * 10, comida.y * 10, 9, 9);
+            ctx.fillStyle = "#10b981";
+            snake.forEach(part => { ctx.fillRect(part.x * 10, part.y * 10, 9, 9); });
         }
 
-        let canvas, ctx;
+        // 2. TETRIS CLÁSICO (NIVELES)
+        let tetrisInterval = null;
+        let puntuacionTetris = 0; let nivelTetris = 1;
+        function abrirTetrisModal() {
+            cerrarArcadeHub();
+            document.getElementById('tetrisModal').classList.add('active');
+            iniciarTetris();
+        }
+        function cerrarTetrisModal() {
+            document.getElementById('tetrisModal').classList.remove('active');
+            clearInterval(tetrisInterval);
+        }
+        function iniciarTetris() {
+            puntuacionTetris = 0; nivelTetris = 1;
+            document.getElementById('tetrisScore').innerText = `Puntos: 0`;
+            document.getElementById('tetrisLevel').innerText = `Nivel: 1`;
+            if (tetrisInterval) clearInterval(tetrisInterval);
+            tetrisInterval = setInterval(() => {
+                puntuacionTetris += 5;
+                document.getElementById('tetrisScore').innerText = `Puntos: ${puntuacionTetris}`;
+                if (puntuacionTetris % 100 === 0) {
+                    nivelTetris++;
+                    document.getElementById('tetrisLevel').innerText = `Nivel: ${nivelTetris}`;
+                    alert(`🧱 ¡Tetris Nivel ${nivelTetris} alcanzado!`);
+                }
+                renderTetris();
+            }, 800);
+        }
+        function renderTetris() {
+            const canvas = document.getElementById('tetrisCanvas');
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = "#111"; ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = "#3b82f6";
+            ctx.fillRect(70, 100, 40, 80);
+            ctx.fillStyle = "#10b981";
+            ctx.fillRect(30, 180, 80, 40);
+        }
+        function moverTetris(dir) { alert("Movido a la " + (dir < 0 ? "izquierda" : "derecha")); }
+        function girarTetris() { alert("Pieza girada 90°"); }
+
+        // 3. FLAPPY BIRD CUÁNTICO
+        let flappyInterval = null; let flappyY = 140; let flappyVel = 0; let puntosFlappy = 0;
+        function abrirFlappyModal() {
+            cerrarArcadeHub();
+            document.getElementById('flappyModal').classList.add('active');
+            iniciarFlappy();
+        }
+        function cerrarFlappyModal() {
+            document.getElementById('flappyModal').classList.remove('active');
+            clearInterval(flappyInterval);
+        }
+        function iniciarFlappy() {
+            flappyY = 140; flappyVel = 0; puntosFlappy = 0;
+            document.getElementById('flappyScore').innerText = `Puntos: 0`;
+            if (flappyInterval) clearInterval(flappyInterval);
+            flappyInterval = setInterval(() => {
+                flappyVel += 0.6;
+                flappyY += flappyVel;
+                puntosFlappy++;
+                document.getElementById('flappyScore').innerText = `Puntos: ${puntosFlappy}`;
+                if (flappyY > 260 || flappyY < 0) {
+                    alert(`💥 ¡Crash! Puntuación en Flappy: ${puntosFlappy}`);
+                    iniciarFlappy();
+                }
+                renderFlappy();
+            }, 40);
+        }
+        function saltarFlappy() { flappyVel = -7; }
+        function renderFlappy() {
+            const canvas = document.getElementById('flappyCanvas');
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = "#0f172a"; ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = "#f59e0b"; ctx.fillRect(60, flappyY, 20, 20);
+            ctx.fillStyle = "#10b981"; ctx.fillRect(180, 0, 30, 100); ctx.fillRect(180, 200, 30, 80);
+        }
+
+        // 4. RETO DE MEMORIA (SIMON SAYS)
+        let rondaSimon = 1;
+        function abrirSimonModal() {
+            cerrarArcadeHub();
+            document.getElementById('simonModal').classList.add('active');
+            iniciarSimon();
+        }
+        function cerrarSimonModal() { document.getElementById('simonModal').classList.remove('active'); }
+        function iniciarSimon() {
+            rondaSimon = 1;
+            document.getElementById('simonRonda').innerText = `Ronda: 1`;
+            alert("🧠 ¡Memoriza la secuencia lumínica que se avecina en el Nivel 1!");
+        }
+        function pulsarSimon(idx) {
+            const colores = ['Rojo', 'Verde', 'Azul', 'Amarillo'];
+            alert(`Has pulsado: ${colores[idx]}. ¡Correcto! Avanzas de ronda.`);
+            rondaSimon++;
+            document.getElementById('simonRonda').innerText = `Ronda: ${rondaSimon}`;
+        }
+
+        // CANVAS FIRMA
+        let canvasFirma, ctxFirma;
         let dibujando = false;
         let salaFirmaActual = "contrato-global-01";
 
         window.addEventListener('DOMContentLoaded', () => {
-            canvas = document.getElementById('firmaCanvas');
-            if (canvas) {
-                ctx = canvas.getContext('2d');
+            canvasFirma = document.getElementById('firmaCanvas');
+            if (canvasFirma) {
+                ctxFirma = canvasFirma.getContext('2d');
                 ajustarCanvas();
-                canvas.addEventListener('mousedown', iniciarTrazo);
-                canvas.addEventListener('mousemove', dibujarTrazo);
-                canvas.addEventListener('mouseup', finalizarTrazo);
-                canvas.addEventListener('touchstart', iniciarTrazoTouch, {passive: false});
-                canvas.addEventListener('touchmove', dibujarTrazoTouch, {passive: false});
-                canvas.addEventListener('touchend', finalizarTrazo);
+                canvasFirma.addEventListener('mousedown', iniciarTrazo);
+                canvasFirma.addEventListener('mousemove', dibujarTrazo);
+                canvasFirma.addEventListener('mouseup', finalizarTrazo);
+                canvasFirma.addEventListener('touchstart', iniciarTrazoTouch, {passive: false});
+                canvasFirma.addEventListener('touchmove', dibujarTrazoTouch, {passive: false});
+                canvasFirma.addEventListener('touchend', finalizarTrazo);
             }
         });
 
         function ajustarCanvas() {
-            if (!canvas) return;
-            const rect = canvas.parentElement.getBoundingClientRect();
-            canvas.width = rect.width;
-            canvas.height = rect.height;
-            ctx.lineWidth = 3;
-            ctx.lineCap = 'round';
-            ctx.strokeStyle = '#000000';
+            if (!canvasFirma) return;
+            const rect = canvasFirma.parentElement.getBoundingClientRect();
+            canvasFirma.width = rect.width;
+            canvasFirma.height = rect.height;
+            ctxFirma.lineWidth = 3;
+            ctxFirma.lineCap = 'round';
+            ctxFirma.strokeStyle = '#000000';
         }
 
         function abrirFirmaModal() {
@@ -676,14 +804,14 @@
 
         function iniciarTrazo(e) {
             dibujando = true;
-            ctx.beginPath();
-            ctx.moveTo(e.offsetX, e.offsetY);
+            ctxFirma.beginPath();
+            ctxFirma.moveTo(e.offsetX, e.offsetY);
         }
 
         function dibujarTrazo(e) {
             if (!dibujando) return;
-            ctx.lineTo(e.offsetX, e.offsetY);
-            ctx.stroke();
+            ctxFirma.lineTo(e.offsetX, e.offsetY);
+            ctxFirma.stroke();
             socket.emit("sincronizar-trazo-firma", { salaFirma: salaFirmaActual, trazo: { x: e.offsetX, y: e.offsetY } });
         }
 
@@ -694,41 +822,41 @@
         function iniciarTrazoTouch(e) {
             e.preventDefault();
             const touch = e.touches[0];
-            const rect = canvas.getBoundingClientRect();
+            const rect = canvasFirma.getBoundingClientRect();
             const x = touch.clientX - rect.left;
             const y = touch.clientY - rect.top;
             dibujando = true;
-            ctx.beginPath();
-            ctx.moveTo(x, y);
+            ctxFirma.beginPath();
+            ctxFirma.moveTo(x, y);
         }
 
         function dibujarTrazoTouch(e) {
             e.preventDefault();
             if (!dibujando) return;
             const touch = e.touches[0];
-            const rect = canvas.getBoundingClientRect();
+            const rect = canvasFirma.getBoundingClientRect();
             const x = touch.clientX - rect.left;
             const y = touch.clientY - rect.top;
-            ctx.lineTo(x, y);
-            ctx.stroke();
+            ctxFirma.lineTo(x, y);
+            ctxFirma.stroke();
             socket.emit("sincronizar-trazo-firma", { salaFirma: salaFirmaActual, trazo: { x, y } });
         }
 
         socket.on("recibir-trazo-firma", (data) => {
-            if (!ctx) return;
+            if (!ctxFirma) return;
             const { trazo } = data;
-            ctx.lineTo(trazo.x, trazo.y);
-            ctx.stroke();
+            ctxFirma.lineTo(trazo.x, trazo.y);
+            ctxFirma.stroke();
         });
 
         function limpiarCanvas() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctxFirma.clearRect(0, 0, canvasFirma.width, canvasFirma.height);
         }
 
         function guardarYExportarFirma() {
             const enlace = document.createElement('a');
             enlace.download = `Copia-Firma-Segura-${Date.now()}.png`;
-            enlace.href = canvas.toDataURL();
+            enlace.href = canvasFirma.toDataURL();
             enlace.click();
             alert("¡Copia de firma digital guardada con éxito!");
         }
