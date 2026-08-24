@@ -2,8 +2,8 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VobixChat - Estilo WhatsApp</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>VobixChat - Estilo WhatsApp Total</title>
     <style>
         :root {
             --whatsapp-green: #00a884;
@@ -11,6 +11,7 @@
             --whatsapp-bg: #efeae2;
             --panel-bg: #ffffff;
             --danger-red: #ea4335;
+            --border-color: #e9edef;
         }
 
         body {
@@ -23,6 +24,7 @@
             justify-content: center;
             align-items: center;
             height: 100vh;
+            overflow: hidden;
         }
 
         .app-container {
@@ -30,13 +32,21 @@
             max-width: 480px;
             background: var(--panel-bg);
             height: 100vh;
-            max-height: 900px;
+            max-height: 100%;
             box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-            border-radius: 12px;
             display: flex;
             flex-direction: column;
             overflow: hidden;
             position: relative;
+        }
+
+        @media (min-width: 768px) {
+            .app-container {
+                height: 90vh;
+                max-height: 900px;
+                border-radius: 12px;
+                border: 1px solid var(--border-color);
+            }
         }
 
         .screen {
@@ -71,9 +81,9 @@
             width: 100%;
             padding: 12px;
             box-sizing: border-box;
-            border: 1px solid #e9edef;
+            border: 1px solid var(--border-color);
             border-radius: 8px;
-            font-size: 15px;
+            font-size: 16px; /* Evita zoom automático en iPhone */
             outline: none;
         }
         input:focus { border-color: var(--whatsapp-green); }
@@ -96,7 +106,7 @@
         .app-header {
             background-color: var(--whatsapp-dark);
             color: white;
-            padding: 15px 20px;
+            padding: 12px 16px;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -104,33 +114,35 @@
         
         .app-body {
             flex: 1;
-            padding: 15px;
+            padding: 12px;
             overflow-y: auto;
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            gap: 10px;
             background: var(--whatsapp-bg);
+            /* Espacio inferior para que el contenido no quede tapado por la burbuja flotante */
+            padding-bottom: 80px; 
         }
 
         .card-panel {
             background: white;
-            padding: 15px;
+            padding: 12px;
             border-radius: 10px;
             box-shadow: 0 1px 3px rgba(0,0,0,0.1);
             text-align: left;
         }
-        .card-panel h3 { margin-top: 0; font-size: 15px; color: var(--whatsapp-dark); }
+        .card-panel h3 { margin-top: 0; font-size: 14px; color: var(--whatsapp-dark); }
 
-        /* Cuadrícula de Vídeos (Múltiples participantes / Conferencias) */
+        /* Cuadrícula de Vídeos (Conferencias) */
         .video-grid-container {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            gap: 8px;
-            max-height: 280px;
+            gap: 6px;
+            max-height: 220px;
             overflow-y: auto;
             background: #111;
             border-radius: 8px;
-            padding: 5px;
+            padding: 4px;
         }
 
         .video-box {
@@ -138,13 +150,13 @@
             background: #222;
             border-radius: 6px;
             overflow: hidden;
-            height: 120px;
+            height: 100px;
             cursor: pointer;
             border: 2px solid transparent;
         }
         .video-box.expanded {
             grid-column: span 2;
-            height: 220px;
+            height: 180px;
             border-color: var(--whatsapp-green);
         }
         .video-box video {
@@ -154,14 +166,108 @@
         }
         .video-label {
             position: absolute;
-            bottom: 4px;
-            left: 4px;
+            bottom: 3px;
+            left: 3px;
             background: rgba(0,0,0,0.6);
             color: white;
-            font-size: 10px;
-            padding: 2px 6px;
-            border-radius: 4px;
+            font-size: 9px;
+            padding: 2px 5px;
+            border-radius: 3px;
         }
+
+        /* --- TECLADO / BARRA FLOTANTE EN BURBUJA (Estilo WhatsApp adaptable Android / iPhone) --- */
+        .chat-input-bar {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: #f0f2f5;
+            padding: 10px 12px;
+            box-sizing: border-box;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-top: 1px solid var(--border-color);
+            z-index: 100;
+            /* Adaptación clave para iPhone (barra inferior Gesture bar / Home indicator) */
+            padding-bottom: calc(10px + env(safe-area-inset-bottom));
+        }
+
+        .chat-bubble-input {
+            flex: 1;
+            background: white;
+            border-radius: 25px;
+            padding: 8px 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            border: 1px solid var(--border-color);
+        }
+
+        .chat-bubble-input input {
+            border: none;
+            outline: none;
+            width: 100%;
+            font-size: 15px;
+            background: transparent;
+        }
+
+        .icon-btn {
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            padding: 0;
+            color: #54656f;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: color 0.2s;
+        }
+        .icon-btn:hover { color: var(--whatsapp-green); }
+
+        .send-mic-btn {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background-color: var(--whatsapp-green);
+            color: white;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            flex-shrink: 0;
+        }
+        .send-mic-btn:hover { background-color: var(--whatsapp-dark); }
+
+        /* Panel de Emojis desplegable */
+        #emojiPickerPanel {
+            position: absolute;
+            bottom: 70px;
+            left: 15px;
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 10px;
+            display: none;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+            z-index: 105;
+        }
+        #emojiPickerPanel.active { display: grid; }
+        .emoji-item {
+            font-size: 22px;
+            cursor: pointer;
+            text-align: center;
+            padding: 4px;
+            border-radius: 5px;
+        }
+        .emoji-item:hover { background: #f0f2f5; }
 
         /* MODAL DE LLAMADA ENTRANTE ESTILO WHATSAPP */
         #incomingCallModal {
@@ -181,14 +287,13 @@
         #incomingCallModal.active { display: flex; }
 
         .caller-avatar {
-            width: 90px; height: 90px;
-            background: #00a884;
+            width: 80px; height: 80px;
+            background: var(--whatsapp-green);
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 35px;
-            margin-top: 40px;
+            font-size: 32px;
             box-shadow: 0 0 20px rgba(0,168,132,0.5);
             animation: pulse 1.5s infinite;
         }
@@ -201,14 +306,14 @@
         .call-action-buttons {
             display: flex;
             gap: 40px;
-            margin-bottom: 50px;
+            margin-bottom: 40px;
         }
         .round-btn {
-            width: 65px; height: 65px;
+            width: 60px; height: 60px;
             border-radius: 50%;
             border: none;
             color: white;
-            font-size: 24px;
+            font-size: 22px;
             cursor: pointer;
             display: flex;
             align-items: center;
@@ -217,39 +322,22 @@
         }
         .btn-accept { background-color: #25d366; }
         .btn-reject { background-color: var(--danger-red); }
-
-        .call-controls-bar {
-            display: flex;
-            justify-content: center;
-            gap: 15px;
-            margin-top: 10px;
-        }
-        button.call-btn {
-            padding: 10px 20px;
-            border-radius: 50px;
-            border: none;
-            color: white;
-            font-weight: bold;
-            cursor: pointer;
-            font-size: 14px;
-        }
-        .btn-danger { background-color: var(--danger-red); }
     </style>
 </head>
 <body>
 
     <div class="app-container">
 
-        <!-- VENTANA FLOTANTE DE LLAMADA ENTRANTE (ESTILO WHATSAPP) -->
+        <!-- MODAL LLAMADA ENTRANTE -->
         <div id="incomingCallModal">
             <div>
-                <p style="text-transform: uppercase; letter-spacing: 2px; font-size: 12px; opacity: 0.7; margin:0;">VobixChat Videollamada</p>
-                <h1 id="incomingCallerName" style="margin: 10px 0; font-size: 26px;">658616136</h1>
+                <p style="text-transform: uppercase; letter-spacing: 2px; font-size: 11px; opacity: 0.7; margin:0;">VobixChat Llamada</p>
+                <h1 id="incomingCallerName" style="margin: 10px 0; font-size: 24px;">658616136</h1>
             </div>
             <div class="caller-avatar">📞</div>
             <div class="call-action-buttons">
-                <button class="round-btn btn-reject" onclick="rechazarLlamadaEntrante()" title="Rechazar">✕</button>
-                <button class="round-btn btn-accept" onclick="aceptarLlamadaEntrante()" title="Contestar">📞</button>
+                <button class="round-btn btn-reject" onclick="rechazarLlamadaEntrante()">✕</button>
+                <button class="round-btn btn-accept" onclick="aceptarLlamadaEntrante()">📞</button>
             </div>
         </div>
 
@@ -280,18 +368,18 @@
 
             <div class="input-group">
                 <label>PIN de Acceso</label>
-                <input type="text" id="regPin" placeholder="1234" style="text-align: center; letter-spacing: 5px; font-size: 18px;">
+                <input type="text" id="regPin" placeholder="1234" style="text-align: center; letter-spacing: 5px;">
             </div>
 
             <button class="btn-main" onclick="verificarPinYEntrar()">Entrar a la App</button>
         </div>
 
-        <!-- PASO 2: PANTALLA PRINCIPAL DE LLAMADAS Y GRUPOS -->
-        <div id="screen-chat" class="screen" style="padding: 0; text-align: left;">
+        <!-- PASO 2: PANTALLA PRINCIPAL CON BURBUJA FLOTANTE ESTILO WHATSAPP -->
+        <div id="screen-chat" class="screen" style="padding: 0; text-align: left; position: relative;">
             <div class="app-header">
                 <div>
-                    <h3 id="lblUserSession" style="margin:0; font-size: 15px;">VobixChat</h3>
-                    <span style="font-size: 11px; opacity: 0.8;" id="lblPhoneSession">En línea</span>
+                    <h3 id="lblUserSession" style="margin:0; font-size: 14px;">VobixChat</h3>
+                    <span style="font-size: 10px; opacity: 0.8;" id="lblPhoneSession">En línea</span>
                 </div>
                 <button onclick="location.reload()" style="background:none; border:none; color:white; cursor:pointer; font-size:12px;">Salir</button>
             </div>
@@ -304,8 +392,8 @@
                         <input type="text" id="destinatarioInput" placeholder="Número (ej. 658616136)">
                     </div>
                     <div style="display: flex; gap: 6px;">
-                        <button class="call-btn btn-main" onclick="iniciarLlamada(false)" style="flex:1; background:#00a884;">Voz</button>
-                        <button class="call-btn btn-main" onclick="iniciarLlamada(true)" style="flex:1; background:#005c4b;">Vídeo</button>
+                        <button class="call-btn btn-main" onclick="iniciarLlamada(false)" style="flex:1; background:#00a884; padding:10px;">Voz</button>
+                        <button class="call-btn btn-main" onclick="iniciarLlamada(true)" style="flex:1; background:#005c4b; padding:10px;">Vídeo</button>
                     </div>
                 </div>
 
@@ -315,12 +403,12 @@
                     <div class="input-group" style="margin-bottom: 6px;">
                         <input type="text" id="salaInput" placeholder="Nombre de Sala (ej. Familia)">
                     </div>
-                    <button class="call-btn btn-main" onclick="unirseSalaGrupal()" style="width:100%; background:#6c757d;">Unirse a Sala Grupal</button>
+                    <button class="call-btn btn-main" onclick="unirseSalaGrupal()" style="width:100%; background:#6c757d; padding:10px;">Unirse a Sala Grupal</button>
                 </div>
 
-                <!-- Cuadrícula de Vídeo Interactiva -->
+                <!-- Cuadrícula de Vídeo -->
                 <div class="card-panel" style="flex: 1; display: flex; flex-direction: column;">
-                    <h3 style="margin-bottom: 5px;">Cámaras Activas (Toca para ampliar)</h3>
+                    <h3 style="margin-bottom: 4px; font-size: 13px;">Cámaras (Toca para ampliar)</h3>
                     <div class="video-grid-container" id="videoGrid">
                         <div class="video-box" id="box-local" onclick="alternarAmpliar('box-local')">
                             <video id="localVideo" autoplay muted playsinline></video>
@@ -328,10 +416,35 @@
                         </div>
                     </div>
 
-                    <div class="call-controls-bar">
-                        <button class="call-btn btn-danger" onclick="colgarTodo()" style="width: 100%;">Finalizar / Colgar</button>
-                    </div>
+                    <button class="call-btn" onclick="colgarTodo()" style="background:#ea4335; border:none; color:white; padding:8px; border-radius:6px; margin-top:8px; font-weight:bold; cursor:pointer;">Finalizar Llamadas</button>
                 </div>
+            </div>
+
+            <!-- PANEL DE EMOJIS FLOTANTE -->
+            <div id="emojiPickerPanel">
+                <span class="emoji-item" onclick="insertarEmoji('😀')">😀</span>
+                <span class="emoji-item" onclick="insertarEmoji('😂')">😂</span>
+                <span class="emoji-item" onclick="insertarEmoji('❤️')">❤️</span>
+                <span class="emoji-item" onclick="insertarEmoji('👍')">👍</span>
+                <span class="emoji-item" onclick="insertarEmoji('🎉')">🎉</span>
+                <span class="emoji-item" onclick="insertarEmoji('🔥')">🔥</span>
+                <span class="emoji-item" onclick="insertarEmoji('😎')">😎</span>
+                <span class="emoji-item" onclick="insertarEmoji('😢')">😢</span>
+                <span class="emoji-item" onclick="insertarEmoji('🙏')">🙏</span>
+                <span class="emoji-item" onclick="insertarEmoji('✨')">✨</span>
+            </div>
+
+            <!-- BURBUJA FLOTANTE INFERIOR (TECLADO / ENTRADA ESTILO WHATSAPP) -->
+            <div class="chat-input-bar">
+                <button class="icon-btn" onclick="toggleEmojiPicker()" title="Emojis">😊</button>
+                <label class="icon-btn" title="Adjuntar Documento">
+                    📎
+                    <input type="file" id="fileDocInput" style="display: none;" onchange="manejarEnvioDocumento(this)">
+                </label>
+                <div class="chat-bubble-input">
+                    <input type="text" id="mensajeInput" placeholder="Escribe un mensaje...">
+                </div>
+                <button class="send-mic-btn" id="btnMicAudio" onclick="accionMicOrSend()" title="Nota de Voz / Enviar">🎤</button>
             </div>
         </div>
 
@@ -354,7 +467,7 @@
             ]
         };
 
-        // Sistema de Audio Web nativo para tonos y timbres
+        // Web Audio Context para sonidos y timbres nativos
         let audioCtx = null;
         let ringingInterval = null;
 
@@ -405,6 +518,55 @@
             }
         }
 
+        // --- FUNCIONES DE LA BARRA / BURBUJA FLOTANTE ---
+        function toggleEmojiPicker() {
+            const panel = document.getElementById('emojiPickerPanel');
+            panel.classList.toggle('active');
+        }
+
+        function insertarEmoji(emoji) {
+            const input = document.getElementById('mensajeInput');
+            input.value += emoji;
+            toggleEmojiPicker();
+            input.focus();
+        }
+
+        function manejarEnvioDocumento(input) {
+            if (input.files && input.files[0]) {
+                const file = input.files[0];
+                alert(`Documento adjuntado con éxito: ${file.name}`);
+                reproducirSonidoNotificacion();
+            }
+        }
+
+        let grabandoAudio = false;
+        function accionMicOrSend() {
+            const input = document.getElementById('mensajeInput');
+            const btn = document.getElementById('btnMicAudio');
+
+            if (input.value.trim().length > 0) {
+                // Enviar texto simulado
+                alert(`Mensaje enviado: ${input.value}`);
+                input.value = "";
+                reproducirSonidoNotificacion();
+            } else {
+                // Simulación de Nota de Voz
+                if (!grabandoAudio) {
+                    grabandoAudio = true;
+                    btn.style.background = "#ea4335"; // Rojo grabando
+                    btn.innerText = "⏹️";
+                    alert("Grabando nota de voz... (Vuelve a tocar para detener y enviar)");
+                } else {
+                    grabandoAudio = false;
+                    btn.style.background = "var(--whatsapp-green)";
+                    btn.innerText = "🎤";
+                    alert("Nota de voz enviada correctamente.");
+                    reproducirSonidoNotificacion();
+                }
+            }
+        }
+
+        // --- REGISTRO Y ACCESO ---
         function avanzarPin() {
             getAudioContext();
             const nombre = document.getElementById('regNombre').value.trim();
@@ -561,7 +723,7 @@
             }
         });
 
-        // --- LLAMADA INDIVIDUAL 1 A 1 CON MODAL ESTILO WHATSAPP ---
+        // --- LLAMADAS 1 A 1 ---
         async function iniciarLlamada(conVideo) {
             const destinatario = document.getElementById('destinatarioInput').value.trim();
             if (!destinatario) return alert("Introduce el número del destinatario.");
@@ -570,12 +732,11 @@
             crearConexionPeerGrupal(destinatarioActual, true);
         }
 
-        // Cuando alguien te llama, salta la pantalla flotante de WhatsApp automáticamente
         socket.on("recibir-oferta-webrtc", async (data) => {
             ofertaPendienteGlobal = data;
             document.getElementById('incomingCallerName').innerText = data.emisor;
             document.getElementById('incomingCallModal').classList.add('active');
-            iniciarTimbreEntrante(); // Suena el timbre continuamente
+            iniciarTimbreEntrante();
         });
 
         async function aceptarLlamadaEntrante() {
