@@ -92,7 +92,6 @@ io.on("connection", (socket) => {
         const idUsuario = String(data.identificador_usuario).trim();
         mapaCanalesUsuarios.set(idUsuario, socket.id);
         socket.idUsuarioVobix = idUsuario;
-        console.log(`[SOCKET] Canal registrado exitosamente: ${idUsuario}`);
     });
 
     socket.on("enviar-mensaje-chat", (datos) => {
