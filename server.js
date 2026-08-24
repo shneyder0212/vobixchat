@@ -1,6 +1,6 @@
 require('dotenv').config();
 const express = require('express');
-const http = require('http');
+const http = http = require('http');
 const path = require('path');
 const fs = require('fs');
 const multer = require('multer');
@@ -10,7 +10,7 @@ const app = express();
 const servidorHTTP = http.createServer(app);
 const io = new Server(servidorHTTP, { 
     cors: { origin: "*" },
-    pingTimeout: 60000,
+    pingTimeout: 120000, // Margen amplio para mantener la sesión abierta permanentemente
     pingInterval: 25000
 });
 
@@ -38,17 +38,14 @@ const upload = multer({
     limits: { fileSize: 10 * 1024 * 1024 } 
 });
 
-// BASE DE DATOS EN MEMORIA DE USUARIOS REGISTRADOS
 const usuariosRegistradosDB = new Map();
 
-// FILTRO ESTRICTO ANTI-VOIP Y VALIDACIÓN DE NÚMERO MÓVIL REAL
+// BLOQUEO ESTRICTO VOIP
 app.post('/api/seguridad/verificar-usuario', (req, res) => {
     const { numeroCrudo } = req.body;
     if (!numeroCrudo) return res.status(400).json({ success: false, error: "NÚMERO REQUERIDO" });
 
     const telefonoLimpio = String(numeroCrudo).trim().replace(/[^0-9]/g, '');
-
-    // Detección estricta de prefijos o rangos VoIP sospechosos / virtuales
     const esVoipSospechoso = (
         telefonoLimpio.startsWith("800") || 
         telefonoLimpio.startsWith("888") || 
@@ -59,55 +56,30 @@ app.post('/api/seguridad/verificar-usuario', (req, res) => {
     );
 
     if (esVoipSospechoso) {
-        return res.status(400).json({ 
-            success: false, 
-            error: "DENEGADO: Los números VoIP o virtuales no están permitidos. Ingrese un número de móvil real." 
-        });
+        return res.status(400).json({ success: false, error: "DENEGADO: Números VoIP no permitidos." });
     }
 
-    const yaRegistrado = usuariosRegistradosDB.has(telefonoLimpio);
-
-    return res.status(200).json({ 
-        success: true, 
-        registradoPrevio: yaRegistrado,
-        message: yaRegistrado ? "Usuario reconocido. Ingrese su PIN." : "Nuevo usuario. Proceda a registrarse." 
-    });
+    return res.status(200).json({ success: true, registradoPrevio: usuariosRegistradosDB.has(telefonoLimpio) });
 });
 
-// VERIFICACIÓN DE PIN Y REGISTRO / ACCESO DE USUARIOS
 app.post('/api/seguridad/verificar-pin', (req, res) => {
     const { telefono, pin, nombre } = req.body;
     if (!telefono || !pin) return res.status(400).json({ success: false, error: "Datos incompletos" });
 
     const telefonoLimpio = String(telefono).trim().replace(/[^0-9]/g, '');
-    const pinMaestro = "1234"; // PIN universal de prueba
-
-    if (pin !== pinMaestro) {
+    if (pin !== "1234") {
         return res.status(400).json({ success: false, error: "PIN incorrecto. Use '1234'." });
     }
 
-    // Registrar o recuperar usuario
     if (!usuariosRegistradosDB.has(telefonoLimpio)) {
-        usuariosRegistradosDB.set(telefonoLimpio, {
-            nombre: nombre || "Usuario Vobix",
-            telefono: telefonoLimpio,
-            registradoEn: new Date()
-        });
+        usuariosRegistradosDB.set(telefonoLimpio, { nombre: nombre || "Usuario", telefono: telefonoLimpio });
     }
 
-    const datosUsuario = usuariosRegistradosDB.get(telefonoLimpio);
-
-    return res.status(200).json({ 
-        success: true, 
-        usuario: datosUsuario,
-        message: "ACCESO CONCEDIDO AL SISTEMA SEGURO" 
-    });
+    return res.status(200).json({ success: true, usuario: usuariosRegistradosDB.get(telefonoLimpio) });
 });
 
 app.post('/api/multimedia/subir-archivo', upload.single('archivo_multimedia'), (req, res) => {
-    if (!req.file) {
-        return res.status(400).json({ success: false, error: "NO_FILE" });
-    }
+    if (!req.file) return res.status(400).json({ success: false, error: "NO_FILE" });
     return res.status(200).json({ success: true, archivoUrl: '/uploads/quantum_media/' + req.file.filename });
 });
 
@@ -116,9 +88,10 @@ const mapaCanalesUsuarios = new Map();
 io.on("connection", (socket) => {
     socket.on("registrar-canal-llamada", (data) => {
         if (!data || !data.identificador_usuario) return;
-        const idUsuario = data.identificador_usuario;
+        const idUsuario = String(data.identificador_usuario).trim();
         mapaCanalesUsuarios.set(idUsuario, socket.id);
         socket.idUsuarioVobix = idUsuario;
+        console.log(`[SOCKET] Usuario conectado permanentemente: ${idUsuario}`);
     });
 
     socket.on("unirse-a-sala", (data) => {
@@ -129,10 +102,16 @@ io.on("connection", (socket) => {
     });
 
     socket.on("senalizacion-grupal", (datos) => {
-        const { destinatario, emisor, tipo, payload } = datos;
-        const socketDestinoId = mapaCanalesUsuarios.get(destinatario);
-        if (socketDestinoId) {
-            io.to(socketDestinoId).emit("recibir-senalizacion-grupal", { emisor, tipo, payload });
+        const { destinatario, emisor, tipo, payload, salaId } = datos;
+        if (salaId) {
+            socket.to(salaId).emit("recibir-senalizacion-grupal", { emisor, tipo, payload });
+        } else if (destinatario) {
+            const socketDestinoId = mapaCanalesUsuarios.get(String(destinatario).trim());
+            if (socketDestinoId) {
+                io.to(socketDestinoId).emit("recibir-senalizacion-grupal", { emisor, tipo, payload });
+            } else {
+                socket.broadcast.emit("recibir-oferta-webrtc", { emisor, sdp: payload });
+            }
         }
     });
 
@@ -142,7 +121,7 @@ io.on("connection", (socket) => {
             socket.to(salaId).emit("usuario-salio-sala", { emisor: socket.idUsuarioVobix });
             socket.leave(salaId);
         } else if (destinatario) {
-            const socketDestinoId = mapaCanalesUsuarios.get(destinatario);
+            const socketDestinoId = mapaCanalesUsuarios.get(String(destinatario).trim());
             if (socketDestinoId) {
                 io.to(socketDestinoId).emit("llamada-finalizada", { emisor: socket.idUsuarioVobix });
             }
@@ -151,11 +130,9 @@ io.on("connection", (socket) => {
 
     socket.on("disconnect", () => {
         if (socket.idUsuarioVobix) {
-            if (mapaCanalesUsuarios.get(socket.idUsuarioVobix) === socket.id) {
-                mapaCanalesUsuarios.delete(socket.idUsuarioVobix);
-                if (socket.salaActual) {
-                    socket.to(socket.salaActual).emit("usuario-salio-sala", { emisor: socket.idUsuarioVobix });
-                }
+            mapaCanalesUsuarios.delete(socket.idUsuarioVobix);
+            if (socket.salaActual) {
+                socket.to(socket.salaActual).emit("usuario-salio-sala", { emisor: socket.idUsuarioVobix });
             }
         }
     });
