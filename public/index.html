@@ -83,7 +83,7 @@
 
         .app-header {
             background: linear-gradient(90deg, #0f172a 0%, #1e293b 100%);
-            color: white; padding: 10px 16px; display: flex; justify-content: space-between; align-items: center;
+            color: white; padding: 10px 14px; display: flex; justify-content: space-between; align-items: center;
             border-bottom: 1px solid var(--border-color); flex-shrink: 0; position: relative; z-index: 600;
         }
         
@@ -219,7 +219,7 @@
 
     <div class="app-container">
 
-        <!-- AGENDA DE CONTACTOS Y DIFUSIÓN DE INVITACIONES -->
+        <!-- AGENDA DE CONTACTOS Y DIFUSIÓN -->
         <div id="contactoModal">
             <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
                 <h3 style="margin: 0; color: #34d399; font-size: 15px;">👥 Agenda de Contactos & Difusión</h3>
@@ -505,17 +505,19 @@
             <button class="btn-imponente" onclick="verificarPinYEntrar()">Acceder a la Red</button>
         </div>
 
-        <!-- PASO 2: PANTALLA PRINCIPAL CON MENÚ DESLIZABLE Y OPCIÓN DE OCULTAR CHAT -->
+        <!-- PASO 2: PANTALLA PRINCIPAL CON BOTÓN DE INVITAR AFUERA Y MENÚ DE TRES PUNTOS -->
         <div id="screen-chat" class="screen" style="padding: 0; text-align: left; position: relative;">
             <div class="app-header">
                 <div>
                     <h3 id="lblUserSession" style="margin:0; font-size: 12px; font-weight: 700; color: #34d399;">VobixChat Élite</h3>
                     <span id="lblEstadoCabecera" style="font-size: 8px; color: #34d399;">🟢 En línea</span>
                 </div>
-                <div style="display: flex; gap: 6px; align-items: center;">
-                    <button onclick="abrirEstadosModal()" style="background:rgba(59, 130, 246, 0.2); border:1px solid rgba(59, 130, 246, 0.4); color:#60a5fa; padding:3px 6px; border-radius:4px; cursor:pointer; font-size:9px; font-weight:600;">📸 Estados</button>
+                <div style="display: flex; gap: 5px; align-items: center;">
+                    <button onclick="abrirEstadosModal()" style="background:rgba(59, 130, 246, 0.2); border:1px solid rgba(59, 130, 246, 0.4); color:#60a5fa; padding:3px 5px; border-radius:4px; cursor:pointer; font-size:8px; font-weight:600;">📸 Estados</button>
+                    <!-- BOTÓN DE INVITAR AFUERA A LA DERECHA -->
+                    <button onclick="copiarEnlaceInvitacion()" style="background:rgba(16, 185, 129, 0.2); border:1px solid rgba(16, 185, 129, 0.4); color:#34d399; padding:3px 5px; border-radius:4px; cursor:pointer; font-size:8px; font-weight:600;">🔗 Invitar</button>
                     <!-- BOTÓN DE TRES PUNTOS (⋮) -->
-                    <button onclick="toggleVobixMenu(event)" style="background:none; border:none; color:white; font-size:24px; cursor:pointer; padding:0 6px;" title="Menú de Opciones">⋮</button>
+                    <button onclick="toggleVobixMenu(event)" style="background:none; border:none; color:white; font-size:22px; cursor:pointer; padding:0 4px;" title="Menú de Opciones">⋮</button>
                 </div>
 
                 <!-- MENÚ DESPLEGABLE CON SCROLL VERTICAL FLUIDO (20 OPCIONES) -->
@@ -560,7 +562,7 @@
                             </div>
                             <div style="display: flex; gap: 6px; align-items: center;">
                                 <span onclick="abrirChatPrivado('34658616136', 'Hijo')" style="font-size: 11px; color: #10b981; cursor: pointer;">💬 Abrir</span>
-                                <span onclick="ocultarChatPrincipal('34658616136')" style="font-size: 11px; color: #ef4444; cursor: pointer; padding: 2px 6px; background: rgba(239,68,68,0.1); border-radius: 4px;" title="Ocultar chat de la pantalla principal">🗑️ Ocultar</span>
+                                <span onclick="ocultarChatPrincipal('34658616136')" style="font-size: 11px; color: #ef4444; cursor: pointer; padding: 2px 6px; background: rgba(239,68,68,0.1); border-radius: 4px;" title="Ocultar chat">🗑️ Ocultar</span>
                             </div>
                         </div>
                     </div>
@@ -618,16 +620,14 @@
         const listaEstadosGlobales = [];
         const contactosAgendaGlobal = [];
 
-        // OCULTAR CHAT DE LA PANTALLA PRINCIPAL (SIN BLOQUEAR)
         function ocultarChatPrincipal(numero) {
             const elemento = document.getElementById(`chat-item-${numero}`);
             if (elemento) {
                 elemento.style.display = 'none';
-                alert(`Chat con ${numero} ocultado de la pantalla principal con éxito. Nadie sabrá que hablas con él. Puedes reabrirlo introduciendo su número en "Nuevo Chat por Número".`);
+                alert(`Chat con ${numero} ocultado de la pantalla principal con éxito. Puedes reabrirlo introduciendo su número en "Nuevo Chat por Número".`);
             }
         }
 
-        // GESTIÓN DE CONTACTOS Y DIFUSIÓN
         function abrirContactoModal() {
             document.getElementById('vobixMenuDropdown').classList.remove('active');
             document.getElementById('contactoModal').classList.add('active');
@@ -683,7 +683,6 @@
             }
         }
 
-        // CENTRO DE ARCADES
         function abrirArcadeHub() {
             document.getElementById('vobixMenuDropdown').classList.remove('active');
             document.getElementById('arcadeHubModal').classList.add('active');
@@ -692,7 +691,6 @@
             document.getElementById('arcadeHubModal').classList.remove('active');
         }
 
-        // CULEBRITA (SNAKE)
         let snakeInterval = null;
         let snake = [{x: 10, y: 10}];
         let comida = {x: 5, y: 5};
@@ -761,7 +759,6 @@
             snake.forEach(part => { ctx.fillRect(part.x * 10, part.y * 10, 9, 9); });
         }
 
-        // TETRIS CLÁSICO
         let tetrisInterval = null;
         let puntuacionTetris = 0; let nivelTetris = 1;
         function abrirTetrisModal() {
@@ -799,7 +796,6 @@
         function moverTetris(dir) { alert("Movido a la " + (dir < 0 ? "izquierda" : "derecha")); }
         function girarTetris() { alert("Pieza girada 90°"); }
 
-        // FLAPPY BIRD
         let flappyInterval = null; let flappyY = 140; let flappyVel = 0; let puntosFlappy = 0;
         function abrirFlappyModal() {
             cerrarArcadeHub();
@@ -835,7 +831,6 @@
             ctx.fillStyle = "#10b981"; ctx.fillRect(180, 0, 30, 100); ctx.fillRect(180, 200, 30, 80);
         }
 
-        // SIMON SAYS
         let rondaSimon = 1;
         function abrirSimonModal() {
             cerrarArcadeHub();
@@ -855,7 +850,6 @@
             document.getElementById('simonRonda').innerText = `Ronda: ${rondaSimon}`;
         }
 
-        // CANVAS FIRMA
         let canvasFirma, ctxFirma;
         let dibujando = false;
         let salaFirmaActual = "contrato-global-01";
@@ -1066,7 +1060,6 @@
             document.getElementById('privateCallActionWrapper').style.display = "flex";
             document.getElementById('privateChatRoom').classList.add('active');
             
-            // Si el chat estaba oculto, lo volvemos a mostrar en la lista principal
             const elementoOculto = document.getElementById(`chat-item-${numero}`);
             if (elementoOculto) elementoOculto.style.display = 'flex';
 
@@ -1097,7 +1090,6 @@
             if (!num) return;
             const container = document.getElementById('chatsListContainer');
             
-            // Comprueba si ya existe en la lista para no duplicar
             if (!document.getElementById(`chat-item-${num}`)) {
                 container.innerHTML += `
                     <div class="chat-list-item" id="chat-item-${num}">
