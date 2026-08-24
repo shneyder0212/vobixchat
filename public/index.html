@@ -168,7 +168,6 @@
             box-shadow: 0 12px 25px rgba(16, 185, 129, 0.5);
         }
 
-        /* Pantalla Principal Chat */
         .app-header {
             background: linear-gradient(90deg, #0f172a 0%, #1e293b 100%);
             color: white;
@@ -200,7 +199,6 @@
         }
         .card-panel h3 { margin-top: 0; font-size: 15px; color: #34d399; font-weight: 700; }
 
-        /* Cuadrícula de Vídeo */
         .video-grid-container {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
@@ -245,7 +243,6 @@
             backdrop-filter: blur(4px);
         }
 
-        /* BARRA INFERIOR / BURBUJA FLOTANTE */
         .chat-input-bar {
             position: absolute;
             bottom: 0;
@@ -313,7 +310,6 @@
         }
         .send-mic-btn:hover { transform: scale(1.05); }
 
-        /* Panel de Emojis */
         #emojiPickerPanel {
             position: absolute;
             bottom: 75px;
@@ -339,7 +335,6 @@
         }
         .emoji-item:hover { background: rgba(255,255,255,0.1); }
 
-        /* MODAL DE LLAMADA ENTRANTE */
         #incomingCallModal {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -449,7 +444,6 @@
                         <option value="+32">🇧🇪 +32</option>
                         <option value="+31">🇳🇱 +31</option>
                     </select>
-                    <!-- Campo limpio sin número preescrito -->
                     <input type="tel" id="regTelefono" placeholder="Introduce tu número" style="flex:1;">
                 </div>
             </div>
@@ -564,7 +558,6 @@
             ]
         };
 
-        // Detección automática de país por IP (Selecciona España +34 por defecto o el correspondiente)
         async function detectarPaisYPrefijo() {
             try {
                 const res = await fetch('https://ipapi.co/json/');
@@ -718,19 +711,22 @@
                 document.getElementById('lblPhoneSession').innerText = "Canal: " + telefono;
                 reproducirSonidoNotificacion();
 
-                await inicializarMediaLocal(true);
+                // NOTA: La cámara ya NO se abre sola al entrar; se abrirá al iniciar o aceptar una llamada.
             } catch (e) {
                 alert("Error de conexión con el servidor seguro.");
             }
         }
 
+        // Inicializa la cámara solo cuando se requiere (Llamada o Videollamada)
         async function inicializarMediaLocal(conVideo) {
-            if (localStream) return;
+            if (localStream) return localStream;
             try {
                 localStream = await navigator.mediaDevices.getUserMedia({ video: conVideo, audio: true });
                 document.getElementById('localVideo').srcObject = localStream;
+                return localStream;
             } catch (error) {
                 alert("No se pudieron obtener permisos de cámara/micrófono.");
+                throw error;
             }
         }
 
@@ -746,12 +742,18 @@
             const salaId = document.getElementById('salaInput').value.trim();
             if (!salaId) return alert("Introduce el nombre de la sala.");
 
-            salaActualId = salaId;
-            socket.emit("unirse-a-sala", { salaId, usuarioId: identificadorUsuario });
-            alert(`Conectado a la sala segura: ${salaId}`);
+            try {
+                await inicializarMediaLocal(true); // Activa la cámara al unirse a la sala
+                salaActualId = salaId;
+                socket.emit("unirse-a-sala", { salaId, usuarioId: identificadorUsuario });
+                alert(`Conectado a la sala segura: ${salaId}`);
+            } catch (e) {
+                console.error(e);
+            }
         }
 
         socket.on("nuevo-usuario-sala", async (data) => {
+            if (!localStream) await inicializarMediaLocal(true);
             crearConexionPeerGrupal(data.emisor, true);
         });
 
@@ -818,6 +820,7 @@
             let pc = peerConnections[emisor];
 
             if (!pc) {
+                if (!localStream) await inicializarMediaLocal(true);
                 crearConexionPeerGrupal(emisor, false);
                 pc = peerConnections[emisor];
             }
@@ -847,7 +850,12 @@
             const prefijoActual = document.getElementById('selectPrefijo').value;
             destinatarioActual = prefijoActual + cuerpoDestino.replace(/[^0-9]/g, '');
 
-            crearConexionPeerGrupal(destinatarioActual, true);
+            try {
+                await inicializarMediaLocal(conVideo);
+                crearConexionPeerGrupal(destinatarioActual, true);
+            } catch (e) {
+                console.error(e);
+            }
         }
 
         socket.on("recibir-oferta-webrtc", async (data) => {
@@ -914,6 +922,13 @@
         function resetearLlamadas() {
             Object.values(peerConnections).forEach(pc => pc.close());
             for (let key in peerConnections) delete peerConnections[key];
+
+            // Apaga la cámara y el micrófono por completo al colgar
+            if (localStream) {
+                localStream.getTracks().forEach(track => track.stop());
+                localStream = null;
+            }
+            document.getElementById('localVideo').srcObject = null;
 
             document.querySelectorAll('.video-box').forEach(box => {
                 if (box.id !== 'box-local') box.remove();
