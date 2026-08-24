@@ -9,12 +9,10 @@ const { Server } = require("socket.io");
 const app = express();
 const servidorHTTP = http.createServer(app);
 
-// CABECERAS DE SEGURIDAD ANTI-BLOQUEO Y ANTI-INYECCIÓN
 app.use((req, res, next) => {
     res.setHeader("X-Content-Type-Options", "nosniff");
     res.setHeader("X-Frame-Options", "DENY");
     res.setHeader("X-XSS-Protection", "1; mode=block");
-    res.setHeader("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
     next();
 });
 
@@ -34,7 +32,6 @@ if (!fs.existsSync(rutaMedia)){
 }
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// ESCUDO ANTI-VIRUS: VALIDACIÓN ESTRICTA DE ARCHIVOS PERMITIDOS
 const almacenamientoConfig = multer.diskStorage({
     destination: (req, file, cb) => cb(null, rutaMedia),
     filename: (req, file, cb) => {
@@ -44,25 +41,13 @@ const almacenamientoConfig = multer.diskStorage({
     }
 });
 
-const fileFilterSeguro = (req, file, cb) => {
-    const extensionesProhibidas = ['.exe', '.bat', '.cmd', '.sh', '.msi', '.vbs', '.js', '.scr', '.pif'];
-    const ext = path.extname(file.originalname).toLowerCase();
-    
-    if (extensionesProhibidas.includes(ext)) {
-        return cb(new Error("ARCHIVO_BLOQUEADO_POR_SEGURIDAD"), false);
-    }
-    cb(null, true);
-};
-
 const upload = multer({ 
     storage: almacenamientoConfig,
-    fileFilter: fileFilterSeguro,
-    limits: { fileSize: 10 * 1024 * 1024 } // 10MB máximo
+    limits: { fileSize: 10 * 1024 * 1024 } 
 });
 
 const usuariosRegistradosDB = new Map();
 
-// FILTRO ANTI-VOIP Y ANTI-FRAUDES
 app.post('/api/seguridad/verificar-usuario', (req, res) => {
     const { numeroCrudo } = req.body;
     if (!numeroCrudo) return res.status(400).json({ success: false, error: "NÚMERO REQUERIDO" });
@@ -72,22 +57,17 @@ app.post('/api/seguridad/verificar-usuario', (req, res) => {
         telefonoLimpio.startsWith("800") || 
         telefonoLimpio.startsWith("888") || 
         telefonoLimpio.startsWith("900") ||
-        telefonoLimpio.startsWith("1800") ||
         telefonoLimpio.length < 8 || 
         telefonoLimpio.length > 15
     );
 
     if (esVoipSospechoso) {
-        return res.status(400).json({ 
-            success: false, 
-            error: "DENEGADO: Los números VoIP o virtuales están bloqueados por seguridad." 
-        });
+        return res.status(400).json({ success: false, error: "DENEGADO: Números VoIP no permitidos." });
     }
 
     return res.status(200).json({ success: true, registradoPrevio: usuariosRegistradosDB.has(telefonoLimpio) });
 });
 
-// AUTENTICACIÓN CIFRADA POR PIN
 app.post('/api/seguridad/verificar-pin', (req, res) => {
     const { telefono, pin, nombre } = req.body;
     if (!telefono || !pin) return res.status(400).json({ success: false, error: "Datos incompletos" });
@@ -104,19 +84,6 @@ app.post('/api/seguridad/verificar-pin', (req, res) => {
     return res.status(200).json({ success: true, usuario: usuariosRegistradosDB.get(telefonoLimpio) });
 });
 
-// SUBIDA DE ARCHIVOS CON SANITIZACIÓN
-app.post('/api/multimedia/subir-archivo', (req, res) => {
-    upload.single('archivo_multimedia')(req, res, (err) => {
-        if (err) {
-            return res.status(400).json({ success: false, error: "Archivo no permitido por el escudo antivirus." });
-        }
-        if (!req.file) {
-            return res.status(400).json({ success: false, error: "NO_FILE" });
-        }
-        return res.status(200).json({ success: true, archivoUrl: '/uploads/quantum_media/' + req.file.filename });
-    });
-});
-
 const mapaCanalesUsuarios = new Map();
 
 io.on("connection", (socket) => {
@@ -125,10 +92,9 @@ io.on("connection", (socket) => {
         const idUsuario = String(data.identificador_usuario).trim();
         mapaCanalesUsuarios.set(idUsuario, socket.id);
         socket.idUsuarioVobix = idUsuario;
-        console.log(`[CANAL SEGURO ACTIVO] Usuario en línea: ${idUsuario}`);
+        console.log(`[SOCKET] Usuario registrado: ${idUsuario}`);
     });
 
-    // MENSAJERÍA EN TIEMPO REAL
     socket.on("enviar-mensaje-chat", (datos) => {
         const { destinatario, emisor, texto, aliasEmisor } = datos;
         const socketDestinoId = mapaCanalesUsuarios.get(String(destinatario).trim());
@@ -144,7 +110,6 @@ io.on("connection", (socket) => {
         socket.to(salaId).emit("nuevo-usuario-sala", { emisor: usuarioId });
     });
 
-    // SEÑALIZACIÓN WEBRTC ROBUSTA
     socket.on("senalizacion-grupal", (datos) => {
         const { destinatario, emisor, tipo, payload, salaId } = datos;
         if (salaId) {
@@ -184,5 +149,5 @@ io.on("connection", (socket) => {
 
 const PORT = process.env.PORT || 3000;
 servidorHTTP.listen(PORT, () => {
-    console.log("[SERVER] VobixChat Red Privada Blindada en puerto " + PORT);
+    console.log("[SERVER] VobixChat activo en puerto " + PORT);
 });
