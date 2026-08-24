@@ -203,7 +203,7 @@
             display: grid;
             grid-template-columns: repeat(2, 1fr);
             gap: 8px;
-            max-height: 240px;
+            max-height: 220px;
             overflow-y: auto;
             background: #000;
             border-radius: 10px;
@@ -216,14 +216,14 @@
             background: #111;
             border-radius: 8px;
             overflow: hidden;
-            height: 110px;
+            height: 100px;
             cursor: pointer;
             border: 2px solid transparent;
             transition: border-color 0.2s;
         }
         .video-box.expanded {
             grid-column: span 2;
-            height: 200px;
+            height: 180px;
             border-color: var(--accent-green);
         }
         .video-box video {
@@ -307,8 +307,17 @@
             cursor: pointer;
             box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
             flex-shrink: 0;
+            transition: background 0.3s;
         }
-        .send-mic-btn:hover { transform: scale(1.05); }
+        .send-mic-btn.recording {
+            background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%) !important;
+            animation: pulseRecord 1s infinite;
+        }
+        @keyframes pulseRecord {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.12); }
+            100% { transform: scale(1); }
+        }
 
         #emojiPickerPanel {
             position: absolute;
@@ -472,7 +481,10 @@
                     <h3 id="lblUserSession" style="margin:0; font-size: 15px; font-weight: 700; color: #34d399;">VobixChat</h3>
                     <span style="font-size: 11px; color: var(--text-muted);" id="lblPhoneSession">Canal Seguro Activo</span>
                 </div>
-                <button onclick="location.reload()" style="background:rgba(239, 68, 68, 0.2); border:1px solid rgba(239, 68, 68, 0.4); color:#fca5a5; padding:6px 12px; border-radius:8px; cursor:pointer; font-size:12px; font-weight:600;">Cerrar Sesión</button>
+                <div style="display: flex; gap: 8px;">
+                    <button onclick="copiarEnlaceInvitacion()" style="background:rgba(16, 185, 129, 0.2); border:1px solid rgba(16, 185, 129, 0.4); color:#34d399; padding:6px 10px; border-radius:8px; cursor:pointer; font-size:11px; font-weight:600;" title="Copiar enlace para invitar">🔗 Invitar</button>
+                    <button onclick="location.reload()" style="background:rgba(239, 68, 68, 0.2); border:1px solid rgba(239, 68, 68, 0.4); color:#fca5a5; padding:6px 10px; border-radius:8px; cursor:pointer; font-size:11px; font-weight:600;">Salir</button>
+                </div>
             </div>
 
             <div class="app-body">
@@ -507,7 +519,7 @@
                         </div>
                     </div>
 
-                    <button onclick="colgarTodo()" style="background:linear-gradient(135deg, #ef4444 0%, #b91c1c 100%); border:none; color:white; padding:12px; border-radius:10px; margin-top:10px; font-weight:700; cursor:pointer; box-shadow: 0 4px 15px rgba(239,68,68,0.4);">Finalizar Todas las Conexiones</button>
+                    <button onclick="colgarTodo()" style="background:linear-gradient(135deg, #ef4444 0%, #b91c1c 100%); border:none; color:white; padding:12px; border-radius:10px; margin-top:10px; font-weight:700; cursor:pointer; box-shadow: 0 4px 15px rgba(239,68,68,0.4);">Colgar / Finalizar Conexión</button>
                 </div>
             </div>
 
@@ -533,9 +545,9 @@
                     <input type="file" id="fileDocInput" style="display: none;" onchange="manejarEnvioDocumento(this)">
                 </label>
                 <div class="chat-bubble-input">
-                    <input type="text" id="mensajeInput" placeholder="Mensaje seguro...">
+                    <input type="text" id="mensajeInput" placeholder="Mensaje seguro..." onkeypress="if(event.key === 'Enter') enviarMensajeTexto()">
                 </div>
-                <button class="send-mic-btn" id="btnMicAudio" onclick="accionMicOrSend()" title="Nota de Voz">🎤</button>
+                <button class="send-mic-btn" id="btnMicAudio" onclick="accionMicOrSend()" title="Nota de Voz / Enviar">🎤</button>
             </div>
         </div>
 
@@ -579,6 +591,31 @@
             }
         }
         detectarPaisYPrefijo();
+
+        // Generar enlace inteligente para invitar a familiares con autocompletado
+        function copiarEnlaceInvitacion() {
+            if (!identificadorUsuario) return alert("Inicia sesión primero.");
+            const enlace = `${window.location.origin}/?llamar=${identificadorUsuario}`;
+            navigator.clipboard.writeText(enlace).then(() => {
+                alert(`¡Enlace copiado con éxito!\n\nEnvíalo a tu familia por WhatsApp:\n${enlace}`);
+            }).catch(() => {
+                prompt("Copia este enlace de invitación:", enlace);
+            });
+        }
+
+        // Auto-rellenar destinatario si entra mediante enlace de invitación
+        window.addEventListener('DOMContentLoaded', () => {
+            const params = new URLSearchParams(window.location.search);
+            const numeroInvitacion = params.get('llamar');
+            if (numeroInvitacion) {
+                setTimeout(() => {
+                    // Limpia el número quitando el prefijo si ya lo trae para colocarlo limpio
+                    const numeroLimpio = numeroInvitacion.replace(/^\+/, '');
+                    document.getElementById('destinatarioInput').value = numeroLimpio;
+                    alert(`¡Enlace de llamada detectado! Se ha colocado el número automáticamente. Pulsa "Llamada Voz" o "Videollamada".`);
+                }, 1200);
+            }
+        });
 
         let audioCtx = null;
         let ringingInterval = null;
@@ -649,26 +686,35 @@
             }
         }
 
+        function enviarMensajeTexto() {
+            const input = document.getElementById('mensajeInput');
+            if (input.value.trim().length > 0) {
+                alert(`Mensaje seguro enviado: ${input.value}`);
+                input.value = "";
+                reproducirSonidoNotificacion();
+            }
+        }
+
+        // Lógica de Nota de Voz Idéntica a WhatsApp (Toca para grabar, toca para enviar)
         let grabandoAudio = false;
         function accionMicOrSend() {
             const input = document.getElementById('mensajeInput');
             const btn = document.getElementById('btnMicAudio');
 
             if (input.value.trim().length > 0) {
-                alert(`Mensaje seguro enviado: ${input.value}`);
-                input.value = "";
-                reproducirSonidoNotificacion();
+                enviarMensajeTexto();
             } else {
                 if (!grabandoAudio) {
                     grabandoAudio = true;
-                    btn.style.background = "linear-gradient(135deg, #ef4444 0%, #b91c1c 100%)";
+                    btn.classList.add('recording');
                     btn.innerText = "⏹️";
-                    alert("Grabando nota de voz encriptada...");
+                    // Feedback visual inmediato estilo WhatsApp
+                    alert("🔴 Grabando nota de voz... (Toca de nuevo el botón rojo para detener y enviar)");
                 } else {
                     grabandoAudio = false;
-                    btn.style.background = "linear-gradient(135deg, #10b981 0%, #059669 100%)";
+                    btn.classList.remove('recording');
                     btn.innerText = "🎤";
-                    alert("Nota de voz enviada correctamente.");
+                    alert("✅ Nota de voz encriptada enviada con éxito.");
                     reproducirSonidoNotificacion();
                 }
             }
@@ -710,14 +756,11 @@
                 document.getElementById('lblUserSession').innerText = nombre;
                 document.getElementById('lblPhoneSession').innerText = "Canal: " + telefono;
                 reproducirSonidoNotificacion();
-
-                // NOTA: La cámara ya NO se abre sola al entrar; se abrirá al iniciar o aceptar una llamada.
             } catch (e) {
                 alert("Error de conexión con el servidor seguro.");
             }
         }
 
-        // Inicializa la cámara solo cuando se requiere (Llamada o Videollamada)
         async function inicializarMediaLocal(conVideo) {
             if (localStream) return localStream;
             try {
@@ -743,7 +786,7 @@
             if (!salaId) return alert("Introduce el nombre de la sala.");
 
             try {
-                await inicializarMediaLocal(true); // Activa la cámara al unirse a la sala
+                await inicializarMediaLocal(true);
                 salaActualId = salaId;
                 socket.emit("unirse-a-sala", { salaId, usuarioId: identificadorUsuario });
                 alert(`Conectado a la sala segura: ${salaId}`);
@@ -853,6 +896,7 @@
             try {
                 await inicializarMediaLocal(conVideo);
                 crearConexionPeerGrupal(destinatarioActual, true);
+                alert(`Llamando a ${destinatarioActual}...`);
             } catch (e) {
                 console.error(e);
             }
@@ -906,6 +950,7 @@
             detenerTimbre();
             document.getElementById('incomingCallModal').classList.remove('active');
             resetearLlamadas();
+            alert("La llamada ha finalizado.");
         });
 
         function colgarTodo() {
@@ -917,13 +962,13 @@
                 socket.emit("finalizar-llamada", { destinatario: destinatarioActual });
             }
             resetearLlamadas();
+            alert("Conexión finalizada.");
         }
 
         function resetearLlamadas() {
             Object.values(peerConnections).forEach(pc => pc.close());
             for (let key in peerConnections) delete peerConnections[key];
 
-            // Apaga la cámara y el micrófono por completo al colgar
             if (localStream) {
                 localStream.getTracks().forEach(track => track.stop());
                 localStream = null;
