@@ -96,10 +96,10 @@ io.on("connection", (socket) => {
     });
 
     socket.on("enviar-mensaje-chat", (datos) => {
-        const { destinatario, emisor, texto, aliasEmisor } = datos;
+        const { destinatario, texto, aliasEmisor } = datos;
         const socketDestinoId = mapaCanalesUsuarios.get(String(destinatario).trim());
         if (socketDestinoId) {
-            io.to(socketDestinoId).emit("recibir-mensaje-chat", { emisor, texto, aliasEmisor });
+            io.to(socketDestinoId).emit("recibir-mensaje-chat", { texto, aliasEmisor });
         }
     });
 
@@ -117,9 +117,7 @@ io.on("connection", (socket) => {
         } else if (destinatario) {
             const socketDestinoId = mapaCanalesUsuarios.get(String(destinatario).trim());
             if (socketDestinoId) {
-                io.to(socketDestinoId).emit("recibir-senalizacion-grupal", { emisor, tipo, payload });
-            } else {
-                socket.broadcast.emit("recibir-oferta-webrtc", { emisor, sdp: payload });
+                io.to(socketDestinoId).emit("recibir-senalizacion-grupal", { emisor, tipo, payload, destinatario });
             }
         }
     });
@@ -149,5 +147,5 @@ io.on("connection", (socket) => {
 
 const PORT = process.env.PORT || 3000;
 servidorHTTP.listen(PORT, () => {
-    console.log("[SERVER] VobixChat activo en puerto " + PORT);
+    console.log("[SERVER] VobixChat operativo en puerto " + PORT);
 });
