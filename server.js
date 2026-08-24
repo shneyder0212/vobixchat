@@ -110,10 +110,10 @@ io.on("connection", (socket) => {
         }
     });
 
-    // SINCRONIZACIÓN DE FIRMA EN TIEMPO REAL (MODO ESPEJO TRANSATLÁNTICO)
+    // SINCRONIZACIÓN DE JUEGOS Y FIRMA
     socket.on("sincronizar-trazo-firma", (datos) => {
-        const { salaFirma, trazo, region } = datos;
-        socket.to(salaFirma).emit("recibir-trazo-firma", { trazo, region });
+        const { salaFirma, trazo } = datos;
+        socket.to(salaFirma).emit("recibir-trazo-firma", { trazo });
     });
 
     socket.on("unirse-sala-firma", (salaFirma) => {
@@ -164,5 +164,5 @@ io.on("connection", (socket) => {
 
 const PORT = process.env.PORT || 3000;
 servidorHTTP.listen(PORT, () => {
-    console.log("[SERVER] VobixChat Élite con Firma Transatlántica en puerto " + PORT);
+    console.log("[SERVER] VobixChat Élite Candy & Parchís Combat operativo en puerto " + PORT);
 });
