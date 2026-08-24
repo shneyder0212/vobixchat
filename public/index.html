@@ -107,6 +107,30 @@
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
+        
+        .phone-input-wrapper {
+            display: flex;
+            gap: 8px;
+            width: 100%;
+        }
+
+        select.prefix-select {
+            width: 110px;
+            padding: 14px 10px;
+            background: rgba(15, 23, 42, 0.9);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            font-size: 15px;
+            color: white;
+            outline: none;
+            cursor: pointer;
+            text-align: center;
+        }
+        select.prefix-select option {
+            background: #0f172a;
+            color: white;
+        }
+
         input {
             width: 100%;
             padding: 14px 16px;
@@ -119,7 +143,7 @@
             outline: none;
             transition: all 0.3s ease;
         }
-        input:focus { 
+        input:focus, select.prefix-select:focus { 
             border-color: var(--accent-green); 
             box-shadow: 0 0 15px rgba(16, 185, 129, 0.3);
             background: rgba(15, 23, 42, 0.9);
@@ -404,7 +428,30 @@
 
             <div class="input-group">
                 <label>Número de Teléfono</label>
-                <input type="tel" id="regTelefono" placeholder="655766134">
+                <div class="phone-input-wrapper">
+                    <select id="selectPrefijo" class="prefix-select">
+                        <option value="+34" selected>🇪🇸 +34</option>
+                        <option value="+1">🇺🇸 +1</option>
+                        <option value="+44">🇬🇧 +44</option>
+                        <option value="+33">🇫🇷 +33</option>
+                        <option value="+49">🇩🇪 +49</option>
+                        <option value="+39">🇮🇹 +39</option>
+                        <option value="+52">🇲🇽 +52</option>
+                        <option value="+54">🇦🇷 +54</option>
+                        <option value="+57">🇨🇴 +57</option>
+                        <option value="+58">🇻🇪 +58</option>
+                        <option value="+51">🇵🇪 +51</option>
+                        <option value="+56">🇨🇱 +56</option>
+                        <option value="+593">🇪🇨 +593</option>
+                        <option value="+55">🇧🇷 +55</option>
+                        <option value="+351">🇵🇹 +351</option>
+                        <option value="+41">🇨🇭 +41</option>
+                        <option value="+32">🇧🇪 +32</option>
+                        <option value="+31">🇳🇱 +31</option>
+                    </select>
+                    <!-- Campo limpio sin número preescrito -->
+                    <input type="tel" id="regTelefono" placeholder="Introduce tu número" style="flex:1;">
+                </div>
             </div>
 
             <button class="btn-imponente" onclick="avanzarPin()">Acceder al Sistema</button>
@@ -439,7 +486,7 @@
                 <div class="card-panel">
                     <h3>📞 Enlace Directo 1 a 1</h3>
                     <div class="input-group" style="margin-bottom: 8px;">
-                        <input type="text" id="destinatarioInput" placeholder="Número (ej. 658616136)">
+                        <input type="text" id="destinatarioInput" placeholder="Número sin prefijo (ej. 658616136)">
                     </div>
                     <div style="display: flex; gap: 8px;">
                         <button class="btn-imponente" onclick="iniciarLlamada(false)" style="margin-top:0; padding:12px; background:linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);">Llamada Voz</button>
@@ -516,6 +563,29 @@
                 { urls: 'stun:stun1.l.google.com:19302' }
             ]
         };
+
+        // Detección automática de país por IP (Selecciona España +34 por defecto o el correspondiente)
+        async function detectarPaisYPrefijo() {
+            try {
+                const res = await fetch('https://ipapi.co/json/');
+                const data = await res.json();
+                if (data && data.country_code) {
+                    const selector = document.getElementById('selectPrefijo');
+                    const paisesPrefijos = {
+                        'ES': '+34', 'US': '+1', 'GB': '+44', 'FR': '+33', 'DE': '+49',
+                        'IT': '+39', 'MX': '+52', 'AR': '+54', 'CO': '+57', 'VE': '+58',
+                        'PE': '+51', 'CL': '+56', 'EC': '+593', 'BR': '+55', 'PT': '+351'
+                    };
+                    const prefijoDetectado = paisesPrefijos[data.country_code];
+                    if (prefijoDetectado) {
+                        selector.value = prefijoDetectado;
+                    }
+                }
+            } catch (e) {
+                console.log("No se pudo detectar el país por IP, usando valor por defecto (+34)");
+            }
+        }
+        detectarPaisYPrefijo();
 
         let audioCtx = null;
         let ringingInterval = null;
@@ -614,15 +684,19 @@
         function avanzarPin() {
             getAudioContext();
             const nombre = document.getElementById('regNombre').value.trim();
-            const telefono = document.getElementById('regTelefono').value.trim();
-            if (!nombre || !telefono) return alert("Completa los campos obligatorios.");
+            const telefonoCuerpo = document.getElementById('regTelefono').value.trim();
+            const prefijo = document.getElementById('selectPrefijo').value;
+            
+            if (!nombre || !telefonoCuerpo) return alert("Por favor, introduce tu nombre y tu número de teléfono.");
+
+            window.telefonoCompletoGlobal = prefijo + telefonoCuerpo.replace(/[^0-9]/g, '');
 
             document.getElementById('screen-registro').classList.remove('active');
             document.getElementById('screen-pin').classList.add('active');
         }
 
         async function verificarPinYEntrar() {
-            const telefono = document.getElementById('regTelefono').value.trim();
+            const telefono = window.telefonoCompletoGlobal;
             const nombre = document.getElementById('regNombre').value.trim();
             const pin = document.getElementById('regPin').value.trim();
 
@@ -641,7 +715,7 @@
                 document.getElementById('screen-pin').classList.remove('active');
                 document.getElementById('screen-chat').classList.add('active');
                 document.getElementById('lblUserSession').innerText = nombre;
-                document.getElementById('lblPhoneSession').innerText = "Conectado: " + telefono;
+                document.getElementById('lblPhoneSession').innerText = "Canal: " + telefono;
                 reproducirSonidoNotificacion();
 
                 await inicializarMediaLocal(true);
@@ -767,10 +841,12 @@
         });
 
         async function iniciarLlamada(conVideo) {
-            const destinatario = document.getElementById('destinatarioInput').value.trim();
-            if (!destinatario) return alert("Introduce el número del destinatario.");
+            const cuerpoDestino = document.getElementById('destinatarioInput').value.trim();
+            if (!cuerpoDestino) return alert("Introduce el número del destinatario.");
 
-            destinatarioActual = destinatario;
+            const prefijoActual = document.getElementById('selectPrefijo').value;
+            destinatarioActual = prefijoActual + cuerpoDestino.replace(/[^0-9]/g, '');
+
             crearConexionPeerGrupal(destinatarioActual, true);
         }
 
@@ -820,7 +896,7 @@
 
         socket.on("llamada-finalizada", () => {
             detenerTimbre();
-            document.getElementById('incomingCallModal'].classList.remove('active');
+            document.getElementById('incomingCallModal').classList.remove('active');
             resetearLlamadas();
         });
 
@@ -832,7 +908,7 @@
             } else if (destinatarioActual) {
                 socket.emit("finalizar-llamada", { destinatario: destinatarioActual });
             }
-            resetearLlar/resetearLlamadas();
+            resetearLlamadas();
         }
 
         function resetearLlamadas() {
