@@ -1,6 +1,6 @@
 require('dotenv').config();
 const express = require('express');
-const http = http = require('http');
+const http = require('http');
 const path = require('path');
 const fs = require('fs');
 const multer = require('multer');
@@ -10,7 +10,7 @@ const app = express();
 const servidorHTTP = http.createServer(app);
 const io = new Server(servidorHTTP, { 
     cors: { origin: "*" },
-    pingTimeout: 120000, // Margen amplio para mantener la sesión abierta permanentemente
+    pingTimeout: 120000,
     pingInterval: 25000
 });
 
