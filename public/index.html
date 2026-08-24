@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, interactive-widget=resizes-content">
-    <title>VobixChat Élite - Red Cuántica y Privacidad</title>
+    <title>VobixChat Élite - Red Cuántica y Personalización Total</title>
     <style>
         :root {
             --bg-deep: #0f172a;
@@ -13,13 +13,16 @@
             --text-main: #f8fafc;
             --text-muted: #94a3b8;
             --border-color: rgba(255, 255, 255, 0.08);
+            --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            --font-size-base: 12px;
         }
 
         html, body {
             height: 100%; height: 100dvh;
             margin: 0; padding: 0; overflow: hidden;
             background: linear-gradient(135deg, #090d16 0%, #0f172a 100%);
-            color: var(--text-main); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            color: var(--text-main); font-family: var(--font-family);
+            font-size: var(--font-size-base);
             overscroll-behavior-y: none;
         }
 
@@ -87,7 +90,6 @@
             border-bottom: 1px solid var(--border-color); flex-shrink: 0; position: relative; z-index: 600;
         }
         
-        /* CUERPO PRINCIPAL CON SCROLL VERTICAL FLUIDO (LÍNEA DE BAJADA Y SUBIDA) */
         .app-body {
             flex: 1; padding: 12px; overflow-y: auto; -webkit-overflow-scrolling: touch;
             display: flex; flex-direction: column; gap: 10px; background: #0b141a; 
@@ -114,7 +116,6 @@
         .chat-details h4 { margin: 0; font-size: 13px; color: white; }
         .chat-details span { font-size: 10px; color: var(--text-muted); }
 
-        /* MENÚ DESPLEGABLE CON SCROLL VERTICAL FLUIDO */
         #vobixMenuDropdown {
             position: absolute; top: 50px; right: 12px; background: #1e293b;
             border: 1px solid var(--border-color); border-radius: 12px; width: 260px;
@@ -128,13 +129,12 @@
         }
         .menu-item:hover { background: rgba(255,255,255,0.08); }
 
-        /* MODALES */
-        #contactoModal, #arcadeHubModal, #snakeModal, #tetrisModal, #flappyModal, #simonModal, #firmaModal, #estadosModal, #privateChatRoom, .fullscreen-modal {
+        #aparienciaModal, #seguridadModal, #chatsOcultosModal, #contactoModal, #firmaModal, #estadosModal, #privateChatRoom, .fullscreen-modal {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background: #0b141a; z-index: 800; display: none;
             flex-direction: column; justify-content: space-between; padding: 16px; box-sizing: border-box; color: white;
         }
-        #contactoModal.active, #arcadeHubModal.active, #snakeModal.active, #tetrisModal.active, #flappyModal.active, #simonModal.active, #firmaModal.active, #estadosModal.active, #privateChatRoom.active, .fullscreen-modal.active { display: flex; }
+        #aparienciaModal.active, #seguridadModal.active, #chatsOcultosModal.active, #contactoModal.active, #firmaModal.active, #estadosModal.active, #privateChatRoom.active, .fullscreen-modal.active { display: flex; }
 
         .canvas-container {
             flex: 1; background: #fff; border-radius: 12px; position: relative; overflow: hidden; margin: 10px 0;
@@ -219,6 +219,87 @@
 
     <div class="app-container">
 
+        <!-- MÓDULO DE CONFIGURACIÓN DE SEGURIDAD (PIN, CLAVE, PATRÓN, BIOMÉTRICO) -->
+        <div id="seguridadModal">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
+                <h3 style="margin: 0; color: #34d399; font-size: 15px;">🔒 Seguridad & Bloqueo</h3>
+                <button onclick="cerrarModal('seguridadModal')" style="background:none; border:none; color:white; font-size:20px; cursor:pointer;">✕</button>
+            </div>
+            <div style="flex: 1; display: flex; flex-direction: column; gap: 12px; padding-top: 10px; font-size: 12px;">
+                <div class="card-panel">
+                    <h4 style="margin:0 0 4px 0; color:var(--accent-green);">🛡️ Método de Bloqueo de Acceso</h4>
+                    <select id="selectMetodoBloqueo" onchange="cambiarMetodoSeguridad(this.value)" style="width:100%; padding:8px; background:#0f172a; color:white; border:1px solid var(--border-color); border-radius:8px;">
+                        <option value="ninguno">🔓 Sin bloqueo (Abierto)</option>
+                        <option value="biometrico">👆 Huella Digital / Face ID (Biométrico)</option>
+                        <option value="pin">🔢 Código PIN Numérico</option>
+                        <option value="clave">🔤 Contraseña Alfanumérica</option>
+                        <option value="patron">🔲 Patrón de Desbloqueo</option>
+                    </select>
+                </div>
+                <div class="card-panel" id="panelConfigBloqueo" style="display: none;">
+                    <h4 style="margin:0 0 4px 0; color:var(--accent-green);">Configurar Credencial</h4>
+                    <div class="input-group" style="margin-top: 6px;">
+                        <input type="text" id="inputCredencialSeguridad" placeholder="Introduce tu PIN o Clave...">
+                    </div>
+                    <button class="btn-imponente" onclick="guardarCredencialSeguridad()" style="padding: 8px; font-size: 12px;">Guardar Bloqueo</button>
+                </div>
+            </div>
+            <button class="btn-imponente" onclick="cerrarModal('seguridadModal')" style="background: #64748b;">Volver</button>
+        </div>
+
+        <!-- MÓDULO DE PERSONALIZACIÓN VISUAL (APARIENCIA, COLORES, FUENTES) -->
+        <div id="aparienciaModal">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
+                <h3 style="margin: 0; color: #34d399; font-size: 15px;">🎨 Apariencia y Estilos</h3>
+                <button onclick="cerrarModal('aparienciaModal')" style="background:none; border:none; color:white; font-size:20px; cursor:pointer;">✕</button>
+            </div>
+            <div style="flex: 1; display: flex; flex-direction: column; gap: 12px; padding-top: 10px; font-size: 12px;">
+                <div class="card-panel">
+                    <h4 style="margin:0 0 4px 0; color:var(--accent-green);">🌈 Tema de Color</h4>
+                    <select id="selectTemaColor" onchange="cambiarTemaColor(this.value)" style="width:100%; padding:8px; background:#0f172a; color:white; border:1px solid var(--border-color); border-radius:8px;">
+                        <option value="amoled">⬛ AMOLED Oscuro Absoluto (Negro)</option>
+                        <option value="esmeralda">🟢 Verde Esmeralda Élite</option>
+                        <option value="azul">🔵 Azul Neón Cuántico</option>
+                    </select>
+                </div>
+                <div class="card-panel">
+                    <h4 style="margin:0 0 4px 0; color:var(--accent-green);">🔤 Tipografía / Letra</h4>
+                    <select id="selectTipoLetra" onchange="cambiarFuente(this.value)" style="width:100%; padding:8px; background:#0f172a; color:white; border:1px solid var(--border-color); border-radius:8px;">
+                        <option value="sans">Modern Sans-Serif</option>
+                        <option value="roboto">Roboto Limpia</option>
+                        <option value="mono">Estilo Consola / Monospace</option>
+                    </select>
+                </div>
+                <div class="card-panel">
+                    <h4 style="margin:0 0 4px 0; color:var(--accent-green);">🔍 Tamaño de Letra</h4>
+                    <select id="selectTamanoLetra" onchange="cambiarTamanoTexto(this.value)" style="width:100%; padding:8px; background:#0f172a; color:white; border:1px solid var(--border-color); border-radius:8px;">
+                        <option value="12px">Normal (12px)</option>
+                        <option value="14px">Mediano (14px)</option>
+                        <option value="16px">Grande / Senior (16px)</option>
+                    </select>
+                </div>
+            </div>
+            <button class="btn-imponente" onclick="cerrarModal('aparienciaModal')" style="background: #64748b;">Guardar Apariencia</button>
+        </div>
+
+        <!-- BÓVEDA DE CHATS OCULTOS -->
+        <div id="chatsOcultosModal">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
+                <h3 style="margin: 0; color: #34d399; font-size: 15px;">📂 Bóveda de Chats Ocultos</h3>
+                <button onclick="cerrarChatsOcultosModal()" style="background:none; border:none; color:white; font-size:20px; cursor:pointer;">✕</button>
+            </div>
+            <p style="font-size: 11px; color: var(--text-muted); margin: 5px 0;">Aquí se almacenan los chats ocultos de la pantalla principal.</p>
+            
+            <div class="card-panel" style="flex: 1; overflow-y: auto;">
+                <h4>Chats Ocultos</h4>
+                <div id="listaChatsOcultosContainer" style="margin-top: 8px; display: flex; flex-direction: column; gap: 6px;">
+                    <p style="font-size: 11px; color: var(--text-muted);">No hay chats ocultos actualmente.</p>
+                </div>
+            </div>
+
+            <button class="btn-imponente" onclick="cerrarChatsOcultosModal()" style="background: #64748b; padding: 10px; font-size: 13px;">Volver</button>
+        </div>
+
         <!-- AGENDA DE CONTACTOS Y DIFUSIÓN -->
         <div id="contactoModal">
             <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
@@ -246,99 +327,6 @@
             </div>
 
             <button class="btn-imponente" onclick="enviarDifusionMasiva()" style="background: #3b82f6; padding: 10px; font-size: 13px;">📢 Enviar Enlace de Invitación por Difusión</button>
-        </div>
-
-        <!-- CENTRO DE ARCADES -->
-        <div id="arcadeHubModal">
-            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
-                <h3 style="margin: 0; color: #34d399; font-size: 15px;">🎮 Vobix Arcade Élite</h3>
-                <button onclick="cerrarArcadeHub()" style="background:none; border:none; color:white; font-size:20px; cursor:pointer;">✕</button>
-            </div>
-            <div style="flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 10px; padding: 5px;">
-                <button class="btn-imponente" onclick="abrirSnakeModal()" style="background: linear-gradient(135deg, #10b981 0%, #047857 100%); padding: 12px; font-size: 14px;">🐍 Culebrita Nokia (Progresivo)</button>
-                <button class="btn-imponente" onclick="abrirTetrisModal()" style="background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); padding: 12px; font-size: 14px;">🧱 Tetris Clásico (Niveles)</button>
-                <button class="btn-imponente" onclick="abrirFlappyModal()" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); padding: 12px; font-size: 14px;">🐦 Flappy Cuántico</button>
-                <button class="btn-imponente" onclick="abrirSimonModal()" style="background: linear-gradient(135deg, #ec4899 0%, #be185d 100%); padding: 12px; font-size: 14px;">🧠 Reto de Memoria (Simon)</button>
-            </div>
-            <button class="btn-imponente" onclick="cerrarArcadeHub()" style="background: #64748b;">Volver al Menú</button>
-        </div>
-
-        <!-- MÓDULO DE LA CULEBRITA -->
-        <div id="snakeModal">
-            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 8px;">
-                <h3 style="margin: 0; color: #10b981; font-size: 14px;">🐍 Culebrita Nokia</h3>
-                <button onclick="cerrarSnakeModal()" style="background:none; border:none; color:white; font-size:18px; cursor:pointer;">✕</button>
-            </div>
-            <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;">
-                <div style="display: flex; gap: 15px; margin-bottom: 4px; font-size: 12px;">
-                    <span id="snakeScore" style="color: #34d399;">Puntos: 0</span>
-                    <span id="snakeLevel" style="color: #60a5fa;">Nivel: 1</span>
-                </div>
-                <canvas id="snakeCanvas" width="240" height="240" style="background: #111; border: 3px solid #10b981; border-radius: 8px;"></canvas>
-                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 10px; width: 180px;">
-                    <div></div>
-                    <button class="btn-imponente" onclick="cambiarDireccionSnake('ARRIBA')" style="padding: 8px;">⬆️</button>
-                    <div></div>
-                    <button class="btn-imponente" onclick="cambiarDireccionSnake('IZQUIERDA')" style="padding: 8px;">⬅️</button>
-                    <button class="btn-imponente" onclick="cambiarDireccionSnake('ABAJO')" style="padding: 8px;">⬇️</button>
-                    <button class="btn-imponente" onclick="cambiarDireccionSnake('DERECHA')" style="padding: 8px;">➡️</button>
-                </div>
-            </div>
-            <button class="btn-imponente" onclick="cerrarSnakeModal()" style="background: #64748b; padding: 8px;">Volver a Arcades</button>
-        </div>
-
-        <!-- MÓDULO DE TETRIS -->
-        <div id="tetrisModal">
-            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 8px;">
-                <h3 style="margin: 0; color: #3b82f6; font-size: 14px;">🧱 Tetris Clásico</h3>
-                <button onclick="cerrarTetrisModal()" style="background:none; border:none; color:white; font-size:18px; cursor:pointer;">✕</button>
-            </div>
-            <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;">
-                <div style="display: flex; gap: 15px; margin-bottom: 4px; font-size: 12px;">
-                    <span id="tetrisScore" style="color: #34d399;">Puntos: 0</span>
-                    <span id="tetrisLevel" style="color: #60a5fa;">Nivel: 1</span>
-                </div>
-                <canvas id="tetrisCanvas" width="200" height="260" style="background: #111; border: 3px solid #3b82f6; border-radius: 8px;"></canvas>
-                <div style="display: flex; gap: 10px; margin-top: 10px; width: 220px;">
-                    <button class="btn-imponente" onclick="moverTetris(-1)" style="padding: 8px; background: #334155;">◀ Izq</button>
-                    <button class="btn-imponente" onclick="girarTetris()" style="padding: 8px; background: #2563eb;">🔄 Girar</button>
-                    <button class="btn-imponente" onclick="moverTetris(1)" style="padding: 8px; background: #334155;">Der ▶</button>
-                </div>
-            </div>
-            <button class="btn-imponente" onclick="cerrarTetrisModal()" style="background: #64748b; padding: 8px;">Volver a Arcades</button>
-        </div>
-
-        <!-- MÓDULO DE FLAPPY BIRD -->
-        <div id="flappyModal">
-            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 8px;">
-                <h3 style="margin: 0; color: #f59e0b; font-size: 14px;">🐦 Flappy Cuántico</h3>
-                <button onclick="cerrarFlappyModal()" style="background:none; border:none; color:white; font-size:18px; cursor:pointer;">✕</button>
-            </div>
-            <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;" onclick="saltarFlappy()">
-                <h3 id="flappyScore" style="color: #34d399; margin: 0 0 5px 0;">Puntos: 0</h3>
-                <canvas id="flappyCanvas" width="240" height="280" style="background: #1e293b; border: 3px solid #f59e0b; border-radius: 8px;"></canvas>
-                <p style="font-size: 10px; color: var(--text-muted); margin-top: 8px;">Toca la pantalla o haz clic para volar</p>
-            </div>
-            <button class="btn-imponente" onclick="cerrarFlappyModal()" style="background: #64748b; padding: 8px;">Volver a Arcades</button>
-        </div>
-
-        <!-- MÓDULO DE SIMON SAYS -->
-        <div id="simonModal">
-            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 8px;">
-                <h3 style="margin: 0; color: #ec4899; font-size: 14px;">🧠 Simon Says (Memoria)</h3>
-                <button onclick="cerrarSimonModal()" style="background:none; border:none; color:white; font-size:18px; cursor:pointer;">✕</button>
-            </div>
-            <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;">
-                <h3 id="simonRonda" style="color: #34d399; margin: 0 0 10px 0;">Ronda: 1</h3>
-                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; width: 220px; height: 220px;">
-                    <div id="simonRed" onclick="pulsarSimon(0)" style="background: #ef4444; border-radius: 12px; opacity: 0.6; cursor: pointer;"></div>
-                    <div id="simonGreen" onclick="pulsarSimon(1)" style="background: #10b981; border-radius: 12px; opacity: 0.6; cursor: pointer;"></div>
-                    <div id="simonBlue" onclick="pulsarSimon(2)" style="background: #3b82f6; border-radius: 12px; opacity: 0.6; cursor: pointer;"></div>
-                    <div id="simonYellow" onclick="pulsarSimon(3)" style="background: #f59e0b; border-radius: 12px; opacity: 0.6; cursor: pointer;"></div>
-                </div>
-                <button class="btn-imponente" onclick="iniciarSimon()" style="margin-top: 15px; background: #ec4899; width: 180px; padding: 10px;">Comenzar Reto</button>
-            </div>
-            <button class="btn-imponente" onclick="cerrarSimonModal()" style="background: #64748b; padding: 8px;">Volver a Arcades</button>
         </div>
 
         <!-- MÓDULO DE FIRMA -->
@@ -419,35 +407,10 @@
                 <label class="icon-btn" title="Adjuntar Documento">📎<input type="file" style="display: none;" onchange="manejarEnvioDocumentoPrivado(this)"></label>
                 <label class="icon-btn" title="Foto o Vídeo">📷<input type="file" accept="image/*,video/*" capture="environment" style="display: none;" onchange="manejarEnvioMultimediaPrivado(this)"></label>
                 <div class="chat-bubble-input">
-                    <input type="text" id="privateMessageInput" placeholder="Escribe un mensaje o pregunta a la IA..." onkeypress="if(event.key === 'Enter') enviarMensajePrivado()">
+                    <input type="text" id="privateMessageInput" placeholder="Escribe un mensaje..." onkeypress="if(event.key === 'Enter') enviarMensajePrivado()">
                 </div>
                 <button class="send-text-btn" onclick="enviarMensajePrivado()" title="Enviar">➤</button>
             </div>
-        </div>
-
-        <!-- MODAL CONFIGURACIÓN DE PRIVACIDAD -->
-        <div id="settingsModal" class="fullscreen-modal">
-            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 8px; margin-bottom: 10px;">
-                <h3 style="margin: 0; color: var(--accent-green); font-size: 14px;">⚙️ Privacidad y Estado Élite</h3>
-                <button onclick="cerrarModal('settingsModal')" style="background:none; border:none; color:white; font-size:16px; cursor:pointer;">✕</button>
-            </div>
-            <div style="flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:12px; font-size:12px;">
-                <div class="card-panel">
-                    <h4 style="margin:0 0 4px 0; color:var(--accent-green);">🟢 Modo de Conexión</h4>
-                    <select id="selectEstadoConexion" onchange="cambiarEstadoConexion(this.value)" style="width:100%; padding:8px; background:#0f172a; color:white; border:1px solid var(--border-color); border-radius:8px;">
-                        <option value="en_linea">🟢 En línea (Normal)</option>
-                        <option value="desconectado_activo">🟡 Desconectado (Pero sigo operativo)</option>
-                        <option value="invisible">🔴 Invisible total</option>
-                    </select>
-                </div>
-                <div class="card-panel">
-                    <h4 style="margin:0 0 4px 0; color:var(--accent-green);">✓✓ Confirmación de Lectura</h4>
-                    <label style="display:flex; align-items:center; gap:8px; cursor:pointer; color:white;">
-                        <input type="checkbox" id="checkDobleCheckAzul" checked onchange="toggleDobleCheckAzul(this.checked)"> Activar doble check azul (visto)
-                    </label>
-                </div>
-            </div>
-            <button class="btn-imponente" onclick="cerrarModal('settingsModal')">Guardar Cambios</button>
         </div>
 
         <!-- MODAL LLAMADA ENTRANTE -->
@@ -467,7 +430,7 @@
         <div id="screen-registro" class="screen active">
             <div class="logo-box">🔒</div>
             <h2>VobixChat Élite</h2>
-            <p class="subtitle">Red Cuántica, IA y Privacidad</p>
+            <p class="subtitle">Red Cuántica, IA y Seguridad Total</p>
 
             <div class="input-group">
                 <label>Tu Nombre o @usuario</label>
@@ -505,7 +468,7 @@
             <button class="btn-imponente" onclick="verificarPinYEntrar()">Acceder a la Red</button>
         </div>
 
-        <!-- PASO 2: PANTALLA PRINCIPAL CON BOTÓN DE INVITAR AFUERA Y MENÚ DE TRES PUNTOS -->
+        <!-- PASO 2: PANTALLA PRINCIPAL CON MENÚ DE TRES PUNTOS (⋮) -->
         <div id="screen-chat" class="screen" style="padding: 0; text-align: left; position: relative;">
             <div class="app-header">
                 <div>
@@ -514,29 +477,26 @@
                 </div>
                 <div style="display: flex; gap: 5px; align-items: center;">
                     <button onclick="abrirEstadosModal()" style="background:rgba(59, 130, 246, 0.2); border:1px solid rgba(59, 130, 246, 0.4); color:#60a5fa; padding:3px 5px; border-radius:4px; cursor:pointer; font-size:8px; font-weight:600;">📸 Estados</button>
-                    <!-- BOTÓN DE INVITAR AFUERA A LA DERECHA -->
                     <button onclick="copiarEnlaceInvitacion()" style="background:rgba(16, 185, 129, 0.2); border:1px solid rgba(16, 185, 129, 0.4); color:#34d399; padding:3px 5px; border-radius:4px; cursor:pointer; font-size:8px; font-weight:600;">🔗 Invitar</button>
-                    <!-- BOTÓN DE TRES PUNTOS (⋮) -->
                     <button onclick="toggleVobixMenu(event)" style="background:none; border:none; color:white; font-size:22px; cursor:pointer; padding:0 4px;" title="Menú de Opciones">⋮</button>
                 </div>
 
-                <!-- MENÚ DESPLEGABLE CON SCROLL VERTICAL FLUIDO (20 OPCIONES) -->
+                <!-- MENÚ DESPLEGABLE CON SCROLL VERTICAL FLUIDO -->
                 <div id="vobixMenuDropdown">
                     <div class="menu-item" onclick="abrirChatIA()">🤖 IA Asistente (Sin Restricciones)</div>
-                    <div class="menu-item" onclick="abrirArcadeHub()">🎮 Centro de Arcades</div>
                     <div class="menu-item" onclick="abrirFirmaModal()">✍️ Modo Espejo de Firma (USA ⇄ España)</div>
+                    <div class="menu-item" onclick="abrirChatsOcultosModal()">📂 Bóveda de Chats Ocultos</div>
                     <div class="menu-item" onclick="abrirContactoModal()">👥 Agenda de Contactos & Difusión</div>
                     <div class="menu-item" onclick="abrirEstadosModal()">📸 Publicar / Ver Estados</div>
-                    <div class="menu-item" onclick="abrirModal('settingsModal')">⚙️ Configuración de Privacidad</div>
+                    <div class="menu-item" onclick="abrirModal('seguridadModal')">🔒 Seguridad & Bloqueo (Biométrico/PIN)</div>
+                    <div class="menu-item" onclick="abrirModal('aparienciaModal')">🎨 Personalización de Apariencia</div>
                     <div class="menu-item" onclick="alternarDesconexionFalsa()">🔌 Desconectarse (Pero seguir en línea)</div>
                     <div class="menu-item" onclick="alert('Bóveda segura AES-256 activa.')">🔐 Bóveda de Contraseñas</div>
                     <div class="menu-item" onclick="alert('Traductor cuántico en tiempo real activo.')">🌐 Traductor Simultáneo</div>
                     <div class="menu-item" onclick="alert('Transcriptor de voz a texto activado.')">🎙️ Transcriptor de Audios</div>
-                    <div class="menu-item" onclick="alert('Panel de documentos recientes abierto.')">📂 Bóveda Documental</div>
                     <div class="menu-item" onclick="alert('Creador de encuestas rápidas activo.')">📊 Creador de Encuestas</div>
                     <div class="menu-item" onclick="alert('Modo temporal de mensajes activado.')">⏱️ Mensajes Autodestructivos</div>
                     <div class="menu-item" onclick="alert('Geolocalización cuántica enlazada.')">📍 Radar Familiar Privado</div>
-                    <div class="menu-item" onclick="alert('Tema AMOLED Oscuro Absoluto aplicado.')">🎨 Modo AMOLED Oscuro</div>
                     <div class="menu-item" onclick="alert('Resumen IA del historial generado.')">📑 Resumen IA de Chats</div>
                     <div class="menu-item" onclick="alert('Papelera de seguridad limpia.')">🗑️ Papelera de Recuperación</div>
                     <div class="menu-item" onclick="alert('Modo Senior de accesibilidad total activado.')">👵👴 Modo Senior (Botones Gigantes)</div>
@@ -545,7 +505,7 @@
                 </div>
             </div>
 
-            <!-- CUERPO CON SCROLL FLUIDO VERTICAL (LÍNEA DE BAJADA Y SUBIDA) -->
+            <!-- CUERPO CON SCROLL FLUIDO VERTICAL -->
             <div class="app-body">
                 <div id="callStatusBanner">Listo para conectar</div>
 
@@ -562,7 +522,7 @@
                             </div>
                             <div style="display: flex; gap: 6px; align-items: center;">
                                 <span onclick="abrirChatPrivado('34658616136', 'Hijo')" style="font-size: 11px; color: #10b981; cursor: pointer;">💬 Abrir</span>
-                                <span onclick="ocultarChatPrincipal('34658616136')" style="font-size: 11px; color: #ef4444; cursor: pointer; padding: 2px 6px; background: rgba(239,68,68,0.1); border-radius: 4px;" title="Ocultar chat">🗑️ Ocultar</span>
+                                <span onclick="ocultarChatPrincipal('34658616136', 'Hijo')" style="font-size: 11px; color: #ef4444; cursor: pointer; padding: 2px 6px; background: rgba(239,68,68,0.1); border-radius: 4px;" title="Ocultar chat">🗑️ Ocultar</span>
                             </div>
                         </div>
                     </div>
@@ -619,13 +579,117 @@
         const historialChats = {};
         const listaEstadosGlobales = [];
         const contactosAgendaGlobal = [];
+        const chatsOcultosGlobales = [];
 
-        function ocultarChatPrincipal(numero) {
+        // LÓGICA DE SEGURIDAD Y BLOQUEO
+        function cambiarMetodoSeguridad(metodo) {
+            const panel = document.getElementById('panelConfigBloqueo');
+            if (metodo === 'ninguno' || metodo === 'biometrico') {
+                panel.style.display = 'none';
+                alert(`Método de seguridad actualizado a: ${metodo.toUpperCase()}`);
+            } else {
+                panel.style.display = 'block';
+            }
+        }
+
+        function guardarCredencialSeguridad() {
+            const val = document.getElementById('inputCredencialSeguridad').value.trim();
+            if (!val) return;
+            alert("¡Credencial de seguridad guardada y cifrada correctamente!");
+            document.getElementById('inputCredencialSeguridad').value = "";
+            cerrarModal('seguridadModal');
+        }
+
+        // LÓGICA DE PERSONALIZACIÓN VISUAL (APARIENCIA)
+        function cambiarTemaColor(tema) {
+            const root = document.documentElement;
+            if (tema === 'amoled') {
+                root.style.setProperty('--bg-deep', '#000000');
+                root.style.setProperty('--card-bg', '#09090b');
+            } else if (tema === 'esmeralda') {
+                root.style.setProperty('--bg-deep', '#064e3b');
+                root.style.setProperty('--card-bg', '#065f46');
+            } else if (tema === 'azul') {
+                root.style.setProperty('--bg-deep', '#1e1b4b');
+                root.style.setProperty('--card-bg', '#312e81');
+            }
+            alert("Tema visual aplicado con éxito.");
+        }
+
+        function cambiarFuente(fuente) {
+            const root = document.documentElement;
+            if (fuente === 'roboto') {
+                root.style.setProperty('--font-family', '"Roboto", sans-serif');
+            } else if (fuente === 'mono') {
+                root.style.setProperty('--font-family', 'monospace');
+            } else {
+                root.style.setProperty('--font-family', '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif');
+            }
+            alert("Tipografía actualizada.");
+        }
+
+        function cambiarTamanoTexto(tamano) {
+            const root = document.documentElement;
+            root.style.setProperty('--font-size-base', tamano);
+            alert(`Tamaño de fuente ajustado a ${tamano}.`);
+        }
+
+        function ocultarChatPrincipal(numero, nombre) {
             const elemento = document.getElementById(`chat-item-${numero}`);
             if (elemento) {
                 elemento.style.display = 'none';
-                alert(`Chat con ${numero} ocultado de la pantalla principal con éxito. Puedes reabrirlo introduciendo su número en "Nuevo Chat por Número".`);
+                if (!chatsOcultosGlobales.some(c => c.numero === numero)) {
+                    chatsOcultosGlobales.push({ numero, nombre });
+                }
+                renderizarChatsOcultos();
+                alert(`Chat con ${nombre || numero} ocultado y guardado en la Bóveda de Chats Ocultos.`);
             }
+        }
+
+        function abrirChatsOcultosModal() {
+            document.getElementById('vobixMenuDropdown').classList.remove('active');
+            document.getElementById('chatsOcultosModal').classList.add('active');
+            renderizarChatsOcultos();
+        }
+
+        function cerrarChatsOcultosModal() {
+            document.getElementById('chatsOcultosModal').classList.remove('active');
+        }
+
+        function renderizarChatsOcultos() {
+            const contenedor = document.getElementById('listaChatsOcultosContainer');
+            if (chatsOcultosGlobales.length === 0) {
+                contenedor.innerHTML = `<p style="font-size: 11px; color: var(--text-muted);">No hay chats ocultos actualmente.</p>`;
+                return;
+            }
+            contenedor.innerHTML = "";
+            chatsOcultosGlobales.forEach(c => {
+                contenedor.innerHTML += `
+                    <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(15,23,42,0.8); padding: 8px; border-radius: 8px;">
+                        <div>
+                            <h4 style="margin:0; font-size:12px; color:white;">${c.nombre}</h4>
+                            <span style="font-size:10px; color:#34d399;">${c.numero}</span>
+                        </div>
+                        <div style="display: flex; gap: 6px;">
+                            <button onclick="restaurarChatOculto('${c.numero}')" style="background:#10b981; border:none; color:white; padding:4px 8px; border-radius:6px; font-size:10px; cursor:pointer;">Restaurar</button>
+                            <button onclick="abrirChatPrivado('${c.numero}', '${c.nombre}')" style="background:#3b82f6; border:none; color:white; padding:4px 8px; border-radius:6px; font-size:10px; cursor:pointer;">Abrir</button>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function restaurarChatOculto(numero) {
+            const index = chatsOcultosGlobales.findIndex(c => c.numero === numero);
+            if (index !== -1) {
+                chatsOcultosGlobales.splice(index, 1);
+            }
+            const elemento = document.getElementById(`chat-item-${numero}`);
+            if (elemento) {
+                elemento.style.display = 'flex';
+            }
+            renderizarChatsOcultos();
+            alert("Chat restaurado a la pantalla principal con éxito.");
         }
 
         function abrirContactoModal() {
@@ -681,173 +745,6 @@
                     alert("¡Enlace de difusión copiado al portapapeles para enviar a tus contactos!");
                 });
             }
-        }
-
-        function abrirArcadeHub() {
-            document.getElementById('vobixMenuDropdown').classList.remove('active');
-            document.getElementById('arcadeHubModal').classList.add('active');
-        }
-        function cerrarArcadeHub() {
-            document.getElementById('arcadeHubModal').classList.remove('active');
-        }
-
-        let snakeInterval = null;
-        let snake = [{x: 10, y: 10}];
-        let comida = {x: 5, y: 5};
-        let dx = 1; let dy = 0;
-        let puntuacionSnake = 0; let nivelSnake = 1; let velocidadSnake = 130;
-
-        function abrirSnakeModal() {
-            cerrarArcadeHub();
-            document.getElementById('snakeModal').classList.add('active');
-            iniciarSnake();
-        }
-        function cerrarSnakeModal() {
-            document.getElementById('snakeModal').classList.remove('active');
-            clearInterval(snakeInterval);
-        }
-        function iniciarSnake() {
-            snake = [{x: 10, y: 10}]; dx = 1; dy = 0; puntuacionSnake = 0; nivelSnake = 1; velocidadSnake = 130;
-            document.getElementById('snakeScore').innerText = `Puntos: 0`;
-            document.getElementById('snakeLevel').innerText = `Nivel: 1`;
-            generarComidaSnake();
-            if (snakeInterval) clearInterval(snakeInterval);
-            snakeInterval = setInterval(bucleSnake, velocidadSnake);
-        }
-        function generarComidaSnake() {
-            comida = { x: Math.floor(Math.random() * 22), y: Math.floor(Math.random() * 22) };
-        }
-        function cambiarDireccionSnake(dir) {
-            if (dir === 'ARRIBA' && dy === 0) { dx = 0; dy = -1; }
-            if (dir === 'ABAJO' && dy === 0) { dx = 0; dy = 1; }
-            if (dir === 'IZQUIERDA' && dx === 0) { dx = -1; dy = 0; }
-            if (dir === 'DERECHA' && dx === 0) { dx = 1; dy = 0; }
-        }
-        function bucleSnake() {
-            const cabeza = {x: snake[0].x + dx, y: snake[0].y + dy};
-            if (cabeza.x < 0 || cabeza.x >= 24 || cabeza.y < 0 || cabeza.y >= 24) {
-                alert(`¡Game Over! Nivel ${nivelSnake} | Puntuación: ${puntuacionSnake}`);
-                iniciarSnake(); return;
-            }
-            for (let i = 0; i < snake.length; i++) {
-                if (cabeza.x === snake[i].x && cabeza.y === snake[i].y) {
-                    alert(`¡Game Over! Nivel ${nivelSnake} | Puntuación: ${puntuacionSnake}`);
-                    iniciarSnake(); return;
-                }
-            }
-            snake.unshift(cabeza);
-            if (cabeza.x === comida.x && cabeza.y === comida.y) {
-                puntuacionSnake += 10;
-                document.getElementById('snakeScore').innerText = `Puntos: ${puntuacionSnake}`;
-                if (puntuacionSnake % 50 === 0) {
-                    nivelSnake++;
-                    document.getElementById('snakeLevel').innerText = `Nivel: ${nivelSnake}`;
-                    velocidadSnake = Math.max(45, velocidadSnake - 20);
-                    clearInterval(snakeInterval);
-                    snakeInterval = setInterval(bucleSnake, velocidadSnake);
-                    alert(`🎉 ¡Nivel Superado! Subes al Nivel ${nivelSnake}`);
-                }
-                generarComidaSnake();
-            } else {
-                snake.pop();
-            }
-            const canvas = document.getElementById('snakeCanvas');
-            const ctx = canvas.getContext('2d');
-            ctx.fillStyle = "#111"; ctx.fillRect(0, 0, canvas.width, canvas.height);
-            ctx.fillStyle = "#ef4444"; ctx.fillRect(comida.x * 10, comida.y * 10, 9, 9);
-            ctx.fillStyle = "#10b981";
-            snake.forEach(part => { ctx.fillRect(part.x * 10, part.y * 10, 9, 9); });
-        }
-
-        let tetrisInterval = null;
-        let puntuacionTetris = 0; let nivelTetris = 1;
-        function abrirTetrisModal() {
-            cerrarArcadeHub();
-            document.getElementById('tetrisModal').classList.add('active');
-            iniciarTetris();
-        }
-        function cerrarTetrisModal() {
-            document.getElementById('tetrisModal').classList.remove('active');
-            clearInterval(tetrisInterval);
-        }
-        function iniciarTetris() {
-            puntuacionTetris = 0; nivelTetris = 1;
-            document.getElementById('tetrisScore').innerText = `Puntos: 0`;
-            document.getElementById('tetrisLevel').innerText = `Nivel: 1`;
-            if (tetrisInterval) clearInterval(tetrisInterval);
-            tetrisInterval = setInterval(() => {
-                puntuacionTetris += 5;
-                document.getElementById('tetrisScore').innerText = `Puntos: ${puntuacionTetris}`;
-                if (puntuacionTetris % 100 === 0) {
-                    nivelTetris++;
-                    document.getElementById('tetrisLevel').innerText = `Nivel: ${nivelTetris}`;
-                    alert(`🧱 ¡Tetris Nivel ${nivelTetris} alcanzado!`);
-                }
-                renderTetris();
-            }, 800);
-        }
-        function renderTetris() {
-            const canvas = document.getElementById('tetrisCanvas');
-            const ctx = canvas.getContext('2d');
-            ctx.fillStyle = "#111"; ctx.fillRect(0, 0, canvas.width, canvas.height);
-            ctx.fillStyle = "#3b82f6"; ctx.fillRect(70, 100, 40, 80);
-            ctx.fillStyle = "#10b981"; ctx.fillRect(30, 180, 80, 40);
-        }
-        function moverTetris(dir) { alert("Movido a la " + (dir < 0 ? "izquierda" : "derecha")); }
-        function girarTetris() { alert("Pieza girada 90°"); }
-
-        let flappyInterval = null; let flappyY = 140; let flappyVel = 0; let puntosFlappy = 0;
-        function abrirFlappyModal() {
-            cerrarArcadeHub();
-            document.getElementById('flappyModal').classList.add('active');
-            iniciarFlappy();
-        }
-        function cerrarFlappyModal() {
-            document.getElementById('flappyModal').classList.remove('active');
-            clearInterval(flappyInterval);
-        }
-        function iniciarFlappy() {
-            flappyY = 140; flappyVel = 0; puntosFlappy = 0;
-            document.getElementById('flappyScore').innerText = `Puntos: 0`;
-            if (flappyInterval) clearInterval(flappyInterval);
-            flappyInterval = setInterval(() => {
-                flappyVel += 0.6;
-                flappyY += flappyVel;
-                puntosFlappy++;
-                document.getElementById('flappyScore').innerText = `Puntos: ${puntosFlappy}`;
-                if (flappyY > 260 || flappyY < 0) {
-                    alert(`💥 ¡Crash! Puntuación en Flappy: ${puntosFlappy}`);
-                    iniciarFlappy();
-                }
-                renderFlappy();
-            }, 40);
-        }
-        function saltarFlappy() { flappyVel = -7; }
-        function renderFlappy() {
-            const canvas = document.getElementById('flappyCanvas');
-            const ctx = canvas.getContext('2d');
-            ctx.fillStyle = "#0f172a"; ctx.fillRect(0, 0, canvas.width, canvas.height);
-            ctx.fillStyle = "#f59e0b"; ctx.fillRect(60, flappyY, 20, 20);
-            ctx.fillStyle = "#10b981"; ctx.fillRect(180, 0, 30, 100); ctx.fillRect(180, 200, 30, 80);
-        }
-
-        let rondaSimon = 1;
-        function abrirSimonModal() {
-            cerrarArcadeHub();
-            document.getElementById('simonModal').classList.add('active');
-            iniciarSimon();
-        }
-        function cerrarSimonModal() { document.getElementById('simonModal').classList.remove('active'); }
-        function iniciarSimon() {
-            rondaSimon = 1;
-            document.getElementById('simonRonda').innerText = `Ronda: 1`;
-            alert("🧠 ¡Memoriza la secuencia lumínica que se avecina en el Nivel 1!");
-        }
-        function pulsarSimon(idx) {
-            const colores = ['Rojo', 'Verde', 'Azul', 'Amarillo'];
-            alert(`Has pulsado: ${colores[idx]}. ¡Correcto! Avanzas de ronda.`);
-            rondaSimon++;
-            document.getElementById('simonRonda').innerText = `Ronda: ${rondaSimon}`;
         }
 
         let canvasFirma, ctxFirma;
@@ -975,12 +872,14 @@
             alert("¡Estado publicado por 24 horas!");
         }
 
-        function mostrarEstadoLlamada(texto) {
+        function mostrarNotificacionMensaje(remitente, texto) {
             const banner = document.getElementById('callStatusBanner');
             if (banner) {
-                banner.innerText = texto;
+                banner.innerText = `💬 Nuevo mensaje de ${remitente}: "${texto}"`;
                 banner.style.display = 'block';
+                setTimeout(() => { banner.style.display = 'none'; }, 5000);
             }
+            if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
         }
 
         socket.on('connect', () => {
@@ -1102,7 +1001,7 @@
                         </div>
                         <div style="display: flex; gap: 6px; align-items: center;">
                             <span onclick="abrirChatPrivado('${num}', 'Usuario ${num}')" style="font-size: 11px; color: #10b981; cursor: pointer;">💬 Abrir</span>
-                            <span onclick="ocultarChatPrincipal('${num}')" style="font-size: 11px; color: #ef4444; cursor: pointer; padding: 2px 6px; background: rgba(239,68,68,0.1); border-radius: 4px;" title="Ocultar chat">🗑️ Ocultar</span>
+                            <span onclick="ocultarChatPrincipal('${num}', 'Usuario ${num}')" style="font-size: 11px; color: #ef4444; cursor: pointer; padding: 2px 6px; background: rgba(239,68,68,0.1); border-radius: 4px;" title="Ocultar chat">🗑️ Ocultar</span>
                         </div>
                     </div>
                 `;
@@ -1199,8 +1098,9 @@
 
         socket.on("recibir-mensaje-chat", (data) => {
             const remitente = data.emisor;
+            const alias = data.aliasEmisor || remitente;
             const estadoCheck = dobleCheckAzulActivo ? '<span class="msg-status">✓✓</span>' : '<span class="msg-status">✓</span>';
-            const textoFormateado = `<b>${data.aliasEmisor || remitente}:</b> ${data.texto} ${estadoCheck}`;
+            const textoFormateado = `<b>${alias}:</b> ${data.texto} ${estadoCheck}`;
 
             if (!historialChats[remitente]) historialChats[remitente] = [];
             historialChats[remitente].push({ tipo: 'recibida', texto: textoFormateado });
@@ -1214,7 +1114,7 @@
                     socket.emit("notificar-leido", { emisor: remitente, lector: identificadorUsuario });
                 }
             } else {
-                mostrarEstadoLlamada(`💬 Nuevo mensaje de ${data.aliasEmisor || remitente}`);
+                mostrarNotificacionMensaje(alias, data.texto);
             }
         });
 
@@ -1255,8 +1155,8 @@
                 navigator.share({ title: 'VobixChat', text: '¡Únete a mi red privada!', url: enlace }).catch(() => {});
             } else {
                 navigator.clipboard.writeText(enlace).then(() => {
-                    mostrarEstadoLlamada("¡Enlace copiado!");
-                }).catch(() => {});
+                    mostrarNotificacionMensaje("Sistema", "¡Enlace copiado!");
+                });
             }
         }
 
@@ -1399,7 +1299,7 @@
             pc.ontrack = (event) => {
                 detenerTonoMarcacion();
                 actualizarBotonLlamadaUI(true);
-                mostrarEstadoLlamada("🟢 En llamada activa");
+                mostrarNotificacionMensaje("Sistema", "🟢 En llamada activa");
             };
 
             pc.onicecandidate = (event) => {
@@ -1438,13 +1338,13 @@
             try {
                 actualizarBotonLlamadaUI(true);
                 iniciarTonoMarcacion();
-                mostrarEstadoLlamada("Llamando (conectando)...");
+                mostrarNotificacionMensaje("Sistema", "Llamando (conectando)...");
                 await inicializarMediaLocal(conVideo);
                 crearConexionPeerGrupal(destinatarioActual, true);
             } catch (e) {
                 detenerTonoMarcacion();
                 actualizarBotonLlamadaUI(false);
-                mostrarEstadoLlamada("Error al iniciar llamada");
+                mostrarNotificacionMensaje("Sistema", "Error al iniciar llamada");
             }
         }
 
@@ -1454,7 +1354,7 @@
             document.getElementById('incomingCallerName').innerText = data.emisor;
             document.getElementById('incomingCallModal').classList.add('active');
             iniciarTimbreEntrante();
-            mostrarEstadoLlamada("📞 Llamada entrante...");
+            mostrarNotificacionMensaje(data.emisor, "📞 Llamada entrante...");
         });
 
         async function aceptarLlamadaEntrante() {
@@ -1464,7 +1364,7 @@
             destinatarioActual = ofertaPendienteGlobal.emisor;
             actualizarBotonLlamadaUI(true);
             try {
-                mostrarEstadoLlamada("Conectando llamada...");
+                mostrarNotificacionMensaje("Sistema", "Conectando llamada...");
                 await inicializarMediaLocal(true);
                 crearConexionPeerGrupal(destinatarioActual, false);
                 const pc = peerConnections[destinatarioActual];
@@ -1480,7 +1380,7 @@
             if (ofertaPendienteGlobal) socket.emit("finalizar-llamada", { destinatario: ofertaPendienteGlobal.emisor });
             ofertaPendienteGlobal = null;
             actualizarBotonLlamadaUI(false);
-            mostrarEstadoLlamada("Llamada rechazada");
+            mostrarNotificacionMensaje("Sistema", "Llamada rechazada");
         }
 
         socket.on("llamada-finalizada", () => {
@@ -1489,7 +1389,7 @@
             document.getElementById('incomingCallModal').classList.remove('active');
             resetearLlamadas();
             actualizarBotonLlamadaUI(false);
-            mostrarEstadoLlamada("Llamada finalizada");
+            mostrarNotificacionMensaje("Sistema", "Llamada finalizada");
         });
 
         function colgarTodo() {
@@ -1502,7 +1402,7 @@
             }
             resetearLlamadas();
             actualizarBotonLlamadaUI(false);
-            mostrarEstadoLlamada("Listo para conectar");
+            mostrarNotificacionMensaje("Sistema", "Listo para conectar");
         }
 
         function resetearLlamadas() {
