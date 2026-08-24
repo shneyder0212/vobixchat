@@ -1,280 +1,210 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>VobixChat</title>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      background-color: #111b21;
-      color: #e9edef;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      height: 100vh;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-    }
-
-    #vobixchat-terminal {
-      position: fixed;
-      inset: 0;
-      background: #111b21;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-      z-index: 200;
-    }
-    .login-card {
-      background: #202c33;
-      padding: 30px;
-      border-radius: 12px;
-      width: 100%;
-      max-width: 360px;
-      display: flex;
-      flex-direction: column;
-      gap: 15px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.5);
-    }
-    .login-card h2 {
-      color: #00a884;
-      font-size: 22px;
-      text-align: center;
-      margin-bottom: 5px;
-    }
-    .login-card input, .login-card select {
-      background: #2a3942;
-      border: 1px solid #374248;
-      color: #fff;
-      padding: 12px;
-      border-radius: 8px;
-      font-size: 15px;
-      outline: none;
-      width: 100%;
-    }
-    .btn-whatsapp {
-      background: #00a884;
-      color: #fff;
-      border: none;
-      padding: 12px;
-      border-radius: 8px;
-      font-weight: bold;
-      font-size: 15px;
-      cursor: pointer;
-      transition: background 0.2s;
-    }
-    .btn-whatsapp:hover { background: #008f72; }
-    
-    #error-login-msg {
-      color: #f15c6d;
-      font-size: 12px;
-      text-align: center;
-      display: none;
-    }
-
-    #vobixchat-hud {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      background: #0b141a;
-      position: relative;
-      overflow-y: auto;
-      padding-bottom: 80px;
-    }
-    .header-chat {
-      background: #202c33;
-      padding: 12px 16px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-bottom: 1px solid #2a3942;
-    }
-    .paneles-video-cuantico {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 10px;
-      padding: 15px;
-    }
-    @media (min-width: 768px) {
-      .paneles-video-cuantico { grid-template-columns: 1fr 1fr; }
-    }
-    .pantalla-media {
-      background: #202c33;
-      border-radius: 10px;
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
-    }
-    .tag-video {
-      font-size: 12px;
-      color: #8696a0;
-      padding: 8px 12px;
-      background: rgba(0,0,0,0.2);
-    }
-    video {
-      width: 100%;
-      height: 220px;
-      object-fit: cover;
-      background: #000;
-    }
-    .call-box {
-      background: #202c33;
-      margin: 15px;
-      padding: 15px;
-      border-radius: 10px;
-      display: flex;
-      gap: 10px;
-      align-items: center;
-    }
-    .call-box input {
-      flex: 1;
-      background: #2a3942;
-      border: none;
-      color: #fff;
-      padding: 10px 14px;
-      border-radius: 8px;
-      font-size: 14px;
-      outline: none;
-    }
-    .wa-footer-moderno {
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      width: 100%;
-      background: #202c33;
-      padding: 10px 16px;
-      padding-bottom: max(12px, env(safe-area-inset-bottom));
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      z-index: 100;
-    }
-    .wa-action-btn {
-      background: transparent;
-      border: none;
-      color: #8696a0;
-      font-size: 22px;
-      cursor: pointer;
-      padding: 4px;
-    }
-    .wa-input-capsule {
-      flex: 1;
-      background: #2a3942;
-      border-radius: 24px;
-      padding: 10px 16px;
-      display: flex;
-      align-items: center;
-    }
-    .wa-input-capsule input {
-      flex: 1;
-      background: transparent;
-      border: none;
-      color: #fff;
-      font-size: 15px;
-      outline: none;
-    }
-  </style>
-  <script src="/socket.io/socket.io.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VobixChat - Videollamada</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; background: #f4f4f9; margin: 0; padding: 20px; }
+        .video-container { display: flex; justify-content: center; gap: 20px; margin-top: 20px; flex-wrap: wrap; }
+        video { width: 400px; max-width: 100%; height: 300px; background: #000; border-radius: 8px; border: 2px solid #ccc; }
+        .controls { margin-top: 20px; }
+        input, button { padding: 10px; font-size: 16px; margin: 5px; border-radius: 5px; border: 1px solid #ccc; }
+        button { background: #007bff; color: white; cursor: pointer; border: none; }
+        button:hover { background: #0056b3; }
+        button.danger { background: #dc3545; }
+        button.danger:hover { background: #a71d2a; }
+    </style>
 </head>
 <body>
 
-  <div id="vobixchat-terminal">
-    <div class="login-card">
-      <h2>VobixChat</h2>
-      <p style="font-size: 13px; color: #8696a0; text-align: center;">Introduce tu número de teléfono móvil</p>
-      
-      <div style="display: flex; gap: 8px;">
-        <select id="country-code" style="width: 110px;">
-          <option value="ES" selected>ES +34</option>
-          <option value="US">US +1</option>
-          <option value="MX">MX +52</option>
-          <option value="CO">CO +57</option>
-          <option value="AR">AR +54</option>
-        </select>
-        <input type="tel" id="phone-number" placeholder="Número móvil">
-      </div>
-      
-      <div id="error-login-msg"></div>
-      <button class="btn-whatsapp" onclick="entrarAlSistema()">Comenzar</button>
-    </div>
-  </div>
+    <h1>VobixChat - Sistema de Llamadas</h1>
+    <div id="estado-usuario" style="font-weight: bold; color: #555;">No registrado</div>
 
-  <div id="vobixchat-hud" style="display: none;">
-    <div class="header-chat">
-      <span id="user-display-tag" style="font-weight: bold; color: #00a884;">VobixChat Online</span>
-      <span id="sys-status" style="font-size: 12px; color: #8696a0;">Conectado</span>
+    <div class="controls">
+        <input type="text" id="miIdInput" placeholder="Tu ID o número de usuario">
+        <button onclick="registrarUsuario()">Conectar ID</button>
     </div>
 
-    <div class="call-box">
-      <input type="tel" id="numero-destino-input" placeholder="Número de destino para llamar">
-      <button class="btn-whatsapp" style="padding: 10px 20px;" onclick="ejecutarMarcadoFromHUD()">Llamar</button>
+    <div class="controls" style="margin-top: 30px;">
+        <input type="text" id="destinatarioInput" placeholder="ID a quien llamar">
+        <button onclick="llamarUsuario()">Iniciar Llamada</button>
+        <button class="danger" onclick="colgar()">Colgar</button>
     </div>
 
-    <div class="paneles-video-cuantico">
-      <div class="pantalla-media">
-        <div class="tag-video">Cámara Local</div>
-        <video id="local-video-preview" autoplay playsinline muted></video>
-      </div>
-      <div class="pantalla-media">
-        <div class="tag-video">Cámara Remota</div>
-        <video id="remote-video-display" autoplay playsinline></video>
-      </div>
+    <div class="video-container">
+        <div>
+            <p>Tu Cámara</p>
+            <video id="localVideo" autoplay muted playsinline></video>
+        </div>
+        <div>
+            <p>Videollamada Remota</p>
+            <video id="remoteVideo" autoplay playsinline></video>
+        </div>
     </div>
-  </div>
 
-  <div class="wa-footer-moderno" id="barra-mensajeria-inferior" style="display: none;">
-    <button class="wa-action-btn">📎</button>
-    <div class="wa-input-capsule">
-      <input type="text" id="mensajeChatInput" placeholder="Escribe un mensaje...">
-    </div>
-    <button class="wa-action-btn" style="color: #00a884;">➤</button>
-  </div>
+    <!-- Script de Socket.io -->
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+        let identificadorUsuario = "";
+        let destinatarioActual = "";
+        let peerConnection = null;
+        let localStream = null;
+        let remoteStream = null;
 
-  <script>
-    async function entrarAlSistema() {
-      const codigoPais = document.getElementById('country-code').value;
-      const numeroCrudo = document.getElementById('phone-number').value.trim();
-      const errorMsg = document.getElementById('error-login-msg');
+        const rtcConfig = {
+            iceServers: [
+                { urls: 'stun:stun.l.google.com:19302' },
+                { urls: 'stun:stun1.l.google.com:19302' }
+            ]
+        };
 
-      errorMsg.style.display = 'none';
-
-      if (!numeroCrudo) {
-        errorMsg.innerText = "Por favor introduce un número válido.";
-        errorMsg.style.display = 'block';
-        return;
-      }
-
-      try {
-        const respuesta = await fetch('/api/seguridad/verificar-usuario', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ numeroCrudo, codigoPais })
-        });
-        const resultado = await respuesta.json();
-
-        if (resultado.success) {
-          document.getElementById('vobixchat-terminal').style.display = 'none';
-          document.getElementById('vobixchat-hud').style.display = 'flex';
-          document.getElementById('barra-mensajeria-inferior').style.display = 'flex';
-          
-          const telefonoFinal = codigoPais + " " + numeroCrudo;
-          document.getElementById('user-display-tag').innerText = "VobixChat // " + telefonoFinal;
-          
-          if (window.conectarClienteSignaling) {
-            window.conectarClienteSignaling(telefonoFinal);
-          }
-        } else {
-          errorMsg.innerText = resultado.error;
-          errorMsg.style.display = 'block';
+        function registrarUsuario() {
+            const input = document.getElementById('miIdInput').value.trim();
+            if (!input) return alert("Introduce un identificador válido.");
+            
+            identificadorUsuario = input;
+            socket.emit("registrar-canal-llamada", { identificador_usuario: identificadorUsuario });
+            document.getElementById('estado-usuario').innerText = `Conectado como: ${identificadorUsuario}`;
+            alert("¡Registrado correctamente en el servidor!");
         }
-      } catch (err) {
-        errorMsg.innerText = "Error de conexión con el servidor.";
-        errorMsg.style.display = 'block';
-      }
-    }
-  </script>
-  <script src="cliente-comunicaciones.js"></script>
+
+        socket.on("error-llamada", (data) => {
+            alert(`Aviso: ${data.error}`);
+            resetearLlamada();
+        });
+
+        socket.on("recibir-oferta-webrtc", async (data) => {
+            const aceptar = confirm(`Llamada entrante de: ${data.emisor}. ¿Deseas contestar?`);
+            if (!aceptar) {
+                socket.emit("finalizar-llamada", { destinatario: data.emisor });
+                return;
+            }
+
+            destinatarioActual = data.emisor;
+
+            try {
+                await inicializarMediaLocal();
+                crearPeerConnection(destinatarioActual);
+
+                await peerConnection.setRemoteDescription(new RTCSessionDescription(data.sdp));
+                const respuesta = await peerConnection.createAnswer();
+                await peerConnection.setLocalDescription(respuesta);
+
+                socket.emit("enviar-respuesta-webrtc", {
+                    destinatario: destinatarioActual,
+                    emisor: identificadorUsuario,
+                    sdp: peerConnection.localDescription
+                });
+            } catch (error) {
+                console.error("Error al aceptar la llamada:", error);
+            }
+        });
+
+        socket.on("recibir-respuesta-webrtc", async (data) => {
+            try {
+                if (peerConnection) {
+                    await peerConnection.setRemoteDescription(new RTCSessionDescription(data.sdp));
+                }
+            } catch (error) {
+                console.error("Error al procesar la respuesta remota:", error);
+            }
+        });
+
+        socket.on("recibir-candidato-ice", async (data) => {
+            try {
+                if (peerConnection && data.candidato) {
+                    await peerConnection.addIceCandidate(new RTCIceCandidate(data.candidato));
+                }
+            } catch (error) {
+                console.error("Error al añadir candidato ICE:", error);
+            }
+        });
+
+        socket.on("llamada-finalizada", () => {
+            alert("La llamada ha finalizado por el otro usuario.");
+            resetearLlamada();
+        });
+
+        async function llamarUsuario() {
+            const destinatario = document.getElementById('destinatarioInput').value.trim();
+            if (!destinatario) return alert("Introduce el ID del destinatario.");
+            if (!identificadorUsuario) return alert("Primero debes registrar tu propio ID arriba.");
+
+            destinatarioActual = destinatario;
+
+            try {
+                await inicializarMediaLocal();
+                crearPeerConnection(destinatarioActual);
+
+                const oferta = await peerConnection.createOffer();
+                await peerConnection.setLocalDescription(oferta);
+
+                socket.emit("enviar-oferta-webrtc", {
+                    emisor: identificadorUsuario,
+                    destinatario: destinatarioActual,
+                    sdp: peerConnection.localDescription
+                });
+            } catch (error) {
+                console.error("Error al iniciar la llamada:", error);
+            }
+        }
+
+        async function inicializarMediaLocal() {
+            if (localStream) return; // Ya inicializado
+            try {
+                localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+                document.getElementById('localVideo').srcObject = localStream;
+            } catch (error) {
+                alert("No se pudieron obtener permisos de cámara y micrófono.");
+                throw error;
+            }
+        }
+
+        function crearPeerConnection(destinatarioId) {
+            peerConnection = new RTCPeerConnection(rtcConfig);
+
+            localStream.getTracks().forEach(track => {
+                peerConnection.addTrack(track, localStream);
+            });
+
+            peerConnection.ontrack = (event) => {
+                remoteStream = event.streams[0];
+                document.getElementById('remoteVideo').srcObject = remoteStream;
+            };
+
+            peerConnection.onicecandidate = (event) => {
+                if (event.candidate) {
+                    socket.emit("enviar-candidato-ice", {
+                        destinatario: destinatarioId,
+                        emisor: identificadorUsuario,
+                        candidato: event.candidate
+                    });
+                }
+            };
+        }
+
+        function colgar() {
+            if (destinatarioActual) {
+                socket.emit("finalizar-llamada", { destinatario: destinatarioActual });
+            }
+            resetearLlamada();
+        }
+
+        function resetearLlamada() {
+            if (peerConnection) {
+                peerConnection.close();
+                peerConnection = null;
+            }
+            if (localStream) {
+                localStream.getTracks().forEach(track => track.stop());
+                localStream = null;
+            }
+            document.getElementById('localVideo').srcObject = null;
+            document.getElementById('remoteVideo').srcObject = null;
+            destinatarioActual = "";
+        }
+    </script>
 </body>
 </html>
