@@ -497,8 +497,8 @@
             }
         });
 
-        // BOTÓN DINÁMICO DE LLAMAR / COLGAR DESDE EL CHAT PRIVADO (ESTILO WHATSAPP)
-        function toggleLparDesdeChatPrivado(conVideo) {
+        // CONTROL CORRECTO Y ACTIVO DEL BOTÓN DE LLAMADA DESDE EL CHAT PRIVADO
+        function toggleLlamarDesdeChatPrivado(conVideo) {
             if (!estaLlamandoActualmente) {
                 if (!chatActivoDestinatario) return;
                 destinatarioActual = chatActivoDestinatario;
@@ -506,10 +506,6 @@
             } else {
                 colgarTodo();
             }
-        }
-        // Alias retrocompatible por si el botón HTML llama a la anterior
-        function llamarDesdeChatPrivado(conVideo) {
-            toggleLparDesdeChatPrivado(conVideo);
         }
 
         function actualizarBotonLlamadaUI(llamando) {
