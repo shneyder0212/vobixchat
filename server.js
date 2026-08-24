@@ -95,11 +95,29 @@ io.on("connection", (socket) => {
     });
 
     socket.on("enviar-mensaje-chat", (datos) => {
-        const { destinatario, texto, aliasEmisor } = datos;
+        const { destinatario, emisor, texto, aliasEmisor } = datos;
         const socketDestinoId = mapaCanalesUsuarios.get(String(destinatario).trim());
         if (socketDestinoId) {
-            io.to(socketDestinoId).emit("recibir-mensaje-chat", { texto, aliasEmisor });
+            io.to(socketDestinoId).emit("recibir-mensaje-chat", { emisor, texto, aliasEmisor });
         }
+    });
+
+    socket.on("notificar-leido", (datos) => {
+        const { emisor, lector } = datos;
+        const socketEmisorId = mapaCanalesUsuarios.get(String(emisor).trim());
+        if (socketEmisorId) {
+            io.to(socketEmisorId).emit("mensaje-leido-confirmacion", { lector });
+        }
+    });
+
+    // SINCRONIZACIÓN DE FIRMA EN TIEMPO REAL (MODO ESPEJO TRANSATLÁNTICO)
+    socket.on("sincronizar-trazo-firma", (datos) => {
+        const { salaFirma, trazo, region } = datos;
+        socket.to(salaFirma).emit("recibir-trazo-firma", { trazo, region });
+    });
+
+    socket.on("unirse-sala-firma", (salaFirma) => {
+        socket.join(salaFirma);
     });
 
     socket.on("unirse-a-sala", (data) => {
@@ -146,5 +164,5 @@ io.on("connection", (socket) => {
 
 const PORT = process.env.PORT || 3000;
 servidorHTTP.listen(PORT, () => {
-    console.log("[SERVER] VobixChat operativo en puerto " + PORT);
+    console.log("[SERVER] VobixChat Élite con Firma Transatlántica en puerto " + PORT);
 });
