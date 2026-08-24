@@ -63,6 +63,20 @@ app.post('/api/seguridad/verificar-usuario', (req, res) => {
     return res.status(200).json({ success: true, message: "ACCESO CONCEDIDO" });
 });
 
+// ENDPOINT DE VERIFICACIÓN DE PIN (MODO PRUEBA GRATIS PARA TU FAMILIA)
+app.post('/api/seguridad/verificar-pin', (req, res) => {
+    const { telefono, pin } = req.body;
+    if (!telefono || !pin) return res.status(400).json({ success: false, error: "Datos incompletos" });
+
+    const pinMaestro = "1234"; // PIN universal gratuito para pruebas
+
+    if (pin === pinMaestro) {
+        return res.status(200).json({ success: true, message: "ACCESO CONCEDIDO (SISTEMA SEGURO)" });
+    }
+
+    return res.status(400).json({ success: false, error: "PIN incorrecto. Usa '1234' para entrar." });
+});
+
 app.post('/api/multimedia/subir-archivo', upload.single('archivo_multimedia'), (req, res) => {
     if (!req.file) {
         return res.status(400).json({ success: false, error: "NO_FILE" });
@@ -71,68 +85,50 @@ app.post('/api/multimedia/subir-archivo', upload.single('archivo_multimedia'), (
 });
 
 const mapaCanalesUsuarios = new Map();
-const estadosUsuarios = new Map();
 
 io.on("connection", (socket) => {
     socket.on("registrar-canal-llamada", (data) => {
         if (!data || !data.identificador_usuario) return;
-        
         const idUsuario = data.identificador_usuario;
         mapaCanalesUsuarios.set(idUsuario, socket.id);
         socket.idUsuarioVobix = idUsuario;
-        
-        if (!estadosUsuarios.has(idUsuario)) {
-            estadosUsuarios.set(idUsuario, 'disponible');
-        }
-        
         console.log(`[SOCKET] Usuario registrado: ${idUsuario} (${socket.id})`);
     });
 
-    socket.on("enviar-oferta-webrtc", (datos) => {
-        const { emisor, destinatario, sdp } = datos;
+    // GESTIÓN DE SALAS PARA VIDEOCONFERENCIAS GRUPALES
+    socket.on("unirse-a-sala", (data) => {
+        const { salaId, usuarioId } = data;
+        socket.join(salaId);
+        socket.salaActual = salaId;
+        console.log(`[SOCKET] Usuario ${usuarioId} se unió a la sala grupal: ${salaId}`);
+        
+        socket.to(salaId).emit("nuevo-usuario-sala", { emisor: usuarioId });
+    });
+
+    socket.on("senalizacion-grupal", (datos) => {
+        const { destinatario, emisor, tipo, payload } = datos;
         const socketDestinoId = mapaCanalesUsuarios.get(destinatario);
-        const estadoDestino = estadosUsuarios.get(destinatario);
-
-        if (!socketDestinoId) {
-            return socket.emit("error-llamada", { error: "El usuario destinatario no está conectado." });
-        }
-
-        if (estadoDestino && estadoDestino !== 'disponible') {
-            return socket.emit("error-llamada", { error: "El usuario se encuentra ocupado en otra llamada." });
-        }
-
-        estadosUsuarios.set(emisor, 'en-llamada');
-        estadosUsuarios.set(destinatario, 'en-llamada');
-
-        io.to(socketDestinoId).emit("recibir-oferta-webrtc", { emisor, sdp });
-    });
-
-    socket.on("enviar-respuesta-webrtc", (datos) => {
-        const socketDestinoId = mapaCanalesUsuarios.get(datos.destinatario);
         if (socketDestinoId) {
-            io.to(socketDestinoId).emit("recibir-respuesta-webrtc", { 
-                emisor: datos.emisor,
-                sdp: datos.sdp 
+            io.to(socketDestinoId).emit("recibir-senalizacion-grupal", {
+                emisor,
+                tipo,
+                payload
             });
-        }
-    });
-
-    socket.on("enviar-candidato-ice", (datos) => {
-        const socketDestinoId = mapaCanalesUsuarios.get(datos.destinatario);
-        if (socketDestinoId) {
-            io.to(socketDestinoId).emit("recibir-candidato-ice", { 
-                emisor: datos.emisor,
-                candidato: datos.candidato 
+        } else {
+            // Compatibilidad hacia llamadas 1 a 1 tradicionales si el destinatario no está en sala grupal
+            io.to(socketDestinoId).emit("recibir-oferta-webrtc", {
+                emisor,
+                sdp: payload
             });
         }
     });
 
     socket.on("finalizar-llamada", (datos) => {
-        const { destinatario } = datos;
-        
-        if (socket.idUsuarioVobix) estadosUsuarios.set(socket.idUsuarioVobix, 'disponible');
-        if (destinatario) {
-            estadosUsuarios.set(destinatario, 'disponible');
+        const { destinatario, salaId } = datos;
+        if (salaId) {
+            socket.to(salaId).emit("usuario-salio-sala", { emisor: socket.idUsuarioVobix });
+            socket.leave(salaId);
+        } else if (destinatario) {
             const socketDestinoId = mapaCanalesUsuarios.get(destinatario);
             if (socketDestinoId) {
                 io.to(socketDestinoId).emit("llamada-finalizada", { emisor: socket.idUsuarioVobix });
@@ -144,7 +140,9 @@ io.on("connection", (socket) => {
         if (socket.idUsuarioVobix) {
             if (mapaCanalesUsuarios.get(socket.idUsuarioVobix) === socket.id) {
                 mapaCanalesUsuarios.delete(socket.idUsuarioVobix);
-                estadosUsuarios.delete(socket.idUsuarioVobix);
+                if (socket.salaActual) {
+                    socket.to(socket.salaActual).emit("usuario-salio-sala", { emisor: socket.idUsuarioVobix });
+                }
                 console.log(`[SOCKET] Usuario desconectado: ${socket.idUsuarioVobix}`);
             }
         }
