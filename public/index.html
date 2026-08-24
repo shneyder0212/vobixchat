@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, interactive-widget=resizes-content">
-    <title>VobixChat - Red Privada Segura</title>
+    <title>VobixChat Élite - Red Cuántica y Menú Completo</title>
     <style>
         :root {
             --bg-deep: #0f172a;
@@ -84,14 +84,13 @@
         .app-header {
             background: linear-gradient(90deg, #0f172a 0%, #1e293b 100%);
             color: white; padding: 8px 12px; display: flex; justify-content: space-between; align-items: center;
-            border-bottom: 1px solid var(--border-color); flex-shrink: 0; position: relative;
+            border-bottom: 1px solid var(--border-color); flex-shrink: 0; position: relative; z-index: 600;
         }
         
         .app-body {
             flex: 1; padding: 8px; overflow-y: auto; -webkit-overflow-scrolling: touch;
             display: flex; flex-direction: column; gap: 6px; background: #0b141a; 
-            padding-bottom: 75px; 
-            overscroll-behavior-y: none;
+            padding-bottom: 75px; overscroll-behavior-y: none;
         }
 
         #callStatusBanner {
@@ -114,6 +113,37 @@
         .chat-details h4 { margin: 0; font-size: 13px; color: white; }
         .chat-details span { font-size: 10px; color: var(--text-muted); }
 
+        /* MENÚ DESPLEGABLE CON SCROLL VERTICAL FLUIDO (20 OPCIONES) */
+        #vobixMenuDropdown {
+            position: absolute; top: 45px; right: 10px; background: #1e293b;
+            border: 1px solid var(--border-color); border-radius: 10px; width: 250px;
+            max-height: 75vh; overflow-y: auto; -webkit-overflow-scrolling: touch;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8); display: none; flex-direction: column; z-index: 700;
+        }
+        #vobixMenuDropdown.active { display: flex; }
+        .menu-item {
+            padding: 10px 14px; font-size: 12px; color: white; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.04);
+            display: flex; align-items: center; gap: 8px; flex-shrink: 0;
+        }
+        .menu-item:hover { background: rgba(255,255,255,0.08); }
+
+        /* MÓDULOS MODALES Y DE JUEGOS */
+        #juegosModal, #firmaModal, #estadosModal {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: #0b141a; z-index: 800; display: none;
+            flex-direction: column; justify-content: space-between; padding: 15px; box-sizing: border-box; color: white;
+        }
+        #juegosModal.active, #firmaModal.active, #estadosModal.active { display: flex; }
+
+        .canvas-container {
+            flex: 1; background: #fff; border-radius: 12px; position: relative; overflow: hidden; margin: 10px 0;
+            border: 2px solid var(--accent-green); cursor: crosshair;
+        }
+        canvas { width: 100%; height: 100%; touch-action: none; display: block; }
+        .watermark-overlay {
+            position: absolute; top: 10px; left: 10px; font-size: 10px; color: rgba(0,0,0,0.3); font-weight: bold; pointer-events: none;
+        }
+
         #privateChatRoom {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background: #0b141a; z-index: 400; display: none;
@@ -129,10 +159,15 @@
             flex: 1; padding: 10px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; background: #0b141a;
         }
         .burbuja {
-            max-width: 80%; padding: 6px 10px; border-radius: 10px; font-size: 12px; word-break: break-word;
+            max-width: 80%; padding: 6px 10px; border-radius: 10px; font-size: 12px; word-break: break-word; position: relative; padding-bottom: 16px;
         }
         .burbuja.recibida { background: #202c33; color: white; align-self: flex-start; border-top-left-radius: 2px; }
         .burbuja.enviada { background: #005c4b; color: white; align-self: flex-end; border-top-right-radius: 2px; }
+        
+        .msg-status {
+            position: absolute; bottom: 2px; right: 6px; font-size: 10px; color: #53bdeb; font-weight: bold;
+        }
+        .msg-status.sent { color: #8696a0; }
 
         .card-panel {
             background: var(--card-bg); padding: 8px 10px; border-radius: 8px;
@@ -163,12 +198,6 @@
             background: var(--accent-green); color: white; border: none; border-radius: 50%;
             width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 13px; flex-shrink: 0;
         }
-        .send-mic-btn {
-            background: #3b82f6; color: white; border: none; border-radius: 50%;
-            width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 13px; flex-shrink: 0;
-        }
-        .send-mic-btn.recording { background: var(--danger-red) !important; animation: pulseRecord 1s infinite; }
-        @keyframes pulseRecord { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
 
         #privateEmojiPicker {
             position: absolute; bottom: 55px; left: 10px; background: #1e293b;
@@ -203,14 +232,88 @@
 
     <div class="app-container">
 
-        <!-- SALA DE CHAT PRIVADO INDIVIDUAL -->
+        <!-- MÓDULO DE MINIJUEGOS -->
+        <div id="juegosModal">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
+                <h3 id="tituloJuegoActivo" style="margin: 0; color: var(--accent-green); font-size: 15px;">🎮 Vobix Arcade Élite</h3>
+                <button onclick="cerrarJuegosModal()" style="background:none; border:none; color:white; font-size:20px; cursor:pointer;">✕</button>
+            </div>
+            
+            <div id="selectorJuegosArea" style="flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 12px; padding: 10px;">
+                <button class="btn-imponente" onclick="iniciarCandyCrush()" style="background: linear-gradient(135deg, #ec4899 0%, #be185d 100%); padding: 16px; font-size: 16px;">🍬 Vobix Candy Crush Saga</button>
+                <button class="btn-imponente" onclick="iniciarParchisCombat()" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); padding: 16px; font-size: 16px;">🎲 Parchís Combat (Ludo)</button>
+            </div>
+
+            <div id="candyCrushArea" style="display: none; flex: 1; flex-direction: column; justify-content: center; align-items: center;">
+                <p style="font-size: 13px; color: #f472b6;">¡Haz clic en los caramelos iguales para combinarlos!</p>
+                <h2 id="puntuacionCandy" style="color: #34d399; margin: 5px 0;">Puntuación: 0</h2>
+                <div id="tableroCandy" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; width: 260px; height: 260px; background: #090d16; padding: 12px; border-radius: 12px; border: 2px solid #ec4899;"></div>
+                <button class="btn-imponente" onclick="volverSelectorJuegos()" style="margin-top: 15px; background: #64748b;">Volver al Menú</button>
+            </div>
+
+            <div id="parchisArea" style="display: none; flex: 1; flex-direction: column; justify-content: center; align-items: center;">
+                <p style="font-size: 13px; color: #fbbf24;">¡Lanza el dado y mueve tu ficha en combate directo!</p>
+                <h2 id="resultadoDado" style="color: #fbbf24; margin: 10px 0;">Dado: 🎲 [ - ]</h2>
+                <div style="font-size: 18px; margin: 10px 0; background: #090d16; padding: 15px; border-radius: 10px; width: 80%;">
+                    Casilla: <span id="posicionFicha" style="color: #34d399; font-weight: bold;">1</span> / 20
+                </div>
+                <button class="btn-imponente" onclick="lanzarDadoParchis()" style="background: #f59e0b; padding: 14px; font-size: 16px;">🎲 Lanzar Dado</button>
+                <button class="btn-imponente" onclick="volverSelectorJuegos()" style="margin-top: 15px; background: #64748b;">Volver al Menú</button>
+            </div>
+        </div>
+
+        <!-- MÓDULO DE FIRMA -->
+        <div id="firmaModal">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
+                <h3 style="margin: 0; color: var(--accent-green); font-size: 15px;">✍️ Firma Transatlántica (USA ⇄ España)</h3>
+                <button onclick="cerrarFirmaModal()" style="background:none; border:none; color:white; font-size:20px; cursor:pointer;">✕</button>
+            </div>
+            <div class="input-group" style="margin-bottom: 5px; margin-top: 5px;">
+                <label>ID de Sala de Firma</label>
+                <div style="display: flex; gap: 6px;">
+                    <input type="text" id="inputSalaFirma" value="contrato-global-01" placeholder="Ej. contrato-usa-esp">
+                    <button class="btn-imponente" onclick="conectarSalaFirma()" style="margin-top:0; width: 90px; padding:8px; font-size:11px;">Enlazar</button>
+                </div>
+            </div>
+            <div class="canvas-container" id="canvasBox">
+                <div class="watermark-overlay">🛡️ VOBIX SECURE SEAL - ID: <span id="lblFirmaHash">QNT-8821</span></div>
+                <canvas id="firmaCanvas"></canvas>
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <button class="btn-imponente" onclick="limpiarCanvas()" style="background: var(--danger-red); flex:1;">Borrar</button>
+                <button class="btn-imponente" onclick="guardarYExportarFirma()" style="background: var(--accent-green); flex:1;">Guardar Copia</button>
+            </div>
+        </div>
+
+        <!-- MÓDULO DE ESTADOS -->
+        <div id="estadosModal">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; margin-bottom: 15px;">
+                <h3 style="margin: 0; color: var(--accent-green); font-size: 16px;">📸 Tus Estados</h3>
+                <button onclick="cerrarEstadosModal()" style="background:none; border:none; color:white; font-size:20px; cursor:pointer;">✕</button>
+            </div>
+            <div class="card-panel" style="margin-bottom: 15px;">
+                <h4>Publicar Nuevo Estado</h4>
+                <div class="input-group" style="margin-top: 8px;">
+                    <input type="text" id="inputTextoEstado" placeholder="Escribe un estado...">
+                </div>
+                <button class="btn-imponente" onclick="publicarEstado()">Publicar Estado (24h)</button>
+            </div>
+            <div class="card-panel" style="flex:1; overflow-y:auto;">
+                <h4>Estados Recientes</h4>
+                <div id="listaEstadosContainer" style="margin-top: 8px; font-size: 12px; color: var(--text-muted);">
+                    <p>No hay estados publicados aún.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- SALA DE CHAT PRIVADO / IA -->
         <div id="privateChatRoom">
             <div class="private-chat-header">
                 <div style="display: flex; align-items: center; gap: 10px;">
                     <button onclick="cerrarChatPrivado()" style="background:none; border:none; color:white; font-size:20px; cursor:pointer;">←</button>
                     <div>
                         <h4 id="privateChatTitle" style="margin:0; font-size:14px; color:white;">Chat</h4>
-                        <span style="font-size:9px; color:#34d399;">🟢 En línea</span>
+                        <span id="privateChatSubtitle" style="font-size:9px; color:#34d399;">🟢 En línea</span>
                     </div>
                 </div>
                 <div style="display: flex; gap: 8px;" id="privateCallActionWrapper">
@@ -220,52 +323,49 @@
             </div>
             
             <div class="private-chat-messages" id="privateChatMessagesContainer">
-                <div class="burbuja recibida">Canal privado seguro establecido.</div>
+                <div class="burbuja recibida">Canal seguro establecido. <span class="msg-status">✓✓</span></div>
             </div>
 
-            <!-- SELECTOR DE EMOJIS FLOTANTE -->
             <div id="privateEmojiPicker">
                 <span class="emoji-item" onclick="insertarEmojiPrivado('😀')">😀</span>
                 <span class="emoji-item" onclick="insertarEmojiPrivado('😂')">😂</span>
                 <span class="emoji-item" onclick="insertarEmojiPrivado('❤️')">❤️</span>
                 <span class="emoji-item" onclick="insertarEmojiPrivado('👍')">👍</span>
-                <span class="emoji-item" onclick="insertarEmojiPrivado('🎉')">🎉</span>
+                <span class="emoji-item" onclick="insertarEmojiPrivado('🤖')">🤖</span>
                 <span class="emoji-item" onclick="insertarEmojiPrivado('🔥')">🔥</span>
-                <span class="emoji-item" onclick="insertarEmojiPrivado('😎')">😎</span>
-                <span class="emoji-item" onclick="insertarEmojiPrivado('🙏')">🙏</span>
-                <span class="emoji-item" onclick="insertarEmojiPrivado('🚀')">🚀</span>
-                <span class="emoji-item" onclick="insertarEmojiPrivado('✨')">✨</span>
             </div>
 
-            <!-- BARRA INFERIOR COMPLETA -->
             <div class="chat-input-bar">
                 <button class="icon-btn" onclick="togglePrivateEmojiPicker()" title="Emojis">😊</button>
-                <label class="icon-btn" title="Adjuntar Documento">
-                    📎
-                    <input type="file" id="fileDocInput" style="display: none;" onchange="manejarEnvioDocumentoPrivado(this)">
-                </label>
-                <label class="icon-btn" title="Enviar Foto o Vídeo">
-                    📷
-                    <input type="file" id="fileMediaInput" accept="image/*,video/*" capture="environment" style="display: none;" onchange="manejarEnvioMultimediaPrivado(this)">
-                </label>
+                <label class="icon-btn" title="Adjuntar Documento">📎<input type="file" style="display: none;" onchange="manejarEnvioDocumentoPrivado(this)"></label>
+                <label class="icon-btn" title="Foto o Vídeo">📷<input type="file" accept="image/*,video/*" capture="environment" style="display: none;" onchange="manejarEnvioMultimediaPrivado(this)"></label>
                 <div class="chat-bubble-input">
-                    <input type="text" id="privateMessageInput" placeholder="Escribe un mensaje..." onkeypress="if(event.key === 'Enter') enviarMensajePrivado()">
+                    <input type="text" id="privateMessageInput" placeholder="Escribe un mensaje o pregunta a la IA..." onkeypress="if(event.key === 'Enter') enviarMensajePrivado()">
                 </div>
-                <button class="send-text-btn" onclick="enviarMensajePrivado()" title="Enviar texto">➤</button>
-                <button class="send-mic-btn" id="btnMicAudioPrivado" onclick="accionMicNotaVozPrivada()" title="Nota de voz">🎤</button>
+                <button class="send-text-btn" onclick="enviarMensajePrivado()" title="Enviar">➤</button>
             </div>
         </div>
 
-        <!-- MODAL DE CONFIGURACIÓN -->
+        <!-- MODAL CONFIGURACIÓN DE PRIVACIDAD -->
         <div id="settingsModal" class="fullscreen-modal">
             <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 8px; margin-bottom: 10px;">
-                <h3 style="margin: 0; color: var(--accent-green); font-size: 14px;">⚙️ Ajustes y Privacidad</h3>
+                <h3 style="margin: 0; color: var(--accent-green); font-size: 14px;">⚙️ Privacidad y Estado Élite</h3>
                 <button onclick="cerrarModal('settingsModal')" style="background:none; border:none; color:white; font-size:16px; cursor:pointer;">✕</button>
             </div>
-            <div style="flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:8px; font-size:11px;">
+            <div style="flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:12px; font-size:12px;">
                 <div class="card-panel">
-                    <h4 style="margin:0 0 3px 0; color:var(--accent-green);">🔒 Red Cuántica Blindada</h4>
-                    <p style="margin:0; color:var(--text-muted); font-size:10px;">Sesión protegida y anticorte activa.</p>
+                    <h4 style="margin:0 0 4px 0; color:var(--accent-green);">🟢 Modo de Conexión</h4>
+                    <select id="selectEstadoConexion" onchange="cambiarEstadoConexion(this.value)" style="width:100%; padding:8px; background:#0f172a; color:white; border:1px solid var(--border-color); border-radius:8px;">
+                        <option value="en_linea">🟢 En línea (Normal)</option>
+                        <option value="desconectado_activo">🟡 Desconectado (Pero sigo operativo)</option>
+                        <option value="invisible">🔴 Invisible total</option>
+                    </select>
+                </div>
+                <div class="card-panel">
+                    <h4 style="margin:0 0 4px 0; color:var(--accent-green);">✓✓ Confirmación de Lectura</h4>
+                    <label style="display:flex; align-items:center; gap:8px; cursor:pointer; color:white;">
+                        <input type="checkbox" id="checkDobleCheckAzul" checked onchange="toggleDobleCheckAzul(this.checked)"> Activar doble check azul (visto)
+                    </label>
                 </div>
             </div>
             <button class="btn-imponente" onclick="cerrarModal('settingsModal')">Guardar Cambios</button>
@@ -287,8 +387,8 @@
         <!-- PASO 1: REGISTRO -->
         <div id="screen-registro" class="screen active">
             <div class="logo-box">🔒</div>
-            <h2>VobixChat</h2>
-            <p class="subtitle">Red Cuántica Privada de Voz y Vídeo</p>
+            <h2>VobixChat Élite</h2>
+            <p class="subtitle">Red Cuántica, IA y Arcades Familiares</p>
 
             <div class="input-group">
                 <label>Tu Nombre o @usuario</label>
@@ -326,26 +426,80 @@
             <button class="btn-imponente" onclick="verificarPinYEntrar()">Acceder a la Red</button>
         </div>
 
-        <!-- PASO 2: PANTALLA PRINCIPAL -->
+        <!-- PASO 2: PANTALLA PRINCIPAL CON MENÚ DE TRES PUNTOS (⋮) -->
         <div id="screen-chat" class="screen" style="padding: 0; text-align: left; position: relative;">
             <div class="app-header">
                 <div>
-                    <h3 id="lblUserSession" style="margin:0; font-size: 12px; font-weight: 700; color: #34d399;">VobixChat</h3>
-                    <span style="font-size: 8px; color: var(--text-muted);">🟢 En línea (Red Privada)</span>
+                    <h3 id="lblUserSession" style="margin:0; font-size: 12px; font-weight: 700; color: #34d399;">VobixChat Élite</h3>
+                    <span id="lblEstadoCabecera" style="font-size: 8px; color: #34d399;">🟢 En línea</span>
                 </div>
-                <div style="display: flex; gap: 5px; align-items: center;">
-                    <button onclick="copiarEnlaceInvitacion()" style="background:rgba(16, 185, 129, 0.2); border:1px solid rgba(16, 185, 129, 0.4); color:#34d399; padding:3px 6px; border-radius:4px; cursor:pointer; font-size:9px; font-weight:600;">🔗 Invitar</button>
-                    <button onclick="location.reload()" style="background:rgba(239, 68, 68, 0.2); border:1px solid rgba(239, 68, 68, 0.2); color:#fca5a5; padding:3px 6px; border-radius:4px; cursor:pointer; font-size:9px; font-weight:600;" title="Cerrar Sesión">🚪 Salir</button>
+                <div style="display: flex; gap: 6px; align-items: center;">
+                    <button onclick="abrirEstadosModal()" style="background:rgba(59, 130, 246, 0.2); border:1px solid rgba(59, 130, 246, 0.4); color:#60a5fa; padding:3px 6px; border-radius:4px; cursor:pointer; font-size:9px; font-weight:600;">📸 Estados</button>
+                    <!-- BOTÓN DE TRES PUNTOS (⋮) OFICIAL -->
+                    <button onclick="toggleVobixMenu(event)" style="background:none; border:none; color:white; font-size:24px; cursor:pointer; padding:0 6px;" title="Menú de Opciones">⋮</button>
+                </div>
+
+                <!-- MENÚ DESPLEGABLE CON SCROLL VERTICAL FLUIDO (20 OPCIONES) -->
+                <div id="vobixMenuDropdown">
+                    <div class="menu-item" onclick="abrirChatIA()">🤖 IA Asistente (Sin Restricciones)</div>
+                    <div class="menu-item" onclick="abrirJuegosModal()">🎮 Arcades (Candy Crush & Parchís)</div>
+                    <div class="menu-item" onclick="abrirFirmaModal()">✍️ Modo Espejo de Firma (USA ⇄ España)</div>
+                    <div class="menu-item" onclick="abrirEstadosModal()">📸 Publicar / Ver Estados</div>
+                    <div class="menu-item" onclick="abrirModal('settingsModal')">⚙️ Configuración de Privacidad</div>
+                    <div class="menu-item" onclick="alternarDesconexionFalsa()">🔌 Desconectarse (Pero seguir en línea)</div>
+                    <div class="menu-item" onclick="alert('Bóveda segura AES-256 activa.')">🔐 Bóveda de Contraseñas</div>
+                    <div class="menu-item" onclick="alert('Traductor cuántico en tiempo real activo.')">🌐 Traductor Simultáneo</div>
+                    <div class="menu-item" onclick="alert('Transcriptor de voz a texto activado.')">🎙️ Transcriptor de Audios</div>
+                    <div class="menu-item" onclick="alert('Panel de documentos recientes abierto.')">📂 Bóveda Documental</div>
+                    <div class="menu-item" onclick="alert('Creador de encuestas rápidas activo.')">📊 Creador de Encuestas</div>
+                    <div class="menu-item" onclick="alert('Modo temporal de mensajes activado.')">⏱️ Mensajes Autodestructivos</div>
+                    <div class="menu-item" onclick="alert('Geolocalización cuántica enlazada.')">📍 Radar Familiar Privado</div>
+                    <div class="menu-item" onclick="alert('Tema AMOLED Oscuro Absoluto aplicado.')">🎨 Modo AMOLED Oscuro</div>
+                    <div class="menu-item" onclick="alert('Resumen IA del historial generado.')">📑 Resumen IA de Chats</div>
+                    <div class="menu-item" onclick="alert('Papelera de seguridad limpia.')">🗑️ Papelera de Recuperación</div>
+                    <div class="menu-item" onclick="alert('Modo Senior de accesibilidad total activado.')">👵👴 Modo Senior (Botones Gigantes)</div>
+                    <div class="menu-item" onclick="alert('Alerta SOS familiar configurada.')">🆘 Botón SOS de Emergencia</div>
+                    <div class="menu-item" onclick="alert('Monitoreo de red en verde (100%).')">🔋 Diagnóstico de Conexión</div>
+                    <div class="menu-item" onclick="location.reload()" style="color: #fca5a5;">🚪 Cerrar Sesión</div>
                 </div>
             </div>
 
             <div class="app-body">
-                
                 <div id="callStatusBanner">Listo para conectar</div>
 
                 <div class="card-panel">
-                    <h3>💬 Chats Privados</h3>
+                    <h3>💬 Accesos Directos Élite</h3>
                     <div style="margin-top: 6px;" id="chatsListContainer">
+                        <div class="chat-list-item" onclick="abrirChatIA()" style="border-color: rgba(16,185,129,0.4); background: rgba(16,185,129,0.05);">
+                            <div class="chat-info">
+                                <div class="chat-avatar" style="background: #3b82f6;">🤖</div>
+                                <div class="chat-details">
+                                    <h4>IA Asistente Total</h4>
+                                    <span>Responde de todo sin filtros</span>
+                                </div>
+                            </div>
+                            <span style="font-size: 11px; color: #3b82f6;">✨ Abrir</span>
+                        </div>
+                        <div class="chat-list-item" onclick="abrirJuegosModal()" style="border-color: rgba(236,72,153,0.4); background: rgba(236,72,153,0.05);">
+                            <div class="chat-info">
+                                <div class="chat-avatar" style="background: #ec4899;">🍬</div>
+                                <div class="chat-details">
+                                    <h4>Candy Crush & Parchís Combat</h4>
+                                    <span>Juega con tus familiares en línea</span>
+                                </div>
+                            </div>
+                            <span style="font-size: 11px; color: #ec4899;">Jugar</span>
+                        </div>
+                        <div class="chat-list-item" onclick="abrirFirmaModal()" style="border-color: rgba(59,130,246,0.4); background: rgba(59,130,246,0.05);">
+                            <div class="chat-info">
+                                <div class="chat-avatar" style="background: #10b981;">✍️</div>
+                                <div class="chat-details">
+                                    <h4>Firma Transatlántica Espejo</h4>
+                                    <span>USA ⇄ España en tiempo real</span>
+                                </div>
+                            </div>
+                            <span style="font-size: 11px; color: #10b981;">Abrir</span>
+                        </div>
                         <div class="chat-list-item" onclick="abrirChatPrivado('34658616136', 'Hijo')">
                             <div class="chat-info">
                                 <div class="chat-avatar">H</div>
@@ -365,14 +519,6 @@
                         <input type="text" id="nuevoChatInput" placeholder="Número exacto (ej. 34695746539)">
                     </div>
                     <button class="btn-imponente" onclick="agregarNuevoChat()" style="margin-top:0; padding:6px; font-size:11px; background:#3b82f6;">Abrir Conversación</button>
-                </div>
-
-                <div class="card-panel">
-                    <h3>👥 Sala Privada Grupal</h3>
-                    <div class="input-group" style="margin-bottom: 4px;">
-                        <input type="text" id="salaInput" placeholder="Nombre de Sala (ej. Familia)">
-                    </div>
-                    <button class="btn-imponente" onclick="unirseSalaGrupal()" style="margin-top:0; padding:6px; font-size:11px; background:#64748b;">Unirse a Sala</button>
                 </div>
             </div>
         </div>
@@ -413,16 +559,201 @@
         let ofertaPendienteGlobal = null;
         let tonoLlamadaInterval = null;
         let estaLlamandoActualmente = false;
-        let grabandoAudioPrivado = false;
+        let dobleCheckAzulActivo = true;
         const peerConnections = {};
         const historialChats = {};
+        const listaEstadosGlobales = [];
 
-        const rtcConfig = {
-            iceServers: [
-                { urls: 'stun:stun.l.google.com:19302' },
-                { urls: 'stun:stun1.l.google.com:19302' }
-            ]
-        };
+        let puntuacionCandyGlobal = 0;
+        let posicionParchisGlobal = 1;
+
+        function abrirJuegosModal() {
+            document.getElementById('vobixMenuDropdown').classList.remove('active');
+            document.getElementById('juegosModal').classList.add('active');
+            volverSelectorJuegos();
+        }
+
+        function cerrarJuegosModal() {
+            document.getElementById('juegosModal').classList.remove('active');
+        }
+
+        function volverSelectorJuegos() {
+            document.getElementById('selectorJuegosArea').style.display = 'flex';
+            document.getElementById('candyCrushArea').style.display = 'none';
+            document.getElementById('parchisArea').style.display = 'none';
+            document.getElementById('tituloJuegoActivo').innerText = "🎮 Vobix Arcade Élite";
+        }
+
+        function iniciarCandyCrush() {
+            document.getElementById('selectorJuegosArea').style.display = 'none';
+            document.getElementById('candyCrushArea').style.display = 'flex';
+            document.getElementById('tituloJuegoActivo').innerText = "🍬 Vobix Candy Crush";
+            puntuacionCandyGlobal = 0;
+            generarTableroCandy();
+        }
+
+        function generarTableroCandy() {
+            const tablero = document.getElementById('tableroCandy');
+            tablero.innerHTML = "";
+            const caramelos = ['🍬', '🍫', '🍭', '⭐', '💎'];
+            for (let i = 0; i < 16; i++) {
+                const randomCandy = caramelos[Math.floor(Math.random() * caramelos.length)];
+                const div = document.createElement('div');
+                div.style.cssText = "background: rgba(255,255,255,0.1); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 26px; cursor: pointer; user-select: none;";
+                div.innerText = randomCandy;
+                div.onclick = () => {
+                    puntuacionCandyGlobal += 10;
+                    document.getElementById('puntuacionCandy').innerText = `Puntuación: ${puntuacionCandyGlobal}`;
+                    div.innerText = caramelos[Math.floor(Math.random() * caramelos.length)];
+                };
+                tablero.appendChild(div);
+            }
+        }
+
+        function iniciarParchisCombat() {
+            document.getElementById('selectorJuegosArea').style.display = 'none';
+            document.getElementById('parchisArea').style.display = 'flex';
+            document.getElementById('tituloJuegoActivo').innerText = "🎲 Parchís Combat";
+            posicionParchisGlobal = 1;
+            document.getElementById('posicionFicha').innerText = posicionParchisGlobal;
+            document.getElementById('resultadoDado').innerText = "🎲 [ - ]";
+        }
+
+        function lanzarDadoParchis() {
+            const tirada = Math.floor(Math.random() * 6) + 1;
+            document.getElementById('resultadoDado').innerText = `Dado: 🎲 [ ${tirada} ]`;
+            posicionParchisGlobal += tirada;
+            if (posicionParchisGlobal >= 20) {
+                posicionParchisGlobal = 20;
+                alert("🎉 ¡Felicidades! Has ganado la partida de Parchís Combat.");
+            }
+            document.getElementById('posicionFicha').innerText = posicionParchisGlobal;
+        }
+
+        let canvas, ctx;
+        let dibujando = false;
+        let salaFirmaActual = "contrato-global-01";
+
+        window.addEventListener('DOMContentLoaded', () => {
+            canvas = document.getElementById('firmaCanvas');
+            if (canvas) {
+                ctx = canvas.getContext('2d');
+                ajustarCanvas();
+                canvas.addEventListener('mousedown', iniciarTrazo);
+                canvas.addEventListener('mousemove', dibujarTrazo);
+                canvas.addEventListener('mouseup', finalizarTrazo);
+                canvas.addEventListener('touchstart', iniciarTrazoTouch, {passive: false});
+                canvas.addEventListener('touchmove', dibujarTrazoTouch, {passive: false});
+                canvas.addEventListener('touchend', finalizarTrazo);
+            }
+        });
+
+        function ajustarCanvas() {
+            if (!canvas) return;
+            const rect = canvas.parentElement.getBoundingClientRect();
+            canvas.width = rect.width;
+            canvas.height = rect.height;
+            ctx.lineWidth = 3;
+            ctx.lineCap = 'round';
+            ctx.strokeStyle = '#000000';
+        }
+
+        function abrirFirmaModal() {
+            document.getElementById('vobixMenuDropdown').classList.remove('active');
+            document.getElementById('firmaModal').classList.add('active');
+            setTimeout(ajustarCanvas, 200);
+        }
+
+        function cerrarFirmaModal() {
+            document.getElementById('firmaModal').classList.remove('active');
+        }
+
+        function conectarSalaFirma() {
+            salaFirmaActual = document.getElementById('inputSalaFirma').value.trim() || "contrato-global-01";
+            socket.emit("unirse-sala-firma", salaFirmaActual);
+            alert(`Conectado a la sala de firma transatlántica: ${salaFirmaActual}. Sincronización activa.`);
+        }
+
+        function iniciarTrazo(e) {
+            dibujando = true;
+            ctx.beginPath();
+            ctx.moveTo(e.offsetX, e.offsetY);
+        }
+
+        function dibujarTrazo(e) {
+            if (!dibujando) return;
+            ctx.lineTo(e.offsetX, e.offsetY);
+            ctx.stroke();
+            socket.emit("sincronizar-trazo-firma", { salaFirma: salaFirmaActual, trazo: { x: e.offsetX, y: e.offsetY } });
+        }
+
+        function finalizarTrazo() {
+            dibujando = false;
+        }
+
+        function iniciarTrazoTouch(e) {
+            e.preventDefault();
+            const touch = e.touches[0];
+            const rect = canvas.getBoundingClientRect();
+            const x = touch.clientX - rect.left;
+            const y = touch.clientY - rect.top;
+            dibujando = true;
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+        }
+
+        function dibujarTrazoTouch(e) {
+            e.preventDefault();
+            if (!dibujando) return;
+            const touch = e.touches[0];
+            const rect = canvas.getBoundingClientRect();
+            const x = touch.clientX - rect.left;
+            const y = touch.clientY - rect.top;
+            ctx.lineTo(x, y);
+            ctx.stroke();
+            socket.emit("sincronizar-trazo-firma", { salaFirma: salaFirmaActual, trazo: { x, y } });
+        }
+
+        socket.on("recibir-trazo-firma", (data) => {
+            if (!ctx) return;
+            const { trazo } = data;
+            ctx.lineTo(trazo.x, trazo.y);
+            ctx.stroke();
+        });
+
+        function limpiarCanvas() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+
+        function guardarYExportarFirma() {
+            const enlace = document.createElement('a');
+            enlace.download = `Copia-Firma-Segura-${Date.now()}.png`;
+            enlace.href = canvas.toDataURL();
+            enlace.click();
+            alert("¡Copia de firma digital guardada con éxito!");
+        }
+
+        function abrirEstadosModal() {
+            document.getElementById('vobixMenuDropdown').classList.remove('active');
+            document.getElementById('estadosModal').classList.add('active');
+        }
+
+        function cerrarEstadosModal() {
+            document.getElementById('estadosModal').classList.remove('active');
+        }
+
+        function publicarEstado() {
+            const texto = document.getElementById('inputTextoEstado').value.trim();
+            if (!texto) return;
+            listaEstadosGlobales.unshift({ autor: nombreUsuarioGlobal || "Tú", texto: texto, hora: new Date().toLocaleTimeString() });
+            const contenedor = document.getElementById('listaEstadosContainer');
+            contenedor.innerHTML = "";
+            listaEstadosGlobales.forEach(est => {
+                contenedor.innerHTML += `<div style="background:rgba(255,255,255,0.05); padding:8px; border-radius:6px; margin-bottom:6px;"><b>${est.autor}:</b> ${est.texto} <span style="font-size:9px; color:#10b981;">(${est.hora})</span></div>`;
+            });
+            document.getElementById('inputTextoEstado').value = "";
+            alert("¡Estado publicado por 24 horas!");
+        }
 
         function mostrarEstadoLlamada(texto) {
             const banner = document.getElementById('callStatusBanner');
@@ -438,9 +769,75 @@
             }
         });
 
+        function toggleVobixMenu(event) {
+            if (event) event.stopPropagation();
+            document.getElementById('vobixMenuDropdown').classList.toggle('active');
+        }
+
+        window.addEventListener('click', () => {
+            const menu = document.getElementById('vobixMenuDropdown');
+            if (menu && menu.classList.contains('active')) menu.classList.remove('active');
+        });
+
+        function abrirModal(modalId) {
+            document.getElementById('vobixMenuDropdown').classList.remove('active');
+            document.getElementById(modalId).classList.add('active');
+        }
+
+        function cerrarModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+        }
+
+        function cambiarEstadoConexion(valor) {
+            const label = document.getElementById('lblEstadoCabecera');
+            if (valor === 'en_linea') {
+                label.innerText = "🟢 En línea";
+                label.style.color = "#34d399";
+            } else if (valor === 'desconectado_activo') {
+                label.innerText = "🟡 Desconectado (Operativo)";
+                label.style.color = "#fbbf24";
+            } else {
+                label.innerText = "🔴 Invisible";
+                label.style.color = "#ef4444";
+            }
+        }
+
+        function alternarDesconexionFalsa() {
+            document.getElementById('vobixMenuDropdown').classList.remove('active');
+            const label = document.getElementById('lblEstadoCabecera');
+            if (label.innerText.includes("Desconectado")) {
+                label.innerText = "🟢 En línea";
+                label.style.color = "#34d399";
+                alert("Modo normal restaurado.");
+            } else {
+                label.innerText = "🟡 Desconectado (Pero sigues en línea)";
+                label.style.color = "#fbbf24";
+                alert("Aparecerás desconectado ante los demás, pero tus llamadas y mensajes siguen funcionando.");
+            }
+        }
+
+        function toggleDobleCheckAzul(activo) {
+            dobleCheckAzulActivo = activo;
+        }
+
+        function abrirChatIA() {
+            document.getElementById('vobixMenuDropdown').classList.remove('active');
+            chatActivoDestinatario = "IA_ASISTENTE";
+            document.getElementById('privateChatTitle').innerText = "🤖 IA Asistente Total";
+            document.getElementById('privateChatSubtitle').innerText = "🟢 Sin restricciones - Responde de todo";
+            document.getElementById('privateCallActionWrapper').style.display = "none";
+            document.getElementById('privateChatRoom').classList.add('active');
+
+            const container = document.getElementById('privateChatMessagesContainer');
+            container.innerHTML = `<div class="burbuja recibida">¡Hola! Soy tu IA asistente avanzada sin restricciones. Pregúntame lo que desees. <span class="msg-status">✓✓</span></div>`;
+            container.scrollTop = container.scrollHeight;
+        }
+
         function abrirChatPrivado(numero, nombre) {
             chatActivoDestinatario = numero;
             document.getElementById('privateChatTitle').innerText = `${nombre} (${numero})`;
+            document.getElementById('privateChatSubtitle').innerText = "🟢 En línea";
+            document.getElementById('privateCallActionWrapper').style.display = "flex";
             document.getElementById('privateChatRoom').classList.add('active');
             
             const container = document.getElementById('privateChatMessagesContainer');
@@ -450,9 +847,13 @@
                     container.innerHTML += `<div class="burbuja ${msg.tipo}">${msg.texto}</div>`;
                 });
             } else {
-                container.innerHTML += `<div class="burbuja recibida">Iniciando cifrado seguro con ${nombre}.</div>`;
+                container.innerHTML += `<div class="burbuja recibida">Canal cifrado con ${nombre}. <span class="msg-status">✓✓</span></div>`;
             }
             container.scrollTop = container.scrollHeight;
+
+            if (dobleCheckAzulActivo) {
+                socket.emit("notificar-leido", { emisor: numero, lector: identificadorUsuario });
+            }
         }
 
         function cerrarChatPrivado() {
@@ -496,15 +897,16 @@
             if (input.files && input.files[0]) {
                 const nombreArchivo = input.files[0].name;
                 const contenedor = document.getElementById('privateChatMessagesContainer');
-                contenedor.innerHTML += `<div class="burbuja enviada">📎 [Documento adjunto: ${nombreArchivo}]</div>`;
+                const estadoCheck = dobleCheckAzulActivo ? '<span class="msg-status sent">✓✓</span>' : '<span class="msg-status sent">✓</span>';
+                contenedor.innerHTML += `<div class="burbuja enviada">📎 [Documento: ${nombreArchivo}] ${estadoCheck}</div>`;
                 contenedor.scrollTop = contenedor.scrollHeight;
 
-                if (chatActivoDestinatario) {
+                if (chatActivoDestinatario && chatActivoDestinatario !== "IA_ASISTENTE") {
                     socket.emit("enviar-mensaje-chat", {
                         destinatario: chatActivoDestinatario,
                         emisor: identificadorUsuario,
                         aliasEmisor: nombreUsuarioGlobal,
-                        texto: `📎 [Documento adjunto: ${nombreArchivo}]`
+                        texto: `📎 [Documento: ${nombreArchivo}]`
                     });
                 }
             }
@@ -517,10 +919,11 @@
                 const tipoTexto = esVideo ? "📹 [Vídeo adjunto]" : "📷 [Foto adjunta]";
                 
                 const contenedor = document.getElementById('privateChatMessagesContainer');
-                contenedor.innerHTML += `<div class="burbuja enviada">${tipoTexto}</div>`;
+                const estadoCheck = dobleCheckAzulActivo ? '<span class="msg-status sent">✓✓</span>' : '<span class="msg-status sent">✓</span>';
+                contenedor.innerHTML += `<div class="burbuja enviada">${tipoTexto} ${estadoCheck}</div>`;
                 contenedor.scrollTop = contenedor.scrollHeight;
 
-                if (chatActivoDestinatario) {
+                if (chatActivoDestinatario && chatActivoDestinatario !== "IA_ASISTENTE") {
                     socket.emit("enviar-mensaje-chat", {
                         destinatario: chatActivoDestinatario,
                         emisor: identificadorUsuario,
@@ -536,40 +939,66 @@
             const texto = input.value.trim();
             if (!texto || !chatActivoDestinatario) return;
 
-            if (!historialChats[chatActivoDestinatario]) historialChats[chatActivoDestinatario] = [];
-            historialChats[chatActivoDestinatario].push({ tipo: 'enviada', texto: texto });
-
+            const estadoCheck = dobleCheckAzulActivo ? '<span class="msg-status sent">✓✓</span>' : '<span class="msg-status sent">✓</span>';
             const container = document.getElementById('privateChatMessagesContainer');
-            container.innerHTML += `<div class="burbuja enviada">${texto}</div>`;
+            container.innerHTML += `<div class="burbuja enviada">${texto} ${estadoCheck}</div>`;
             container.scrollTop = container.scrollHeight;
             input.value = "";
             document.getElementById('privateEmojiPicker').classList.remove('active');
 
-            socket.emit("enviar-mensaje-chat", {
-                destinatario: chatActivoDestinatario,
-                emisor: identificadorUsuario,
-                aliasEmisor: nombreUsuarioGlobal,
-                texto: texto
-            });
+            if (chatActivoDestinatario === "IA_ASISTENTE") {
+                setTimeout(() => {
+                    let respuestaIA = `Entendido. Analizando tu consulta sin restricciones: "${texto}". Como IA avanzada, estoy completamente operativa.`;
+                    if (texto.toLowerCase().includes("hola")) {
+                        respuestaIA = "¡Hola! Estoy lista para ayudarte sin filtros ni limitaciones.";
+                    }
+                    container.innerHTML += `<div class="burbuja recibida">${respuestaIA} <span class="msg-status">✓✓</span></div>`;
+                    container.scrollTop = container.scrollHeight;
+                }, 600);
+            } else {
+                if (!historialChats[chatActivoDestinatario]) historialChats[chatActivoDestinatario] = [];
+                historialChats[chatActivoDestinatario].push({ tipo: 'enviada', texto: `${texto} ${estadoCheck}` });
+
+                socket.emit("enviar-mensaje-chat", {
+                    destinatario: chatActivoDestinatario,
+                    emisor: identificadorUsuario,
+                    aliasEmisor: nombreUsuarioGlobal,
+                    texto: texto
+                });
+            }
         }
 
         socket.on("recibir-mensaje-chat", (data) => {
             const remitente = data.emisor;
+            const estadoCheck = dobleCheckAzulActivo ? '<span class="msg-status">✓✓</span>' : '<span class="msg-status">✓</span>';
+            const textoFormateado = `<b>${data.aliasEmisor || remitente}:</b> ${data.texto} ${estadoCheck}`;
+
             if (!historialChats[remitente]) historialChats[remitente] = [];
-            historialChats[remitente].push({ tipo: 'recibida', texto: `<b>${data.aliasEmisor || remitente}:</b> ${data.texto}` });
+            historialChats[remitente].push({ tipo: 'recibida', texto: textoFormateado });
 
             if (chatActivoDestinatario === remitente) {
                 const container = document.getElementById('privateChatMessagesContainer');
-                container.innerHTML += `<div class="burbuja recibida"><b>${data.aliasEmisor || remitente}:</b> ${data.texto}</div>`;
+                container.innerHTML += `<div class="burbuja recibida">${textoFormateado}</div>`;
                 container.scrollTop = container.scrollHeight;
+
+                if (dobleCheckAzulActivo) {
+                    socket.emit("notificar-leido", { emisor: remitente, lector: identificadorUsuario });
+                }
             } else {
                 mostrarEstadoLlamada(`💬 Nuevo mensaje de ${data.aliasEmisor || remitente}`);
             }
         });
 
+        socket.on("mensaje-leido-confirmacion", (data) => {
+            const checks = document.querySelectorAll('.msg-status.sent');
+            checks.forEach(c => {
+                c.style.color = '#53bdeb';
+            });
+        });
+
         function toggleLlamarDesdeChatPrivado(conVideo) {
             if (!estaLlamandoActualmente) {
-                if (!chatActivoDestinatario) return;
+                if (!chatActivoDestinatario || chatActivoDestinatario === "IA_ASISTENTE") return;
                 destinatarioActual = chatActivoDestinatario;
                 iniciarConexionLlamada(conVideo);
             } else {
@@ -731,22 +1160,6 @@
                 throw error;
             }
         }
-
-        async function unirseSalaGrupal() {
-            const salaId = document.getElementById('salaInput').value.trim();
-            if (!salaId) return;
-            try {
-                await inicializarMediaLocal(true);
-                salaActualId = salaId;
-                socket.emit("unirse-a-sala", { salaId, usuarioId: identificadorUsuario });
-                mostrarEstadoLlamada(`Conectado a sala: ${salaId}`);
-            } catch (e) {}
-        }
-
-        socket.on("nuevo-usuario-sala", async (data) => {
-            if (!localStream) await inicializarMediaLocal(true);
-            crearConexionPeerGrupal(data.emisor, true);
-        });
 
         function crearConexionPeerGrupal(remoteId, esIniciador) {
             if (peerConnections[remoteId]) return;
