@@ -1,13 +1,13 @@
 require('dotenv').config();
 const express = require('express');
-const http = require('http');
+const httpModule = require('http');
 const path = require('path');
 const fs = require('fs');
 const multer = require('multer');
 const { Server } = require("socket.io");
 
 const app = express();
-const servidorHTTP = http.createServer(app);
+const servidorHTTP = httpModule.createServer(app);
 
 app.use((req, res, next) => {
     res.setHeader("X-Content-Type-Options", "nosniff");
@@ -41,17 +41,13 @@ const almacenamientoConfig = multer.diskStorage({
     }
 });
 
-const upload = multer({ 
-    storage: almacenamientoConfig,
-    limits: { fileSize: 10 * 1024 * 1024 } 
-});
+const upload = multer({ storage: almacenamientoConfig, limits: { fileSize: 10 * 1024 * 1024 } });
 
 const usuariosRegistradosDB = new Map();
 
 app.post('/api/seguridad/verificar-usuario', (req, res) => {
     const { numeroCrudo } = req.body;
     if (!numeroCrudo) return res.status(400).json({ success: false, error: "NÚMERO REQUERIDO" });
-
     const telefonoLimpio = String(numeroCrudo).trim().replace(/[^0-9]/g, '');
     const esVoipSospechoso = (
         telefonoLimpio.startsWith("800") || 
@@ -60,27 +56,18 @@ app.post('/api/seguridad/verificar-usuario', (req, res) => {
         telefonoLimpio.length < 8 || 
         telefonoLimpio.length > 15
     );
-
-    if (esVoipSospechoso) {
-        return res.status(400).json({ success: false, error: "DENEGADO: Números VoIP no permitidos." });
-    }
-
+    if (esVoipSospechoso) return res.status(400).json({ success: false, error: "DENEGADO: Números VoIP no permitidos." });
     return res.status(200).json({ success: true, registradoPrevio: usuariosRegistradosDB.has(telefonoLimpio) });
 });
 
 app.post('/api/seguridad/verificar-pin', (req, res) => {
     const { telefono, pin, nombre } = req.body;
     if (!telefono || !pin) return res.status(400).json({ success: false, error: "Datos incompletos" });
-
     const telefonoLimpio = String(telefono).trim().replace(/[^0-9]/g, '');
-    if (pin !== "1234") {
-        return res.status(400).json({ success: false, error: "PIN incorrecto. Use '1234'." });
-    }
-
+    if (pin !== "1234") return res.status(400).json({ success: false, error: "PIN incorrecto. Use '1234'." });
     if (!usuariosRegistradosDB.has(telefonoLimpio)) {
         usuariosRegistradosDB.set(telefonoLimpio, { nombre: nombre || "Usuario", telefono: telefonoLimpio });
     }
-
     return res.status(200).json({ success: true, usuario: usuariosRegistradosDB.get(telefonoLimpio) });
 });
 
@@ -110,23 +97,6 @@ io.on("connection", (socket) => {
         }
     });
 
-    // SINCRONIZACIÓN DE JUEGOS Y FIRMA
-    socket.on("sincronizar-trazo-firma", (datos) => {
-        const { salaFirma, trazo } = datos;
-        socket.to(salaFirma).emit("recibir-trazo-firma", { trazo });
-    });
-
-    socket.on("unirse-sala-firma", (salaFirma) => {
-        socket.join(salaFirma);
-    });
-
-    socket.on("unirse-a-sala", (data) => {
-        const { salaId, usuarioId } = data;
-        socket.join(salaId);
-        socket.salaActual = salaId;
-        socket.to(salaId).emit("nuevo-usuario-sala", { emisor: usuarioId });
-    });
-
     socket.on("senalizacion-grupal", (datos) => {
         const { destinatario, emisor, tipo, payload, salaId } = datos;
         if (salaId) {
@@ -139,12 +109,18 @@ io.on("connection", (socket) => {
         }
     });
 
+    socket.on("sincronizar-trazo-firma", (datos) => {
+        const { salaFirma, trazo } = datos;
+        socket.to(salaFirma).emit("recibir-trazo-firma", { trazo });
+    });
+
+    socket.on("unirse-sala-firma", (salaFirma) => {
+        socket.join(salaFirma);
+    });
+
     socket.on("finalizar-llamada", (datos) => {
-        const { destinatario, salaId } = datos;
-        if (salaId) {
-            socket.to(salaId).emit("usuario-salio-sala", { emisor: socket.idUsuarioVobix });
-            socket.leave(salaId);
-        } else if (destinatario) {
+        const { destinatario } = datos;
+        if (destinatario) {
             const socketDestinoId = mapaCanalesUsuarios.get(String(destinatario).trim());
             if (socketDestinoId) {
                 io.to(socketDestinoId).emit("llamada-finalizada", { emisor: socket.idUsuarioVobix });
@@ -155,14 +131,11 @@ io.on("connection", (socket) => {
     socket.on("disconnect", () => {
         if (socket.idUsuarioVobix) {
             mapaCanalesUsuarios.delete(socket.idUsuarioVobix);
-            if (socket.salaActual) {
-                socket.to(socket.salaActual).emit("usuario-salio-sala", { emisor: socket.idUsuarioVobix });
-            }
         }
     });
 });
 
 const PORT = process.env.PORT || 3000;
 servidorHTTP.listen(PORT, () => {
-    console.log("[SERVER] VobixChat Élite Candy & Parchís Combat operativo en puerto " + PORT);
+    console.log("[SERVER] VobixChat Élite Definitivo en puerto " + PORT);
 });
