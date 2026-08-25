@@ -396,7 +396,7 @@
             </div>
         </div>
 
-        <!-- SALA DE CHAT PRIVADO / IA (CON REPRODUCTOR DE NOTAS DE VOZ) -->
+        <!-- SALA DE CHAT PRIVADO / IA -->
         <div id="privateChatRoom">
             <div class="private-chat-header">
                 <div style="display: flex; align-items: center; gap: 10px;">
@@ -462,7 +462,7 @@
             <button class="btn-imponente" onclick="cerrarModal('settingsModal')">Guardar Cambios</button>
         </div>
 
-        <!-- MODAL LLAMADA ENTRANTE (CON TIMBRE REAL Y VIBRACIÓN) -->
+        <!-- MODAL LLAMADA ENTRANTE -->
         <div id="incomingCallModal">
             <div>
                 <p style="text-transform: uppercase; letter-spacing: 2px; font-size: 9px; color: var(--accent-green); font-weight: 700; margin:0;">VobixChat Videollamada Entrante</p>
@@ -479,7 +479,7 @@
         <div id="screen-registro" class="screen active">
             <div class="logo-box">🔒</div>
             <h2>VobixChat Élite</h2>
-            <p class="subtitle">Red Cuántica con Alerta Sísmica y Notas de Voz con Reproductor</p>
+            <p class="subtitle">Red Cuántica con Llamadas y Videollamadas Reparadas</p>
 
             <div class="input-group">
                 <label>Tu Nombre o @usuario</label>
@@ -532,7 +532,7 @@
                     <button onclick="toggleVobixMenu(event)" style="background:none; border:none; color:white; font-size:22px; cursor:pointer; padding:0 2px;" title="Menú">⋮</button>
                 </div>
 
-                <!-- MENÚ DESPLEGABLE CON SCROLL VERTICAL FLUIDO (INCLUYE RADAR SÍSMICO) -->
+                <!-- MENÚ DESPLEGABLE CON SCROLL VERTICAL FLUIDO -->
                 <div id="vobixMenuDropdown">
                     <div class="menu-item" onclick="abrirChatIA()">🤖 IA Asistente (Sin Restricciones)</div>
                     <div class="menu-item" onclick="abrirAlertaSismica()">🌋 Radar Sísmico y Volcánico en Vivo</div>
@@ -544,7 +544,7 @@
                     <div class="menu-item" onclick="abrirEstadosModal()">📸 Publicar / Ver Estados</div>
                     <div class="menu-item" onclick="lanzarEncuestaRapida()">📊 Crear Encuesta Rápida</div>
                     <div class="menu-item" onclick="activarTraductorCuantico()">🌐 Activar Traductor Simultáneo</div>
-                    <div class="menu-item" onclick="activarMensajesAutodestructivos()">⏱️ Activar Mensajes Autodestructivos</div>
+                    <div class="menu-item" onclick="activarMensajesAutodestructivos()">⏱️ Mensajes Autodestructivos</div>
                     <div class="menu-item" onclick="abrirRadarFamiliar()">📍 Radar Familiar (Geolocalización)</div>
                     <div class="menu-item" onclick="resumirChatsConIA()">📑 Resumen IA del Historial de Chat</div>
                     <div class="menu-item" onclick="abrirModal('settingsModal')">⚙️ Configuración de Privacidad</div>
@@ -587,6 +587,9 @@
         </div>
 
     </div>
+
+    <!-- ELEMENTO DE AUDIO OCULTO PARA LLAMADAS DE VOZ -->
+    <audio id="remoteAudioElement" autoplay playsinline style="display:none;"></audio>
 
     <script src="/socket.io/socket.io.js"></script>
     <script>
@@ -1260,22 +1263,36 @@
             if (peerConnections[remoteId]) return;
             const pc = new RTCPeerConnection();
             peerConnections[remoteId] = pc;
-            if (localStream) localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
+            
+            if (localStream) {
+                localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
+            }
+
             pc.ontrack = (e) => {
-                let tile = document.getElementById(`tile-${remoteId}`);
-                if (!tile) {
-                    const grid = document.getElementById('videoGridContainer');
-                    tile = document.createElement('div');
-                    tile.className = 'video-tile';
-                    tile.id = `tile-${remoteId}`;
-                    tile.innerHTML = `<video autoplay playsinline></video><span>${remoteId}</span>`;
-                    grid.appendChild(tile);
+                // Si es pista de audio pura (llamada de voz), la enrutamos al elemento de audio oculto
+                if (e.streams[0].getVideoTracks().length === 0) {
+                    const audioElem = document.getElementById('remoteAudioElement');
+                    audioElem.srcObject = e.streams[0];
+                    audioElem.play().catch(() => {});
+                } else {
+                    // Si es videollamada, la mostramos en la rejilla
+                    let tile = document.getElementById(`tile-${remoteId}`);
+                    if (!tile) {
+                        const grid = document.getElementById('videoGridContainer');
+                        tile = document.createElement('div');
+                        tile.className = 'video-tile';
+                        tile.id = `tile-${remoteId}`;
+                        tile.innerHTML = `<video autoplay playsinline></video><span>${remoteId}</span>`;
+                        grid.appendChild(tile);
+                    }
+                    tile.querySelector('video').srcObject = e.streams[0];
                 }
-                tile.querySelector('video').srcObject = e.streams[0];
             };
+
             pc.onicecandidate = (e) => {
                 if (e.candidate) socket.emit("senalizacion-grupal", { destinatario: remoteId, emisor: identificadorUsuario, tipo: 'candidato-ice', payload: e.candidate });
             };
+
             if (esIniciador) {
                 pc.createOffer().then(o => pc.setLocalDescription(o)).then(() => {
                     socket.emit("senalizacion-grupal", { destinatario: remoteId, emisor: identificadorUsuario, tipo: 'oferta', payload: pc.localDescription });
