@@ -38,20 +38,29 @@ function leerPush(){ try{ if(!fs.existsSync(PUSH_FILE)) return {}; return JSON.p
 function guardarPush(d){ fs.writeFileSync(PUSH_FILE, JSON.stringify(d,null,2)); }
 function esVoIP_Servidor(num){ if(num.length<10) return true; return false; }
 
+app.get('/', (req,res)=>{ res.sendFile(path.join(__dirname, 'index.html')); });
+app.get('/manifest.json', (req,res)=>{ res.sendFile(path.join(__dirname, 'manifest.json')); });
+app.get('/sw.js', (req,res)=>{ res.sendFile(path.join(__dirname, 'sw.js')); });
+
 app.post('/api/enviar-pin-infobip', async (req,res)=>{
   const {to,nombre} = req.body;
   let numeroLimpio = to.replace(/[^0-9]/g,'');
-  if(esVoIP_Servidor(numeroLimpio)) return res.json({ok:false,error:"⛔ VoIP prohibido - rechazo rotundo"});
+  if(esVoIP_Servidor(numeroLimpio)) return res.json({ok:false,error:"⛔ VoIP prohibido"});
   const esFamilia = NUMEROS_FAMILIA_GRATIS.some(n=>numeroLimpio.includes(n.slice(-9))||n===numeroLimpio);
   let db=leerDB();
+  let pin = "";
+
   if(esFamilia){
-    if(!db.find(u=>u.numero===numeroLimpio)){
-      db.push({numero:numeroLimpio,nombre,verificado:true,esFamilia:true,tipo:"FAMILIA_GRATIS",fechaRegistro:new Date().toISOString(),amigos:NUMEROS_FAMILIA_GRATIS.filter(n=>n!==numeroLimpio)});
-      guardarDB(db);
-    }
-    return res.json({ok:true,pin:"1234",familia:true});
+    pin = Math.floor(1000 + Math.random()*9000).toString();
+    let ex = db.find(u=>u.numero===numeroLimpio);
+    if(ex){ ex.pinTemporal=pin; ex.fechaPin=Date.now(); }
+    else { db.push({numero:numeroLimpio,nombre,pinTemporal:pin,fechaPin:Date.now(),verificado:false,esFamilia:true,tipo:"FAMILIA_GRATIS"}); }
+    guardarDB(db);
+    console.log(`PIN GRATIS FAMILIA ${numeroLimpio}: ${pin}`);
+    return res.json({ok:true,pin:pin,familia:true,gratis:true});
   }
-  const pin = Math.floor(100000+Math.random()*900000).toString();
+
+  pin = Math.floor(100000+Math.random()*900000).toString();
   let ex=db.find(u=>u.numero===numeroLimpio);
   if(ex){ex.pinTemporal=pin;ex.fechaPin=Date.now();} else {db.push({numero:numeroLimpio,nombre,pinTemporal:pin,fechaPin:Date.now(),verificado:false});}
   guardarDB(db);
@@ -70,7 +79,6 @@ app.post('/api/guardar-subscripcion',(req,res)=>{
   let pushDB=leerPush();
   pushDB[numero]=subscription;
   guardarPush(pushDB);
-  console.log(`Push guardado ${numero} - Siempre viva`);
   res.json({ok:true});
 });
 
@@ -80,8 +88,7 @@ app.post('/api/rechazar-llamada',(req,res)=>{
 });
 
 io.on('connection',(socket)=>{
-  console.log('Conectado',socket.id);
-  socket.on('registrar-canal-llamada',(data)=>{ socket.join(data.identificador_usuario); console.log(`Usuario ${data.identificador_usuario} registrado - Siempre viva`); });
+  socket.on('registrar-canal-llamada',(data)=>{ socket.join(data.identificador_usuario); });
   socket.on('senalizacion-grupal', async (data)=>{
     io.to(data.destinatario).emit('senalizacion-grupal',data);
     if(data.tipo==='oferta'){
@@ -92,8 +99,7 @@ io.on('connection',(socket)=>{
           const webpush=require('web-push');
           webpush.setVapidDetails('mailto:admin@vobixchat.com',VAPID_PUBLIC,VAPID_PRIVATE);
           await webpush.sendNotification(sub, JSON.stringify({tipo:'llamada',emisor:data.emisor,nombre:data.aliasEmisor||data.emisor,conVideo:data.conVideo}));
-          console.log(`Push llamada enviado a ${data.destinatario}`);
-        }catch(e){console.log("Push fallo",e.message);}
+        }catch(e){}
       }
     }
   });
@@ -122,4 +128,4 @@ io.on('connection',(socket)=>{
 });
 
 const PORT=process.env.PORT||3000;
-server.listen(PORT,()=>{ console.log(`VobixChat SIEMPRE VIVA puerto ${PORT}`); console.log(`10 Familia gratis: ${NUMEROS_FAMILIA_GRATIS.join(', ')}`); });
+server.listen(PORT,()=>{ console.log(`VobixChat FINAL SIN 1234 - Puerto ${PORT}`); });
