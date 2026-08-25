@@ -1,0 +1,20 @@
+<!DOCTYPE html><html><head><meta charset="UTF-8"><title>VOBIX REMOTE EXE</title><style>body{margin:0;background:#0b141a;color:#e9edef;font-family:sans-serif;padding:16px}button{padding:12px 20px;background:linear-gradient(180deg,#25d366,#128c7e);border:none;border-radius:10px;color:#000;font-weight:800;cursor:pointer;margin:6px}input{padding:12px;border-radius:10px;background:#0f1d28;color:white;border:1px solid #25d366;width:260px}.video{width:100%;height:70vh;background:#000;border-radius:12px;border:2px solid #25d366;object-fit:contain}.card{background:#152535;border-radius:12px;padding:12px;margin-top:10px}</style></head><body>
+<h2 style="color:#25d366">🖥️ VOBIX REMOTE - TeamViewer Gratis $0</h2>
+<div class="card"><button onclick="generarId()">🖥️ Mi ID: <span id="myId">--</span></button><button onclick="iniciarCompartir()">🖥️ Compartir mi PC</button><span id="status">Desconectado</span></div>
+<div class="card"><input id="remoteIdInput" placeholder="ID: 123-456-789"><button onclick="conectar()">🎮 Controlar remoto</button></div>
+<video id="remoteVideo" class="video" autoplay playsinline></video>
+<div class="card"><button onclick="toggleControl()" id="btnControl">🎮 Control OFF</button><button onclick="fullscreen()">⛶ Fullscreen</button></div>
+<script src="/socket.io/socket.io.js"></script>
+<script>
+const { ipcRenderer } = require('electron');
+const socket = io('https://TU-SERVER.onrender.com');
+let myId=null,peer=null,dataChannel=null,controlMode=false,isController=false,localStream=null;
+function generarId(){myId=Math.floor(100+Math.random()*900)+'-'+Math.floor(100+Math.random()*900)+'-'+Math.floor(100+Math.random()*900);document.getElementById('myId').innerText=myId;socket.emit('registrar-remote',{id:myId,de:'exe-'+myId});}
+async function iniciarCompartir(){if(!myId) generarId();isController=false;try{localStream=await navigator.mediaDevices.getDisplayMedia({video:{width:1920,height:1080},audio:true});document.getElementById('remoteVideo').srcObject=localStream;}catch(e){alert('Permite pantalla');}}
+function conectar(){const id=document.getElementById('remoteIdInput').value.trim();if(!id)return;myId=id;isController=true;crearPeer(id,true);socket.emit('solicitar-remote',{id:id,de:'controlador'});}
+function crearPeer(remoteId,iniciador){if(peer) return;peer=new RTCPeerConnection({iceServers:[{urls:'stun:stun.l.google.com:19302'}]});if(iniciador){dataChannel=peer.createDataChannel('control');}else{peer.ondatachannel=(e)=>{dataChannel=e.channel;};}if(localStream) localStream.getTracks().forEach(t=>peer.addTrack(t,localStream));peer.ontrack=(e)=>{document.getElementById('remoteVideo').srcObject=e.streams[0];};peer.onicecandidate=(e)=>{if(e.candidate) socket.emit('senal-remote',{id:remoteId,emisor:myId,dest:remoteId,tipo:'ice',payload:e.candidate});};if(iniciador){peer.createOffer().then(o=>peer.setLocalDescription(o)).then(()=>{socket.emit('senal-remote',{id:remoteId,emisor:myId,dest:remoteId,tipo:'offer',payload:peer.localDescription});});}}
+function toggleControl(){controlMode=!controlMode;document.getElementById('btnControl').innerText=controlMode?'🎮 Control ON':'🎮 Control OFF';}
+function fullscreen(){const v=document.getElementById('remoteVideo');if(v.requestFullscreen) v.requestFullscreen();}
+socket.on('senal-remote-recibida',async d=>{if(d.id!==myId) return;if(!peer) crearPeer(d.emisor,false);if(d.tipo==='offer'){await peer.setRemoteDescription(d.payload);const ans=await peer.createAnswer();await peer.setLocalDescription(ans);socket.emit('senal-remote',{id:d.id,emisor:myId,dest:d.emisor,tipo:'answer',payload:ans});}else if(d.tipo==='answer'){await peer.setRemoteDescription(d.payload);}else if(d.tipo==='ice'){await peer.addIceCandidate(d.payload);}});
+window.onload=()=>{generarId();};
+</script></body></html>
