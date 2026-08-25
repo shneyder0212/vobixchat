@@ -7,8 +7,9 @@
 <link rel="manifest" href="/manifest.json">
 <meta name="theme-color" content="#10b981">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <style>
-:root{--bg-deep:#0f172a;--card-bg:#1e293b;--accent-green:#10b981;--text-main:#f8fafc;--text-muted:#94a3b8;--border-color:rgba(255,255,255,0.08)}
+:root{--bg-deep:#0f172a;--card-bg:#1e293b;--accent-green:#10b981;--danger-red:#ef4444;--text-main:#f8fafc;--text-muted:#94a3b8;--border-color:rgba(255,255,255,0.08)}
 html,body{height:100%;height:100dvh;margin:0;padding:0;overflow:hidden;background:linear-gradient(135deg,#090d16 0%,#0f172a 100%);color:var(--text-main);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;font-size:12px}
 .app-container{width:100%;max-width:480px;height:100%;height:100dvh;background:var(--card-bg);display:flex;flex-direction:column;overflow:hidden;position:relative;margin:0 auto;border:1px solid var(--border-color)}
 .screen{display:none;flex-direction:column;height:100%;padding:16px;box-sizing:border-box;justify-content:center;align-items:center;text-align:center;overflow-y:auto}.screen.active{display:flex}
@@ -40,17 +41,18 @@ button.btn-imponente{width:100%;padding:12px;background:linear-gradient(135deg,#
 <div id="videoCallStage" class="video-call-stage"><div style="display:flex;justify-content:space-between;padding-bottom:8px"><h3 style="margin:0;color:#34d399">Videollamada Familiar</h3><button onclick="colgarTodo()" style="background:#ef4444;border:none;color:white;padding:8px 16px;border-radius:20px">Colgar</button></div><div class="video-grid-container" id="videoGridContainer"></div></div>
 <div id="privateChatRoom"><div class="private-chat-header"><div style="display:flex;align-items:center;gap:10px"><button onclick="cerrarChatPrivado()" style="background:none;border:none;color:white;font-size:20px">←</button><div><h4 id="privateChatTitle" style="margin:0;color:white">Chat</h4></div></div><div style="display:flex;gap:8px"><button onclick="toggleLlamarDesdeChatPrivado(false)" style="background:#3b82f6;border:none;color:white;width:32px;height:32px;border-radius:50%">📞</button><button onclick="toggleLlamarDesdeChatPrivado(true)" style="background:#10b981;border:none;color:white;width:32px;height:32px;border-radius:50%">📹</button></div></div><div class="private-chat-messages" id="privateChatMessagesContainer"><div class="burbuja recibida">Canal seguro familiar - Siempre viva para siempre.</div></div><div class="chat-input-bar"><div class="chat-bubble-input"><input type="text" id="privateMessageInput" placeholder="Escribe..." onkeypress="if(event.key==='Enter')enviarMensajePrivado()"></div><button onclick="enviarMensajePrivado()" style="background:#10b981;border:none;color:white;width:34px;height:34px;border-radius:50%">➤</button></div></div>
 <div id="incomingCallModal"><div><p style="text-transform:uppercase;letter-spacing:2px;font-size:9px;color:#10b981">Llamada Familiar Entrante</p><h1 id="incomingCallerName">Familia</h1></div><div style="width:75px;height:75px;background:#10b981;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:28px">📹</div><div style="display:flex;gap:30px"><button class="round-btn" style="background:#ef4444" onclick="rechazarLlamadaEntrante()">✕</button><button class="round-btn" style="background:#10b981" onclick="aceptarLlamadaEntrante()">📹</button></div></div>
-<div id="screen-registro" class="screen active"><div class="logo-box">🔒</div><h2>VobixChat Familia</h2><p style="color:#94a3b8;font-size:11px">10 Familia Gratis Para Siempre - Siempre Viva</p><div class="input-group"><label>Tu Nombre</label><input type="text" id="regNombre" placeholder="Ej. Mamá"></div><div class="input-group"><label>Teléfono Real (No VoIP)</label><div class="phone-input-wrapper"><select id="selectPrefijo" class="prefix-select"><option value="+34" selected>🇪🇸 +34</option><option value="+1">🇺🇸/🇩🇴 +1</option><option value="+44">🇬🇧 +44</option></select><input type="tel" id="regTelefono" placeholder="Número real" style="flex:1"></div></div><button class="btn-imponente" onclick="validarYContinuarRegistro()">Continuar</button><p style="font-size:10px;color:#fca5a5;margin-top:8px">⛔ VoIP rechazo rotundo<br><span style="color:#34d399">10 familia: PIN 1234 gratis para siempre</span></p></div>
+<div id="screen-registro" class="screen active"><div class="logo-box">🔒</div><h2>VobixChat Familia</h2><p style="color:#94a3b8;font-size:11px">10 Familia Gratis Para Siempre - Siempre Viva</p><div class="input-group"><label>Tu Nombre</label><input type="text" id="regNombre" placeholder="Ej. Mamá"></div><div class="input-group"><label>Teléfono Real (No VoIP)</label><div class="phone-input-wrapper"><select id="selectPrefijo" class="prefix-select"><option value="+34" selected>🇪🇸 +34</option><option value="+1">🇺🇸/🇩🇴 +1</option><option value="+44">🇬🇧 +44</option></select><input type="tel" id="regTelefono" placeholder="Número real" style="flex:1"></div></div><button class="btn-imponente" onclick="validarYContinuarRegistro()">Continuar</button><p style="font-size:10px;color:#fca5a5;margin-top:8px">⛔ VoIP / virtuales rechazo rotundo<br><span style="color:#34d399">10 números familia: PIN 1234 gratis para siempre</span><br><span style="color:#94a3b8">App siempre viva + notificaciones llamada/mensaje</span></p></div>
 <div id="screen-pin" class="screen"><h2>Verificación</h2><p id="lblPinInfo" style="color:#94a3b8;font-size:11px">Introduce PIN</p><div class="input-group"><input type="text" id="regPin" placeholder="PIN" style="text-align:center;letter-spacing:6px;font-size:18px;font-weight:bold"></div><button class="btn-imponente" onclick="verificarPinYEntrar()">Acceder</button></div>
-<div id="screen-chat" class="screen" style="padding:0;text-align:left;position:relative"><div class="app-header"><div><h3 id="lblUserSession" style="margin:0;font-size:12px;color:#34d399">VobixChat</h3><span style="font-size:8px;color:#34d399">Siempre viva - 10 familia para siempre</span></div><div style="display:flex;gap:6px"><button onclick="copiarEnlaceInvitacion()" style="background:rgba(16,185,129,0.2);border:1px solid #10b981;color:#34d399;padding:4px 8px;border-radius:6px;font-size:10px">🔗 Invitar</button></div></div><div class="app-body"><div id="callStatusBanner" style="display:none"></div><div class="card-panel"><h3 style="color:#34d399">Familia - Gratis Para Siempre (10)</h3><div id="chatsListContainer"></div></div><div class="card-panel"><h3>Nuevo Chat</h3><input type="text" id="nuevoChatInput" placeholder="Número"><button class="btn-imponente" onclick="agregarNuevoChat()" style="background:#3b82f6;margin-top:6px;padding:8px">Abrir Chat</button></div></div></div>
+<div id="screen-chat" class="screen" style="padding:0;text-align:left;position:relative"><div class="app-header"><div><h3 id="lblUserSession" style="margin:0;font-size:12px;color:#34d399">VobixChat</h3><span style="font-size:8px;color:#34d399">Siempre viva - 10 familia para siempre</span></div><div style="display:flex;gap:6px"><button onclick="copiarEnlaceInvitacion()" style="background:rgba(16,185,129,0.2);border:1px solid #10b981;color:#34d399;padding:4px 8px;border-radius:6px;font-size:10px">🔗 Invitar</button></div></div><div class="app-body"><div id="callStatusBanner" style="display:none;background:#1e293b;color:#34d399;padding:4px;text-align:center;border-radius:6px"></div><div class="card-panel"><h3 style="color:#34d399">Familia - Gratis Para Siempre (10)</h3><div id="chatsListContainer"></div></div><div class="card-panel"><h3>Nuevo Chat por Número</h3><input type="text" id="nuevoChatInput" placeholder="Número"><button class="btn-imponente" onclick="agregarNuevoChat()" style="background:#3b82f6;margin-top:6px;padding:8px">Abrir Chat</button></div></div></div>
 </div>
 <audio id="remoteAudioElement" autoplay playsinline style="display:none"></audio>
 <script src="/socket.io/socket.io.js"></script>
 <script>
 const socket = io({reconnection:true});
-let identificadorUsuario="",nombreUsuarioGlobal="",chatActivoDestinatario="",localStream=null,ofertaPendienteGlobal=null,pinTemporalInfobip="",numeroEnVerificacion="",ringingInterval=null,audioCtx=null;
+let identificadorUsuario="",nombreUsuarioGlobal="",chatActivoDestinatario="",localStream=null,ofertaPendienteGlobal=null,pinTemporalInfobip="",numeroEnVerificacion="",ringingInterval=null,audioCtx=null,pushSubscription=null;
 const peerConnections={};
 const ICE_SERVERS={iceServers:[{urls:"stun:stun.l.google.com:19302"}]};
+
 const NUMEROS_FAMILIA_GRATIS = [
   "34658616136",
   "34672953430",
@@ -64,7 +66,9 @@ const NUMEROS_FAMILIA_GRATIS = [
   "18094527038"
 ];
 const PIN_FAMILIA="1234";
-function esVoIP(n){if(n.length<10)return true;return false;}
+
+function esVoIP(numero){ if(numero.length<10) return true; return false; }
+
 function validarYContinuarRegistro(){
   const nombre=document.getElementById('regNombre').value.trim();
   const pref=document.getElementById('selectPrefijo').value.replace('+','');
@@ -73,47 +77,157 @@ function validarYContinuarRegistro(){
   if(tel.startsWith("34")&&tel.length>10) numeroCompleto=tel;
   if(tel.startsWith("1")&&tel.length>10) numeroCompleto=tel;
   if(!nombre||!tel){alert("Faltan datos");return;}
-  if(esVoIP(numeroCompleto)){alert("⛔ VoIP PROHIBIDO");return;}
+  if(esVoIP(numeroCompleto)){alert("⛔ NUMERO VoIP / VIRTUAL PROHIBIDO - Rechazo rotundo");return;}
   identificadorUsuario=numeroCompleto; nombreUsuarioGlobal=nombre;
   const guardado=localStorage.getItem("vobix_user_"+numeroCompleto);
-  if(guardado){entrarDefinitivo(JSON.parse(guardado));return;}
+  if(guardado){const datos=JSON.parse(guardado); entrarDefinitivo(datos); return;}
   document.getElementById('screen-registro').classList.remove('active');
   document.getElementById('screen-pin').classList.add('active');
   const esFamilia=NUMEROS_FAMILIA_GRATIS.some(n=>numeroCompleto.includes(n.slice(-9))||n.includes(tel.slice(-9))||numeroCompleto===n);
-  if(esFamilia){document.getElementById('lblPinInfo').innerText="FAMILIA: "+nombre+" - PIN 1234 GRATIS PARA SIEMPRE";}
-  else{document.getElementById('lblPinInfo').innerText="Invitado Infobip a +"+numeroCompleto; pinTemporalInfobip=Math.floor(100000+Math.random()*900000).toString(); numeroEnVerificacion=numeroCompleto; fetch('/api/enviar-pin-infobip',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({to:numeroCompleto,nombre:nombre})}).then(r=>r.json()).then(d=>{if(d.ok){pinTemporalInfobip=d.pin; alert("PIN Infobip: "+d.pin);}});}
-}
-function verificarPinYEntrar(){
-  const pin=document.getElementById('regPin').value.trim();
-  const num=identificadorUsuario;
-  const esFamilia=NUMEROS_FAMILIA_GRATIS.some(n=>num.includes(n.slice(-9))||n.includes(num.slice(-9))||num===n);
-  if(esFamilia&&pin===PIN_FAMILIA){
-    const datos={numero:num,nombre:nombreUsuarioGlobal,verificado:true,esFamilia:true,tipo:"FAMILIA_GRATIS",fechaRegistro:new Date().toISOString(),amigos:NUMEROS_FAMILIA_GRATIS.filter(n=>n!==num)};
-    localStorage.setItem("vobix_user_"+num,JSON.stringify(datos)); localStorage.setItem("vobix_session_actual",num); guardarUsuarioEnListaGlobal(datos); alert("✅ "+nombreUsuarioGlobal+" REGISTRADO PARA SIEMPRE"); entrarDefinitivo(datos); return;
+  if(esFamilia){
+    document.getElementById('lblPinInfo').innerText="FAMILIA: "+nombre+" - PIN 1234 GRATIS PARA SIEMPRE - Sin Infobip - Siempre viva";
+  } else {
+    document.getElementById('lblPinInfo').innerText="Invitado externo: enviando PIN por Infobip a +"+numeroCompleto;
+    pinTemporalInfobip=Math.floor(100000+Math.random()*900000).toString();
+    numeroEnVerificacion=numeroCompleto;
+    fetch('/api/enviar-pin-infobip',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({to:numeroCompleto,nombre:nombre})})
+   .then(r=>r.json()).then(d=>{ if(d.ok){ pinTemporalInfobip=d.pin; console.log("PIN Infobip:",d.pin); alert("PIN Infobip enviado a +"+numeroCompleto+" (prueba: "+d.pin+")"); } else alert(d.error); });
   }
-  if(pin===pinTemporalInfobip&&num===numeroEnVerificacion){
-    const datos={numero:num,nombre:nombreUsuarioGlobal,verificado:true,esFamilia:false,fechaRegistro:new Date().toISOString(),amigos:[]};
-    localStorage.setItem("vobix_user_"+num,JSON.stringify(datos)); guardarUsuarioEnListaGlobal(datos); entrarDefinitivo(datos);
-  }else{alert("PIN incorrecto");}
 }
-function guardarUsuarioEnListaGlobal(u){let l=JSON.parse(localStorage.getItem("vobix_usuarios_globales")||"[]");if(!l.find(x=>x.numero===u.numero)){l.push(u);localStorage.setItem("vobix_usuarios_globales",JSON.stringify(l));}}
-function entrarDefinitivo(d){document.getElementById('screen-pin').classList.remove('active');document.getElementById('screen-chat').classList.add('active');document.getElementById('lblUserSession').innerText=d.nombre+" ("+d.numero+") - SIEMPRE VIVA";socket.emit("registrar-canal-llamada",{identificador_usuario:d.numero});cargarListaAmigos(d); inicializarNotificacionesSiempreViva(d.numero);}
-function cargarListaAmigos(d){const lista=JSON.parse(localStorage.getItem("vobix_usuarios_globales")||"[]");const cont=document.getElementById('chatsListContainer');cont.innerHTML="";let amigos=d.esFamilia?NUMEROS_FAMILIA_GRATIS.filter(n=>n!==d.numero):d.amigos;amigos.forEach(nA=>{const a=lista.find(u=>u.numero===nA)||{numero:nA,nombre:nA};cont.innerHTML+=`<div class="chat-list-item" onclick="abrirChatPrivado('${nA}','${a.nombre}')"><div style="display:flex;gap:10px"><div class="chat-avatar">${a.nombre.charAt(0)}</div><div><h4 style="margin:0;color:white">${a.nombre}</h4><span style="font-size:10px;color:#34d399">${a.numero} - GRATIS PARA SIEMPRE ✓</span></div></div></div>`;});}
-function abrirChatPrivado(num,nombre){chatActivoDestinatario=num;document.getElementById('privateChatTitle').innerText=nombre;document.getElementById('privateChatRoom').classList.add('active');}
+
+function verificarPinYEntrar(){
+  const pinInput=document.getElementById('regPin').value.trim();
+  const numeroCompleto=identificadorUsuario;
+  const esFamilia=NUMEROS_FAMILIA_GRATIS.some(n=>numeroCompleto.includes(n.slice(-9))||n.includes(numeroCompleto.slice(-9))||numeroCompleto===n);
+  if(esFamilia&&pinInput===PIN_FAMILIA){
+    const datos={numero:numeroCompleto,nombre:nombreUsuarioGlobal,verificado:true,esFamilia:true,tipo:"FAMILIA_GRATIS",fechaRegistro:new Date().toISOString(),amigos:NUMEROS_FAMILIA_GRATIS.filter(n=>n!==numeroCompleto)};
+    localStorage.setItem("vobix_user_"+numeroCompleto,JSON.stringify(datos));
+    localStorage.setItem("vobix_session_actual",numeroCompleto);
+    guardarUsuarioEnListaGlobal(datos);
+    alert("✅ "+nombreUsuarioGlobal+" REGISTRADO PARA SIEMPRE COMO FAMILIA GRATIS - SIEMPRE VIVA");
+    entrarDefinitivo(datos);
+    return;
+  }
+  if(pinInput===pinTemporalInfobip&&numeroCompleto===numeroEnVerificacion){
+    const datos={numero:numeroCompleto,nombre:nombreUsuarioGlobal,verificado:true,esFamilia:false,tipo:"INVITADO_INFOBIP",fechaRegistro:new Date().toISOString(),amigos:[]};
+    localStorage.setItem("vobix_user_"+numeroCompleto,JSON.stringify(datos));
+    localStorage.setItem("vobix_session_actual",numeroCompleto);
+    guardarUsuarioEnListaGlobal(datos);
+    entrarDefinitivo(datos);
+  } else if(!esFamilia){
+    alert("PIN Infobip incorrecto");
+  } else {
+    alert("PIN Familia incorrecto, usa 1234");
+  }
+}
+
+function guardarUsuarioEnListaGlobal(usuario){
+  let lista=JSON.parse(localStorage.getItem("vobix_usuarios_globales")||"[]");
+  if(!lista.find(u=>u.numero===usuario.numero)){
+    lista.push(usuario);
+    localStorage.setItem("vobix_usuarios_globales",JSON.stringify(lista));
+  }
+}
+function entrarDefinitivo(datos){
+  document.getElementById('screen-pin').classList.remove('active');
+  document.getElementById('screen-chat').classList.add('active');
+  document.getElementById('lblUserSession').innerText=datos.nombre+" ("+datos.numero+") - "+(datos.esFamilia?"FAMILIA GRATIS SIEMPRE VIVA":"Invitado");
+  socket.emit("registrar-canal-llamada",{identificador_usuario:datos.numero});
+  cargarListaAmigos(datos);
+  inicializarNotificacionesSiempreViva(datos.numero);
+}
+function cargarListaAmigos(datosUsuario){
+  const listaGlobal=JSON.parse(localStorage.getItem("vobix_usuarios_globales")||"[]");
+  const cont=document.getElementById('chatsListContainer');
+  cont.innerHTML="";
+  let amigosMostrar=datosUsuario.esFamilia?NUMEROS_FAMILIA_GRATIS.filter(n=>n!==datosUsuario.numero):datosUsuario.amigos;
+  amigosMostrar.forEach(numAmigo=>{
+    const amigo=listaGlobal.find(u=>u.numero===numAmigo)||{numero:numAmigo,nombre:numAmigo};
+    const nombreMostrar=amigo.nombre||numAmigo;
+    cont.innerHTML+=`<div class="chat-list-item" onclick="abrirChatPrivado('${numAmigo}','${nombreMostrar}')"><div style="display:flex;gap:10px;align-items:center"><div class="chat-avatar">${nombreMostrar.charAt(0)}</div><div><h4 style="margin:0;color:white">${nombreMostrar}</h4><span style="font-size:10px;color:#34d399">${numAmigo} - FAMILIA GRATIS PARA SIEMPRE ✓</span></div></div></div>`;
+  });
+}
+function abrirChatPrivado(num,nombre){chatActivoDestinatario=num;document.getElementById('privateChatTitle').innerText=nombre||num;document.getElementById('privateChatRoom').classList.add('active');}
 function cerrarChatPrivado(){document.getElementById('privateChatRoom').classList.remove('active');}
-function enviarMensajePrivado(){const inp=document.getElementById('privateMessageInput');const txt=inp.value.trim();if(!txt)return;const c=document.getElementById('privateChatMessagesContainer');c.innerHTML+=`<div class="burbuja enviada">${txt}</div>`;c.scrollTop=c.scrollHeight;socket.emit("enviar-mensaje-chat",{destinatario:chatActivoDestinatario,emisor:identificadorUsuario,aliasEmisor:nombreUsuarioGlobal,texto:txt});inp.value="";}
+function enviarMensajePrivado(){
+  const inp=document.getElementById('privateMessageInput');const txt=inp.value.trim();if(!txt)return;
+  const c=document.getElementById('privateChatMessagesContainer');c.innerHTML+=`<div class="burbuja enviada">${txt}</div>`;c.scrollTop=c.scrollHeight;
+  socket.emit("enviar-mensaje-chat",{destinatario:chatActivoDestinatario,emisor:identificadorUsuario,aliasEmisor:nombreUsuarioGlobal,texto:txt});
+  inp.value="";
+}
 function agregarNuevoChat(){const num=document.getElementById('nuevoChatInput').value.replace(/[^0-9]/g,'');if(!num)return;abrirChatPrivado(num,num);}
 function getAudioContext(){if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();if(audioCtx.state==='suspended')audioCtx.resume();return audioCtx;}
-function iniciarTimbreEntrante(){if(navigator.vibrate)navigator.vibrate([500,300,500]);ringingInterval=setInterval(()=>{try{const ctx=getAudioContext();const o=ctx.createOscillator();const g=ctx.createGain();o.frequency.setValueAtTime(520,ctx.currentTime);g.gain.setValueAtTime(0.3,ctx.currentTime);o.connect(g);g.connect(ctx.destination);o.start();o.stop(ctx.currentTime+0.4);}catch(e){}},1000);}
+function iniciarTimbreEntrante(){if(navigator.vibrate)navigator.vibrate([500,300,500]);ringingInterval=setInterval(()=>{try{const ctx=getAudioContext();const o=ctx.createOscillator();const g=ctx.createGain();o.frequency.setValueAtTime(520,ctx.currentTime);g.gain.setValueAtTime(0.3,ctx.currentTime);g.gain.exponentialRampToValueAtTime(0.01,ctx.currentTime+0.4);o.connect(g);g.connect(ctx.destination);o.start();o.stop(ctx.currentTime+0.4);}catch(e){}},1000);}
 function detenerTimbre(){if(ringingInterval){clearInterval(ringingInterval);ringingInterval=null;}if(navigator.vibrate)navigator.vibrate(0);}
-async function toggleLlamarDesdeChatPrivado(conVideo){const num=chatActivoDestinatario;if(!num)return;document.getElementById('videoCallStage').classList.add('active');try{localStream=await navigator.mediaDevices.getUserMedia({audio:true,video:conVideo});}catch(e){alert("Permite micro/camara");return;}const grid=document.getElementById('videoGridContainer');grid.innerHTML="";const tile=document.createElement('div');tile.className='video-tile';tile.innerHTML=`<video autoplay muted playsinline></video><span>Tu</span>`;grid.appendChild(tile);tile.querySelector('video').srcObject=localStream;const pc=new RTCPeerConnection(ICE_SERVERS);peerConnections[num]=pc;localStream.getTracks().forEach(t=>pc.addTrack(t,localStream));pc.ontrack=e=>{let t2=document.getElementById(`tile-${num}`);if(!t2){t2=document.createElement('div');t2.className='video-tile';t2.id=`tile-${num}`;t2.innerHTML=`<video autoplay playsinline></video><span>${num}</span>`;grid.appendChild(t2);}t2.querySelector('video').srcObject=e.streams[0];document.getElementById('remoteAudioElement').srcObject=e.streams[0];};pc.onicecandidate=e=>{if(e.candidate)socket.emit("senalizacion-grupal",{destinatario:num,emisor:identificadorUsuario,aliasEmisor:nombreUsuarioGlobal,tipo:'candidato-ice',payload:e.candidate});};const off=await pc.createOffer();await pc.setLocalDescription(off);socket.emit("senalizacion-grupal",{destinatario:num,emisor:identificadorUsuario,aliasEmisor:nombreUsuarioGlobal,tipo:'oferta',payload:pc.localDescription,conVideo});}
-socket.on("senalizacion-grupal",async d=>{if(d.destinatario!==identificadorUsuario)return;if(d.tipo==='oferta'){ofertaPendienteGlobal=d;document.getElementById('incomingCallerName').innerText=d.aliasEmisor||d.emisor;document.getElementById('incomingCallModal').classList.add('active');iniciarTimbreEntrante();}if(d.tipo==='respuesta'){const pc=peerConnections[d.emisor];if(pc)await pc.setRemoteDescription(new RTCSessionDescription(d.payload));}if(d.tipo==='candidato-ice'){const pc=peerConnections[d.emisor];if(pc)await pc.addIceCandidate(new RTCIceCandidate(d.payload));}});
-async function aceptarLlamadaEntrante(){detenerTimbre();document.getElementById('incomingCallModal').classList.remove('active');document.getElementById('videoCallStage').classList.add('active');const data=ofertaPendienteGlobal;const emisor=data.emisor;const conVideo=data.conVideo;try{localStream=await navigator.mediaDevices.getUserMedia({audio:true,video:conVideo});}catch(e){return;}const grid=document.getElementById('videoGridContainer');grid.innerHTML="";const t=document.createElement('div');t.className='video-tile';t.innerHTML=`<video autoplay muted playsinline></video><span>Tu</span>`;grid.appendChild(t);t.querySelector('video').srcObject=localStream;const pc=new RTCPeerConnection(ICE_SERVERS);peerConnections[emisor]=pc;localStream.getTracks().forEach(tr=>pc.addTrack(tr,localStream));pc.ontrack=e=>{let tile=document.getElementById(`tile-${emisor}`);if(!tile){tile=document.createElement('div');tile.className='video-tile';tile.id=`tile-${emisor}`;tile.innerHTML=`<video autoplay playsinline></video><span>${emisor}</span>`;grid.appendChild(tile);}tile.querySelector('video').srcObject=e.streams[0];document.getElementById('remoteAudioElement').srcObject=e.streams[0];};pc.onicecandidate=e=>{if(e.candidate)socket.emit("senalizacion-grupal",{destinatario:emisor,emisor:identificadorUsuario,tipo:'candidato-ice',payload:e.candidate});};await pc.setRemoteDescription(new RTCSessionDescription(data.payload));const ans=await pc.createAnswer();await pc.setLocalDescription(ans);socket.emit("senalizacion-grupal",{destinatario:emisor,emisor:identificadorUsuario,tipo:'respuesta',payload:pc.localDescription});}
-function rechazarLlamadaEntrante(){detenerTimbre();document.getElementById('incomingCallModal').classList.remove('active');}
-function colgarTodo(){detenerTimbre();if(localStream){localStream.getTracks().forEach(t=>t.stop());localStream=null;}Object.values(peerConnections).forEach(pc=>pc.close());for(let k in peerConnections)delete peerConnections[k];document.getElementById('videoCallStage').classList.remove('active');}
-function copiarEnlaceInvitacion(){const enlace=`${location.origin}${location.pathname}?invitacion=${identificadorUsuario}`;navigator.clipboard.writeText(enlace).then(()=>alert("Enlace copiado! "+enlace));}
-socket.on("nuevo-mensaje-chat",d=>{if(d.destinatario!==identificadorUsuario)return;const c=document.getElementById('privateChatMessagesContainer');if(chatActivoDestinatario===d.emisor){c.innerHTML+=`<div class="burbuja recibida">${d.texto}</div>`;c.scrollTop=c.scrollHeight;}else{if(Notification.permission==="granted"){new Notification(`💬 ${d.aliasEmisor}`,{body:d.texto,icon:'/icon-192.png'});}}});
-function inicializarNotificacionesSiempreViva(numero){if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js').then(reg=>{Notification.requestPermission().then(perm=>{if(perm==='granted'){reg.pushManager.getSubscription().then(sub=>{if(sub){fetch('/api/guardar-subscripcion',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({numero:numero,subscription:sub})});}}); if('wakeLock' in navigator){navigator.wakeLock.request('screen').catch(()=>{});}}});});} navigator.serviceWorker.addEventListener('message',e=>{if(e.data.tipo==='aceptar-llamada'){ofertaPendienteGlobal=e.data.data; aceptarLlamadaEntrante();}}); document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&identificadorUsuario){socket.emit("registrar-canal-llamada",{identificador_usuario:identificadorUsuario});}});}
+async function toggleLlamarDesdeChatPrivado(conVideo){
+  const num=chatActivoDestinatario;if(!num)return;
+  document.getElementById('videoCallStage').classList.add('active');
+  try{localStream=await navigator.mediaDevices.getUserMedia({audio:true,video:conVideo});}catch(e){alert("Permite micro/camara");return;}
+  const grid=document.getElementById('videoGridContainer');grid.innerHTML="";
+  const tile=document.createElement('div');tile.className='video-tile';tile.innerHTML=`<video autoplay muted playsinline></video><span>Tu</span>`;grid.appendChild(tile);tile.querySelector('video').srcObject=localStream;
+  const pc=new RTCPeerConnection(ICE_SERVERS);peerConnections[num]=pc;
+  localStream.getTracks().forEach(t=>pc.addTrack(t,localStream));
+  pc.ontrack=e=>{let t2=document.getElementById(`tile-${num}`);if(!t2){t2=document.createElement('div');t2.className='video-tile';t2.id=`tile-${num}`;t2.innerHTML=`<video autoplay playsinline></video><span>${num}</span>`;grid.appendChild(t2);}t2.querySelector('video').srcObject=e.streams[0];document.getElementById('remoteAudioElement').srcObject=e.streams[0];};
+  pc.onicecandidate=e=>{if(e.candidate)socket.emit("senalizacion-grupal",{destinatario:num,emisor:identificadorUsuario,aliasEmisor:nombreUsuarioGlobal,tipo:'candidato-ice',payload:e.candidate});};
+  const off=await pc.createOffer();await pc.setLocalDescription(off);
+  socket.emit("senalizacion-grupal",{destinatario:num,emisor:identificadorUsuario,aliasEmisor:nombreUsuarioGlobal,tipo:'oferta',payload:pc.localDescription,conVideo});
+}
+socket.on("senalizacion-grupal",async d=>{
+  if(d.destinatario!==identificadorUsuario)return;
+  if(d.tipo==='oferta'){ofertaPendienteGlobal=d;document.getElementById('incomingCallerName').innerText=d.aliasEmisor||d.emisor;document.getElementById('incomingCallModal').classList.add('active');iniciarTimbreEntrante();}
+  if(d.tipo==='respuesta'){const pc=peerConnections[d.emisor];if(pc)await pc.setRemoteDescription(new RTCSessionDescription(d.payload));}
+  if(d.tipo==='candidato-ice'){const pc=peerConnections[d.emisor];if(pc)await pc.addIceCandidate(new RTCIceCandidate(d.payload));}
+});
+async function aceptarLlamadaEntrante(){
+  detenerTimbre();document.getElementById('incomingCallModal').classList.remove('active');document.getElementById('videoCallStage').classList.add('active');
+  const data=ofertaPendienteGlobal;const emisor=data.emisor;const conVideo=data.conVideo;
+  try{localStream=await navigator.mediaDevices.getUserMedia({audio:true,video:conVideo});}catch(e){return;}
+  const grid=document.getElementById('videoGridContainer');grid.innerHTML="";
+  const t=document.createElement('div');t.className='video-tile';t.innerHTML=`<video autoplay muted playsinline></video><span>Tu</span>`;grid.appendChild(t);t.querySelector('video').srcObject=localStream;
+  const pc=new RTCPeerConnection(ICE_SERVERS);peerConnections[emisor]=pc;
+  localStream.getTracks().forEach(tr=>pc.addTrack(tr,localStream));
+  pc.ontrack=e=>{let tile=document.getElementById(`tile-${emisor}`);if(!tile){tile=document.createElement('div');tile.className='video-tile';tile.id=`tile-${emisor}`;tile.innerHTML=`<video autoplay playsinline></video><span>${emisor}</span>`;grid.appendChild(tile);}tile.querySelector('video').srcObject=e.streams[0];document.getElementById('remoteAudioElement').srcObject=e.streams[0];};
+  pc.onicecandidate=e=>{if(e.candidate)socket.emit("senalizacion-grupal",{destinatario:emisor,emisor:identificadorUsuario,tipo:'candidato-ice',payload:e.candidate});};
+  await pc.setRemoteDescription(new RTCSessionDescription(data.payload));
+  const ans=await pc.createAnswer();await pc.setLocalDescription(ans);
+  socket.emit("senalizacion-grupal",{destinatario:emisor,emisor:identificadorUsuario,tipo:'respuesta',payload:pc.localDescription});
+}
+function rechazarLlamadaEntrante(){detenerTimbre();document.getElementById('incomingCallModal').classList.remove('active');socket.emit("senalizacion-grupal",{destinatario:ofertaPendienteGlobal.emisor,emisor:identificadorUsuario,tipo:'rechazo'});}
+function colgarTodo(){detenerTimbre();if(localStream){localStream.getTracks().forEach(t=>t.stop());localStream=null;}Object.values(peerConnections).forEach(pc=>pc.close());for(let k in peerConnections)delete peerConnections[k];document.getElementById('videoCallStage').classList.remove('active');document.getElementById('videoGridContainer').innerHTML="";}
+function copiarEnlaceInvitacion(){const enlace=`${location.origin}${location.pathname}?invitacion=${identificadorUsuario}`;navigator.clipboard.writeText(enlace).then(()=>alert("Enlace copiado! Mandalo a familia: "+enlace)).catch(()=>prompt("Copia:",enlace));}
+socket.on("nuevo-mensaje-chat",d=>{
+  if(d.destinatario!==identificadorUsuario)return;
+  const c=document.getElementById('privateChatMessagesContainer');
+  if(chatActivoDestinatario===d.emisor){c.innerHTML+=`<div class="burbuja recibida">${d.texto}</div>`;c.scrollTop=c.scrollHeight;}
+  else{
+    if(Notification.permission==="granted"){
+      new Notification(`💬 ${d.aliasEmisor}`,{body:d.texto,icon:'/icon-192.png',vibrate:[200,100,200]});
+    }
+  }
+});
+function inicializarNotificacionesSiempreViva(numero){
+  if('serviceWorker' in navigator){
+    navigator.serviceWorker.register('/sw.js').then(reg=>{
+      console.log("SW registrado - App siempre viva");
+      return Notification.requestPermission().then(perm=>{
+        if(perm==='granted'){
+          reg.pushManager.getSubscription().then(sub=>{
+            if(sub){
+              fetch('/api/guardar-subscripcion',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({numero:numero,subscription:sub})});
+            }
+          });
+          if('wakeLock' in navigator){
+            navigator.wakeLock.request('screen').catch(()=>{});
+          }
+        }
+      });
+    });
+  }
+}
+navigator.serviceWorker.addEventListener('message', e=>{ if(e.data.tipo==='aceptar-llamada'){ ofertaPendienteGlobal=e.data.data; aceptarLlamadaEntrante(); } });
+document.addEventListener('visibilitychange', ()=>{
+  if(document.visibilityState==='visible'&&identificadorUsuario){ socket.emit("registrar-canal-llamada",{identificador_usuario:identificadorUsuario}); }
+});
 </script>
 </body>
 </html>
