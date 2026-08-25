@@ -36,7 +36,6 @@ function leerDB(){ try{ if(!fs.existsSync(DB_FILE)) return []; return JSON.parse
 function guardarDB(d){ fs.writeFileSync(DB_FILE, JSON.stringify(d,null,2)); }
 function leerPush(){ try{ if(!fs.existsSync(PUSH_FILE)) return {}; return JSON.parse(fs.readFileSync(PUSH_FILE,'utf8')); }catch(e){return {};} }
 function guardarPush(d){ fs.writeFileSync(PUSH_FILE, JSON.stringify(d,null,2)); }
-
 function esVoIP_Servidor(num){ if(num.length<10) return true; return false; }
 
 app.post('/api/enviar-pin-infobip', async (req,res)=>{
@@ -75,8 +74,14 @@ app.post('/api/guardar-subscripcion',(req,res)=>{
   res.json({ok:true});
 });
 
+app.post('/api/rechazar-llamada',(req,res)=>{
+  io.to(req.body.emisor).emit('senalizacion-grupal',{tipo:'rechazo',destinatario:req.body.emisor,emisor:req.body.destinatario});
+  res.json({ok:true});
+});
+
 io.on('connection',(socket)=>{
-  socket.on('registrar-canal-llamada',(data)=>{ socket.join(data.identificador_usuario); });
+  console.log('Conectado',socket.id);
+  socket.on('registrar-canal-llamada',(data)=>{ socket.join(data.identificador_usuario); console.log(`Usuario ${data.identificador_usuario} registrado - Siempre viva`); });
   socket.on('senalizacion-grupal', async (data)=>{
     io.to(data.destinatario).emit('senalizacion-grupal',data);
     if(data.tipo==='oferta'){
@@ -87,7 +92,8 @@ io.on('connection',(socket)=>{
           const webpush=require('web-push');
           webpush.setVapidDetails('mailto:admin@vobixchat.com',VAPID_PUBLIC,VAPID_PRIVATE);
           await webpush.sendNotification(sub, JSON.stringify({tipo:'llamada',emisor:data.emisor,nombre:data.aliasEmisor||data.emisor,conVideo:data.conVideo}));
-        }catch(e){}
+          console.log(`Push llamada enviado a ${data.destinatario}`);
+        }catch(e){console.log("Push fallo",e.message);}
       }
     }
   });
@@ -105,7 +111,7 @@ io.on('connection',(socket)=>{
     }
     let pushDB=leerPush();
     let sub=pushDB[data.destinatario];
-    if(sub){
+    if(sub && data.destinatario!==data.emisor){
       try{
         const webpush=require('web-push');
         webpush.setVapidDetails('mailto:admin@vobixchat.com',VAPID_PUBLIC,VAPID_PRIVATE);
@@ -116,4 +122,4 @@ io.on('connection',(socket)=>{
 });
 
 const PORT=process.env.PORT||3000;
-server.listen(PORT,()=>{ console.log(`VobixChat SIEMPRE VIVA puerto ${PORT} - 10 familia gratis`); });
+server.listen(PORT,()=>{ console.log(`VobixChat SIEMPRE VIVA puerto ${PORT}`); console.log(`10 Familia gratis: ${NUMEROS_FAMILIA_GRATIS.join(', ')}`); });
