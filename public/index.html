@@ -396,7 +396,7 @@
             </div>
         </div>
 
-        <!-- SALA DE CHAT PRIVADO / IA (CON MICRÓFONO DE NOTAS DE VOZ) -->
+        <!-- SALA DE CHAT PRIVADO / IA (CON REPRODUCTOR DE NOTAS DE VOZ) -->
         <div id="privateChatRoom">
             <div class="private-chat-header">
                 <div style="display: flex; align-items: center; gap: 10px;">
@@ -429,7 +429,7 @@
                 <button class="icon-btn" onclick="togglePrivateEmojiPicker()" title="Emojis">😊</button>
                 <label class="icon-btn" title="Adjuntar Documento">📎<input type="file" style="display: none;" onchange="manejarEnvioDocumentoPrivado(this)"></label>
                 <label class="icon-btn" title="Foto o Vídeo">📷<input type="file" accept="image/*,video/*" capture="environment" style="display: none;" onchange="manejarEnvioMultimediaPrivado(this)"></label>
-                <button class="icon-btn" onclick="grabarYEnviarNotaDeVoz()" title="Nota de Voz">🎙️</button>
+                <button class="icon-btn" id="btnGrabarVoz" onclick="toggleGrabacionVoz()" title="Grabar Nota de Voz">🎙️</button>
                 <div class="chat-bubble-input">
                     <input type="text" id="privateMessageInput" placeholder="Escribe un mensaje..." onkeypress="if(event.key === 'Enter') enviarMensajePrivado()">
                 </div>
@@ -479,7 +479,7 @@
         <div id="screen-registro" class="screen active">
             <div class="logo-box">🔒</div>
             <h2>VobixChat Élite</h2>
-            <p class="subtitle">Red Cuántica con Alerta Sísmica y Notas de Voz</p>
+            <p class="subtitle">Red Cuántica con Alerta Sísmica y Notas de Voz con Reproductor</p>
 
             <div class="input-group">
                 <label>Tu Nombre o @usuario</label>
@@ -623,6 +623,9 @@
         let ringingInterval = null;
         let estaLlamandoActualmente = false;
         let dobleCheckAzulActivo = true;
+        let mediaRecorder = null;
+        let audioChunks = [];
+        let estaGrabandoAudio = false;
         const peerConnections = {};
         const historialChats = {};
         const listaEstadosGlobales = [];
@@ -630,31 +633,73 @@
         const chatsOcultosGlobales = [];
         const bovedaClavesGlobales = [];
 
-        // LÓGICA DE NOTA DE VOZ (MICRÓFONO)
-        function grabarYEnviarNotaDeVoz() {
-            if (!chatActivoDestinatario) return;
-            alert("🎙️ Grabando nota de voz de 3 segundos...");
-            setTimeout(() => {
-                const textoAudio = "🎤 [Nota de Voz en Audio - 0:03]";
-                const container = document.getElementById('privateChatMessagesContainer');
-                container.innerHTML += `<div class="burbuja enviada">${textoAudio} <span class="msg-status sent">✓✓</span></div>`;
-                container.scrollTop = container.scrollHeight;
+        // LÓGICA DE GRABACIÓN Y REPRODUCCIÓN DE NOTAS DE VOZ REALES
+        async function toggleGrabacionVoz() {
+            const btn = document.getElementById('btnGrabarVoz');
+            if (!estaGrabandoAudio) {
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    mediaRecorder = new MediaRecorder(stream);
+                    audioChunks = [];
+                    
+                    mediaRecorder.ondataavailable = event => {
+                        if (event.data.size > 0) audioChunks.push(event.data);
+                    };
 
-                if (chatActivoDestinatario !== "IA_ASISTENTE") {
-                    socket.emit("enviar-mensaje-chat", {
-                        destinatario: chatActivoDestinatario,
-                        emisor: identificadorUsuario,
-                        aliasEmisor: nombreUsuarioGlobal,
-                        texto: textoAudio
-                    });
-                } else {
-                    setTimeout(() => {
-                        container.innerHTML += `<div class="burbuja recibida">IA: He recibido tu nota de voz perfectamente. <span class="msg-status">✓✓</span></div>`;
-                        container.scrollTop = container.scrollHeight;
-                    }, 600);
+                    mediaRecorder.onstop = () => {
+                        const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                        const audioUrl = URL.createObjectURL(audioBlob);
+                        enviarNotaDeVozReal(audioUrl);
+                    };
+
+                    mediaRecorder.start();
+                    estaGrabandoAudio = true;
+                    btn.style.color = "#ef4444";
+                    btn.title = "Grabando... Toca para detener";
+                    alert("🎙️ Grabando nota de voz... Toca el micrófono de nuevo cuando termines.");
+                } catch (e) {
+                    alert("No se pudo acceder al micrófono.");
                 }
-                alert("¡Nota de voz enviada con éxito!");
-            }, 3000);
+            } else {
+                if (mediaRecorder && mediaRecorder.state !== "inactive") {
+                    mediaRecorder.stop();
+                }
+                estaGrabandoAudio = false;
+                btn.style.color = "var(--text-muted)";
+                btn.title = "Grabar Nota de Voz";
+            }
+        }
+
+        function enviarNotaDeVozReal(audioUrl) {
+            if (!chatActivoDestinatario) return;
+            const contenedor = document.getElementById('privateChatMessagesContainer');
+            
+            const audioHtml = `
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <audio controls style="height: 32px; max-width: 200px;">
+                        <source src="${audioUrl}" type="audio/webm">
+                        Tu navegador no soporta audio.
+                    </audio>
+                </div>
+                <span class="msg-status sent">✓✓</span>
+            `;
+
+            contenedor.innerHTML += `<div class="burbuja enviada">${audioHtml}</div>`;
+            contenedor.scrollTop = contenedor.scrollHeight;
+
+            if (chatActivoDestinatario !== "IA_ASISTENTE") {
+                socket.emit("enviar-mensaje-chat", {
+                    destinatario: chatActivoDestinatario,
+                    emisor: identificadorUsuario,
+                    aliasEmisor: nombreUsuarioGlobal,
+                    texto: `🎤 [Nota de Voz Interactiva]`
+                });
+            } else {
+                setTimeout(() => {
+                    contenedor.innerHTML += `<div class="burbuja recibida">IA: He escuchado tu nota de voz con éxito. <span class="msg-status">✓✓</span></div>`;
+                    contenedor.scrollTop = contenedor.scrollHeight;
+                }, 800);
+            }
         }
 
         // LÓGICA DE ALERTA SÍSMICA Y VOLCÁNICA (USGS API)
