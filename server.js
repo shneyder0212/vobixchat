@@ -2,130 +2,98 @@ const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
 const path = require('path');
-const fs = require('fs');
 
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server, { cors: { origin: "*" }, pingInterval: 10000, pingTimeout: 5000 });
+const io = new Server(server, { cors: { origin: "*" } });
 
+app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
-app.use(express.static(__dirname));
 
-const INFOBIP_API_KEY = "PON_AQUI_TU_API_KEY_DE_INFOBIP";
-const INFOBIP_BASE_URL = "https://api.infobip.com";
-const VAPID_PUBLIC = "PON_AQUI_TU_VAPID_PUBLIC_KEY";
-const VAPID_PRIVATE = "PON_AQUI_TU_VAPID_PRIVATE_KEY";
+app.get('/', (req,res)=>{ res.sendFile(path.join(__dirname,'public','index.html')); });
+app.get('/api/ping', (req,res)=>{ res.json({ok:true,time:Date.now(),msg:"VOBIX BOMBA 24H + TeamViewer+Zoom+Musica $0 P2P"}); });
+app.post('/api/ping', (req,res)=>{ console.log('📡 Ping', req.body.c || 0, 'TeamViewer P2P $0'); res.json({ok:true}); });
 
-const NUMEROS_FAMILIA_GRATIS = [
-  "34658616136",
-  "34672953430",
-  "18096025900",
-  "18295159742",
-  "34645711126",
-  "18295229469",
-  "34657956823",
-  "34695746539",
-  "34652024433",
-  "18094527038"
-];
+let usuarios = {};
+let reuniones = {};
 
-const DB_FILE = path.join(__dirname, 'vobix_usuarios_db.json');
-const PUSH_FILE = path.join(__dirname, 'vobix_push_db.json');
+io.on('connection', socket=>{
+  console.log('🔌 Conectado', socket.id);
 
-function leerDB(){ try{ if(!fs.existsSync(DB_FILE)) return []; return JSON.parse(fs.readFileSync(DB_FILE,'utf8')); }catch(e){return [];} }
-function guardarDB(d){ fs.writeFileSync(DB_FILE, JSON.stringify(d,null,2)); }
-function leerPush(){ try{ if(!fs.existsSync(PUSH_FILE)) return {}; return JSON.parse(fs.readFileSync(PUSH_FILE,'utf8')); }catch(e){return {};} }
-function guardarPush(d){ fs.writeFileSync(PUSH_FILE, JSON.stringify(d,null,2)); }
-function esVoIP_Servidor(num){ if(num.length<10) return true; return false; }
-
-app.get('/', (req,res)=>{ res.sendFile(path.join(__dirname, 'index.html')); });
-app.get('/manifest.json', (req,res)=>{ res.sendFile(path.join(__dirname, 'manifest.json')); });
-app.get('/sw.js', (req,res)=>{ res.sendFile(path.join(__dirname, 'sw.js')); });
-
-app.post('/api/enviar-pin-infobip', async (req,res)=>{
-  const {to,nombre} = req.body;
-  let numeroLimpio = to.replace(/[^0-9]/g,'');
-  if(esVoIP_Servidor(numeroLimpio)) return res.json({ok:false,error:"⛔ VoIP prohibido"});
-  const esFamilia = NUMEROS_FAMILIA_GRATIS.some(n=>numeroLimpio.includes(n.slice(-9))||n===numeroLimpio);
-  let db=leerDB();
-  let pin = "";
-
-  if(esFamilia){
-    pin = Math.floor(1000 + Math.random()*9000).toString();
-    let ex = db.find(u=>u.numero===numeroLimpio);
-    if(ex){ ex.pinTemporal=pin; ex.fechaPin=Date.now(); }
-    else { db.push({numero:numeroLimpio,nombre,pinTemporal:pin,fechaPin:Date.now(),verificado:false,esFamilia:true,tipo:"FAMILIA_GRATIS"}); }
-    guardarDB(db);
-    console.log(`PIN GRATIS FAMILIA ${numeroLimpio}: ${pin}`);
-    return res.json({ok:true,pin:pin,familia:true,gratis:true});
-  }
-
-  pin = Math.floor(100000+Math.random()*900000).toString();
-  let ex=db.find(u=>u.numero===numeroLimpio);
-  if(ex){ex.pinTemporal=pin;ex.fechaPin=Date.now();} else {db.push({numero:numeroLimpio,nombre,pinTemporal:pin,fechaPin:Date.now(),verificado:false});}
-  guardarDB(db);
-  if(INFOBIP_API_KEY!=="PON_AQUI_TU_API_KEY_DE_INFOBIP"){
-    await fetch(`${INFOBIP_BASE_URL}/sms/2/text/advanced`,{
-      method:'POST',headers:{'Authorization':`App ${INFOBIP_API_KEY}`,'Content-Type':'application/json'},
-      body:JSON.stringify({messages:[{destinations:[{to:numeroLimpio}],from:"VobixChat",text:`VobixChat PIN: ${pin} valido 5 min.`}]})
-    });
-  }
-  console.log(`PIN Infobip ${numeroLimpio}: ${pin}`);
-  res.json({ok:true,pin:pin});
-});
-
-app.post('/api/guardar-subscripcion',(req,res)=>{
-  const {numero,subscription} = req.body;
-  let pushDB=leerPush();
-  pushDB[numero]=subscription;
-  guardarPush(pushDB);
-  res.json({ok:true});
-});
-
-app.post('/api/rechazar-llamada',(req,res)=>{
-  io.to(req.body.emisor).emit('senalizacion-grupal',{tipo:'rechazo',destinatario:req.body.emisor,emisor:req.body.destinatario});
-  res.json({ok:true});
-});
-
-io.on('connection',(socket)=>{
-  socket.on('registrar-canal-llamada',(data)=>{ socket.join(data.identificador_usuario); });
-  socket.on('senalizacion-grupal', async (data)=>{
-    io.to(data.destinatario).emit('senalizacion-grupal',data);
-    if(data.tipo==='oferta'){
-      let pushDB=leerPush();
-      let sub=pushDB[data.destinatario];
-      if(sub){
-        try{
-          const webpush=require('web-push');
-          webpush.setVapidDetails('mailto:admin@vobixchat.com',VAPID_PUBLIC,VAPID_PRIVATE);
-          await webpush.sendNotification(sub, JSON.stringify({tipo:'llamada',emisor:data.emisor,nombre:data.aliasEmisor||data.emisor,conVideo:data.conVideo}));
-        }catch(e){}
-      }
-    }
+  socket.on('registrar-canal-llamada', d=>{
+    if(!d.identificador_usuario) return;
+    usuarios[d.identificador_usuario] = socket.id;
+    socket.identificador = d.identificador_usuario;
   });
-  socket.on('enviar-mensaje-chat', async (data)=>{
-    io.to(data.destinatario).emit('nuevo-mensaje-chat',data);
-    let db=leerDB();
-    let emisor=db.find(u=>u.numero===data.emisor);
-    let dest=db.find(u=>u.numero===data.destinatario);
-    if(emisor&&dest){
-      if(!emisor.amigos) emisor.amigos=[];
-      if(!emisor.amigos.includes(data.destinatario)) emisor.amigos.push(data.destinatario);
-      if(!dest.amigos) dest.amigos=[];
-      if(!dest.amigos.includes(data.emisor)) dest.amigos.push(data.emisor);
-      guardarDB(db);
+
+  socket.on('registrar-remote', d=>{
+    if(!d.id) return;
+    usuarios['remote-'+d.id] = socket.id;
+  });
+
+  socket.on('solicitar-remote', d=>{
+    const dest = usuarios['remote-'+d.id] || usuarios[d.id];
+    if(dest) io.to(dest).emit('solicitud-remote-recibida', {id:d.id, de:d.de});
+  });
+
+  socket.on('senal-remote', d=>{
+    const dest = usuarios['remote-'+d.dest] || usuarios[d.id] || usuarios['remote-'+d.id];
+    if(dest) io.to(dest).emit('senal-remote-recibida', d);
+  });
+
+  socket.on('crear-reunion', d=>{
+    if(!d.id) return;
+    if(!reuniones[d.id]) reuniones[d.id] = {creador:d.de, participantes:[d.de]};
+    else if(!reuniones[d.id].participantes.includes(d.de)) reuniones[d.id].participantes.push(d.de);
+    usuarios['reunion-'+d.id+'-'+d.de] = socket.id;
+    socket.reunionId = d.id;
+  });
+
+  socket.on('unirse-reunion', d=>{
+    if(!d.id || !reuniones[d.id]) reuniones[d.id] = {creador:d.de, participantes:[d.de]};
+    else if(!reuniones[d.id].participantes.includes(d.de)) reuniones[d.id].participantes.push(d.de);
+    socket.join('reunion-'+d.id);
+    usuarios['reunion-'+d.id+'-'+d.de] = socket.id;
+    socket.reunionId = d.id;
+    socket.to('reunion-'+d.id).emit('nuevo-participante-reunion', {id:d.id, de:d.de});
+  });
+
+  socket.on('senal-reunion', d=>{
+    if(!d.id) return;
+    socket.to('reunion-'+d.id).emit('senal-reunion-recibida', d);
+  });
+
+  socket.on('salir-reunion', d=>{
+    if(d.id && reuniones[d.id]){
+      reuniones[d.id].participantes = reuniones[d.id].participantes.filter(p=>p!==d.de);
+      if(reuniones[d.id].participantes.length===0) delete reuniones[d.id];
     }
-    let pushDB=leerPush();
-    let sub=pushDB[data.destinatario];
-    if(sub && data.destinatario!==data.emisor){
-      try{
-        const webpush=require('web-push');
-        webpush.setVapidDetails('mailto:admin@vobixchat.com',VAPID_PUBLIC,VAPID_PRIVATE);
-        await webpush.sendNotification(sub, JSON.stringify({tipo:'mensaje',emisor:data.emisor,nombre:data.aliasEmisor,texto:data.texto}));
-      }catch(e){}
-    }
+    socket.leave('reunion-'+d.id);
+  });
+
+  socket.on('chat-reunion', d=>{
+    if(!d.id) return;
+    socket.to('reunion-'+d.id).emit('chat-reunion-recibido', d);
+  });
+
+  socket.on('ping-keepalive', d=>{
+    socket.emit('pong-keepalive', {ok:true, c:d.c});
+  });
+
+  socket.on('mensaje-privado', d=>{
+    const dest = usuarios[d.para];
+    if(dest) io.to(dest).emit('mensaje-privado-recibido', d);
+  });
+
+  socket.on('senalizacion-grupal', d=>{
+    const dest = usuarios[d.destinatario];
+    if(dest) io.to(dest).emit('recibir-senalizacion-grupal', {emisor:d.emisor, tipo:d.tipo, payload:d.payload});
+  });
+
+  socket.on('disconnect', ()=>{
+    if(socket.identificador) delete usuarios[socket.identificador];
   });
 });
 
-const PORT=process.env.PORT||3000;
-server.listen(PORT,()=>{ console.log(`VobixChat FINAL SIN 1234 - Puerto ${PORT}`); });
+const PORT = process.env.PORT || 10000;
+server.listen(PORT, ()=>{ console.log('🚀 VOBIX BOMBA - TEAMVIEWER + ZOOM + MUSICA $0 en puerto', PORT); });
