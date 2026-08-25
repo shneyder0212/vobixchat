@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, interactive-widget=resizes-content">
-    <title>VobixChat Élite - Videollamada Multiusuario Directa</title>
+    <title>VobixChat Élite - Red Cuántica Definitiva</title>
     <style>
         :root {
             --bg-deep: #0f172a;
@@ -118,7 +118,7 @@
 
         #vobixMenuDropdown {
             position: absolute; top: 50px; right: 12px; background: #1e293b;
-            border: 1px solid var(--border-color); border-radius: 12px; width: 270px;
+            border: 1px solid var(--border-color); border-radius: 12px; width: 280px;
             max-height: 75vh; overflow-y: auto; -webkit-overflow-scrolling: touch;
             box-shadow: 0 15px 35px rgba(0,0,0,0.8); display: none; flex-direction: column; z-index: 900;
         }
@@ -131,7 +131,6 @@
 
         video { filter: var(--filtro-video); transition: filter 0.3s ease; }
 
-        /* PANTALLA DE VIDEOLLAMADA DIRECTA CON REJILLA MULTIUSUARIO */
         .video-call-stage {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background: #000; z-index: 750; display: none; flex-direction: column; justify-content: space-between; overflow: hidden; padding: 12px; box-sizing: border-box;
@@ -149,12 +148,12 @@
             position: absolute; bottom: 5px; left: 5px; background: rgba(0,0,0,0.6); color: white; font-size: 9px; padding: 2px 6px; border-radius: 4px;
         }
 
-        #agregarParticipanteModal, #estudioBellezaModal, #bovedaPassModal, #chatsOcultosModal, #contactoModal, #firmaModal, #estadosModal, #privateChatRoom, .fullscreen-modal {
+        #alertaSismicaModal, #agregarParticipanteModal, #estudioBellezaModal, #bovedaPassModal, #chatsOcultosModal, #contactoModal, #firmaModal, #estadosModal, #privateChatRoom, .fullscreen-modal {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background: #0b141a; z-index: 800; display: none;
             flex-direction: column; justify-content: space-between; padding: 16px; box-sizing: border-box; color: white;
         }
-        #agregarParticipanteModal.active, #estudioBellezaModal.active, #bovedaPassModal.active, #chatsOcultosModal.active, #contactoModal.active, #firmaModal.active, #estadosModal.active, #privateChatRoom.active, .fullscreen-modal.active { display: flex; }
+        #alertaSismicaModal.active, #agregarParticipanteModal.active, #estudioBellezaModal.active, #bovedaPassModal.active, #chatsOcultosModal.active, #contactoModal.active, #firmaModal.active, #estadosModal.active, #privateChatRoom.active, .fullscreen-modal.active { display: flex; }
 
         .canvas-container {
             flex: 1; background: #fff; border-radius: 12px; position: relative; overflow: hidden; margin: 10px 0;
@@ -239,29 +238,45 @@
 
     <div class="app-container">
 
-        <!-- PANTALLA DE VIDEOLLAMADA CON BOTÓN DE "AGREGAR PARTICIPANTE" EN DIRECTO -->
+        <!-- MODAL DE ALERTA SÍSMICA Y VOLCÁNICA EN VIVO -->
+        <div id="alertaSismicaModal">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
+                <h3 style="margin: 0; color: #ef4444; font-size: 15px;">🌋 Radar Sísmico y Volcánico Mundial</h3>
+                <button onclick="cerrarAlertaSismica()" style="background:none; border:none; color:white; font-size:20px; cursor:pointer;">✕</button>
+            </div>
+            <p style="font-size: 11px; color: var(--text-muted); margin: 5px 0;">Monitoreo en tiempo real de terremotos y actividad sísmica (vía USGS).</p>
+            
+            <div class="card-panel" style="flex: 1; overflow-y: auto; margin-top: 8px;">
+                <h4>Últimos Sismos Registrados</h4>
+                <div id="listaSismosContainer" style="margin-top: 8px; display: flex; flex-direction: column; gap: 6px;">
+                    <p style="font-size: 11px; color: var(--text-muted);">Cargando actividad sísmica en vivo...</p>
+                </div>
+            </div>
+
+            <button class="btn-imponente" onclick="verificarSismosAhora()" style="background: #3b82f6; padding: 10px; font-size: 13px; margin-top: 8px;">🔄 Actualizar Sismos</button>
+        </div>
+
+        <!-- PANTALLA DE VIDEOLLAMADA ACTIVA -->
         <div id="videoCallStage" class="video-call-stage">
             <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 8px;">
                 <h3 style="margin: 0; color: #34d399; font-size: 14px;">📹 Videollamada Activa</h3>
                 <button onclick="abrirAgregarParticipanteModal()" style="background: rgba(16,185,129,0.2); border: 1px solid rgba(16,185,129,0.4); color: #34d399; padding: 4px 10px; border-radius: 6px; cursor: pointer; font-size: 11px; font-weight: bold;">➕ Agregar Persona</button>
             </div>
             
-            <div class="video-grid-container" id="videoGridContainer">
-                <!-- Se insertan dinámicamente los vídeos de todos los agregados -->
-            </div>
+            <div class="video-grid-container" id="videoGridContainer"></div>
 
             <div style="width: 100%; display: flex; justify-content: center; padding: 5px 0;">
                 <button onclick="colgarTodo()" style="background: var(--danger-red); border: none; color: white; padding: 10px 24px; border-radius: 30px; font-weight: bold; cursor: pointer; box-shadow: 0 5px 15px rgba(0,0,0,0.5);">🔴 Colgar Llamada</button>
             </div>
         </div>
 
-        <!-- MODAL PARA AGREGAR NUEVA PERSONA A LA LLAMADA EN CURSO -->
+        <!-- MODAL PARA AGREGAR PARTICIPANTE -->
         <div id="agregarParticipanteModal">
             <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
                 <h3 style="margin: 0; color: #34d399; font-size: 15px;">➕ Invitar a la Llamada en Curso</h3>
                 <button onclick="cerrarAgregarParticipanteModal()" style="background:none; border:none; color:white; font-size:20px; cursor:pointer;">✕</button>
             </div>
-            <p style="font-size: 11px; color: var(--text-muted); margin: 5px 0;">Introduce el número de teléfono o ID de la persona que deseas sumar a esta misma llamada.</p>
+            <p style="font-size: 11px; color: var(--text-muted); margin: 5px 0;">Introduce el número de la persona que deseas sumar.</p>
             <div class="card-panel" style="margin-top: 10px;">
                 <div class="input-group">
                     <label>Número de la Persona</label>
@@ -446,16 +461,16 @@
             <button class="btn-imponente" onclick="cerrarModal('settingsModal')">Guardar Cambios</button>
         </div>
 
-        <!-- MODAL LLAMADA ENTRANTE -->
+        <!-- MODAL LLAMADA ENTRANTE (CON TIMBRE REAL Y VIBRACIÓN) -->
         <div id="incomingCallModal">
             <div>
-                <p style="text-transform: uppercase; letter-spacing: 2px; font-size: 9px; color: var(--accent-green); font-weight: 700; margin:0;">VobixChat Llamada Entrante</p>
+                <p style="text-transform: uppercase; letter-spacing: 2px; font-size: 9px; color: var(--accent-green); font-weight: 700; margin:0;">VobixChat Videollamada Entrante</p>
                 <h1 id="incomingCallerName" style="margin: 6px 0; font-size: 20px; font-weight: 800;">Usuario</h1>
             </div>
-            <div class="caller-avatar">📞</div>
+            <div class="caller-avatar">📹</div>
             <div class="call-action-buttons">
                 <button class="round-btn btn-reject" onclick="rechazarLlamadaEntrante()">✕</button>
-                <button class="round-btn btn-accept" onclick="aceptarLlamadaEntrante()">📞</button>
+                <button class="round-btn btn-accept" onclick="aceptarLlamadaEntrante()">📹</button>
             </div>
         </div>
 
@@ -463,7 +478,7 @@
         <div id="screen-registro" class="screen active">
             <div class="logo-box">🔒</div>
             <h2>VobixChat Élite</h2>
-            <p class="subtitle">Red Cuántica con Videollamadas Directas Multiusuario</p>
+            <p class="subtitle">Red Cuántica con Alerta Sísmica y Timbre Persistente</p>
 
             <div class="input-group">
                 <label>Tu Nombre o @usuario</label>
@@ -506,18 +521,20 @@
             <div class="app-header">
                 <div>
                     <h3 id="lblUserSession" style="margin:0; font-size: 12px; font-weight: 700; color: #34d399;">VobixChat Élite</h3>
-                    <span id="lblEstadoCabecera" style="font-size: 8px; color: #34d399;">🟢 En línea</span>
+                    <span id="lblEstadoCabecera" style="font-size: 8px; color: #34d399;">🟢 En línea (Persistente)</span>
                 </div>
                 <div style="display: flex; gap: 4px; align-items: center;">
+                    <button onclick="abrirAlertaSismica()" style="background:rgba(239,68,68,0.2); border:1px solid rgba(239,68,68,0.4); color:#ef4444; padding:3px 4px; border-radius:4px; cursor:pointer; font-size:8px; font-weight:600;">🌋 Sismos</button>
                     <button onclick="abrirEstudioBelleza()" style="background:rgba(236,72,153,0.2); border:1px solid rgba(236,72,153,0.4); color:#f472b6; padding:3px 4px; border-radius:4px; cursor:pointer; font-size:8px; font-weight:600;">✨ Filtros</button>
                     <button onclick="abrirEstadosModal()" style="background:rgba(59, 130, 246, 0.2); border:1px solid rgba(59, 130, 246, 0.4); color:#60a5fa; padding:3px 4px; border-radius:4px; cursor:pointer; font-size:8px; font-weight:600;">📸 Estados</button>
                     <button onclick="copiarEnlaceInvitacion()" style="background:rgba(16, 185, 129, 0.2); border:1px solid rgba(16, 185, 129, 0.4); color:#34d399; padding:3px 4px; border-radius:4px; cursor:pointer; font-size:8px; font-weight:600;">🔗 Invitar</button>
                     <button onclick="toggleVobixMenu(event)" style="background:none; border:none; color:white; font-size:22px; cursor:pointer; padding:0 2px;" title="Menú">⋮</button>
                 </div>
 
-                <!-- MENÚ DESPLEGABLE CON SCROLL VERTICAL FLUIDO -->
+                <!-- MENÚ DESPLEGABLE CON SCROLL VERTICAL FLUIDO (INCLUYE RADAR SÍSMICO) -->
                 <div id="vobixMenuDropdown">
                     <div class="menu-item" onclick="abrirChatIA()">🤖 IA Asistente (Sin Restricciones)</div>
+                    <div class="menu-item" onclick="abrirAlertaSismica()">🌋 Radar Sísmico y Volcánico en Vivo</div>
                     <div class="menu-item" onclick="abrirEstudioBelleza()">✨ Estudio de Belleza & Filtros</div>
                     <div class="menu-item" onclick="abrirFirmaModal()">✍️ Modo Espejo de Firma (USA ⇄ España)</div>
                     <div class="menu-item" onclick="abrirBovedaPass()">🔐 Bóveda AES-256 de Contraseñas</div>
@@ -599,10 +616,10 @@
         let nombreUsuarioGlobal = "";
         let chatActivoDestinatario = "";
         let destinatarioActual = "";
-        let salaLlamadaActual = "";
         let localStream = null;
         let ofertaPendienteGlobal = null;
-        let tonoLlamadaInterval = null;
+        let audioCtx = null;
+        let ringingInterval = null;
         let estaLlamandoActualmente = false;
         let dobleCheckAzulActivo = true;
         const peerConnections = {};
@@ -611,6 +628,87 @@
         const contactosAgendaGlobal = [];
         const chatsOcultosGlobales = [];
         const bovedaClavesGlobales = [];
+
+        // LÓGICA DE ALERTA SÍSMICA Y VOLCÁNICA (USGS API)
+        function abrirAlertaSismica() {
+            document.getElementById('vobixMenuDropdown').classList.remove('active');
+            document.getElementById('alertaSismicaModal').classList.add('active');
+            verificarSismosAhora();
+        }
+
+        function cerrarAlertaSismica() {
+            document.getElementById('alertaSismicaModal').classList.remove('active');
+        }
+
+        async function verificarSismosAhora() {
+            const contenedor = document.getElementById('listaSismosContainer');
+            contenedor.innerHTML = `<p style="font-size: 11px; color: var(--text-muted);">Consultando red sísmica mundial...</p>`;
+            try {
+                const response = await fetch('https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/significant_hour.geojson');
+                const data = await response.json();
+                if (data.features && data.features.length > 0) {
+                    contenedor.innerHTML = "";
+                    data.features.forEach(eq => {
+                        const mag = eq.properties.mag;
+                        const lugar = eq.properties.place;
+                        const fecha = new Date(eq.properties.time).toLocaleTimeString();
+                        contenedor.innerHTML += `
+                            <div style="background: rgba(239, 68, 68, 0.15); border: 1px solid #ef4444; padding: 8px; border-radius: 6px;">
+                                <h4 style="margin:0; font-size:12px; color:#ef4444;">⚠️ Sismo M ${mag}</h4>
+                                <p style="margin:2px 0; font-size:11px; color:white;">${lugar}</p>
+                                <span style="font-size:9px; color:var(--text-muted);">Hora UTC: ${fecha}</span>
+                            </div>
+                        `;
+                    });
+                } else {
+                    const res2 = await fetch('https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/4.5_day.geojson');
+                    const data2 = await res2.json();
+                    contenedor.innerHTML = "";
+                    data2.features.slice(0, 5).forEach(eq => {
+                        contenedor.innerHTML += `
+                            <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid #10b981; padding: 8px; border-radius: 6px;">
+                                <h4 style="margin:0; font-size:12px; color:#34d399;">🌍 Sismo M ${eq.properties.mag}</h4>
+                                <p style="margin:2px 0; font-size:11px; color:white;">${eq.properties.place}</p>
+                            </div>
+                        `;
+                    });
+                }
+            } catch (e) {
+                contenedor.innerHTML = `<p style="font-size: 11px; color: var(--danger-red);">Error al conectar con la red sismológica.</p>`;
+            }
+        }
+
+        // SISTEMA DE AUDIO Y TIMBRE PERSISTENTE
+        function getAudioContext() {
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            return audioCtx;
+        }
+
+        function iniciarTimbreEntrante() {
+            detenerTimbre();
+            getAudioContext();
+            if (navigator.vibrate) navigator.vibrate([1000, 500, 1000, 500, 1000, 500, 1000]);
+            ringingInterval = setInterval(() => {
+                try {
+                    const ctx = getAudioContext();
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(520, ctx.currentTime);
+                    osc.frequency.setValueAtTime(660, ctx.currentTime + 0.2);
+                    gain.gain.setValueAtTime(0.3, ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.4);
+                    osc.connect(gain); gain.connect(ctx.destination);
+                    osc.start(); osc.stop(ctx.currentTime + 0.4);
+                } catch (e) {}
+            }, 1000);
+        }
+
+        function detenerTimbre() {
+            if (ringingInterval) { clearInterval(ringingInterval); ringingInterval = null; }
+            if (navigator.vibrate) navigator.vibrate(0);
+        }
 
         // LÓGICA DE AGREGAR PARTICIPANTE A LA LLAMADA EN CURSO
         function abrirAgregarParticipanteModal() {
@@ -625,7 +723,7 @@
             const numeroDestino = document.getElementById('inputNumeroInvitarLlamada').value.trim().replace(/[^0-9]/g, '');
             if (!numeroDestino) return;
             cerrarAgregarParticipanteModal();
-            alert(`Llamando a ${numeroDestino} para sumarlo a esta misma videollamada...`);
+            alert(`Llamando a ${numeroDestino} para sumarlo a esta videollamada...`);
 
             if (!localStream) {
                 localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
@@ -1042,7 +1140,7 @@
         }
 
         function colgarTodo() {
-            detenerTonoMarcacion(); detenerTimbre();
+            detenerTimbre();
             document.getElementById('incomingCallModal').classList.remove('active');
             document.getElementById('videoCallStage').classList.remove('active');
             if (destinatarioActual) socket.emit("finalizar-llamada", { destinatario: destinatarioActual });
@@ -1050,7 +1148,7 @@
         }
 
         function resetearLlamadas() {
-            detenerTonoMarcacion(); detenerTimbre();
+            detenerTimbre();
             Object.values(peerConnections).forEach(pc => pc.close());
             for (let key in peerConnections) delete peerConnections[key];
             if (localStream) { localStream.getTracks().forEach(t => t.stop()); localStream = null; }
@@ -1127,11 +1225,6 @@
             } else if (data.tipo === 'respuesta') { await pc.setRemoteDescription(new RTCSessionDescription(data.payload)); }
             else if (data.tipo === 'candidato-ice') { await pc.addIceCandidate(new RTCIceCandidate(data.payload)); }
         });
-
-        function iniciarTonoMarcacion() {}
-        function detenerTonoMarcacion() {}
-        function iniciarTimbreEntrante() {}
-        function detenerTimbre() {}
     </script>
 </body>
 </html>
