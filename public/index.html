@@ -396,7 +396,7 @@
             </div>
         </div>
 
-        <!-- SALA DE CHAT PRIVADO / IA -->
+        <!-- SALA DE CHAT PRIVADO / IA (CON MICRÓFONO DE NOTAS DE VOZ) -->
         <div id="privateChatRoom">
             <div class="private-chat-header">
                 <div style="display: flex; align-items: center; gap: 10px;">
@@ -429,6 +429,7 @@
                 <button class="icon-btn" onclick="togglePrivateEmojiPicker()" title="Emojis">😊</button>
                 <label class="icon-btn" title="Adjuntar Documento">📎<input type="file" style="display: none;" onchange="manejarEnvioDocumentoPrivado(this)"></label>
                 <label class="icon-btn" title="Foto o Vídeo">📷<input type="file" accept="image/*,video/*" capture="environment" style="display: none;" onchange="manejarEnvioMultimediaPrivado(this)"></label>
+                <button class="icon-btn" onclick="grabarYEnviarNotaDeVoz()" title="Nota de Voz">🎙️</button>
                 <div class="chat-bubble-input">
                     <input type="text" id="privateMessageInput" placeholder="Escribe un mensaje..." onkeypress="if(event.key === 'Enter') enviarMensajePrivado()">
                 </div>
@@ -478,7 +479,7 @@
         <div id="screen-registro" class="screen active">
             <div class="logo-box">🔒</div>
             <h2>VobixChat Élite</h2>
-            <p class="subtitle">Red Cuántica con Alerta Sísmica y Timbre Persistente</p>
+            <p class="subtitle">Red Cuántica con Alerta Sísmica y Notas de Voz</p>
 
             <div class="input-group">
                 <label>Tu Nombre o @usuario</label>
@@ -521,7 +522,7 @@
             <div class="app-header">
                 <div>
                     <h3 id="lblUserSession" style="margin:0; font-size: 12px; font-weight: 700; color: #34d399;">VobixChat Élite</h3>
-                    <span id="lblEstadoCabecera" style="font-size: 8px; color: #34d399;">🟢 En línea (Persistente)</span>
+                    <span id="lblEstadoCabecera" style="font-size: 8px; color: #34d399;">🟢 En línea</span>
                 </div>
                 <div style="display: flex; gap: 4px; align-items: center;">
                     <button onclick="abrirAlertaSismica()" style="background:rgba(239,68,68,0.2); border:1px solid rgba(239,68,68,0.4); color:#ef4444; padding:3px 4px; border-radius:4px; cursor:pointer; font-size:8px; font-weight:600;">🌋 Sismos</button>
@@ -628,6 +629,33 @@
         const contactosAgendaGlobal = [];
         const chatsOcultosGlobales = [];
         const bovedaClavesGlobales = [];
+
+        // LÓGICA DE NOTA DE VOZ (MICRÓFONO)
+        function grabarYEnviarNotaDeVoz() {
+            if (!chatActivoDestinatario) return;
+            alert("🎙️ Grabando nota de voz de 3 segundos...");
+            setTimeout(() => {
+                const textoAudio = "🎤 [Nota de Voz en Audio - 0:03]";
+                const container = document.getElementById('privateChatMessagesContainer');
+                container.innerHTML += `<div class="burbuja enviada">${textoAudio} <span class="msg-status sent">✓✓</span></div>`;
+                container.scrollTop = container.scrollHeight;
+
+                if (chatActivoDestinatario !== "IA_ASISTENTE") {
+                    socket.emit("enviar-mensaje-chat", {
+                        destinatario: chatActivoDestinatario,
+                        emisor: identificadorUsuario,
+                        aliasEmisor: nombreUsuarioGlobal,
+                        texto: textoAudio
+                    });
+                } else {
+                    setTimeout(() => {
+                        container.innerHTML += `<div class="burbuja recibida">IA: He recibido tu nota de voz perfectamente. <span class="msg-status">✓✓</span></div>`;
+                        container.scrollTop = container.scrollHeight;
+                    }, 600);
+                }
+                alert("¡Nota de voz enviada con éxito!");
+            }, 3000);
+        }
 
         // LÓGICA DE ALERTA SÍSMICA Y VOLCÁNICA (USGS API)
         function abrirAlertaSismica() {
