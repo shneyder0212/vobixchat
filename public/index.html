@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, interactive-widget=resizes-content">
-    <title>VobixChat Élite - Red Cuántica Definitiva</title>
+    <title>VobixChat Élite - Videollamada Multiusuario Directa</title>
     <style>
         :root {
             --bg-deep: #0f172a;
@@ -131,24 +131,30 @@
 
         video { filter: var(--filtro-video); transition: filter 0.3s ease; }
 
+        /* PANTALLA DE VIDEOLLAMADA DIRECTA CON REJILLA MULTIUSUARIO */
         .video-call-stage {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: #000; z-index: 750; display: none; flex-direction: column; justify-content: space-between; overflow: hidden;
+            background: #000; z-index: 750; display: none; flex-direction: column; justify-content: space-between; overflow: hidden; padding: 12px; box-sizing: border-box;
         }
         .video-call-stage.active { display: flex; }
 
-        .video-main-fullscreen { width: 100%; height: 100%; object-fit: cover; cursor: pointer; }
-        .video-pip-floating {
-            position: absolute; top: 20px; right: 20px; width: 100px; height: 140px;
-            background: #111; border-radius: 10px; border: 2px solid var(--accent-green); overflow: hidden; object-fit: cover; cursor: pointer; z-index: 760; box-shadow: 0 5px 15px rgba(0,0,0,0.6);
+        .video-grid-container {
+            flex: 1; display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px; align-content: center; overflow-y: auto;
+        }
+        .video-tile {
+            position: relative; background: #111; border-radius: 10px; overflow: hidden; aspect-ratio: 4/3; border: 2px solid var(--accent-green);
+        }
+        .video-tile video { width: 100%; height: 100%; object-fit: cover; }
+        .video-tile span {
+            position: absolute; bottom: 5px; left: 5px; background: rgba(0,0,0,0.6); color: white; font-size: 9px; padding: 2px 6px; border-radius: 4px;
         }
 
-        #estudioBellezaModal, #bovedaPassModal, #chatsOcultosModal, #contactoModal, #firmaModal, #estadosModal, #privateChatRoom, .fullscreen-modal {
+        #agregarParticipanteModal, #estudioBellezaModal, #bovedaPassModal, #chatsOcultosModal, #contactoModal, #firmaModal, #estadosModal, #privateChatRoom, .fullscreen-modal {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background: #0b141a; z-index: 800; display: none;
             flex-direction: column; justify-content: space-between; padding: 16px; box-sizing: border-box; color: white;
         }
-        #estudioBellezaModal.active, #bovedaPassModal.active, #chatsOcultosModal.active, #contactoModal.active, #firmaModal.active, #estadosModal.active, #privateChatRoom.active, .fullscreen-modal.active { display: flex; }
+        #agregarParticipanteModal.active, #estudioBellezaModal.active, #bovedaPassModal.active, #chatsOcultosModal.active, #contactoModal.active, #firmaModal.active, #estadosModal.active, #privateChatRoom.active, .fullscreen-modal.active { display: flex; }
 
         .canvas-container {
             flex: 1; background: #fff; border-radius: 12px; position: relative; overflow: hidden; margin: 10px 0;
@@ -233,13 +239,37 @@
 
     <div class="app-container">
 
-        <!-- PANTALLA DE VÍDEO LLAMADA CON INTERCAMBIO TIPO WHATSAPP -->
+        <!-- PANTALLA DE VIDEOLLAMADA CON BOTÓN DE "AGREGAR PARTICIPANTE" EN DIRECTO -->
         <div id="videoCallStage" class="video-call-stage">
-            <video id="videoPrincipal" class="video-main-fullscreen" autoplay playsinline onclick="intercambiarPantallasVideo()"></video>
-            <video id="videoSecundario" class="video-pip-floating" autoplay muted playsinline onclick="intercambiarPantallasVideo()"></video>
-            <div style="position: absolute; bottom: 30px; width: 100%; display: flex; justify-content: center; gap: 20px; z-index: 770;">
-                <button onclick="colgarTodo()" style="background: var(--danger-red); border: none; color: white; padding: 12px 24px; border-radius: 30px; font-weight: bold; cursor: pointer; box-shadow: 0 5px 15px rgba(0,0,0,0.5);">🔴 Colgar</button>
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 8px;">
+                <h3 style="margin: 0; color: #34d399; font-size: 14px;">📹 Videollamada Activa</h3>
+                <button onclick="abrirAgregarParticipanteModal()" style="background: rgba(16,185,129,0.2); border: 1px solid rgba(16,185,129,0.4); color: #34d399; padding: 4px 10px; border-radius: 6px; cursor: pointer; font-size: 11px; font-weight: bold;">➕ Agregar Persona</button>
             </div>
+            
+            <div class="video-grid-container" id="videoGridContainer">
+                <!-- Se insertan dinámicamente los vídeos de todos los agregados -->
+            </div>
+
+            <div style="width: 100%; display: flex; justify-content: center; padding: 5px 0;">
+                <button onclick="colgarTodo()" style="background: var(--danger-red); border: none; color: white; padding: 10px 24px; border-radius: 30px; font-weight: bold; cursor: pointer; box-shadow: 0 5px 15px rgba(0,0,0,0.5);">🔴 Colgar Llamada</button>
+            </div>
+        </div>
+
+        <!-- MODAL PARA AGREGAR NUEVA PERSONA A LA LLAMADA EN CURSO -->
+        <div id="agregarParticipanteModal">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
+                <h3 style="margin: 0; color: #34d399; font-size: 15px;">➕ Invitar a la Llamada en Curso</h3>
+                <button onclick="cerrarAgregarParticipanteModal()" style="background:none; border:none; color:white; font-size:20px; cursor:pointer;">✕</button>
+            </div>
+            <p style="font-size: 11px; color: var(--text-muted); margin: 5px 0;">Introduce el número de teléfono o ID de la persona que deseas sumar a esta misma llamada.</p>
+            <div class="card-panel" style="margin-top: 10px;">
+                <div class="input-group">
+                    <label>Número de la Persona</label>
+                    <input type="text" id="inputNumeroInvitarLlamada" placeholder="Ej. 34600000000">
+                </div>
+                <button class="btn-imponente" onclick="invitarPersonaALlamadaActiva()" style="background: #10b981; padding: 12px; font-size: 14px;">Llamar e Invitar</button>
+            </div>
+            <button class="btn-imponente" onclick="cerrarAgregarParticipanteModal()" style="background: #64748b; padding: 10px;">Volver</button>
         </div>
 
         <!-- BÓVEDA DE CONTRASEÑAS AES-256 -->
@@ -248,18 +278,15 @@
                 <h3 style="margin: 0; color: #34d399; font-size: 15px;">🔐 Bóveda Criptográfica AES-256</h3>
                 <button onclick="cerrarBovedaPass()" style="background:none; border:none; color:white; font-size:20px; cursor:pointer;">✕</button>
             </div>
-            <p style="font-size: 11px; color: var(--text-muted); margin: 5px 0;">Almacena tus claves y notas confidenciales de forma ultrasegura.</p>
-            <div class="card-panel" style="margin-bottom: 10px;">
+            <div class="card-panel" style="margin-bottom: 10px; margin-top: 10px;">
                 <h4>Guardar Nueva Clave</h4>
-                <div class="input-group" style="margin-top: 6px;"><input type="text" id="tituloClave" placeholder="Título (ej. Banco / Gmail)"></div>
-                <div class="input-group"><input type="text" id="secretoClave" placeholder="Contraseña o Nota secreta"></div>
-                <button class="btn-imponente" onclick="guardarClaveBoveda()" style="padding: 8px; font-size: 12px;">Guardar en Bóveda</button>
+                <div class="input-group" style="margin-top: 6px;"><input type="text" id="tituloClave" placeholder="Título"></div>
+                <div class="input-group"><input type="text" id="secretoClave" placeholder="Contraseña"></div>
+                <button class="btn-imponente" onclick="guardarClaveBoveda()" style="padding: 8px; font-size: 12px;">Guardar</button>
             </div>
             <div class="card-panel" style="flex: 1; overflow-y: auto;">
-                <h4>Mis Credenciales Cifradas</h4>
-                <div id="listaBovedaContainer" style="margin-top: 8px; display: flex; flex-direction: column; gap: 6px;">
-                    <p style="font-size: 11px; color: var(--text-muted);">No hay claves guardadas.</p>
-                </div>
+                <h4>Mis Credenciales</h4>
+                <div id="listaBovedaContainer" style="margin-top: 8px; display: flex; flex-direction: column; gap: 6px;"><p style="font-size: 11px; color: var(--text-muted);">Sin claves.</p></div>
             </div>
             <button class="btn-imponente" onclick="cerrarBovedaPass()" style="background: #64748b; padding: 10px;">Volver</button>
         </div>
@@ -274,12 +301,12 @@
                 <video id="previewFiltroVideo" autoplay muted playsinline style="width: 100%; height: 100%; object-fit: cover;"></video>
             </div>
             <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 10px;">
-                <button class="btn-imponente" onclick="aplicarFiltroVideo('natural')" style="background: #3b82f6; padding: 10px; font-size: 11px;">🌟 Retoques Natural</button>
-                <button class="btn-imponente" onclick="aplicarFiltroVideo('cinematic')" style="background: #ec4899; padding: 10px; font-size: 11px;">🎬 Cine de Lujo</button>
-                <button class="btn-imponente" onclick="aplicarFiltroVideo('glow')" style="background: #10b981; padding: 10px; font-size: 11px;">✨ Piel Radiante</button>
-                <button class="btn-imponente" onclick="aplicarFiltroVideo('vintage')" style="background: #f59e0b; padding: 10px; font-size: 11px;">🎞️ Vintage Élite</button>
+                <button class="btn-imponente" onclick="aplicarFiltroVideo('natural')" style="background: #3b82f6; padding: 10px; font-size: 11px;">🌟 Natural</button>
+                <button class="btn-imponente" onclick="aplicarFiltroVideo('cinematic')" style="background: #ec4899; padding: 10px; font-size: 11px;">🎬 Cine</button>
+                <button class="btn-imponente" onclick="aplicarFiltroVideo('glow')" style="background: #10b981; padding: 10px; font-size: 11px;">✨ Glow</button>
+                <button class="btn-imponente" onclick="aplicarFiltroVideo('vintage')" style="background: #f59e0b; padding: 10px; font-size: 11px;">🎞️ Vintage</button>
             </div>
-            <button class="btn-imponente" onclick="cerrarEstudioBelleza()" style="background: #64748b;">Aplicar y Volver</button>
+            <button class="btn-imponente" onclick="cerrarEstudioBelleza()" style="background: #64748b;">Volver</button>
         </div>
 
         <!-- BÓVEDA DE CHATS OCULTOS -->
@@ -290,9 +317,7 @@
             </div>
             <div class="card-panel" style="flex: 1; overflow-y: auto; margin-top: 10px;">
                 <h4>Chats Ocultos</h4>
-                <div id="listaChatsOcultosContainer" style="margin-top: 8px; display: flex; flex-direction: column; gap: 6px;">
-                    <p style="font-size: 11px; color: var(--text-muted);">No hay chats ocultos actualmente.</p>
-                </div>
+                <div id="listaChatsOcultosContainer" style="margin-top: 8px; display: flex; flex-direction: column; gap: 6px;"><p style="font-size: 11px; color: var(--text-muted);">Sin chats ocultos.</p></div>
             </div>
             <button class="btn-imponente" onclick="cerrarChatsOcultosModal()" style="background: #64748b; padding: 10px; font-size: 13px;">Volver</button>
         </div>
@@ -311,11 +336,9 @@
             </div>
             <div class="card-panel" style="flex: 1; overflow-y: auto;">
                 <h4>Mis Contactos</h4>
-                <div id="listaContactosAgenda" style="margin-top: 8px; display: flex; flex-direction: column; gap: 6px;">
-                    <p style="font-size: 11px; color: var(--text-muted);">Sin contactos.</p>
-                </div>
+                <div id="listaContactosAgenda" style="margin-top: 8px; display: flex; flex-direction: column; gap: 6px;"><p style="font-size: 11px; color: var(--text-muted);">Sin contactos.</p></div>
             </div>
-            <button class="btn-imponente" onclick="enviarDifusionMasiva()" style="background: #3b82f6; padding: 10px; font-size: 13px;">📢 Enviar Difusión de Invitación</button>
+            <button class="btn-imponente" onclick="enviarDifusionMasiva()" style="background: #3b82f6; padding: 10px; font-size: 13px;">📢 Enviar Difusión</button>
         </div>
 
         <!-- MÓDULO DE FIRMA -->
@@ -358,7 +381,7 @@
             </div>
         </div>
 
-        <!-- SALA DE CHAT PRIVADO / IA / TRADUCTOR -->
+        <!-- SALA DE CHAT PRIVADO / IA -->
         <div id="privateChatRoom">
             <div class="private-chat-header">
                 <div style="display: flex; align-items: center; gap: 10px;">
@@ -440,7 +463,7 @@
         <div id="screen-registro" class="screen active">
             <div class="logo-box">🔒</div>
             <h2>VobixChat Élite</h2>
-            <p class="subtitle">Red Cuántica con Todas las Funciones Definitivas</p>
+            <p class="subtitle">Red Cuántica con Videollamadas Directas Multiusuario</p>
 
             <div class="input-group">
                 <label>Tu Nombre o @usuario</label>
@@ -492,7 +515,7 @@
                     <button onclick="toggleVobixMenu(event)" style="background:none; border:none; color:white; font-size:22px; cursor:pointer; padding:0 2px;" title="Menú">⋮</button>
                 </div>
 
-                <!-- MENÚ DESPLEGABLE CON SCROLL VERTICAL FLUIDO (TODAS LAS 20+ OPCIONES) -->
+                <!-- MENÚ DESPLEGABLE CON SCROLL VERTICAL FLUIDO -->
                 <div id="vobixMenuDropdown">
                     <div class="menu-item" onclick="abrirChatIA()">🤖 IA Asistente (Sin Restricciones)</div>
                     <div class="menu-item" onclick="abrirEstudioBelleza()">✨ Estudio de Belleza & Filtros</div>
@@ -506,8 +529,6 @@
                     <div class="menu-item" onclick="activarMensajesAutodestructivos()">⏱️ Activar Mensajes Autodestructivos</div>
                     <div class="menu-item" onclick="abrirRadarFamiliar()">📍 Radar Familiar (Geolocalización)</div>
                     <div class="menu-item" onclick="resumirChatsConIA()">📑 Resumen IA del Historial de Chat</div>
-                    <div class="menu-item" onclick="activarWalkieTalkie()">🎙️ Modo Walkie-Talkie Cuántico</div>
-                    <div class="menu-item" onclick="programarRecordatorioVoz()">⏰ Programar Recordatorio de Voz</div>
                     <div class="menu-item" onclick="abrirModal('settingsModal')">⚙️ Configuración de Privacidad</div>
                     <div class="menu-item" onclick="alternarDesconexionFalsa()">🔌 Desconectarse (Pero seguir en línea)</div>
                     <div class="menu-item" onclick="location.reload()" style="color: #fca5a5;">🚪 Cerrar Sesión</div>
@@ -578,7 +599,7 @@
         let nombreUsuarioGlobal = "";
         let chatActivoDestinatario = "";
         let destinatarioActual = "";
-        let salaActualId = null;
+        let salaLlamadaActual = "";
         let localStream = null;
         let ofertaPendienteGlobal = null;
         let tonoLlamadaInterval = null;
@@ -591,7 +612,54 @@
         const chatsOcultosGlobales = [];
         const bovedaClavesGlobales = [];
 
-        // FUNCIONES DE LAS NUEVAS HERRAMIENTAS MAESTRAS
+        // LÓGICA DE AGREGAR PARTICIPANTE A LA LLAMADA EN CURSO
+        function abrirAgregarParticipanteModal() {
+            document.getElementById('agregarParticipanteModal').classList.add('active');
+        }
+
+        function cerrarAgregarParticipanteModal() {
+            document.getElementById('agregarParticipanteModal').classList.remove('active');
+        }
+
+        async function invitarPersonaALlamadaActiva() {
+            const numeroDestino = document.getElementById('inputNumeroInvitarLlamada').value.trim().replace(/[^0-9]/g, '');
+            if (!numeroDestino) return;
+            cerrarAgregarParticipanteModal();
+            alert(`Llamando a ${numeroDestino} para sumarlo a esta misma videollamada...`);
+
+            if (!localStream) {
+                localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
+            }
+
+            const pc = new RTCPeerConnection();
+            peerConnections[numeroDestino] = pc;
+            localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
+
+            pc.ontrack = (event) => {
+                let tile = document.getElementById(`tile-${numeroDestino}`);
+                if (!tile) {
+                    const grid = document.getElementById('videoGridContainer');
+                    tile = document.createElement('div');
+                    tile.className = 'video-tile';
+                    tile.id = `tile-${numeroDestino}`;
+                    tile.innerHTML = `<video autoplay playsinline></video><span>${numeroDestino}</span>`;
+                    grid.appendChild(tile);
+                }
+                tile.querySelector('video').srcObject = event.streams[0];
+            };
+
+            pc.onicecandidate = (event) => {
+                if (event.candidate) {
+                    socket.emit("senalizacion-grupal", { destinatario: numeroDestino, emisor: identificadorUsuario, tipo: 'candidato-ice', payload: event.candidate });
+                }
+            };
+
+            const offer = await pc.createOffer();
+            await pc.setLocalDescription(offer);
+            socket.emit("senalizacion-grupal", { destinatario: numeroDestino, emisor: identificadorUsuario, tipo: 'oferta', payload: pc.localDescription });
+        }
+
+        // FUNCIONES DE LAS DEMÁS HERRAMIENTAS
         function abrirBovedaPass() {
             document.getElementById('vobixMenuDropdown').classList.remove('active');
             document.getElementById('bovedaPassModal').classList.add('active');
@@ -627,47 +695,27 @@
             document.getElementById('vobixMenuDropdown').classList.remove('active');
             const pregunta = prompt("¿Qué deseas preguntar en la encuesta familiar?");
             if(!pregunta) return;
-            alert(`📊 Encuesta creada con éxito: "${pregunta}". Compártela en el chat activo.`);
+            alert(`📊 Encuesta creada con éxito: "${pregunta}". Compártela en el chat.`);
         }
 
         function activarTraductorCuantico() {
             document.getElementById('vobixMenuDropdown').classList.remove('active');
-            alert("🌐 Traductor Cuántico Simultáneo activado. Los mensajes extranjeros se traducirán automáticamente en los chats.");
+            alert("🌐 Traductor Cuántico Simultáneo activado.");
         }
 
         function activarMensajesAutodestructivos() {
             document.getElementById('vobixMenuDropdown').classList.remove('active');
-            alert("⏱️ Mensajes Autodestructivos activados (se borrarán a los 30 segundos de ser leídos).");
+            alert("⏱️ Mensajes Autodestructivos activados (30 segundos).");
         }
 
         function abrirRadarFamiliar() {
             document.getElementById('vobixMenuDropdown').classList.remove('active');
-            alert("📍 Radar Familiar Cuántico: Conectando coordenadas encriptadas punto a punto con tu círculo seguro...");
+            alert("📍 Radar Familiar Cuántico: Conectando coordenadas...");
         }
 
         function resumirChatsConIA() {
             document.getElementById('vobixMenuDropdown').classList.remove('active');
-            alert("📑 Resumen IA: Analizando el historial acumulado... Todos los puntos clave y acuerdos familiares han sido sintetizados con éxito.");
-        }
-
-        function activarWalkieTalkie() {
-            document.getElementById('vobixMenuDropdown').classList.remove('active');
-            alert("🎙️ Modo Walkie-Talkie Militar activado. Mantén pulsado para transmitir audio instantáneo cifrado.");
-        }
-
-        function programarRecordatorioVoz() {
-            document.getElementById('vobixMenuDropdown').classList.remove('active');
-            alert("⏰ Recordatorio programado correctamente en la red para notificar a los dispositivos enlazados.");
-        }
-
-        let esPrincipalMio = false;
-        function intercambiarPantallasVideo() {
-            esPrincipalMio = !esPrincipalMio;
-            const principal = document.getElementById('videoPrincipal');
-            const secundario = document.getElementById('videoSecundario');
-            const tempSrc = principal.srcObject;
-            principal.srcObject = secundario.srcObject;
-            secundario.srcObject = tempSrc;
+            alert("📑 Resumen IA: Historial sintetizado con éxito.");
         }
 
         let previewStream = null;
@@ -700,7 +748,7 @@
                 elemento.style.display = 'none';
                 if (!chatsOcultosGlobales.some(c => c.numero === numero)) chatsOcultosGlobales.push({ numero, nombre });
                 renderizarChatsOcultos();
-                alert(`Chat con ${nombre || numero} ocultado en la Bóveda de Chats Ocultos.`);
+                alert(`Chat con ${nombre || numero} ocultado en la Bóveda.`);
             }
         }
         function abrirChatsOcultosModal() {
@@ -759,18 +807,23 @@
         function enviarDifusionMasiva() {
             if (contactosAgendaGlobal.length === 0) { alert("Sin contactos para difusión."); return; }
             const enlace = `${window.location.origin}/?llamar=${identificadorUsuario}`;
-            navigator.clipboard.writeText(enlace).then(() => { alert("¡Enlace de difusión copiado al portapapeles!"); });
+            navigator.clipboard.writeText(enlace).then(() => { alert("¡Enlace de difusión copiado!"); });
         }
 
         let canvasFirma, ctxFirma;
         let salaFirmaActual = "contrato-global-01";
+        let dibujando = false;
         window.addEventListener('DOMContentLoaded', () => {
             canvasFirma = document.getElementById('firmaCanvas');
             if (canvasFirma) {
                 ctxFirma = canvasFirma.getContext('2d');
                 ajustarCanvas();
-                canvasFirma.addEventListener('mousedown', iniciarTrazo);
-                canvasFirma.addEventListener('mousemove', dibujarTrazo);
+                canvasFirma.addEventListener('mousedown', (e) => { dibujando = true; ctxFirma.beginPath(); ctxFirma.moveTo(e.offsetX, e.offsetY); });
+                canvasFirma.addEventListener('mousemove', (e) => {
+                    if (!dibujando) return;
+                    ctxFirma.lineTo(e.offsetX, e.offsetY); ctxFirma.stroke();
+                    socket.emit("sincronizar-trazo-firma", { salaFirma: salaFirmaActual, trazo: { x: e.offsetX, y: e.offsetY } });
+                });
                 canvasFirma.addEventListener('mouseup', () => dibujando = false);
             }
         });
@@ -790,12 +843,6 @@
             salaFirmaActual = document.getElementById('inputSalaFirma').value.trim() || "contrato-global-01";
             socket.emit("unirse-sala-firma", salaFirmaActual);
             alert(`Conectado a la sala: ${salaFirmaActual}`);
-        }
-        function iniciarTrazo(e) { dibujando = true; ctxFirma.beginPath(); ctxFirma.moveTo(e.offsetX, e.offsetY); }
-        function dibujarTrazo(e) {
-            if (!dibujando) return;
-            ctxFirma.lineTo(e.offsetX, e.offsetY); ctxFirma.stroke();
-            socket.emit("sincronizar-trazo-firma", { salaFirma: salaFirmaActual, trazo: { x: e.offsetX, y: e.offsetY } });
         }
         socket.on("recibir-trazo-firma", (data) => {
             if (!ctxFirma) return;
@@ -842,10 +889,7 @@
             else if (val === 'desconectado_activo') { label.innerText = "🟡 Desconectado (Operativo)"; label.style.color = "#fbbf24"; }
             else { label.innerText = "🔴 Invisible"; label.style.color = "#ef4444"; }
         }
-        function alternarDesconexionFalsa() {
-            document.getElementById('vobixMenuDropdown').classList.remove('active');
-            alert("Estado alternado.");
-        }
+        function alternarDesconexionFalsa() { document.getElementById('vobixMenuDropdown').classList.remove('active'); alert("Estado alternado."); }
         function toggleDobleCheckAzul(val) { dobleCheckAzulActivo = val; }
 
         function abrirChatIA() {
@@ -855,8 +899,7 @@
             document.getElementById('privateChatSubtitle').innerText = "🟢 Sin restricciones";
             document.getElementById('privateCallActionWrapper').style.display = "none";
             document.getElementById('privateChatRoom').classList.add('active');
-            const container = document.getElementById('privateChatMessagesContainer');
-            container.innerHTML = `<div class="burbuja recibida">¡Hola! Soy tu IA asistente avanzada sin restricciones. <span class="msg-status">✓✓</span></div>`;
+            document.getElementById('privateChatMessagesContainer').innerHTML = `<div class="burbuja recibida">¡Hola! Soy tu IA asistente avanzada sin restricciones. <span class="msg-status">✓✓</span></div>`;
         }
 
         function abrirChatPrivado(numero, nombre) {
@@ -898,8 +941,7 @@
         function manejarEnvioDocumentoPrivado(input) {
             if (input.files && input.files[0]) {
                 const nombre = input.files[0].name;
-                const container = document.getElementById('privateChatMessagesContainer');
-                container.innerHTML += `<div class="burbuja enviada">📎 [Documento: ${nombre}] <span class="msg-status sent">✓✓</span></div>`;
+                document.getElementById('privateChatMessagesContainer').innerHTML += `<div class="burbuja enviada">📎 [Documento: ${nombre}] <span class="msg-status sent">✓✓</span></div>`;
                 if (chatActivoDestinatario && chatActivoDestinatario !== "IA_ASISTENTE") {
                     socket.emit("enviar-mensaje-chat", { destinatario: chatActivoDestinatario, emisor: identificadorUsuario, aliasEmisor: nombreUsuarioGlobal, texto: `📎 [Documento: ${nombre}]` });
                 }
@@ -908,8 +950,7 @@
         function manejarEnvioMultimediaPrivado(input) {
             if (input.files && input.files[0]) {
                 const tipo = input.files[0].type.startsWith('video') ? "📹 [Vídeo]" : "📷 [Foto]";
-                const container = document.getElementById('privateChatMessagesContainer');
-                container.innerHTML += `<div class="burbuja enviada">${tipo} <span class="msg-status sent">✓✓</span></div>`;
+                document.getElementById('privateChatMessagesContainer').innerHTML += `<div class="burbuja enviada">${tipo} <span class="msg-status sent">✓✓</span></div>`;
                 if (chatActivoDestinatario && chatActivoDestinatario !== "IA_ASISTENTE") {
                     socket.emit("enviar-mensaje-chat", { destinatario: chatActivoDestinatario, emisor: identificadorUsuario, aliasEmisor: nombreUsuarioGlobal, texto: tipo });
                 }
@@ -927,7 +968,7 @@
 
             if (chatActivoDestinatario === "IA_ASISTENTE") {
                 setTimeout(() => {
-                    container.innerHTML += `<div class="burbuja recibida">IA Analizada: "${texto}". Todo operativo sin restricciones. <span class="msg-status">✓✓</span></div>`;
+                    container.innerHTML += `<div class="burbuja recibida">IA Analizada: "${texto}". Todo operativo. <span class="msg-status">✓✓</span></div>`;
                 }, 600);
             } else {
                 if (!historialChats[chatActivoDestinatario]) historialChats[chatActivoDestinatario] = [];
@@ -943,33 +984,27 @@
             if (!historialChats[remitente]) historialChats[remitente] = [];
             historialChats[remitente].push({ tipo: 'recibida', texto: textoFormateado });
             if (chatActivoDestinatario === remitente) {
-                const container = document.getElementById('privateChatMessagesContainer');
-                container.innerHTML += `<div class="burbuja recibida">${textoFormateado}</div>`;
+                document.getElementById('privateChatMessagesContainer').innerHTML += `<div class="burbuja recibida">${textoFormateado}</div>`;
             } else {
                 mostrarNotificacionMensaje(alias, data.texto);
             }
         });
 
-        function toggleLlamarDesdeChatPrivado(conVideo) {
+        async function toggleLlamarDesdeChatPrivado(conVideo) {
             if (!estaLlamandoActualmente) {
                 if (!chatActivoDestinatario || chatActivoDestinatario === "IA_ASISTENTE") return;
                 destinatarioActual = chatActivoDestinatario;
-                iniciarConexionLlamada(conVideo);
-            } else { colgarTodo(); }
-        }
-
-        async function iniciarConexionLlamada(conVideo) {
-            try {
                 estaLlamandoActualmente = true;
-                iniciarTonoMarcacion();
-                const stream = await inicializarMediaLocal(conVideo);
-                if (conVideo) {
-                    document.getElementById('videoPrincipal').srcObject = stream;
-                    document.getElementById('videoSecundario').srcObject = stream;
-                    document.getElementById('videoCallStage').classList.add('active');
-                }
+                
+                localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: conVideo });
+                
+                const grid = document.getElementById('videoGridContainer');
+                grid.innerHTML = `<div class="video-tile" id="tile-local"><video autoplay muted playsinline></video><span>Tú</span></div>`;
+                grid.querySelector('#tile-local video').srcObject = localStream;
+                document.getElementById('videoCallStage').classList.add('active');
+
                 crearConexionPeerGrupal(destinatarioActual, true);
-            } catch (e) { detenerTonoMarcacion(); estaLlamandoActualmente = false; }
+            } else { colgarTodo(); }
         }
 
         socket.on("recibir-oferta-webrtc", async (data) => {
@@ -986,15 +1021,18 @@
             if (!ofertaPendienteGlobal) return;
             destinatarioActual = ofertaPendienteGlobal.emisor;
             estaLlamandoActualmente = true;
-            const stream = await inicializarMediaLocal(true);
-            document.getElementById('videoPrincipal').srcObject = stream;
-            document.getElementById('videoSecundario').srcObject = stream;
+
+            localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
+            const grid = document.getElementById('videoGridContainer');
+            grid.innerHTML = `<div class="video-tile" id="tile-local"><video autoplay muted playsinline></video><span>Tú</span></div>`;
+            grid.querySelector('#tile-local video').srcObject = localStream;
             document.getElementById('videoCallStage').classList.add('active');
+
             crearConexionPeerGrupal(destinatarioActual, false);
             const pc = peerConnections[destinatarioActual];
             await pc.setRemoteDescription(new RTCSessionDescription(ofertaPendienteGlobal.sdp));
             const answer = await pc.createAnswer(); await pc.setLocalDescription(answer);
-            socket.emit("senalizacion-grupal", { salaId: null, destinatario: destinatarioActual, emisor: identificadorUsuario, tipo: 'respuesta', payload: answer });
+            socket.emit("senalizacion-grupal", { destinatario: destinatarioActual, emisor: identificadorUsuario, tipo: 'respuesta', payload: answer });
         }
 
         function rechazarLlamadaEntrante() {
@@ -1016,13 +1054,14 @@
             Object.values(peerConnections).forEach(pc => pc.close());
             for (let key in peerConnections) delete peerConnections[key];
             if (localStream) { localStream.getTracks().forEach(t => t.stop()); localStream = null; }
+            document.getElementById('videoGridContainer').innerHTML = "";
             destinatarioActual = ""; ofertaPendienteGlobal = null; estaLlamandoActualmente = false;
         }
 
         function copiarEnlaceInvitacion() {
             if (!identificadorUsuario) return;
             const enlace = `${window.location.origin}/?llamar=${identificadorUsuario}`;
-            navigator.clipboard.writeText(enlace).then(() => { alert("¡Enlace de invitación copiado!"); });
+            navigator.clipboard.writeText(enlace).then(() => { alert("¡Enlace copiado!"); });
         }
 
         async function validarYContinuarRegistro() {
@@ -1046,19 +1085,26 @@
             document.getElementById('lblUserSession').innerText = nombreUsuarioGlobal;
         }
 
-        async function inicializarMediaLocal(conVideo) {
-            if (localStream) return localStream;
-            localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: conVideo });
-            return localStream;
-        }
-
         function crearConexionPeerGrupal(remoteId, esIniciador) {
             if (peerConnections[remoteId]) return;
             const pc = new RTCPeerConnection();
             peerConnections[remoteId] = pc;
             if (localStream) localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
-            pc.ontrack = (e) => { document.getElementById('videoSecundario').srcObject = e.streams[0]; };
-            pc.onicecandidate = (e) => { if (e.candidate) socket.emit("senalizacion-grupal", { destinatario: remoteId, emisor: identificadorUsuario, tipo: 'candidato-ice', payload: e.candidate }); };
+            pc.ontrack = (e) => {
+                let tile = document.getElementById(`tile-${remoteId}`);
+                if (!tile) {
+                    const grid = document.getElementById('videoGridContainer');
+                    tile = document.createElement('div');
+                    tile.className = 'video-tile';
+                    tile.id = `tile-${remoteId}`;
+                    tile.innerHTML = `<video autoplay playsinline></video><span>${remoteId}</span>`;
+                    grid.appendChild(tile);
+                }
+                tile.querySelector('video').srcObject = e.streams[0];
+            };
+            pc.onicecandidate = (e) => {
+                if (e.candidate) socket.emit("senalizacion-grupal", { destinatario: remoteId, emisor: identificadorUsuario, tipo: 'candidato-ice', payload: e.candidate });
+            };
             if (esIniciador) {
                 pc.createOffer().then(o => pc.setLocalDescription(o)).then(() => {
                     socket.emit("senalizacion-grupal", { destinatario: remoteId, emisor: identificadorUsuario, tipo: 'oferta', payload: pc.localDescription });
@@ -1067,12 +1113,17 @@
         }
 
         socket.on("recibir-senalizacion-grupal", async (data) => {
-            let pc = peerConnections[data.emisor];
-            if (!pc) { await inicializarMediaLocal(true); crearConexionPeerGrupal(data.emisor, false); pc = peerConnections[data.emisor]; }
+            const remoteId = data.emisor;
+            let pc = peerConnections[remoteId];
+            if (!pc) {
+                if (!localStream) localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
+                crearConexionPeerGrupal(remoteId, false);
+                pc = peerConnections[remoteId];
+            }
             if (data.tipo === 'oferta') {
                 await pc.setRemoteDescription(new RTCSessionDescription(data.payload));
                 const ans = await pc.createAnswer(); await pc.setLocalDescription(ans);
-                socket.emit("senalizacion-grupal", { destinatario: data.emisor, emisor: identificadorUsuario, tipo: 'respuesta', payload: ans });
+                socket.emit("senalizacion-grupal", { destinatario: remoteId, emisor: identificadorUsuario, tipo: 'respuesta', payload: ans });
             } else if (data.tipo === 'respuesta') { await pc.setRemoteDescription(new RTCSessionDescription(data.payload)); }
             else if (data.tipo === 'candidato-ice') { await pc.addIceCandidate(new RTCIceCandidate(data.payload)); }
         });
