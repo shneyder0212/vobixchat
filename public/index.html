@@ -1,0 +1,27 @@
+<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>VobixChat</title>
+<style>*{box-sizing:border-box;font-family:Inter,system-ui}body{margin:0;min-height:100vh;background:#070c09;display:flex;align-items:center;justify-content:center}body::before{content:"";position:fixed;inset:0;background-image:radial-gradient(#7aff7a 1.5px,transparent 2px);background-size:32px 32px;opacity:.35}
+.card{width:360px;background:linear-gradient(180deg,#132015,#0c1710);border:1.5px solid #6eff7a;border-radius:26px;padding:28px 22px;text-align:center;box-shadow:0 0 15px #6eff7a,0 0 60px rgba(110,255,122,.6);position:relative}
+.logo{width:86px;height:86px;margin:0 auto 16px;background:#6eff7a;border-radius:20px;display:flex;align-items:center;justify-content:center;font-size:48px;font-weight:900;color:#0f2f17;box-shadow:0 0 20px #6eff7a}
+h1{margin:0;color:#fff;font-size:30px;font-weight:900;letter-spacing:.5px}.todo{color:#6eff7a;font-weight:900;margin:8px 0 2px;font-size:15px;letter-spacing:.3px}.sub{color:#fff;font-size:10px;letter-spacing:2px;font-weight:800}.e2e{color:#b8ffbe;font-size:11px;margin:14px 0 18px}
+input{width:100%;background:#132015;border:1.2px solid #3a6b3f;border-radius:14px;padding:14px;color:#fff;outline:none}
+.row{display:flex;gap:10px;margin:12px 0}.pref{width:80px;background:#132015;border:1.2px solid #3a6b3f;border-radius:14px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800}
+.btn{width:100%;background:#6eff7a;border:none;padding:16px;border-radius:14px;font-weight:900;color:#123b1a;cursor:pointer;letter-spacing:.5px;box-shadow:0 0 20px rgba(110,255,122,.6)}
+</style></head><body><div class="card"><div class="logo">V</div><h1>VOBIXCHAT</h1><div class="todo">TODO EN UNO</div><div class="sub">SEGURO • RAPIDO • PRIVADO</div><div class="e2e">🔒 Cifrado de extremo a extremo</div>
+<input id="user" placeholder="Nombre de usuario"><div class="row"><div class="pref">+34</div><input id="phone" placeholder="Teléfono" style="margin:0;flex:1"></div><div style="text-align:left;color:#8fbf94;font-size:10px;margin:-6px 0 12px 4px">País detectado: ES - Prefijo +34</div>
+<button class="btn" id="btn" onclick="send()">ENVIARME PIN POR SMS</button></div>
+<script>
+async function send(){
+ const u=user.value.trim(),p=phone.value.trim();
+ if(!u||!p)return alert('Pon nombre y teléfono');
+ btn.innerText='ENVIANDO...';
+ const r=await fetch('/api/send-pin',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({user:u,phone:p})});
+ const d=await r.json();
+ if(d.ok){
+   localStorage.setItem('vobix_user',u);localStorage.setItem('vobix_phone',p);localStorage.setItem('vobix_pin',d.pin);
+   const pin=prompt('Tu PIN es: '+d.pin+'\nEscríbelo para entrar:');
+   if(pin==d.pin)location.href='chat.html';
+   else alert('PIN incorrecto');
+ }
+ btn.innerText='ENVIARME PIN POR SMS';
+}
+</script></body></html>
