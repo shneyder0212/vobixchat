@@ -1,0 +1,13 @@
+<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Chat</title>
+<script src="/socket.io/socket.io.js"></script>
+<style>body{margin:0;background:#070c09;color:#fff;font-family:system-ui;display:flex;height:100vh}.users{width:220px;background:#0f1f12;border-right:1px solid #2a5a32;padding:12px}.chat{flex:1;display:flex;flex-direction:column}#msgs{flex:1;overflow:auto;padding:12px}.msg{background:#132015;border:1px solid #2a5a32;padding:8px 12px;border-radius:12px;margin-bottom:8px}.input{display:flex;gap:8px;padding:10px;border-top:1px solid #2a5a32}input{flex:1;background:#132015;border:1px solid #2a5a32;border-radius:12px;padding:12px;color:#fff}</style></head><body>
+<div class="users"><b style="color:#6eff7a">VOBIXCHAT</b><div id="list" style="margin-top:12px;font-size:13px"></div></div>
+<div class="chat"><div id="msgs"></div><div class="input"><input id="text" placeholder="Escribe..."><button onclick="send()" style="background:#6eff7a;border:none;border-radius:12px;padding:12px 18px;font-weight:900">➤</button></div></div>
+<script>
+const socket=io();const user=localStorage.getItem('vobix_user')||'Anon';const phone=localStorage.getItem('vobix_phone');
+socket.emit('join',{user,phone});
+socket.on('users',u=>{list.innerHTML=u.map(x=>'• '+x.user).join('<br>')});
+socket.on('message',m=>{const d=document.createElement('div');d.className='msg';d.innerHTML=`<b style="color:#6eff7a">${m.user}</b> <small>${m.time}</small><br>${m.text}`;msgs.appendChild(d);msgs.scrollTop=msgs.scrollHeight});
+function send(){if(!text.value.trim())return;socket.emit('message',{user,text:text.value});text.value='';}
+text.addEventListener('keydown',e=>{if(e.key==='Enter')send()});
+</script></body></html>
