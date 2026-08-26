@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>VobixChat</title>
+<style>
+*{box-sizing:border-box;font-family:Arial}body{margin:0;background:#0a110b;color:#fff;display:flex;height:100vh}
+.sidebar{width:280px;background:#101610;border-right:2px solid #1e3a22;padding:12px}
+.main{flex:1;display:flex;flex-direction:column;background:#080c09}
+.header{background:#101610;padding:14px;border-bottom:1px solid #1e3a22;display:flex;justify-content:space-between;align-items:center}
+.msg-area{flex:1;padding:16px;overflow:auto}
+.bubble{background:#1a2b1e;border:1px solid #2d5a33;padding:10px 14px;border-radius:14px;margin:6px 0;max-width:70%}
+.me{background:#3aff68;color:#000;margin-left:auto}
+.input-area{display:flex;gap:8px;padding:12px;background:#101610}
+.input-area input{flex:1;background:#0a150c;border:1px solid #234427;border-radius:12px;padding:12px;color:#fff}
+.input-area button{background:#3aff68;border:none;border-radius:12px;padding:12px 18px;font-weight:900;cursor:pointer}
+.user-card{background:#0a150c;border:1px solid #3aff68;border-radius:12px;padding:12px;margin-bottom:10px}
+</style>
+</head>
+<body>
+<div class="sidebar">
+<h3 style="color:#3aff68">VOBIXCHAT</h3>
+<div class="user-card"><b id="uName">SHNEYDER</b><br><small id="uPhone">+34 655766134</small></div>
+<p style="font-size:12px;color:#8ac898">🔒 Cifrado de extremo a extremo</p>
+<button onclick="localStorage.clear();location.href='index.html'" style="width:100%;margin-top:20px;background:transparent;border:1px solid #3aff68;color:#3aff68;padding:10px;border-radius:10px;cursor:pointer">Salir</button>
+</div>
+<div class="main">
+<div class="header"><span>💬 Chat General</span><span id="online">● En línea</span></div>
+<div class="msg-area" id="msgs"><div class="bubble">¡Bienvenido a VobixChat Shneyder! 🎉</div><div class="bubble">Tu app ya funciona, segura y privada.</div></div>
+<div class="input-area"><input id="txt" placeholder="Escribe un mensaje..."><button onclick="send()">Enviar</button></div>
+</div>
+<script>
+document.getElementById('uName').innerText=localStorage.getItem('vobix_user')||'SHNEYDER';
+document.getElementById('uPhone').innerText=localStorage.getItem('vobix_phone')||'+34 655766134';
+function send(){
+ let t=document.getElementById('txt'); if(!t.value.trim()) return;
+ let m=document.createElement('div'); m.className='bubble me'; m.innerText=t.value;
+ document.getElementById('msgs').appendChild(m); t.value='';
+ document.getElementById('msgs').scrollTop=9999;
+}
+document.getElementById('txt').addEventListener('keydown',e=>{ if(e.key==='Enter') send() });
+</script>
+</body>
+</html>
