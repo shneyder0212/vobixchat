@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin - VobixChat</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:Arial;background:#0a0a0a;color:white;padding:20px}
+h2{color:#00ff88;margin-bottom:16px}
+.card{background:#1c1c1c;border:1px solid #222;border-radius:12px;padding:14px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center}
+.card b{color:#00ff88}
+small{opacity:0.6}
+button{padding:6px 10px;border-radius:8px;border:none;background:#222;color:white;cursor:pointer}
+</style>
+</head>
+<body>
+<h2>Panel Admin - Usuarios Registrados</h2>
+<p style="opacity:0.6;font-size:12px;margin-bottom:14px">Por privacidad los números están enmascarados como ****123</p>
+<div id="list">Cargando...</div>
+<button onclick="load()" style="margin-top:15px;background:#00ff88;color:black;font-weight:bold;padding:10px 16px">Recargar</button>
+
+<script>
+async function load(){
+  let r=await fetch('/api/users');
+  let users=await r.json();
+  let html='';
+  if(users.length==0) html='<p>No hay usuarios</p>';
+  users.forEach(u=>{
+    html+=`<div class="card"><div><b>@${u.username}</b><br><small>${u.phoneMasked} - ${u.verified ? '✅ Verificado' : '❌ Sin verificar'}</small></div><small>ID privado protegido</small></div>`;
+  });
+  document.getElementById('list').innerHTML=html;
+}
+load();
+</script>
+</body>
+</html>
