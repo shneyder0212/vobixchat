@@ -1,0 +1,28 @@
+const socket = io();
+let myKeys, myPub, usersKeys={};
+
+function toggleMenu(){ let m=document.getElementById('menu3'); m.style.display=m.style.display==='flex'?'none':'flex'; }
+function openView(id){ document.querySelectorAll('.view').forEach(v=>v.classList.remove('active')); document.getElementById(id).classList.add('active'); document.getElementById('menu3').style.display='none'; if(id==='signView') resizeCanvas(); }
+
+async function initKeys(){
+  let saved=localStorage.getItem('vobix_keys');
+  if(saved){ let j=JSON.parse(saved); myKeys={privateKey:await crypto.subtle.importKey("jwk",j.privateKey,{name:"ECDH",namedCurve:"P-256"},false,["deriveKey"]), publicKey:await crypto.subtle.importKey("jwk",j.publicKey,{name:"ECDH",namedCurve:"P-256"},true,[])}; myPub=j.publicKey;
+  }else{ let kp=await crypto.subtle.generateKey({name:"ECDH",namedCurve:"P-256"},true,["deriveKey"]); myPub=await crypto.subtle.exportKey("jwk",kp.publicKey); let priv=await crypto.subtle.exportKey("jwk",kp.privateKey); localStorage.setItem('vobix_keys',JSON.stringify({privateKey:priv,publicKey:myPub})); myKeys=kp; }
+  let me=JSON.parse(localStorage.getItem('vobix_user')); if(me) fetch('/save-key',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({phone:me.phone,publicKey:myPub})}); loadKeys();
+}
+async function loadKeys(){ try{ let r=await fetch('/api/keys'); let a=await r.json(); for(let u of a) if(u.publicKey) usersKeys[u.username]=await crypto.subtle.importKey("jwk",u.publicKey,{name:"ECDH",namedCurve:"P-256"},true,[]); }catch{} }
+async function getSecret(pub){ return await crypto.subtle.deriveKey({name:"ECDH",public:pub},myKeys.privateKey,{name:"AES-GCM",length:256},false,["encrypt","decrypt"]); }
+async function encryptForAll(t){ let enc=new TextEncoder(), packs=[]; let me=JSON.parse(localStorage.getItem('vobix_user')); for(let u in usersKeys){ if(u===me.username) continue; let s=await getSecret(usersKeys[u]); let iv=crypto.getRandomValues(new Uint8Array(12)); let c=await crypto.subtle.encrypt({name:"AES-GCM",iv},s,enc.encode(t)); packs.push({to:u,data:btoa(String.fromCharCode(...iv)+String.fromCharCode(...new Uint8Array(c)))}); } let iv2=crypto.getRandomValues(new Uint8Array(12)); let selfS=await crypto.subtle.deriveKey({name:"ECDH",public:myKeys.publicKey},myKeys.privateKey,{name:"AES-GCM",length:256},false,["encrypt","decrypt"]); let c2=await crypto.subtle.encrypt({name:"AES-GCM",iv:iv2},selfS,enc.encode(t)); packs.push({to:me.username,data:btoa(String.fromCharCode(...iv2)+String.fromCharCode(...new Uint8Array(c2)))}); return packs; }
+async function decryptOne(b64,from){ try{ let k=usersKeys[from]; if(!k) return null; let s=await getSecret(k); let raw=atob(b64); let iv=new Uint8Array([...raw.slice(0,12)].map(c=>c.charCodeAt(0))); let data=new Uint8Array([...raw.slice(12)].map(c=>c.charCodeAt(0))); let p=await crypto.subtle.decrypt({name:"AES-GCM",iv},s,data); return new TextDecoder().decode(p);}catch{return null}}
+
+async function sendPin(){ let u=document.getElementById('username').value.trim(), p=document.getElementById('phone').value.trim(); if(!u||!p) return alert("rellena"); let r=await fetch('/send-pin',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({phone:p,username:u})}); let d=await r.json(); document.getElementById('msg').innerText=d.ok?"PIN en Logs Render":d.msg; if(d.ok) document.getElementById('pinBox').style.display='block'; }
+async function verifyPin(){ let p=document.getElementById('phone').value.trim(), pin=document.getElementById('pin').value.trim(); let r=await fetch('/verify-pin',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({phone:p,pin})}); let d=await r.json(); if(d.ok){ let u=document.getElementById('username').value.trim(); localStorage.setItem('vobix_user',JSON.stringify({username:u,phone:p})); document.getElementById('login').style.display='none'; document.getElementById('app').style.display='flex'; initKeys(); }else alert("pin mal"); }
+window.sendChat=async function(){ let t=document.getElementById('text').value.trim(); if(!t) return; let me=JSON.parse(localStorage.getItem('vobix_user')); let packs=await encryptForAll(t); for(let p of packs) socket.emit('chat',{username:me.username,phone:me.phone,to:p.to,text:p.data,encrypted:true,from:me.username}); document.getElementById('text').value=''; }
+function addMsg(d,txt){ let me=JSON.parse(localStorage.getItem('vobix_user')||'{}'); let div=document.createElement('div'); div.style.cssText="background:#202c33;padding:8px 12px;border-radius:10px;margin:5px 0;max-width:80%;"+(d.username===me.username?"margin-left:auto;background:#005c4b":""); div.innerHTML=`<b>@${d.username}</b> ${txt} 🔒`; document.getElementById('messages').appendChild(div); document.getElementById('messages').scrollTop=99999; }
+socket.on('history',async a=>{ for(let d of a){ let me=JSON.parse(localStorage.getItem('vobix_user')||'{}'); if(d.to&&d.to!==me.username) continue; let t=d.encrypted?await decryptOne(d.text,d.from||d.username):d.text; if(t) addMsg(d,t); }});
+socket.on('chat',async d=>{ let me=JSON.parse(localStorage.getItem('vobix_user')||'{}'); if(d.to&&d.to!==me.username) return; let t=d.encrypted?await decryptOne(d.text,d.from||d.username):d.text; if(t) addMsg(d,t); });
+function logout(){ localStorage.clear(); location.reload(); }
+
+let su=localStorage.getItem('vobix_user');
+if(su){ document.getElementById('login').style.display='none'; document.getElementById('app').style.display='flex'; initKeys(); }
+setInterval(loadKeys,5000);
