@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content">
+<title>VobixChat</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#111;color:#fff;height:100dvh;display:flex;flex-direction:column;overflow:hidden}
+#login{padding:20px;overflow-y:auto;height:100dvh}
+#login input{width:100%;padding:14px;margin:8px 0;border-radius:12px;border:none;font-size:16px!important;background:#222;color:#fff;outline:none}
+#login button{width:100%;padding:14px;margin:8px 0;border-radius:12px;border:none;background:#00ff88;font-weight:bold;font-size:16px}
+
+#chat{display:none;flex:1;flex-direction:column;height:100dvh}
+#messages{flex:1;overflow-y:auto;padding:12px;padding-bottom:20px;-webkit-overflow-scrolling:touch}
+#messages div{background:#202c33;margin:4px 0;padding:8px 12px;border-radius:8px;max-width:85%;word-wrap:break-word;font-size:15px;line-height:19px}
+#messages div.me{background:#005c4b;margin-left:auto}
+
+/* BARRA DE ESCRITURA IGUAL QUE WHATSAPP */
+#inputBar{position:sticky;bottom:0;left:0;right:0;display:flex;align-items:flex-end;background:#202c33;padding:6px 8px;gap:6px;min-height:60px}
+#text{flex:1;resize:none;max-height:120px;min-height:44px;font-size:16px!important;line-height:20px;padding:11px 14px;border-radius:22px;border:none;outline:none;background:#2a3942;color:#fff;overflow-y:auto}
+#text::placeholder{color:#8696a0}
+#sendBtn{width:44px;height:44px;min-width:44px;border-radius:50%;border:none;background:#00a884;color:#fff;font-size:20px;display:flex;align-items:center;justify-content:center}
+
+.bottom-menu{height:60px;min-height:60px;display:flex;background:#000;border-top:1px solid #222;z-index:10}
+.bottom-menu div{flex:1;text-align:center;padding:10px 0;font-size:11px;color:#8696a0}
+.bottom-menu div.active{color:#00ff88}
+</style>
+</head>
+<body>
+
+<div id="login">
+<h2 style="color:#00ff88">VobixChat</h2>
+<input id="username" placeholder="@usuario" autocomplete="username" autocapitalize="off">
+<input id="phone" placeholder="+34 6XX XXX XXX" inputmode="tel" autocomplete="tel">
+<button onclick="sendPin()">Enviar PIN</button>
+<input id="pin" placeholder="PIN de 6 dígitos" inputmode="numeric" pattern="[0-9]*" enterkeyhint="done">
+<button onclick="verifyPin()">Verificar y Entrar</button>
+<p id="msg" style="color:#00ff88"></p>
+</div>
+
+<div id="chat">
+<div id="messages"></div>
+<div id="inputBar">
+<textarea id="text" placeholder="Escribe un mensaje" rows="1" enterkeyhint="send" autocapitalize="sentences"></textarea>
+<button id="sendBtn" onclick="sendChat()">➤</button>
+</div>
+<div class="bottom-menu">
+<div class="active">💬<br>Chats</div>
+<div onclick="alert('Llamadas con timbre + vibrador activado')">📞<br>Llamadas</div>
+<div onclick="let u=JSON.parse(localStorage.getItem('vobix_user')||'{}'); alert('Perfil: @'+u.username+'\n'+u.phone+'\nRegistrado para siempre')">👤<br>Perfil</div>
+<div onclick="location.href='/admin.html?key=sh6684'">🛡️<br>Admin</div>
+</div>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="/app.js"></script>
+<script>
+const $text = document.getElementById('text');
+const $messages = document.getElementById('messages');
+
+// Auto-crecer como WhatsApp
+$text.addEventListener('input', ()=>{
+  $text.style.height='auto';
+  $text.style.height=Math.min($text.scrollHeight,120)+'px';
+  $messages.scrollTop = $messages.scrollHeight;
+});
+
+// TECLADO PERFECTO WHATSAPP
+$text.addEventListener('keydown', (e)=>{
+  // PC / Mac: Enter envia, Shift+Enter salto
+  if(e.key==='Enter' && !e.shiftKey){
+    e.preventDefault();
+    sendChat();
+  }
+});
+
+// Movil: enterkeyhint send
+$text.addEventListener('keyup', (e)=>{
+  if(e.key==='Enter' && window.innerWidth < 768 && !e.shiftKey){
+    // en movil ya lo maneja keydown
+  }
+});
+
+function sendPin(){
+  let u=document.getElementById('username').value.trim();
+  let p=document.getElementById('phone').value.trim();
+  if(!u || !p) return document.getElementById('msg').innerText='Falta usuario y telefono';
+  fetch('/send-pin',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:u, phone:p})})
+  .then(r=>r.json()).then(d=>{
+    document.getElementById('msg').innerText = d.ok ? (d.gratis ? 'PIN GRATIS - Mira Render Logs' : 'PIN enviado por SMS') : d.msg;
+  });
+}
+function verifyPin(){
+  let p=document.getElementById('phone').value.trim();
+  let pin=document.getElementById('pin').value.trim();
+  fetch('/verify-pin',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({phone:p, pin:pin})})
+  .then(r=>r.json()).then(d=>{
+    if(d.ok){
+      let u=document.getElementById('username').value.trim();
+      localStorage.setItem('vobix_user', JSON.stringify({username:u, phone:p}));
+      document.getElementById('login').style.display='none';
+      document.getElementById('chat').style.display='flex';
+      $text.focus();
+    } else document.getElementById('msg').innerText='PIN incorrecto';
+  });
+}
+function sendChat(){
+  let t=$text.value.trim();
+  if(!t) return;
+  let my=JSON.parse(localStorage.getItem('vobix_user'));
+  socket.emit('chat',{username:my.username, text:t});
+  $text.value='';
+  $text.style.height='44px';
+  $text.focus();
+  // vibracion leve como WhatsApp
+  if(navigator.vibrate) navigator.vibrate(10);
+}
+socket.on('chat', data=>{
+  let div=document.createElement('div');
+  let my=JSON.parse(localStorage.getItem('vobix_user')||'{}');
+  div.className = data.username===my.username ? 'me' : '';
+  div.innerText='@'+data.username+': '+data.text;
+  $messages.appendChild(div);
+  $messages.scrollTop=$messages.scrollHeight;
+  if(Notification && Notification.permission==='granted' && document.hidden){
+    new Notification('@'+data.username, {body:data.text});
+  }
+});
+
+// Fix teclado iPhone / Android que tapa
+if(window.visualViewport){
+  let lastH=window.visualViewport.height;
+  window.visualViewport.addEventListener('resize', ()=>{
+    if(window.visualViewport.height < lastH){
+      $messages.scrollTop=$messages.scrollHeight;
+    }
+    lastH=window.visualViewport.height;
+  });
+}
+
+// Entrar si ya registrado para siempre
+let saved=JSON.parse(localStorage.getItem('vobix_user')||'null');
+if(saved){
+  document.getElementById('login').style.display='none';
+  document.getElementById('chat').style.display='flex';
+}
+</script>
+</body>
+</html>
