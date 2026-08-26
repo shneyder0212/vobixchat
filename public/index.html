@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>VobixChat</title>
+<style>
+*{box-sizing:border-box;font-family:Arial,sans-serif}
+body{margin:0;min-height:100vh;background:#080c09;display:flex;justify-content:center;align-items:center;background-image:radial-gradient(#1f2d22 1.2px, transparent 1.2px);background-size:22px 22px}
+.card{width:380px;background:#101610;border:1.8px solid #3aff68;border-radius:24px;padding:28px 22px;text-align:center;box-shadow:0 0 30px #3aff6855}
+.logo{width:76px;height:76px;background:#3aff68;border-radius:20px;margin:0 auto 16px;display:flex;align-items:center;justify-content:center;font-size:42px;font-weight:900;color:#000}
+h1{margin:0;color:white;font-size:36px;letter-spacing:1px}
+.sub{color:#3aff68;font-size:20px;font-weight:900;margin:4px 0 6px}
+.sub2{color:#cbd8cc;font-size:12px;letter-spacing:3px;margin-bottom:26px}
+input{width:100%;background:#0e1710;border:1.5px solid #2a4a2e;border-radius:14px;padding:15px;color:white;outline:none}
+input::placeholder{color:#7a8f7d}
+.row{display:flex;gap:10px;margin:14px 0}
+.pref{width:78px}.num{flex:1}
+.pais{font-size:12px;color:#8db891;text-align:left;margin:0 0 18px}
+.btn{width:100%;background:#3aff68;border:none;color:#000;padding:16px;border-radius:14px;font-weight:900;cursor:pointer;margin-bottom:12px}
+#pinBox{display:none}
+#loginScreen{display:block}
+#chatScreen{display:none}
+.contact{background:#0e1710;border:1px solid #2a4a2e;border-radius:12px;padding:12px;margin:8px 0;text-align:left;color:white}
+</style>
+</head>
+<body>
+<div class="card" id="loginScreen">
+<div class="logo">V</div>
+<h1>VOBIXCHAT</h1>
+<div class="sub">TODO EN UNO</div>
+<div class="sub2">SEGURO • RAPIDO • PRIVADO</div>
+
+<input id="username" placeholder="Nombre de usuario">
+<div class="row">
+<div class="pref"><input value="+34" readonly></div>
+<div class="num"><input id="phone" placeholder=""></div>
+</div>
+<div class="pais">País detectado: ES - Prefijo +34</div>
+<button class="btn" onclick="sendPin()">ENVIARME PIN POR SMS</button>
+
+<div id="pinBox">
+<input id="pin" placeholder="PIN de 6 dígitos">
+<button class="btn" onclick="verifyPin()">VERIFICAR Y ENTRAR</button>
+</div>
+</div>
+
+<div class="card" id="chatScreen">
+<div class="logo" style="width:56px;height:56px;font-size:28px">V</div>
+<h2 id="welcome" style="color:white;margin:10px 0"></h2>
+<div class="sub2">CHAT PRINCIPAL</div>
+<div id="chats">
+<div class="contact">📢 Comunicaciones Oficiales - Bienvenido a VobixChat</div>
+</div>
+<input id="msg" placeholder="Escribe un mensaje..." style="margin-top:12px">
+<button class="btn" onclick="sendMsg()">ENVIAR MENSAJE</button>
+<button class="btn" style="background:#111;border:1px solid #3aff68;color:#3aff68" onclick="localStorage.clear();location.reload()">SALIR</button>
+</div>
+
+<script>
+let curPhone="", curUser="";
+async function sendPin(){
+ curUser=document.getElementById('username').value.trim();
+ let phone=document.getElementById('phone').value.trim().replace(/\s/g,'');
+ if(!curUser){alert('Pon nombre de usuario');return;}
+ if(!phone){alert('Pon teléfono');return;}
+ if(!phone.startsWith('+')) phone='+34'+phone.replace(/^34/,'');
+ curPhone=phone;
+ const r=await fetch('/send-pin',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({phone:curPhone})});
+ const d=await r.json();
+ if(d.ok){document.getElementById('pinBox').style.display='block';alert('PIN enviado a '+curPhone);}
+ else alert('Error: '+d.error);
+}
+async function verifyPin(){
+ const pin=document.getElementById('pin').value.trim();
+ const r=await fetch('/verify-pin',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({phone:curPhone,pin,username:curUser})});
+ const d=await r.json();
+ if(d.ok){
+  localStorage.setItem('vobix_user',curUser);
+  localStorage.setItem('vobix_phone',curPhone);
+  showChat();
+ } else {alert('PIN incorrecto');}
+}
+function showChat(){
+ document.getElementById('loginScreen').style.display='none';
+ document.getElementById('chatScreen').style.display='block';
+ document.getElementById('welcome').innerText='Hola, '+(localStorage.getItem('vobix_user')||curUser);
+}
+function sendMsg(){
+ const t=document.getElementById('msg').value;
+ if(!t) return;
+ const div=document.createElement('div');
+ div.className='contact';
+ div.innerText=(localStorage.getItem('vobix_user')||'Yo')+': '+t;
+ document.getElementById('chats').appendChild(div);
+ document.getElementById('msg').value='';
+}
+// Si ya verificó antes, entra directo
+if(localStorage.getItem('vobix_phone')){
+ curUser=localStorage.getItem('vobix_user')||'Usuario';
+ showChat();
+}
+</script>
+</body>
+</html>
