@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>VOBIXCHAT</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@600;800&display=swap" rel="stylesheet">
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--fs:14px}
+body{font-family:'Outfit',sans-serif;background:#050a06;height:100vh;color:#fff;overflow:hidden;font-size:var(--fs)}
+.bg{position:fixed;inset:0;background:radial-gradient(700px at 15% 0%,rgba(0,255,136,.18),transparent),#050a06}
+#login{position:relative;z-index:2;height:100vh;display:flex;align-items:center;justify-content:center}
+.card{width:420px;background:rgba(15,25,17,.95);border:1px solid rgba(0,255,136,.15);border-radius:26px;padding:38px 32px;text-align:center}
+.icon{width:72px;height:72px;margin:0 auto 14px;background:linear-gradient(180deg,#00ff88,#00b35e);border-radius:20px;display:grid;place-items:center;font-size:34px}
+.card h1{font-size:42px;font-weight:800;line-height:1;text-align:center}
+.sub{font-size:18px;font-weight:600;color:#00ff88;margin-top:8px;letter-spacing:2px;text-align:center}
+.tag{font-size:11px;letter-spacing:5px;opacity:.4;margin:12px 0 20px;text-align:center}
+.card input{width:100%;padding:14px;border-radius:12px;border:1px solid rgba(255,255,255,.1);background:#000;color:#fff;margin-top:10px;text-align:center}
+.row{display:flex;gap:8px;margin-top:10px}
+.row input{flex:1;margin-top:0}
+.btn{width:100%;margin-top:14px;padding:15px;border-radius:12px;border:none;background:#00ff88;color:#00210f;font-weight:800;cursor:pointer}
+.btn2{background:transparent;border:1px solid #00ff88;color:#00ff88}
+small{opacity:.5;font-size:11px;display:block;margin-top:8px}
+#app{display:none;position:relative;z-index:2;height:100vh;flex-direction:column}
+header{height:60px;background:rgba(10,20,13,.95);border-bottom:1px solid rgba(0,255,136,.1);display:flex;align-items:center;justify-content:space-between;padding:0 12px}
+.zoom{display:flex;gap:4px;align-items:center}
+.zoom button{width:32px;height:32px;border-radius:8px;border:1px solid rgba(0,255,136,.2);background:#000;color:#00ff88;font-weight:800;cursor:pointer}
+#main{flex:1;display:flex;overflow:hidden}
+#side{width:300px;background:rgba(8,14,10,.95);border-right:1px solid rgba(0,255,136,.08);display:flex;flex-direction:column}
+#list{flex:1;overflow:auto}
+.item{padding:12px;border-bottom:1px solid rgba(255,255,255,.03);cursor:pointer;display:flex;gap:10px;align-items:center}
+.item.active{background:rgba(0,255,136,.1);border-left:3px solid #00ff88}
+.av{width:34px;height:34px;border-radius:50%;background:#122219;display:grid;place-items:center;color:#00ff88;font-weight:800;font-size:12px}
+#chat{flex:1;display:flex;flex-direction:column}
+#msgs{flex:1;overflow:auto;padding:16px;display:flex;flex-direction:column;gap:8px}
+.m{max-width:70%;padding:10px 14px;border-radius:16px;line-height:1.3}
+.me{align-self:flex-end;background:#00ff88;color:#00210f;border-bottom-right-radius:4px}
+.other{align-self:flex-start;background:#1d2b20}
+#bar{padding:10px;display:flex;gap:6px;background:rgba(10,20,13,.95);border-top:1px solid rgba(0,255,136,.08)}
+#bar input{flex:1;padding:12px 16px;border-radius:22px;border:1px solid rgba(255,255,255,.08);background:#000;color:#fff;font-size:var(--fs)}
+#bar button{padding:0 16px;border-radius:22px;border:none;background:#00ff88;font-weight:800;cursor:pointer}
+</style>
+</head>
+<body>
+<div class="bg"></div>
+<div id="login">
+<div class="card">
+<div class="icon">🔒</div>
+<h1>VOBIXCHAT</h1>
+<div class="sub">TODO EN UNO</div>
+<div class="tag">SEGURO • RAPIDO • PRIVADO</div>
+<input id="usuario" placeholder="Nombre de usuario">
+<div class="row">
+<input id="prefijo" style="width:90px;flex:none" value="+34">
+<input id="telefono" placeholder="Teléfono">
+</div>
+<small id="paisDetectado">Detectando país...</small>
+<button class="btn btn2" onclick="enviarPin()">ENVIARME PIN POR SMS</button>
+<input id="pin" placeholder="PIN de 6 dígitos">
+<button class="btn" onclick="entrar()">ENTRAR A VOBIXCHAT</button>
+</div>
+</div>
+<div id="app">
+<header><b>🔒 VOBIXCHAT</b><div class="zoom"><button onclick="cambiaFS(-1)">A-</button><button onclick="cambiaFS(1)">A+</button><span id="yo" style="margin-left:8px;opacity:.6;font-size:12px"></span></div></header>
+<div id="main"><div id="side"><div style="padding:10px;display:flex;gap:6px"><input id="newId" placeholder="Añadir usuario" style="flex:1;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,.08);background:#000;color:#fff"><button onclick="addChat()" style="width:36px;border-radius:10px;border:none;background:#00ff88;font-weight:800">+</button></div><div id="list"></div></div><div id="chat"><div id="msgs"></div><div id="bar"><input id="txt" placeholder="Mensaje..."><button onclick="enviar()">➤</button></div></div></div>
+</div>
+<script>
+let fs=14;function cambiaFS(d){fs=Math.min(22,Math.max(12,fs+d));document.documentElement.style.setProperty('--fs',fs+'px');}
+let socket,miId,chatActual=null,chats={};
+async function detectarPais(){
+ try{
+  const r = await fetch('/api/mi-pais').then(r=>r.json());
+  document.getElementById('prefijo').value = r.country_calling_code || '+34';
+  document.getElementById('paisDetectado').innerText = `País detectado: ${r.country} - Prefijo ${r.country_calling_code}`;
+ }catch(e){ document.getElementById('paisDetectado').innerText='Prefijo por defecto +34'; }
+}
+detectarPais();
+async function enviarPin(){
+ const usuario=document.getElementById('usuario').value.trim();
+ const prefijo=document.getElementById('prefijo').value.trim();
+ const telefono=document.getElementById('telefono').value.trim();
+ if(!usuario||!telefono) return alert('Pon usuario y teléfono');
+ const full = prefijo + telefono;
+ const res = await fetch('/api/enviar-pin',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({telefono:full, usuario})}).then(r=>r.json());
+ if(res.ok) alert('PIN enviado a '+full); else alert('Error: '+(res.detalle?.requestError?.serviceException?.text||res.msg));
+}
+async function entrar(){
+ const prefijo=document.getElementById('prefijo').value.trim();
+ const telefono=document.getElementById('telefono').value.trim();
+ const pin=document.getElementById('pin').value.trim();
+ const full = prefijo + telefono;
+ if(!pin) return alert('Pon el PIN');
+ const ver = await fetch('/api/verificar-pin',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({telefono:full, pin})}).then(r=>r.json());
+ if(!ver.ok) return alert(ver.msg);
+ miId=ver.usuario;
+ socket=io();
+ socket.on('connect',()=>{
+  socket.emit('registrar-canal-llamada',{identificador_usuario:miId});
+  document.getElementById('login').style.display='none';
+  document.getElementById('app').style.display='flex';
+  document.getElementById('yo').innerText=miId+' '+full;
+ });
+ socket.on('mensaje-privado-recibido',d=>{if(!chats[d.de]) crearChat(d.de);chats[d.de].push({de:d.de,txt:d.mensaje});if(chatActual==d.de) pintar();});
+}
+function addChat(){let id=document.getElementById('newId').value.trim();if(!id)return;crearChat(id);document.getElementById('newId').value='';}
+function crearChat(id){if(chats[id]){cambiarChat(id);return;}chats[id]=[];let div=document.createElement('div');div.className='item';div.id='chat-'+id;div.innerHTML=`<div class="av">${id[0].toUpperCase()}</div><span>${id}</span>`;div.onclick=()=>cambiarChat(id);document.getElementById('list').appendChild(div);cambiarChat(id);}
+function cambiarChat(id){chatActual=id;document.querySelectorAll('.item').forEach(e=>e.classList.remove('active'));let el=document.getElementById('chat-'+id);if(el)el.classList.add('active');pintar();}
+function pintar(){let c=document.getElementById('msgs');c.innerHTML='';(chats[chatActual]||[]).forEach(m=>{let d=document.createElement('div');d.className='m '+(m.de==miId?'me':'other');d.innerText=m.txt;c.appendChild(d)});c.scrollTop=c.scrollHeight;}
+function enviar(){let t=document.getElementById('txt');let msg=t.value.trim();if(!msg||!chatActual)return;chats[chatActual].push({de:miId,txt:msg});pintar();t.value='';socket.emit('mensaje-privado',{para:chatActual,de:miId,mensaje:msg});}
+</script>
+</body>
+</html>
