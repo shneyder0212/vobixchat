@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>VobixChat</title>
+<script src="/socket.io/socket.io.js"></script>
+<script src="https://unpkg.com/simple-peer@9.11.1/simplepeer.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',Roboto}
+html,body{height:100%;overflow:hidden;background:#111b21}
+.app{display:flex;height:100vh}
+.v-logo{width:44px;height:44px;background:linear-gradient(135deg,#00a884,#06cf9c);border-radius:12px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:24px;color:#111b21;box-shadow:0 3px 15px rgba(0,168,132,.4)}
+.sidebar{width:35%;min-width:400px;max-width:520px;background:#111b21;border-right:1px solid #222d34;display:flex;flex-direction:column;position:relative}
+.side-top{height:60px;background:#202c33;display:flex;align-items:center;justify-content:space-between;padding:0 16px}
+.search-inner{background:#202c33;border-radius:8px;height:36px;display:flex;align-items:center;padding:0 12px;margin:8px 12px}
+.search-inner input{flex:1;background:transparent;border:none;outline:none;color:#d1d7db;font-size:14px}
+.me-verde{background:#182229;padding:10px 16px;display:flex;gap:10px;align-items:center;border-bottom:1px solid #222d34}
+.avatar{width:49px;height:49px;background:#00a884;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#111b21;font-weight:800;flex-shrink:0}
+.chat-list{flex:1;overflow-y:auto}
+.chat-item{display:flex;gap:12px;padding:12px 16px;cursor:pointer;border-bottom:1px solid #222d3411}
+.chat-item:hover,.chat-item.active{background:#2a3942}
+.chat{flex:1;display:flex;flex-direction:column;background:#0b141a;position:relative}
+.chat-header{height:60px;background:#202c33;display:flex;align-items:center;justify-content:space-between;padding:0 16px;border-left:1px solid #222d34}
+#messages{flex:1;overflow-y:auto;padding:20px 5%;background:#0b141a}
+.msg{max-width:68%;padding:7px 10px;border-radius:8px;margin:3px 0;font-size:14.2px;box-shadow:0 1px.5px rgba(0,0,0,.4)}
+.msg.me{background:#005c4b;color:#e9edef;margin-left:auto;border-top-right-radius:0}
+.msg.other{background:#202c33;color:#e9edef;margin-right:auto;border-top-left-radius:0}
+.type-box{height:62px;background:#202c33;display:flex;align-items:center;gap:10px;padding:0 12px;border-left:1px solid #222d34}
+.type-box input{flex:1;height:42px;border-radius:8px;background:#2a3942;border:none;color:#e9edef;padding:0 12px;outline:none}
+.send{width:45px;height:45px;background:#00a884;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#111b21;cursor:pointer}
+#threeMenu{position:absolute;top:60px;right:10px;width:280px;background:#233138;border-radius:8px;box-shadow:0 8px 25px rgba(0,0,0,.5);z-index:50;display:none;overflow:hidden;border:1px solid #2a3942}
+#threeMenu.active{display:block}
+.menu-item{padding:13px 16px;display:flex;align-items:center;gap:14px;color:#e9edef;font-size:14.5px;cursor:pointer}
+.menu-item:hover{background:#2a3942}
+.menu-item i{width:20px;color:#00a884;font-size:16px}
+.menu-item small{margin-left:auto;color:#8696a0;font-size:11px}
+.area{position:absolute;inset:0;background:#111b21;z-index:30;display:none;flex-direction:column}
+.area.active{display:flex}
+.area-header{height:60px;background:#202c33;display:flex;align-items:center;gap:14px;padding:0 16px;color:#e9edef}
+.area-body{flex:1;overflow:auto;padding:16px}
+#videoGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}
+.vid{aspect-ratio:16/9;background:#000;border-radius:12px;border:2px solid #00a884;overflow:hidden;position:relative}
+.vid video{width:100%;height:100%;object-fit:cover}
+.reg{width:100%;height:42px;border-radius:8px;margin:6px 0}
+input.reg{background:#202c33;border:1px solid #2a3942;color:#e9edef;padding:0 12px;outline:none}
+button.reg{background:#00a884;color:#111b21;font-weight:800;border:none;cursor:pointer}
+.ban{background:#182229;border-left:4px solid #00a884;color:#e9edef;padding:10px;border-radius:8px;font-size:13px;margin:8px 0}
+.music-card{background:#202c33;border:1px solid #2a3942;border-radius:10px;padding:12px;margin:8px 0;display:flex;align-items:center;justify-content:space-between;color:#e9edef}
+</style>
+</head>
+<body>
+<div class="app">
+<div class="sidebar">
+<div class="side-top"><div class="v-logo">V</div><div style="display:flex;gap:20px;color:#aebac1;font-size:20px;align-items:center"><i class="fa-solid fa-users" onclick="openArea('inviteArea')" style="cursor:pointer"></i><i class="fa-solid fa-ellipsis-vertical" onclick="toggleMenu()" style="cursor:pointer"></i></div></div>
+
+<div id="threeMenu">
+<div class="menu-item" onclick="openArea('meetArea')"><i class="fa-solid fa-video"></i>Meet Verde <small>Llamada</small></div>
+<div class="menu-item" onclick="openArea('teamArea')"><i class="fa-solid fa-display"></i>Team Verde <small>Pantalla</small></div>
+<div class="menu-item" onclick="openArea('signArea')"><i class="fa-solid fa-signature"></i>Firma Espejo <small>Marca</small></div>
+<div class="menu-item" onclick="openArea('musicArea')"><i class="fa-solid fa-music"></i>Música Gratis <small>6 temas</small></div>
+<div class="menu-item" onclick="openArea('filesArea')"><i class="fa-solid fa-folder"></i>Archivos 50MB <small>Vault</small></div>
+<div class="menu-item" onclick="openArea('aiArea')"><i class="fa-solid fa-robot"></i>IA 1000x <small>0.3ms</small></div>
+<div class="menu-item" onclick="openArea('inviteArea')"><i class="fa-solid fa-link"></i>Entrelazar Usuarios <small>Invitación</small></div>
+<div class="menu-item" onclick="openArea('settingsArea')"><i class="fa-solid fa-gear"></i>Ajustes Verde</div>
+</div>
+
+<div class="search-inner"><i class="fa-solid fa-magnifying-glass" style="color:#8696a0;margin-right:12px"></i><input placeholder="Buscar o iniciar chat"></div>
+<div class="me-verde"><div class="avatar" style="width:36px;height:36px;font-size:16px">V</div><div id="meBox" style="flex:1;color:#e9edef;font-size:13px"><b style="color:#00a884">VobixChat</b><br>Sin registro</div><i class="fa-solid fa-shield" style="color:#00a884"></i></div>
+<div class="chat-list"><div class="chat-item active"><div class="avatar">V</div><div style="flex:1"><div style="display:flex;justify-content:space-between"><b style="color:#e9edef">VobixChat Oficial</b><span style="color:#8696a0;font-size:12px">ahora</span></div><p style="color:#8696a0;font-size:13px">🟢 Toca 3 puntitos para ver todo</p></div></div></div>
+
+<div style="padding:10px;border-top:1px solid #222d34">
+<input class="reg" id="regUser" placeholder="@usuario"><input class="reg" id="regPhone" placeholder="+34 6XX XXX">
+<button class="reg" onclick="sendPin()">ENVIAR PIN IA 0.3ms</button><div id="pinStatus" style="color:#00a884;font-size:12px;font-weight:700"></div>
+<input class="reg" id="regPin" placeholder="PIN 6 dígitos" style="display:none"><button class="reg" id="btnVerify" onclick="verifyPin()" style="display:none">VERIFICAR Y ENTRELAZAR</button>
+</div>
+</div>
+
+<div class="chat">
+<div class="chat-header"><div style="display:flex;align-items:center;gap:10px"><div class="v-logo" style="width:40px;height:40px;font-size:20px">V</div><div><b style="color:#e9edef">VobixChat Verde</b><p style="color:#8696a0;font-size:13px">● verde activo</p></div></div><div style="color:#aebac1;display:flex;gap:18px;font-size:19px"><i class="fa-solid fa-video" onclick="openArea('meetArea')" style="cursor:pointer"></i><i class="fa-solid fa-phone"></i></div></div>
+<div id="messages"></div>
+<div class="type-box"><i class="fa-regular fa-face-smile" style="color:#8696a0;font-size:22px"></i><input id="msgInput" placeholder="Escribe mensaje" onkeydown="if(event.key==='Enter')sendMsg()"><div class="send" onclick="sendMsg()"><i class="fa-solid fa-paper-plane"></i></div></div>
+
+<div class="area" id="meetArea"><div class="area-header"><i class="fa-solid fa-arrow-left" onclick="closeAreas()" style="color:#00a884;cursor:pointer"></i><b>Meet Verde - Llamada real</b></div><div class="area-body"><button class="reg" onclick="joinMeet()" style="max-width:300px">UNIRSE Y LLAMAR VERDE</button><button class="reg" onclick="leaveMeet()" style="max-width:300px;background:#202c33;color:#fff;border:1px solid #00a884">COLGAR</button><div id="videoGrid" style="margin-top:16px"></div><div class="ban">Abre 2 navegadores y dale UNIRSE en los dos - ya funciona</div></div></div>
+<div class="area" id="teamArea"><div class="area-header"><i class="fa-solid fa-arrow-left" onclick="closeAreas()" style="color:#00a884;cursor:pointer"></i><b>Team Verde</b></div><div class="area-body"><div class="ban">Team Verde - Compartir pantalla dentro de Meet</div><div id="remoteView" style="width:100%;height:60vh;background:#000;border:2px solid #00a884;border-radius:12px;display:flex;align-items:center;justify-content:center;color:#00a884">Sin compartir</div></div></div>
+<div class="area" id="signArea"><div class="area-header"><i class="fa-solid fa-arrow-left" onclick="closeAreas()" style="color:#00a884;cursor:pointer"></i><b>Firma Espejo</b></div><div class="area-body"><div class="ban">Firma Espejo Verde activa</div></div></div>
+<div class="area" id="musicArea"><div class="area-header"><i class="fa-solid fa-arrow-left" onclick="closeAreas()" style="color:#00a884;cursor:pointer"></i><b>Música Gratis - 6 temas que SÍ suenan</b></div><div class="area-body"><audio id="audioPlayer" controls style="width:100%;background:#202c33;border-radius:8px;margin-bottom:12px"></audio>
+<div class="music-card"><span>1. Lofi Chill - Study</span><i class="fa-solid fa-play" style="color:#00a884;cursor:pointer" onclick="playFree('https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3')"></i></div>
+<div class="music-card"><span>2. Deep Work - Focus</span><i class="fa-solid fa-play" style="color:#00a884;cursor:pointer" onclick="playFree('https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3')"></i></div>
+<div class="music-card"><span>3. Night Focus - Lofi</span><i class="fa-solid fa-play" style="color:#00a884;cursor:pointer" onclick="playFree('https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3')"></i></div>
+<div class="music-card"><span>4. Verde Energy - Up</span><i class="fa-solid fa-play" style="color:#00a884;cursor:pointer" onclick="playFree('https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3')"></i></div>
+<div class="music-card"><span>5. Vobix Morning</span><i class="fa-solid fa-play" style="color:#00a884;cursor:pointer" onclick="playFree('https://www.soundhelix.com/examples/mp3/SoundHelix-Song-9.mp3')"></i></div>
+<div class="music-card"><span>6. Relax Verde</span><i class="fa-solid fa-play" style="color:#00a884;cursor:pointer" onclick="playFree('https://www.soundhelix.com/examples/mp3/SoundHelix-Song-10.mp3')"></i></div>
+</div></div>
+<div class="area" id="inviteArea"><div class="area-header"><i class="fa-solid fa-arrow-left" onclick="closeAreas()" style="color:#00a884;cursor:pointer"></i><b>Entrelazar Usuarios</b></div><div class="area-body"><div class="ban">Genera tu link verde y mándalo - cuando entren quedan entrelazados contigo</div><input class="reg" id="inviteLink" readonly placeholder="Tu link verde"><button class="reg" onclick="genInvite()">GENERAR MI LINK VERDE</button><button class="reg" onclick="copyInvite()" style="background:#202c33;color:#fff;border:1px solid #00a884">COPIAR LINK</button></div></div>
+<div class="area" id="filesArea"><div class="area-header"><i class="fa-solid fa-arrow-left" onclick="closeAreas()" style="color:#00a884;cursor:pointer"></i><b>Archivos 50MB</b></div><div class="area-body"><div class="ban">Vault Verde 50MB</div></div></div>
+<div class="area" id="aiArea"><div class="area-header"><i class="fa-solid fa-arrow-left" onclick="closeAreas()" style="color:#00a884;cursor:pointer"></i><b>IA 1000x</b></div><div class="area-body"><div class="ban">IA 0.3ms - Bloquea VOIP 51/55/80/81/90 + bots - Solo SIM 6XX/7XX física</div></div></div>
+<div class="area" id="settingsArea"><div class="area-header"><i class="fa-solid fa-arrow-left" onclick="closeAreas()" style="color:#00a884;cursor:pointer"></i><b>Ajustes Verde</b></div><div class="area-body"><div class="ban">VobixChat Verde v4 - V grande + 3 puntitos con todo dentro</div></div></div>
+</div>
+</div>
+<script>
+const socket=io(); let myUsername=null;
+function toggleMenu(){ document.getElementById('threeMenu').classList.toggle('active'); }
+function openArea(id){ document.getElementById('threeMenu').classList.remove('active'); document.querySelectorAll('.area').forEach(a=>a.classList.remove('active')); document.getElementById(id).classList.add('active'); }
+function closeAreas(){ document.querySelectorAll('.area').forEach(a=>a.classList.remove('active')); }
+async function sendPin(){
+ let u=document.getElementById('regUser').value.trim().replace('@',''); let p=document.getElementById('regPhone').value.trim();
+ if(!u||!p) return alert('Faltan datos');
+ document.getElementById('pinStatus').innerText='IA 0.3ms analizando...';
+ let r=await fetch('/send-pin',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({phone:p,username:u})}); let j=await r.json();
+ if(!j.ok){ document.getElementById('pinStatus').innerText=j.msg; return; }
+ document.getElementById('pinStatus').innerText='PIN en consola: '+j.pin+' IA OK '+j.ia.time;
+ document.getElementById('regPin').style.display='block'; document.getElementById('btnVerify').style.display='block';
+}
+async function verifyPin(){
+ let p=document.getElementById('regPhone').value.trim(); let pin=document.getElementById('regPin').value.trim();
+ let r=await fetch('/verify-pin',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({phone:p,pin})}); let j=await r.json(); if(!j.ok) return alert('PIN malo');
+ myUsername=j.username; localStorage.setItem('vobix_user',JSON.stringify({username:myUsername,phone:p}));
+ document.getElementById('meBox').innerHTML='<b>@'+myUsername+'</b><br>● Verde entrelazado';
+ let kp=await crypto.subtle.generateKey({name:"ECDH",namedCurve:"P-256"},true,["deriveKey"]); let pub=await crypto.subtle.exportKey("jwk",kp.publicKey);
+ await fetch('/save-key',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({phone:p,username:myUsername,publicKey:pub})});
+ socket.emit('set-user',myUsername);
+}
+function sendMsg(){ let i=document.getElementById('msgInput'); let t=i.value.trim(); if(!t||!myUsername) return alert('Registrate'); socket.emit('chat',{from:myUsername,text:t}); i.value=''; }
+socket.on('chat',d=>{ let b=document.getElementById('messages'); let div=document.createElement('div'); div.className='msg '+(d.from===myUsername?'me':'other'); div.innerText=d.from+': '+d.text; b.appendChild(div); b.scrollTop=b.scrollHeight; });
+function playFree(url){ let a=document.getElementById('audioPlayer'); a.src=url; a.load(); a.play(); }
+function genInvite(){ if(!myUsername) return alert('Registrate primero'); let link=location.origin+'?invite='+myUsername; document.getElementById('inviteLink').value=link; }
+function copyInvite(){ let i=document.getElementById('inviteLink'); i.select(); document.execCommand('copy'); }
+let localStream=null, peers={}, myRoom='vobix-verde'
+async function joinMeet(){ try{ localStream=await navigator.mediaDevices.getUserMedia({video:true,audio:true}); addVideo('yo-'+socket.id, localStream); socket.emit('meet-join',{room:myRoom,user:myUsername||'Anon'}); openArea('meetArea'); }catch(e){ alert(e.message) } }
+function addVideo(id,stream){ if(document.getElementById(id)) return; let g=document.getElementById('videoGrid'); let d=document.createElement('div'); d.className='vid'; d.id=id; let v=document.createElement('video'); v.autoplay=true; v.playsInline=true; v.muted=id.startsWith('yo-'); v.srcObject=stream; d.appendChild(v); g.appendChild(d); }
+socket.on('meet-users', users=>{ users.forEach(u=>{ let p=new SimplePeer({initiator:true,trickle:false,stream:localStream}); p.on('signal',s=>socket.emit('meet-signal',{to:u.id,signal:s})); p.on('stream',s=>addVideo(u.id,s)); peers[u.id]=p; }); });
+socket.on('meet-user-joined', ({id})=>{ let p=new SimplePeer({initiator:false,trickle:false,stream:localStream}); p.on('signal',s=>socket.emit('meet-signal',{to:id,signal:s})); p.on('stream',s=>addVideo(id,s)); peers[id]=p; });
+socket.on('meet-signal', ({from,signal})=>{ if(peers[from]) peers[from].signal(signal); });
+socket.on('meet-user-left', id=>{ if(peers[id]) peers[id].destroy(); delete peers[id]; let el=document.getElementById(id); if(el) el.remove(); });
+function leaveMeet(){ if(localStream) localStream.getTracks().forEach(t=>t.stop()); Object.values(peers).forEach(p=>p.destroy()); peers={}; document.getElementById('videoGrid').innerHTML=''; socket.emit('meet-leave',{room:myRoom}); closeAreas(); }
+document.addEventListener('click', e=>{ let m=document.getElementById('threeMenu'); if(!e.target.closest('.fa-ellipsis-vertical') &&!e.target.closest('#threeMenu')) m.classList.remove('active'); });
+</script>
+</body>
+</html>
