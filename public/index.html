@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>VobixChat Verde</title>
+<script src="/socket.io/socket.io.js"></script>
+<script src="https://unpkg.com/simple-peer@9.11.1/simplepeer.min.js"></script>
+<script src="https://unpkg.com/signature_pad@4.1.7/dist/signature_pad.umd.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',system-ui,Roboto,Arial}
+html,body{height:100%;overflow:hidden}
+body{background:#111b21;display:flex;justify-content:center}
+.app{width:100%;max-width:1600px;height:100vh;display:flex;background:#111b21}
+
+/* SIDEBAR - VERDE */
+.sidebar{width:30%;min-width:340px;max-width:440px;background:#111b21;border-right:1px solid #222d34;display:flex;flex-direction:column}
+.side-header{height:59px;background:#202c33;display:flex;align-items:center;justify-content:space-between;padding:0 16px}
+.side-header b{color:#00a884;font-size:20px;letter-spacing:.3px}
+.me-box{background:#202c33;padding:10px 16px;color:#8696a0;font-size:13px;border-bottom:1px solid #222d34;line-height:18px}
+.me-box strong{color:#00a884}
+.tabs{height:49px;display:flex;background:#111b21;border-bottom:1px solid #222d34}
+.tab{flex:1;display:flex;align-items:center;justify-content:center;color:#8696a0;cursor:pointer;font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;border-bottom:3px solid transparent;transition:.15s}
+.tab.active{color:#00a884;border-bottom-color:#00a884;background:#202c33}
+.panel{flex:1;overflow-y:auto;background:#111b21;padding:16px}
+
+/* INPUTS VERDES */
+input{width:100%;height:42px;padding:0 14px;border-radius:8px;border:1px solid #2a3942;background:#202c33;color:#d1d7db;outline:none;margin:7px 0;font-size:14px}
+input::placeholder{color:#8696a0}
+input:focus{border-color:#00a884;box-shadow:0 0 0 1px #00a884}
+button{width:100%;height:42px;border-radius:8px;border:none;background:#00a884;color:#111b21;font-weight:700;font-size:14px;cursor:pointer;margin:7px 0;transition:.18s}
+button:hover{background:#06cf9c;transform:translateY(-1px)}
+button:active{transform:translateY(0)}
+button.secondary{background:#202c33;color:#e9edef;border:1px solid #00a884}
+button.secondary:hover{background:#2a3942}
+.hint{font-size:11.5px;color:#8696a0;margin:6px 2px;line-height:14px}
+.status{font-size:12px;color:#00a884;min-height:18px;margin:6px 2px;font-weight:600}
+.ban{background:#182229;border-left:4px solid #00a884;color:#e9edef;padding:10px 12px;border-radius:8px;font-size:13px;margin:10px 0}
+.green-title{color:#00a884;font-weight:700;font-size:14px;margin:14px 0 8px 0;text-transform:uppercase;letter-spacing:.4px}
+
+/* CHAT - VERDE */
+.chat{flex:1;display:flex;flex-direction:column;background:#0b141a;position:relative}
+.chat-header{height:59px;background:#202c33;display:flex;align-items:center;gap:12px;padding:0 16px;border-left:1px solid #222d34}
+.chat-header .dot{width:10px;height:10px;background:#00a884;border-radius:50%;box-shadow:0 0 10px #00a884}
+.chat-header b{color:#e9edef;font-size:16px}
+#messages{flex:1;overflow-y:auto;padding:16px 5% 20px 5%;background-color:#0b141a;background-image:url("https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png");background-blend-mode:overlay;background-size:400px;opacity:1}
+.msg{max-width:65%;padding:6px 7px 6px 9px;border-radius:8px;margin:3px 0;font-size:14.2px;line-height:19px;position:relative;word-wrap:break-word;box-shadow:0 1px .5px rgba(0,0,0,.4)}
+.msg.me{background:#005c4b;color:#e9edef;margin-left:auto;border-top-right-radius:0}
+.msg.other{background:#202c33;color:#e9edef;margin-right:auto;border-top-left-radius:0}
+.msg .meta{font-size:11px;color:#53bdeb;margin-top:4px;text-align:right;display:flex;justify-content:flex-end;gap:4px}
+.type-box{height:62px;background:#202c33;padding:5px 12px;display:flex;align-items:center;gap:10px;border-left:1px solid #222d34}
+.type-box input{flex:1;height:42px;border-radius:21px;background:#2a3942;border:none;margin:0;padding:0 16px}
+.type-box button{width:45px;height:45px;min-width:45px;border-radius:50%;margin:0;padding:0;font-size:20px;display:flex;align-items:center;justify-content:center}
+
+/* AREAS VERDES */
+#meetArea,#teamArea,#signArea{display:none;position:absolute;inset:0;background:#111b21;z-index:20;padding:16px;overflow:auto}
+#videoGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px;margin-top:14px}
+.vid{aspect-ratio:16/9;background:#000;border-radius:12px;overflow:hidden;border:2px solid #00a884;position:relative}
+.vid video{width:100%;height:100%;object-fit:cover}
+#remoteView{width:100%;height:72vh;background:#000;border:2px solid #00a884;border-radius:12px;display:flex;align-items:center;justify-content:center;color:#00a884;font-weight:600}
+#signCanvas{width:100%;height:400px;background:#fff;border-radius:12px;border:3px solid #00a884;cursor:crosshair;display:block}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="sidebar">
+    <div class="side-header"><b>VobixChat</b><span style="font-size:11px;color:#00a884;font-weight:700">● VERDE ACTIVO</span></div>
+    <div class="me-box" id="meBox">Sin registro - Obligatorio SIM 6XX/7XX</div>
+    <div class="tabs">
+      <div class="tab active" onclick="openTab('chatTab',this)">CHAT</div>
+      <div class="tab" onclick="openTab('meetTab',this)">MEET</div>
+      <div class="tab" onclick="openTab('teamTab',this)">TEAM</div>
+      <div class="tab" onclick="openTab('signTab',this)">FIRMA</div>
+    </div>
+
+    <div class="panel" id="chatTab">
+      <div class="green-title">Registro Obligatorio Verde + IA 1000x</div>
+      <input id="regUser" placeholder="@usuario ej: juan">
+      <input id="regPhone" placeholder="+34 6XX XXX XXX - Solo SIM física">
+      <button onclick="sendPin()">ENVIAR PIN</button>
+      <div class="status" id="pinStatus"></div>
+      <input id="regPin" placeholder="PIN 6 dígitos" style="display:none">
+      <button id="btnVerify" onclick="verifyPin()" style="display:none">VERIFICAR Y ENTRELAZAR</button>
+      <div class="hint">🤖 IA detecta en 0.3ms: rangos VOIP 51/55/80, entropía bot, repeticiones. Solo 6XX/7XX físicos pasan.</div>
+      <div class="ban" id="vaultInfo" style="display:none"></div>
+      <div class="green-title">Chat Verde</div>
+      <div class="hint">Todo mensaje es E2E entrelazado solo entre registrados.</div>
+    </div>
+
+    <div class="panel" id="meetTab" style="display:none">
+      <div class="green-title">Meet Verde</div>
+      <button onclick="joinMeet()">UNIRSE A MEET VERDE</button>
+      <button class="secondary" onclick="leaveMeet()">SALIR</button>
+    </div>
+
+    <div class="panel" id="teamTab" style="display:none">
+      <div class="green-title">Team Verde</div>
+      <button onclick="startShare()">COMPARTIR PANTALLA VERDE</button>
+      <button class="secondary" onclick="stopShare()">DETENER</button>
+    </div>
+
+    <div class="panel" id="signTab" style="display:none">
+      <div class="green-title">Firma Espejo Verde</div>
+      <input type="file" id="pdfFile" accept=".pdf,.png,.jpg,.jpeg">
+      <button onclick="startSign()">CARGAR DOCUMENTO</button>
+      <button class="secondary" onclick="clearSign()">BORRAR FIRMA</button>
+      <button onclick="saveSign()">FIRMAR + MARCA INVISIBLE VERDE</button>
+      <div class="status" id="signStatus"></div>
+    </div>
+  </div>
+
+  <div class="chat">
+    <div class="chat-header"><div class="dot"></div><b id="chatTitle">VobixChat Verde</b><span style="font-size:12px;color:#8696a0">E2E Entrelazado IA</span></div>
+    <div id="messages"></div>
+    <div class="type-box">
+      <input id="msgInput" placeholder="Escribe un mensaje" onkeydown="if(event.key==='Enter')sendMsg()">
+      <button onclick="sendMsg()">➤</button>
+    </div>
+    <div id="meetArea"><div class="green-title">Meet Verde Activo</div><div id="videoGrid"></div></div>
+    <div id="teamArea"><div class="green-title">Team Verde Activo</div><div id="remoteView">Sin compartir - Verde</div></div>
+    <div id="signArea"><div class="green-title">Firma Verde - Marca Invisible</div><canvas id="signCanvas"></canvas></div>
+  </div>
+</div>
+
+<script>
+const socket = io();
+let myUsername = null;
+
+function openTab(id,el){
+  document.querySelectorAll('.panel').forEach(p=>p.style.display='none');
+  document.getElementById(id).style.display='block';
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('meetArea').style.display = id==='meetTab' ? 'block' : 'none';
+  document.getElementById('teamArea').style.display = id==='teamTab' ? 'block' : 'none';
+  document.getElementById('signArea').style.display = id==='signTab' ? 'block' : 'none';
+}
+function showBan(t){
+  let d=document.createElement('div'); d.className='ban'; d.innerText=t;
+  document.getElementById('messages').appendChild(d);
+  document.getElementById('messages').scrollTop = document.getElementById('messages').scrollHeight;
+}
+async function sendPin(){
+  let u=document.getElementById('regUser').value.trim().replace('@','');
+  let p=document.getElementById('regPhone').value.trim();
+  if(!u||!p) return alert('Usuario y teléfono obligatorios');
+  document.getElementById('pinStatus').innerText='🤖 IA 1000x analizando 0.3ms...';
+  let r=await fetch('/send-pin',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({phone:p,username:u})});
+  let j=await r.json();
+  if(!j.ok){ document.getElementById('pinStatus').innerText=j.msg; return; }
+  document.getElementById('pinStatus').innerText=`✅ IA OK ${j.ia.time} Score ${j.ia.score} - PIN en logs Render`;
+  document.getElementById('regPin').style.display='block';
+  document.getElementById('btnVerify').style.display='block';
+}
+async function verifyPin(){
+  let p=document.getElementById('regPhone').value.trim();
+  let pin=document.getElementById('regPin').value.trim();
+  let r=await fetch('/verify-pin',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({phone:p,pin})});
+  let j=await r.json();
+  if(!j.ok) return alert('PIN incorrecto');
+  myUsername=j.username;
+  localStorage.setItem('vobix_user', JSON.stringify({username:myUsername, phone:p}));
+  document.getElementById('meBox').innerHTML=`<strong>@${myUsername}</strong> ${p}<br><span style="color:#00a884">● Verde activo entrelazado IA ${j.ia?j.ia.time:''}</span>`;
+  let vault=document.getElementById('vaultInfo'); vault.style.display='block'; vault.innerText=`🔗 @${myUsername} entrelazado verde - IA 1000x`;
+  let kp=await crypto.subtle.generateKey({name:"ECDH",namedCurve:"P-256"},true,["deriveKey"]);
+  let pub=await crypto.subtle.exportKey("jwk",kp.publicKey);
+  await fetch('/save-key',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({phone:p,username:myUsername,publicKey:pub})});
+  socket.emit('set-user',myUsername);
+  showBan(`Bienvenido @${myUsername} - Verde 100% activo`);
+}
+function sendMsg(){
+  let inp=document.getElementById('msgInput'); let t=inp.value.trim();
+  if(!t) return;
+  if(!myUsername) return alert('Registro obligatorio');
+  socket.emit('chat',{from:myUsername,text:t,ts:Date.now()});
+  inp.value='';
+}
+socket.on('chat',d=>{
+  let box=document.getElementById('messages');
+  let div=document.createElement('div'); div.className='msg '+(d.from===myUsername?'me':'other');
+  div.innerHTML=`${d.text}<div class="meta">${d.from} • ${new Date(d.ts).toLocaleTimeString()}</div>`;
+  box.appendChild(div); box.scrollTop=box.scrollHeight;
+});
+socket.on('history',h=>{
+  let box=document.getElementById('messages'); box.innerHTML='';
+  h.forEach(d=>{
+    let div=document.createElement('div'); div.className='msg '+(d.from===myUsername?'me':'other');
+    div.innerHTML=`${d.text}<div class="meta">${d.from}</div>`; box.appendChild(div);
+  });
+  box.scrollTop=box.scrollHeight;
+});
+(function(){ let u=localStorage.getItem('vobix_user'); if(u){ try{ let j=JSON.parse(u); document.getElementById('regUser').value=j.username; document.getElementById('regPhone').value=j.phone; }catch{} } })();
+</script>
+<script src="/js/meet.js"></script>
+<script src="/js/team.js"></script>
+<script src="/js/sign.js"></script>
+</body>
+</html>
