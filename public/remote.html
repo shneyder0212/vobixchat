@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+body{font-family:Arial;background:#0f0f0f;color:white;margin:0;padding:20px}
+.lang{position:fixed;top:10px;right:10px;background:#222;padding:8px;border-radius:20px}
+.lang span{cursor:pointer;margin:0 4px}
+.card{background:#1c1c1c;padding:20px;border-radius:15px;max-width:500px;margin:60px auto}
+</style></head><body>
+<div class="lang">
+<span onclick="setLang('es')">🇪🇸</span><span onclick="setLang('en')">🇺🇸</span><span onclick="setLang('fr')">🇫🇷</span><span onclick="setLang('pt')">🇧🇷</span><span onclick="setLang('de')">🇩🇪</span><span onclick="setLang('it')">🇮🇹</span>
+</div>
+<div class="card">
+<h2 id="t-title"></h2><p id="t-sub"></p>
+<button style="width:100%;padding:12px;background:#00ff88;border:none;border-radius:8px;font-weight:bold" id="t-btn"></button>
+</div>
+<script>
+const TRAD={
+ es:{title:"Control Remoto",sub:"Controla VobixChat desde otro dispositivo",btn:"Conectar"},
+ en:{title:"Remote Control",sub:"Control VobixChat from another device",btn:"Connect"},
+ fr:{title:"Contrôle à distance",sub:"Contrôlez VobixChat à distance",btn:"Connecter"},
+ pt:{title:"Controle Remoto",sub:"Controle o VobixChat de outro dispositivo",btn:"Conectar"},
+ de:{title:"Fernsteuerung",sub:"Steuere VobixChat von einem anderen Gerät",btn:"Verbinden"},
+ it:{title:"Controllo Remoto",sub:"Controlla VobixChat da un altro dispositivo",btn:"Connetti"}
+};
+function detect(){let n=(navigator.language||'es').substr(0,2);return TRAD[n]?n:'en';}
+let cur=localStorage.getItem('vobix_lang')||detect();
+function apply(){let t=TRAD[cur];document.getElementById('t-title').innerText=t.title;document.getElementById('t-sub').innerText=t.sub;document.getElementById('t-btn').innerText=t.btn;}
+function setLang(l){cur=l;localStorage.setItem('vobix_lang',l);apply();}
+apply();
+</script></body></html>

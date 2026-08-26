@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+body{font-family:Arial;background:#0f0f0f;color:white;margin:0;padding:20px}
+.lang{position:fixed;top:10px;right:10px;background:#222;padding:8px;border-radius:20px}
+.lang span{cursor:pointer;margin:0 4px}
+.card{background:#1c1c1c;padding:20px;border-radius:15px;max-width:600px;margin:60px auto}
+.item{background:#222;padding:12px;margin:10px 0;border-radius:8px}
+</style></head><body>
+<div class="lang">
+<span onclick="setLang('es')">🇪🇸</span><span onclick="setLang('en')">🇺🇸</span><span onclick="setLang('fr')">🇫🇷</span><span onclick="setLang('pt')">🇧🇷</span><span onclick="setLang('de')">🇩🇪</span><span onclick="setLang('it')">🇮🇹</span>
+</div>
+<div class="card">
+<h2 id="t-title"></h2><p id="t-sub"></p>
+<div class="item" id="t-i1"></div>
+<div class="item" id="t-i2"></div>
+<div class="item" id="t-i3"></div>
+</div>
+<script>
+const TRAD={
+ es:{title:"Comunicaciones",sub:"Tus mensajes y llamadas",i1:"📩 Mensajes",i2:"📞 Llamadas",i3:"🔒 Encriptado de extremo a extremo"},
+ en:{title:"Communications",sub:"Your messages and calls",i1:"📩 Messages",i2:"📞 Calls",i3:"🔒 End-to-end encrypted"},
+ fr:{title:"Communications",sub:"Vos messages et appels",i1:"📩 Messages",i2:"📞 Appels",i3:"🔒 Chiffrement de bout en bout"},
+ pt:{title:"Comunicações",sub:"Suas mensagens e chamadas",i1:"📩 Mensagens",i2:"📞 Chamadas",i3:"🔒 Criptografia de ponta a ponta"},
+ de:{title:"Kommunikation",sub:"Deine Nachrichten und Anrufe",i1:"📩 Nachrichten",i2:"📞 Anrufe",i3:"🔒 Ende-zu-Ende verschlüsselt"},
+ it:{title:"Comunicazioni",sub:"I tuoi messaggi e chiamate",i1:"📩 Messaggi",i2:"📞 Chiamate",i3:"🔒 Crittografato end-to-end"}
+};
+function detect(){let n=(navigator.language||'es').substr(0,2);return TRAD[n]?n:'en';}
+let cur=localStorage.getItem('vobix_lang')||detect();
+function apply(){let t=TRAD[cur];document.getElementById('t-title').innerText=t.title;document.getElementById('t-sub').innerText=t.sub;document.getElementById('t-i1').innerText=t.i1;document.getElementById('t-i2').innerText=t.i2;document.getElementById('t-i3').innerText=t.i3;}
+function setLang(l){cur=l;localStorage.setItem('vobix_lang',l);apply();}
+apply();
+</script></body></html>
