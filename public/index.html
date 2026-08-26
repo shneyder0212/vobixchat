@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>VobixChat - Privado</title>
+<script src="/socket.io/socket.io.js"></script>
+<script src="https://unpkg.com/simple-peer@9.11.1/simplepeer.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:system-ui}
+body{background:#111b21;color:#e9edef;height:100vh;overflow:hidden}
+#login{position:fixed;inset:0;background:#111b21;z-index:9999;display:flex;align-items:center;justify-content:center;flex-direction:column;padding:20px}
+#login input{width:100%;max-width:320px;padding:14px;border-radius:10px;border:none;background:#202c33;color:#fff;margin:8px 0;font-size:16px}
+#login button{width:100%;max-width:320px;padding:14px;border-radius:10px;border:none;background:#00a884;color:#fff;font-weight:bold;margin-top:10px;cursor:pointer}
+#app{display:none;height:100vh;flex-direction:column}
+header{height:56px;background:#202c33;display:flex;align-items:center;justify-content:space-between;padding:0 16px}
+#menu3{position:fixed;top:56px;right:0;width:280px;background:#202c33;z-index:5000;display:none;flex-direction:column;padding:10px;border-radius:0 0 0 12px}
+#menu3 button{padding:12px;background:#2a3942;color:#fff;border:none;border-radius:8px;margin:4px 0;text-align:left;cursor:pointer}
+.view{display:none;flex:1;overflow:auto;padding:10px}
+.view.active{display:flex;flex-direction:column}
+#messages{flex:1;overflow:auto;padding:10px}
+#chatInput{display:flex;padding:10px;background:#202c33;gap:8px}
+#chatInput input{flex:1;padding:12px;border-radius:20px;border:none;background:#2a3942;color:#fff}
+#chatInput button{padding:10px 18px;border-radius:20px;border:none;background:#00a884;color:#fff;font-weight:bold}
+#videoGrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:10px}
+#signCanvas{width:100%;height:380px;background:#fff;border-radius:12px;touch-action:none}
+#remoteView{width:100%;height:60vh;background:#000;border-radius:12px;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.ban{position:fixed;top:10px;left:50%;transform:translateX(-50%);background:#ff3b30;color:#fff;padding:10px 20px;border-radius:20px;z-index:10000;display:none;font-weight:bold}
+</style>
+</head>
+<body>
+<div id="ban" class="ban"></div>
+
+<div id="login">
+<h2 style="color:#00a884;margin-bottom:10px">VobixChat 🔒</h2>
+<p style="font-size:13px;color:#8696a0;margin-bottom:12px;text-align:center">Solo SIM real. VOIP bloqueado.<br>Registro obligatorio.</p>
+<input id="username" placeholder="@usuario">
+<input id="phone" placeholder="+34 6XX XXX XXX">
+<button onclick="sendPin()">Enviar PIN (ver logs Render)</button>
+<div id="pinBox" style="display:none;width:100%;max-width:320px">
+<input id="pin" placeholder="PIN de 6 digitos">
+<button onclick="verifyPin()">Verificar y Entrar - Entrelazado</button>
+</div>
+<div id="msg" style="margin-top:10px;font-size:13px;color:#8696a0;max-width:320px;text-align:center"></div>
+</div>
+
+<div id="app">
+<header>
+<div style="font-weight:bold;color:#00a884">VobixChat • E2E 🔒</div>
+<button onclick="toggleMenu()" style="background:#00a884;border:none;color:#fff;padding:8px 14px;border-radius:20px">☰</button>
+</header>
+
+<div id="menu3">
+<button onclick="openView('chatView')">💬 Chat E2E</button>
+<button onclick="openView('meetView')">📹 VobixMeet 30K HD</button>
+<button onclick="openView('teamView')">🖥️ Control Remoto Gratis</button>
+<button onclick="openView('signView')">✍️ Firma Espejo Blindada</button>
+<button onclick="openView('vaultView')">🔐 Vault PIN 1234</button>
+<button onclick="openView('boardView')">🎨 Pizarra</button>
+<button onclick="openView('radioView')">📻 Radio</button>
+<button onclick="openView('transView')">🌐 Traductor</button>
+<button onclick="openView('musicView')">🎵 Musica</button>
+<button onclick="logout()" style="background:#ff3b30">🚪 Salir</button>
+</div>
+
+<div id="chatView" class="view active">
+<div id="messages"></div>
+<div id="chatInput">
+<input id="text" placeholder="Mensaje E2E cifrado..." onkeydown="if(event.key==='Enter')sendChat()">
+<button onclick="sendChat()">➤</button>
+</div>
+</div>
+
+<div id="meetView" class="view">
+<h3 style="padding:10px">VobixMeet - Sin Ruido Sin Eco - 30K FullHD</h3>
+<div style="display:flex;gap:8px;padding:10px">
+<button onclick="joinMeetHD()" style="flex:1;padding:12px;background:#00a884;border:none;color:#fff;border-radius:10px;font-weight:bold">Unirse HD</button>
+<button onclick="leaveMeet()" style="flex:1;padding:12px;background:#ff3b30;border:none;color:#fff;border-radius:10px">Salir</button>
+<button onclick="shareScreen()" style="flex:1;padding:12px;background:#2a3942;border:none;color:#fff;border-radius:10px">🖥️ Pantalla</button>
+</div>
+<div id="videoGrid"></div>
+</div>
+
+<div id="teamView" class="view">
+<h3 style="padding:10px">TeamVobix - Control Remoto</h3>
+<div style="display:flex;gap:8px;padding:10px">
+<button onclick="startShare()" style="flex:1;padding:12px;background:#00a884;border:none;color:#fff;border-radius:10px">Compartir Pantalla</button>
+<button onclick="stopShare()" style="flex:1;padding:12px;background:#ff3b30;border:none;color:#fff;border-radius:10px">Detener</button>
+<button onclick="requestControl()" style="flex:1;padding:12px;background:#2a3942;border:none;color:#fff;border-radius:10px">Pedir Control</button>
+</div>
+<div id="remoteView"><span style="color:#8696a0">Sin compartir</span></div>
+</div>
+
+<div id="signView" class="view">
+<h3 style="padding:10px">Firma Espejo - Marca Invisible + PIN por lado</h3>
+<div style="padding:10px;display:flex;gap:8px;flex-wrap:wrap">
+<input type="file" id="pdfFile" accept=".pdf,.png,.jpg,.jpeg" style="background:#2a3942;padding:8px;border-radius:8px;color:#fff">
+<button onclick="startSign()" style="padding:10px 16px;background:#00a884;border:none;color:#fff;border-radius:8px;font-weight:bold">Iniciar Firma Espejo</button>
+<button onclick="clearSign()" style="padding:10px;background:#2a3942;border:none;color:#fff;border-radius:8px">Limpiar</button>
+<button onclick="saveSign()" style="padding:10px;background:#00a884;border:none;color:#fff;border-radius:8px">Blindar y Guardar 🔒</button>
+</div>
+<div id="signStatus" style="padding:0 10px;font-size:12px;color:#53bdeb"></div>
+<canvas id="signCanvas" style="margin:10px;background:#fff"></canvas>
+</div>
+
+<div id="vaultView" class="view" style="align-items:center;justify-content:center">
+<h3>Vault Seguro</h3>
+<input id="vaultPin" placeholder="PIN 1234" style="padding:12px;border-radius:10px;border:none;background:#2a3942;color:#fff;margin:10px">
+<button onclick="openVault()" style="padding:12px 20px;background:#00a884;border:none;color:#fff;border-radius:10px">Abrir</button>
+<div id="vaultContent" style="display:none;margin-top:20px;padding:20px;background:#202c33;border-radius:12px;width:90%">🔒 Contenido secreto entrelazado solo para registrados.</div>
+</div>
+
+<div id="boardView" class="view"><canvas id="board" style="width:100%;height:70vh;background:#fff;border-radius:12px"></canvas></div>
+<div id="radioView" class="view" style="padding:20px"><h3>Radio</h3><audio controls src="https://stream.live.vc.bbcmedia.co.uk/bbc_world_service" style="width:100%;margin-top:20px"></audio></div>
+<div id="transView" class="view" style="padding:20px"><h3>Traductor</h3><textarea id="transText" style="width:100%;height:100px;background:#2a3942;color:#fff;border:none;border-radius:10px;padding:10px;margin-top:10px"></textarea><button onclick="doTranslate()" style="margin-top:10px;padding:12px;background:#00a884;border:none;color:#fff;border-radius:10px;width:100%">Traducir ES→EN</button><div id="transResult" style="margin-top:10px;padding:10px;background:#202c33;border-radius:10px"></div></div>
+<div id="musicView" class="view" style="padding:20px"><h3>Musica</h3><audio controls style="width:100%;margin-top:20px"><source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"></audio></div>
+
+</div>
+<script src="js/app.js"></script>
+<script src="js/meet.js"></script>
+<script src="js/team.js"></script>
+<script src="js/sign.js"></script>
+</body>
+</html>
