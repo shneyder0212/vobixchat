@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>VobixChat DIOS</title>
+<script src="/socket.io/socket.io.js"></script>
+<script src="https://unpkg.com/simple-peer@9.11.1/simplepeer.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:system-ui,-apple-system}
+body{background:#111b21;color:#fff;height:100vh;overflow:hidden}
+#login{position:fixed;inset:0;background:#111b21;z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px}
+.box{background:#202c33;padding:26px;border-radius:16px;width:100%;max-width:360px}
+.box h2{text-align:center;margin-bottom:14px}
+.box input{width:100%;padding:14px;margin:8px 0;border:none;border-radius:10px;background:#2a3942;color:#fff;font-size:15px;outline:none}
+.box button{width:100%;padding:14px;background:#00a884;border:none;border-radius:10px;color:#fff;font-weight:bold;font-size:15px;margin-top:6px}
+#msg{font-size:11px;color:#8696a0;text-align:center;margin-top:8px}
+#app{height:100vh;display:none;flex-direction:column}
+header{background:#202c33;padding:12px 16px;display:flex;justify-content:space-between;align-items:center}
+#menuBtn{background:none;border:none;color:#fff;font-size:26px}
+#menu3{position:absolute;right:10px;top:52px;background:#233138;border-radius:12px;display:none;flex-direction:column;width:240px;z-index:100;box-shadow:0 8px 20px #000;overflow:hidden}
+#menu3 button{padding:14px 16px;text-align:left;background:none;border:none;color:#e9edef;font-size:14px;border-bottom:1px solid #2a3942}
+.view{display:none;flex:1;flex-direction:column;overflow:hidden}
+.view.active{display:flex}
+#messages{flex:1;overflow:auto;padding:10px;background:#0b141a}
+#bar{display:flex;gap:6px;padding:8px;background:#202c33;align-items:flex-end}
+#bar textarea{flex:1;padding:12px 16px;border-radius:22px;border:none;background:#2a3942;color:#fff;resize:none;outline:none;max-height:110px}
+#bar button{width:46px;height:46px;border-radius:50%;border:none;background:#00a884;color:#fff;font-size:20px;flex-shrink:0}
+#videoGrid{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:6px;flex:1;background:#000;overflow:auto}
+#videoGrid video{width:100%;height:180px;background:#111;border-radius:12px;object-fit:cover}
+.controls{display:flex;gap:8px;padding:10px;background:#202c33;justify-content:center;flex-wrap:wrap}
+.controls button{padding:10px 16px;border-radius:20px;border:none;background:#2a3942;color:#fff;font-size:13px}
+#remoteView{flex:1;background:#000;display:flex;align-items:center;justify-content:center;position:relative}
+#signWrap{flex:1;display:flex;flex-direction:column;background:#fff}
+#signWrap canvas{flex:1;touch-action:none;background:#fff}
+#ban{position:fixed;top:12px;left:50%;transform:translateX(-50%);background:#f15c6d;color:#fff;padding:10px 18px;border-radius:10px;display:none;z-index:9999;font-size:13px}
+</style>
+</head>
+<body>
+<div id="ban"></div>
+
+<div id="login">
+<div class="box">
+<h2>VobixChat 🔒</h2>
+<input id="username" placeholder="@usuario">
+<input id="phone" placeholder="+34 6XX XXX XXX">
+<button onclick="sendPin()">Enviar PIN</button>
+<div id="pinBox" style="display:none"><input id="pin" placeholder="PIN - Mira Logs Render"><button onclick="verifyPin()">ENTRAR</button></div>
+<p id="msg">Cifrado de extremo a extremo</p>
+</div>
+</div>
+
+<div id="app">
+<header>
+<span>VobixChat</span>
+<div style="position:relative">
+<button id="menuBtn" onclick="toggleMenu()">⋮</button>
+<div id="menu3">
+<button onclick="openView('chatView')">💬 Chat E2E</button>
+<button onclick="openView('zoomView')">🎥 VobixMeet 30K HD</button>
+<button onclick="openView('teamView')">🖥️ Control Remoto</button>
+<button onclick="openView('signView')">📝 Firma Espejo</button>
+<button onclick="openView('musicView')">🎵 Música Gratis</button>
+<button onclick="openView('vaultView')">🔐 Vault Secreto</button>
+<button onclick="openView('boardView')">🎨 Pizarra Infinita</button>
+<button onclick="openView('radioView')">📻 Radio Mundial</button>
+<button onclick="openView('translateView')">🌐 Traductor</button>
+<button onclick="logout()">🚪 Salir</button>
+</div>
+</div>
+</header>
+
+<div id="chatView" class="view active"><div id="messages"></div><div id="bar"><textarea id="text" rows="1" placeholder="Mensaje cifrado"></textarea><button onclick="sendChat()">➤</button></div></div>
+
+<div id="zoomView" class="view"><div id="videoGrid"></div><div class="controls"><button onclick="joinMeetHD()">Entrar VobixMeet</button><button onclick="shareScreen()">Compartir Pantalla</button><button onclick="leaveMeet()" style="background:#f15c6d">Salir</button></div><p style="font-size:10px;text-align:center;padding:6px;color:#8696a0">E2E • Sin Ruido • Sin Eco • 1080p 60fps</p></div>
+
+<div id="teamView" class="view"><div id="remoteView"><span style="color:#8696a0">Esperando control...</span></div><div class="controls"><button onclick="startShare()">Compartir mi pantalla</button><button onclick="requestControl()">Pedir control</button><button onclick="stopShare()" style="background:#f15c6d">Detener</button></div></div>
+
+<div id="signView" class="view"><div style="padding:10px;background:#202c33"><input type="file" id="pdfFile" accept="application/pdf,image/*"><button onclick="startSign()" style="margin-top:6px;padding:8px 12px;background:#00a884;border:none;border-radius:6px;color:#fff">Iniciar Espejo</button><div id="signStatus" style="font-size:11px;color:#00a884;margin-top:6px"></div></div><div id="signWrap"><canvas id="signCanvas"></canvas></div><div class="controls"><button onclick="clearSign()">Borrar</button><button onclick="saveSign()" style="background:#00a884">Firmar + Marca Agua</button></div></div>
+
+<div id="musicView" class="view"><iframe src="https://pixabay.com/music/search/" style="width:100%;height:100%;border:none;background:#fff"></iframe></div>
+<div id="vaultView" class="view"><div style="padding:20px"><input id="vaultPin" type="password" placeholder="PIN Vault 4 dígitos" style="width:100%;padding:14px;border-radius:10px;border:none;background:#2a3942;color:#fff"><button onclick="openVault()" style="width:100%;margin-top:10px;padding:14px;background:#00a884;border:none;border-radius:10px;color:#fff">Abrir Vault</button><div id="vaultContent" style="display:none;margin-top:15px;background:#202c33;padding:15px;border-radius:10px">Tus archivos secretos aquí 🔐</div></div></div>
+<div id="boardView" class="view"><iframe src="https://excalidraw.com" style="width:100%;height:100%;border:none"></iframe></div>
+<div id="radioView" class="view"><iframe src="https://radio.garden" style="width:100%;height:100%;border:none"></iframe></div>
+<div id="translateView" class="view"><div style="padding:10px;background:#202c33"><textarea id="transText" placeholder="Escribe para traducir" style="width:100%;height:100px;padding:12px;border-radius:10px;border:none;background:#2a3942;color:#fff"></textarea><button onclick="doTranslate()" style="width:100%;margin-top:8px;padding:12px;background:#00a884;border:none;border-radius:10px;color:#fff">Traducir EN ↔ ES</button><div id="transResult" style="margin-top:10px;padding:12px;background:#202c33;border-radius:10px;min-height:60px"></div></div></div>
+
+</div>
+
+<script src="js/app.js"></script>
+<script src="js/meet.js"></script>
+<script src="js/team.js"></script>
+<script src="js/sign.js"></script>
+</body>
+</html>
