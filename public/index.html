@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>VobixChat</title>
+<style>
+*{box-sizing:border-box;font-family:Arial}
+body{margin:0;min-height:100vh;background:#080c09;display:flex;justify-content:center;align-items:center;background-image:radial-gradient(rgba(58,255,104,.22) 1.7px,transparent 1.7px);background-size:22px 22px}
+.card{width:360px;background:#0a110b;border:2px solid #3aff68;border-radius:24px;padding:22px 18px;text-align:center;box-shadow:0 0 45px #3aff68a0}
+.logo{width:76px;height:76px;background:#3aff68;border-radius:18px;margin:0 auto 14px;display:flex;align-items:center;justify-content:center;font-size:42px;font-weight:900;color:#000;box-shadow:0 0 20px #3aff68}
+h1{margin:0;color:#fff;font-size:34px;font-weight:900;letter-spacing:.5px}
+.g{color:#3aff68;font-size:17px;font-weight:900;margin:8px 0 2px}
+.w{color:#fff;font-size:10px;letter-spacing:2.8px;font-weight:800}
+.e{color:#8ac898;font-size:11px;margin:10px 0 18px}
+input{width:100%;background:#0a150c;border:1.5px solid #234427;border-radius:14px;padding:14px;color:#fff;outline:none;font-size:14px;margin-bottom:10px}
+input::placeholder{color:#5a7a62}
+.row{display:flex;gap:8px}.row div:first-child{width:72px}.row div:last-child{flex:1}
+.p{font-size:10px;color:#7ba882;text-align:left;margin-bottom:14px}
+.btn{width:100%;background:#3aff68;border:none;padding:14px;border-radius:14px;font-weight:900;cursor:pointer;font-size:13px;letter-spacing:.5px}
+#pinBox{display:none;margin-top:12px}
+</style>
+</head>
+<body>
+<div class="card">
+<div class="logo">V</div>
+<h1>VOBIXCHAT</h1>
+<div class="g">TODO EN UNO</div>
+<div class="w">SEGURO • RAPIDO • PRIVADO</div>
+<div class="e">🔒 Cifrado de extremo a extremo</div>
+
+<input id="user" placeholder="Nombre de usuario">
+<div class="row"><div><input value="+34" readonly style="text-align:center"></div><div><input id="tel" placeholder="Teléfono"></div></div>
+<div class="p">Pais detectado: ES - Prefijo +34</div>
+
+<button class="btn" onclick="enviar()">ENVIARME PIN POR SMS</button>
+<div id="pinBox"><input id="pin" placeholder="PIN 123456"><button class="btn" onclick="entrar()" style="margin-top:8px">VERIFICAR Y ENTRAR</button></div>
+</div>
+<script>
+function enviar(){
+ let u=document.getElementById('user').value.trim();
+ let t=document.getElementById('tel').value.trim();
+ if(!u){alert('Pon tu usuario');return}
+ if(!t){alert('Pon tu teléfono');return}
+ localStorage.setItem('vobix_user',u);
+ localStorage.setItem('vobix_phone',t);
+ document.getElementById('pinBox').style.display='block';
+ alert('Tu PIN es: 123456');
+}
+function entrar(){
+ if(document.getElementById('pin').value.trim()==='123456') location.href='chat.html';
+ else alert('PIN: 123456');
+}
+</script>
+</body>
+</html>
