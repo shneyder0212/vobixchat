@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html lang="es">
 
 <head>
@@ -8,167 +7,143 @@
 
 <meta
   name="viewport"
-  content="width=device-width, initial-scale=1.0"
+  content="width=device-width,initial-scale=1"
 >
 
-<title>VOBIXCHAT</title>
+<title>VobixChat</title>
 
 <style>
 
 *{
   box-sizing:border-box;
+  font-family:Inter,system-ui;
 }
 
 body{
-
   margin:0;
-
   min-height:100vh;
-
+  background:#070c09;
   display:flex;
-
   align-items:center;
-
   justify-content:center;
+}
 
-  font-family:Arial,sans-serif;
-
-  color:white;
-
-  background-color:#080808;
-
+body::before{
+  content:"";
+  position:fixed;
+  inset:0;
   background-image:
     radial-gradient(
-      #292929 1px,
-      transparent 1px
+      #7aff7a 1.5px,
+      transparent 2px
     );
-
-  background-size:20px 20px;
-
+  background-size:32px 32px;
+  opacity:.35;
 }
 
 .card{
-
-  width:90%;
-
-  max-width:430px;
-
-  background:#162d25;
-
-  border-radius:24px;
-
-  padding:34px 26px;
-
-  box-shadow:
-    0 20px 60px
-    rgba(0,0,0,.55);
-
+  width:360px;
+  background:
+    linear-gradient(
+      180deg,
+      #132015,
+      #0c1710
+    );
+  border:1.5px solid #6eff7a;
+  border-radius:26px;
+  padding:28px 22px;
   text-align:center;
-
+  box-shadow:
+    0 0 15px #6eff7a,
+    0 0 60px rgba(110,255,122,.6);
+  position:relative;
 }
 
 .logo{
-
-  width:82px;
-
-  height:82px;
-
-  margin:0 auto 14px;
-
-  border-radius:50%;
-
+  width:86px;
+  height:86px;
+  margin:0 auto 16px;
+  background:#6eff7a;
+  border-radius:20px;
   display:flex;
-
   align-items:center;
-
   justify-content:center;
-
-  background:#00e676;
-
-  color:white;
-
   font-size:48px;
-
-  font-weight:bold;
-
+  font-weight:900;
+  color:#0f2f17;
+  box-shadow:
+    0 0 20px #6eff7a;
 }
 
 h1{
-
   margin:0;
-
-  font-size:38px;
-
-  letter-spacing:1px;
-
+  color:#fff;
+  font-size:30px;
+  font-weight:900;
+  letter-spacing:.5px;
 }
 
-.subtitle{
+.todo{
+  color:#6eff7a;
+  font-weight:900;
+  margin:8px 0 2px;
+  font-size:15px;
+  letter-spacing:.3px;
+}
 
-  margin-top:5px;
+.sub{
+  color:#fff;
+  font-size:10px;
+  letter-spacing:2px;
+  font-weight:800;
+}
 
-  margin-bottom:26px;
-
-  color:#d0d0d0;
-
+.e2e{
+  color:#b8ffbe;
+  font-size:11px;
+  margin:14px 0 18px;
 }
 
 input{
-
   width:100%;
-
-  padding:15px;
-
-  margin-bottom:13px;
-
-  border:0;
-
-  border-radius:10px;
-
+  background:#132015;
+  border:1.2px solid #3a6b3f;
+  border-radius:14px;
+  padding:14px;
+  color:#fff;
   outline:none;
-
-  font-size:16px;
-
 }
 
-button{
+.row{
+  display:flex;
+  gap:10px;
+  margin:12px 0;
+}
 
+.pref{
+  width:80px;
+  background:#132015;
+  border:1.2px solid #3a6b3f;
+  border-radius:14px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:#fff;
+  font-weight:800;
+}
+
+.btn{
   width:100%;
-
-  padding:15px;
-
-  border:0;
-
-  border-radius:10px;
-
-  background:#00e676;
-
-  color:#04150d;
-
-  font-size:16px;
-
-  font-weight:bold;
-
+  background:#6eff7a;
+  border:none;
+  padding:16px;
+  border-radius:14px;
+  font-weight:900;
+  color:#123b1a;
   cursor:pointer;
-
-}
-
-button:disabled{
-
-  opacity:.7;
-
-  cursor:not-allowed;
-
-}
-
-.security{
-
-  margin-top:18px;
-
-  color:#cfcfcf;
-
-  font-size:14px;
-
+  letter-spacing:.5px;
+  box-shadow:
+    0 0 20px rgba(110,255,122,.6);
 }
 
 </style>
@@ -181,6 +156,7 @@ button:disabled{
 
 <div class="card">
 
+
   <div class="logo">
     V
   </div>
@@ -191,94 +167,109 @@ button:disabled{
   </h1>
 
 
-  <div class="subtitle">
+  <div class="todo">
     TODO EN UNO
+  </div>
+
+
+  <div class="sub">
+    SEGURO • RAPIDO • PRIVADO
+  </div>
+
+
+  <div class="e2e">
+    🔒 Cifrado de extremo a extremo
   </div>
 
 
   <input
     id="user"
-    type="text"
-    placeholder="Tu nombre"
-    autocomplete="name"
+    placeholder="Nombre de usuario"
   >
 
 
-  <input
-    id="phone"
-    type="tel"
-    placeholder="+34 600 000 000"
-    autocomplete="tel"
+  <div class="row">
+
+    <div class="pref">
+      +34
+    </div>
+
+    <input
+      id="phone"
+      placeholder="Teléfono"
+      style="margin:0;flex:1"
+    >
+
+  </div>
+
+
+  <div
+    style="
+      text-align:left;
+      color:#8fbf94;
+      font-size:10px;
+      margin:-6px 0 12px 4px
+    "
   >
+    País detectado: ES - Prefijo +34
+  </div>
 
 
   <button
+    class="btn"
     id="btn"
-    type="button"
+    onclick="send()"
   >
     ENVIARME PIN POR SMS
   </button>
 
-
-  <div class="security">
-    🔒 Cifrado de extremo a extremo
-  </div>
 
 </div>
 
 
 <script>
 
-'use strict';
-
-
-const userInput =
-  document.getElementById('user');
-
-const phoneInput =
-  document.getElementById('phone');
-
-const btn =
-  document.getElementById('btn');
-
-
-// ======================================================
-// REGISTRO VOBIXCHAT
-// ======================================================
-
 async function send(){
 
-  const username =
-    userInput.value.trim();
+  const u =
+    document
+      .getElementById('user')
+      .value
+      .trim();
 
-  const phone =
-    phoneInput.value.trim();
+  const p =
+    document
+      .getElementById('phone')
+      .value
+      .trim();
+
+  const btn =
+    document.getElementById('btn');
 
 
-  if (!username || !phone) {
+  if(!u || !p){
 
-    alert(
+    return alert(
       'Pon nombre y teléfono'
     );
-
-    return;
 
   }
 
 
-  btn.disabled = true;
-
   btn.innerText =
     'ENVIANDO...';
 
+  btn.disabled = true;
 
-  try {
 
-    // --------------------------------------------------
-    // SOLICITAR PIN
-    // --------------------------------------------------
+  try{
 
-    const response =
+
+    // ================================================
+    // PEDIR PIN AL SERVIDOR
+    // ================================================
+
+    const r =
       await fetch(
         '/api/send-pin',
         {
@@ -292,9 +283,9 @@ async function send(){
 
           body:JSON.stringify({
 
-            user:username,
+            user:u,
 
-            phone:phone
+            phone:p
 
           })
 
@@ -302,14 +293,14 @@ async function send(){
       );
 
 
-    const data =
-      await response.json();
+    const d =
+      await r.json();
 
 
-    if (!data.ok) {
+    if(!d.ok){
 
       alert(
-        data.msg ||
+        d.msg ||
         'No se pudo generar el PIN'
       );
 
@@ -318,28 +309,30 @@ async function send(){
     }
 
 
-    // --------------------------------------------------
+    // ================================================
     // PIN DE PRUEBAS
-    // --------------------------------------------------
+    // ================================================
 
-    const enteredPin =
+    const pin =
       prompt(
         'Tu PIN es: ' +
-        data.pin +
-        '\n\nEscríbelo para entrar:'
+        d.pin +
+        '\nEscríbelo para entrar:'
       );
 
 
-    if (!enteredPin) {
+    if(!pin){
+
       return;
+
     }
 
 
-    // --------------------------------------------------
-    // VERIFICACIÓN EN EL SERVIDOR
-    // --------------------------------------------------
+    // ================================================
+    // VERIFICAR PIN EN EL SERVIDOR
+    // ================================================
 
-    const verifyResponse =
+    const vr =
       await fetch(
         '/verify-pin',
         {
@@ -353,10 +346,9 @@ async function send(){
 
           body:JSON.stringify({
 
-            phone:phone,
+            phone:p,
 
-            pin:
-              enteredPin.trim()
+            pin:pin.trim()
 
           })
 
@@ -364,14 +356,14 @@ async function send(){
       );
 
 
-    const verification =
-      await verifyResponse.json();
+    const verified =
+      await vr.json();
 
 
-    if (!verification.ok) {
+    if(!verified.ok){
 
       alert(
-        verification.msg ||
+        verified.msg ||
         'PIN incorrecto'
       );
 
@@ -380,42 +372,49 @@ async function send(){
     }
 
 
-    // --------------------------------------------------
+    // ================================================
     // GUARDAR SESIÓN LOCAL
-    // --------------------------------------------------
+    // ================================================
 
     localStorage.setItem(
       'vobix_user',
-      verification.user.username
+      verified.user
+        ? verified.user.username
+        : u
     );
 
 
     localStorage.setItem(
       'vobix_phone',
-      phone
+      p
     );
 
 
-    localStorage.setItem(
-      'vobix_user_id',
-      verification.user.id
-    );
+    if(
+      verified.user &&
+      verified.user.id
+    ){
+
+      localStorage.setItem(
+        'vobix_user_id',
+        verified.user.id
+      );
+
+    }
 
 
-    // --------------------------------------------------
-    // ENTRAR
-    // --------------------------------------------------
+    // ================================================
+    // ENTRAR A VOBIXCHAT
+    // ================================================
 
-    window.location.href =
+    location.href =
       'chat.html';
 
 
-  } catch (error) {
+  }catch(error){
 
-    console.error(
-      'VOBIXCHAT REGISTER ERROR:',
-      error
-    );
+
+    console.error(error);
 
 
     alert(
@@ -423,46 +422,19 @@ async function send(){
     );
 
 
-  } finally {
+  }finally{
 
-    btn.disabled = false;
 
     btn.innerText =
       'ENVIARME PIN POR SMS';
 
+
+    btn.disabled = false;
+
+
   }
 
 }
-
-
-btn.addEventListener(
-  'click',
-  send
-);
-
-
-phoneInput.addEventListener(
-  'keydown',
-  event => {
-
-    if (event.key === 'Enter') {
-      send();
-    }
-
-  }
-);
-
-
-userInput.addEventListener(
-  'keydown',
-  event => {
-
-    if (event.key === 'Enter') {
-      phoneInput.focus();
-    }
-
-  }
-);
 
 </script>
 
