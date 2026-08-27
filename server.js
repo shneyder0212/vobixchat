@@ -2,11 +2,13 @@
 
 const express = require('express');
 const http = require('http');
+const crypto = require('crypto');
 const { Server } = require('socket.io');
 const path = require('path');
 
 const config = require('./config');
 const database = require('./database/db');
+const { normalizePhone } = require('./core/users');
 
 const app = express();
 const server = http.createServer(app);
@@ -22,110 +24,79 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 
 // ======================================================
-// VOBIXCHAT
-// NORMALIZACIÓN INTERNACIONAL DE TELÉFONOS
+// VOBIXCHAT - SEGURIDAD / PIN / SESIONES
 // ======================================================
 
-function normalizeInternationalPhone(phone, callingCode = '') {
+const pins = {};
+const pendingUsers = {};
+const sessions = {};
 
-  let number = String(phone || '').trim();
-
-  let prefix = String(callingCode || '').trim();
-
-
-  // Quitar espacios, guiones, paréntesis, etc.
-  number = number.replace(/[^\d+]/g, '');
-
-  prefix = prefix.replace(/[^\d+]/g, '');
+const SESSION_TTL_MS =
+  7 * 24 * 60 * 60 * 1000; // 7 días
 
 
-  // ----------------------------------------------
-  // 0034XXXXXXXXX -> +34XXXXXXXXX
-  // ----------------------------------------------
+// ======================================================
+// CREAR TOKEN SEGURO
+// ======================================================
 
-  if (number.startsWith('00')) {
+function createSessionToken() {
 
-    number =
-      '+' + number.substring(2);
-
-  }
-
-
-  // ----------------------------------------------
-  // SI YA VIENE EN FORMATO INTERNACIONAL
-  // NO VOLVEMOS A AÑADIR EL PREFIJO
-  // ----------------------------------------------
-
-  if (number.startsWith('+')) {
-
-    if (!/^\+[1-9]\d{6,14}$/.test(number)) {
-
-      return '';
-
-    }
-
-    return number;
-
-  }
-
-
-  // ----------------------------------------------
-  // NECESITAMOS PREFIJO INTERNACIONAL
-  // ----------------------------------------------
-
-  if (!prefix) {
-
-    return '';
-
-  }
-
-
-  if (!prefix.startsWith('+')) {
-
-    prefix =
-      '+' + prefix;
-
-  }
-
-
-  // ----------------------------------------------
-  // QUITAR CEROS INICIALES DEL NÚMERO NACIONAL
-  // ----------------------------------------------
-
-  number =
-    number.replace(/^0+/, '');
-
-
-  const internationalPhone =
-    prefix + number;
-
-
-  // ----------------------------------------------
-  // VALIDACIÓN BÁSICA E.164
-  // ----------------------------------------------
-
-  if (
-    !/^\+[1-9]\d{6,14}$/.test(
-      internationalPhone
-    )
-  ) {
-
-    return '';
-
-  }
-
-
-  return internationalPhone;
+  return crypto
+    .randomBytes(32)
+    .toString('hex');
 
 }
 
 
 // ======================================================
-// VOBIXCHAT - REGISTRO / PIN DE PRUEBAS
+// OBTENER TOKEN DEL REQUEST
 // ======================================================
 
-const pins = {};
-const pendingUsers = {};
+function getToken(req) {
+
+  const authorization =
+    req.headers.authorization || '';
+
+  if (
+    authorization.startsWith('Bearer ')
+  ) {
+
+    return authorization
+      .slice(7)
+      .trim();
+
+  }
+
+  return '';
+
+}
+
+
+// ======================================================
+// LIMPIAR SESIONES VENCIDAS
+// ======================================================
+
+function cleanExpiredSessions() {
+
+  const now = Date.now();
+
+  for (
+    const [token, session]
+    of Object.entries(sessions)
+  ) {
+
+    if (
+      now - session.createdAt >
+      SESSION_TTL_MS
+    ) {
+
+      delete sessions[token];
+
+    }
+
+  }
+
+}
 
 
 // ======================================================
@@ -134,46 +105,22 @@ const pendingUsers = {};
 
 function sendPin(req, res) {
 
-  const phone =
-    normalizeInternationalPhone(
-      req.body.phone || '',
-      req.body.callingCode || ''
-    );
+  const phone = normalizePhone(
+    req.body.phone || ''
+  );
 
-
-  const username =
-    String(
-      req.body.username ||
-      req.body.user ||
-      ''
-    ).trim();
-
-
-  const country =
-    String(
-      req.body.country || ''
-    )
-      .trim()
-      .toUpperCase();
-
-
-  const language =
-    String(
-      req.body.language || ''
-    )
-      .trim()
-      .toLowerCase();
+  const username = String(
+    req.body.username ||
+    req.body.user ||
+    ''
+  ).trim();
 
 
   if (!phone || !username) {
 
     return res.status(400).json({
-
       ok: false,
-
-      msg:
-        'Falta usuario, teléfono o prefijo internacional'
-
+      msg: 'Falta usuario o teléfono'
     });
 
   }
@@ -182,12 +129,8 @@ function sendPin(req, res) {
   if (!config.TEST_PIN_MODE) {
 
     return res.status(503).json({
-
       ok: false,
-
-      msg:
-        'SMS real todavía no configurado'
-
+      msg: 'SMS real todavía no configurado'
     });
 
   }
@@ -197,18 +140,21 @@ function sendPin(req, res) {
     String(config.TEST_PIN);
 
 
-  pins[phone] = pin;
+  pins[phone] = {
+
+    pin,
+
+    createdAt:
+      Date.now(),
+
+    attempts: 0
+
+  };
 
 
   pendingUsers[phone] = {
 
     username,
-
-    phone,
-
-    country,
-
-    language,
 
     createdAt:
       Date.now()
@@ -217,7 +163,7 @@ function sendPin(req, res) {
 
 
   console.log(
-    `VOBIXCHAT | PIN PRUEBAS | ${username} | ${country || 'SIN PAIS'}`
+    `VOBIXCHAT | PIN PRUEBAS GENERADO | ${username}`
   );
 
 
@@ -227,16 +173,12 @@ function sendPin(req, res) {
 
     pin,
 
-    testMode: true,
-
-    phone
+    testMode: true
 
   });
 
 }
 
-
-// Mantener compatibilidad con las dos rutas
 
 app.post(
   '/send-pin',
@@ -253,89 +195,343 @@ app.post(
 // VERIFICAR PIN
 // ======================================================
 
-app.post(
-  '/verify-pin',
-  async (req, res) => {
+async function verifyPin(req, res) {
 
-    const phone =
-      normalizeInternationalPhone(
-        req.body.phone || '',
-        req.body.callingCode || ''
+  const phone = normalizePhone(
+    req.body.phone || ''
+  );
+
+  const pin = String(
+    req.body.pin || ''
+  ).trim();
+
+
+  if (!phone || !pin) {
+
+    return res.status(400).json({
+
+      ok: false,
+
+      msg:
+        'Faltan datos'
+
+    });
+
+  }
+
+
+  const pinData =
+    pins[phone];
+
+
+  if (!pinData) {
+
+    return res.status(400).json({
+
+      ok: false,
+
+      msg:
+        'Solicita un PIN primero'
+
+    });
+
+  }
+
+
+  // ====================================================
+  // COMPROBAR CADUCIDAD
+  // ====================================================
+
+  if (
+    Date.now() -
+    pinData.createdAt >
+    config.PIN_TTL_MS
+  ) {
+
+    delete pins[phone];
+    delete pendingUsers[phone];
+
+
+    return res.status(400).json({
+
+      ok: false,
+
+      msg:
+        'El PIN ha caducado. Solicita otro.'
+
+    });
+
+  }
+
+
+  // ====================================================
+  // COMPROBAR INTENTOS
+  // ====================================================
+
+  if (
+    pinData.attempts >=
+    config.PIN_MAX_ATTEMPTS
+  ) {
+
+    delete pins[phone];
+    delete pendingUsers[phone];
+
+
+    return res.status(429).json({
+
+      ok: false,
+
+      msg:
+        'Demasiados intentos. Solicita otro PIN.'
+
+    });
+
+  }
+
+
+  // ====================================================
+  // COMPROBAR PIN
+  // ====================================================
+
+  if (
+    pinData.pin !== pin
+  ) {
+
+    pinData.attempts += 1;
+
+
+    return res.status(400).json({
+
+      ok: false,
+
+      msg:
+        'PIN incorrecto',
+
+      attemptsLeft:
+        Math.max(
+          0,
+          config.PIN_MAX_ATTEMPTS -
+          pinData.attempts
+        )
+
+    });
+
+  }
+
+
+  const pending =
+    pendingUsers[phone];
+
+
+  if (!pending) {
+
+    return res.status(400).json({
+
+      ok: false,
+
+      msg:
+        'Registro no encontrado'
+
+    });
+
+  }
+
+
+  try {
+
+    // ==================================================
+    // GUARDAR / ACTUALIZAR USUARIO
+    // ==================================================
+
+    const result =
+      await database.query(
+        `
+        INSERT INTO users
+        (
+          username,
+          phone,
+          verified,
+          online,
+          created_at,
+          updated_at
+        )
+
+        VALUES
+        (
+          $1,
+          $2,
+          true,
+          false,
+          NOW(),
+          NOW()
+        )
+
+        ON CONFLICT (phone)
+
+        DO UPDATE SET
+
+          username =
+            EXCLUDED.username,
+
+          verified =
+            true,
+
+          updated_at =
+            NOW()
+
+        RETURNING
+
+          id,
+          username,
+          phone,
+          verified,
+          created_at,
+          updated_at
+        `,
+        [
+          pending.username,
+          phone
+        ]
       );
 
 
-    const pin =
-      String(
-        req.body.pin || ''
-      ).trim();
+    const user =
+      result.rows[0];
 
 
-    if (!phone || !pin) {
+    // ==================================================
+    // CREAR SESIÓN
+    // ==================================================
 
-      return res.status(400).json({
+    const token =
+      createSessionToken();
+
+
+    sessions[token] = {
+
+      userId:
+        user.id,
+
+      phone:
+        user.phone,
+
+      username:
+        user.username,
+
+      createdAt:
+        Date.now()
+
+    };
+
+
+    // PIN YA NO SE PUEDE REUTILIZAR
+
+    delete pins[phone];
+    delete pendingUsers[phone];
+
+
+    console.log(
+      `VOBIXCHAT | SESIÓN CREADA | ${user.username}`
+    );
+
+
+    return res.json({
+
+      ok: true,
+
+      token,
+
+      user: {
+
+        id:
+          user.id,
+
+        username:
+          user.username,
+
+        phone:
+          user.phone,
+
+        verified:
+          user.verified
+
+      }
+
+    });
+
+
+  } catch (error) {
+
+    console.error(
+      'VOBIXCHAT DATABASE REGISTER ERROR:',
+      error.message
+    );
+
+
+    return res.status(500).json({
+
+      ok: false,
+
+      msg:
+        'No se pudo guardar el usuario'
+
+    });
+
+  }
+
+}
+
+
+app.post(
+  '/verify-pin',
+  verifyPin
+);
+
+app.post(
+  '/api/verify-pin',
+  verifyPin
+);
+
+
+// ======================================================
+// COMPROBAR SESIÓN
+// ======================================================
+
+app.get(
+  '/api/session',
+  async (req, res) => {
+
+    cleanExpiredSessions();
+
+
+    const token =
+      getToken(req);
+
+
+    if (!token) {
+
+      return res.status(401).json({
 
         ok: false,
 
-        msg:
-          'Faltan datos de verificación'
+        authenticated: false
 
       });
 
     }
 
 
-    // --------------------------------------------------
-    // COMPROBAR QUE EXISTE UN PIN
-    // --------------------------------------------------
-
-    if (!pins[phone]) {
-
-      return res.json({
-
-        ok: false,
-
-        msg:
-          'Solicita un PIN primero'
-
-      });
-
-    }
+    const session =
+      sessions[token];
 
 
-    // --------------------------------------------------
-    // COMPROBAR PIN
-    // --------------------------------------------------
+    if (!session) {
 
-    if (pins[phone] !== pin) {
-
-      return res.json({
+      return res.status(401).json({
 
         ok: false,
 
-        msg:
-          'PIN incorrecto'
-
-      });
-
-    }
-
-
-    // --------------------------------------------------
-    // RECUPERAR REGISTRO PENDIENTE
-    // --------------------------------------------------
-
-    const pending =
-      pendingUsers[phone];
-
-
-    if (!pending) {
-
-      return res.json({
-
-        ok: false,
-
-        msg:
-          'Registro no encontrado'
+        authenticated: false
 
       });
 
@@ -344,82 +540,67 @@ app.post(
 
     try {
 
-      // =================================================
-      // GUARDAR USUARIO EN POSTGRESQL / SUPABASE
-      // =================================================
-
       const result =
         await database.query(
           `
-          INSERT INTO users
-          (
-            username,
-            phone,
-            verified,
-            online,
-            created_at,
-            updated_at
-          )
-
-          VALUES
-          (
-            $1,
-            $2,
-            true,
-            false,
-            NOW(),
-            NOW()
-          )
-
-          ON CONFLICT (phone)
-
-          DO UPDATE SET
-
-            username =
-              EXCLUDED.username,
-
-            verified =
-              true,
-
-            updated_at =
-              NOW()
-
-          RETURNING
+          SELECT
             id,
             username,
             phone,
-            verified,
-            created_at,
-            updated_at
+            verified
+          FROM users
+          WHERE id = $1
+          LIMIT 1
           `,
           [
-            pending.username,
-            phone
+            session.userId
           ]
         );
+
+
+      if (
+        result.rows.length === 0
+      ) {
+
+        delete sessions[token];
+
+
+        return res.status(401).json({
+
+          ok: false,
+
+          authenticated: false
+
+        });
+
+      }
 
 
       const user =
         result.rows[0];
 
 
-      // ------------------------------------------------
-      // PIN DE UN SOLO USO
-      // ------------------------------------------------
+      if (!user.verified) {
 
-      delete pins[phone];
-
-      delete pendingUsers[phone];
+        delete sessions[token];
 
 
-      console.log(
-        `VOBIXCHAT | USUARIO GUARDADO | ${user.username} | ${user.phone}`
-      );
+        return res.status(401).json({
+
+          ok: false,
+
+          authenticated: false
+
+        });
+
+      }
 
 
       return res.json({
 
         ok: true,
+
+        authenticated: true,
 
         user: {
 
@@ -433,13 +614,7 @@ app.post(
             user.phone,
 
           verified:
-            user.verified,
-
-          country:
-            pending.country,
-
-          language:
-            pending.language
+            user.verified
 
         }
 
@@ -448,9 +623,8 @@ app.post(
 
     } catch (error) {
 
-
       console.error(
-        'VOBIXCHAT DATABASE REGISTER ERROR:',
+        'VOBIXCHAT SESSION ERROR:',
         error.message
       );
 
@@ -459,12 +633,40 @@ app.post(
 
         ok: false,
 
-        msg:
-          'No se pudo guardar el usuario'
+        authenticated: false
 
       });
 
     }
+
+  }
+);
+
+
+// ======================================================
+// CERRAR SESIÓN
+// ======================================================
+
+app.post(
+  '/api/logout',
+  (req, res) => {
+
+    const token =
+      getToken(req);
+
+
+    if (token) {
+
+      delete sessions[token];
+
+    }
+
+
+    return res.json({
+
+      ok: true
+
+    });
 
   }
 );
@@ -504,24 +706,25 @@ app.get(
 
     } catch (error) {
 
-
       console.error(
         'VOBIXCHAT DATABASE ERROR:',
         error.message
       );
 
 
-      return res.status(500).json({
+      return res
+        .status(500)
+        .json({
 
-        ok: false,
+          ok: false,
 
-        app:
-          'VobixChat',
+          app:
+            'VobixChat',
 
-        database:
-          'disconnected'
+          database:
+            'disconnected'
 
-      });
+        });
 
     }
 
@@ -579,9 +782,7 @@ io.on(
       ({ room } = {}) => {
 
         if (!room) {
-
           return;
-
         }
 
 
@@ -601,7 +802,10 @@ io.on(
 
         const others =
           Array.from(
-            io.sockets.adapter.rooms.get(room) ||
+            io.sockets
+              .adapter
+              .rooms
+              .get(room) ||
             []
           )
 
@@ -635,10 +839,11 @@ io.on(
         signal
       } = {}) => {
 
-        if (!to || !signal) {
-
+        if (
+          !to ||
+          !signal
+        ) {
           return;
-
         }
 
 
@@ -662,12 +867,12 @@ io.on(
 
     socket.on(
       'meet-leave',
-      ({ room } = {}) => {
+      ({
+        room
+      } = {}) => {
 
         if (!room) {
-
           return;
-
         }
 
 
@@ -703,6 +908,16 @@ io.on(
 
 
 // ======================================================
+// LIMPIEZA AUTOMÁTICA
+// ======================================================
+
+setInterval(
+  cleanExpiredSessions,
+  60 * 60 * 1000
+);
+
+
+// ======================================================
 // ARRANQUE DEL SERVIDOR
 // ======================================================
 
@@ -714,7 +929,6 @@ const PORT =
 server.listen(
   PORT,
   async () => {
-
 
     console.log(
       `VobixChat LISTO | Puerto ${PORT}`
@@ -731,7 +945,8 @@ server.listen(
 
 
     const connected =
-      await database.testConnection();
+      await database
+        .testConnection();
 
 
     if (connected) {
@@ -747,7 +962,6 @@ server.listen(
       );
 
     }
-
 
   }
 );
