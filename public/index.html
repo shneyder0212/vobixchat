@@ -167,17 +167,26 @@ input{
   </h1>
 
 
-  <div class="todo">
+  <div
+    class="todo"
+    id="txtTodo"
+  >
     TODO EN UNO
   </div>
 
 
-  <div class="sub">
+  <div
+    class="sub"
+    id="txtSub"
+  >
     SEGURO • RAPIDO • PRIVADO
   </div>
 
 
-  <div class="e2e">
+  <div
+    class="e2e"
+    id="txtE2E"
+  >
     🔒 Cifrado de extremo a extremo
   </div>
 
@@ -190,13 +199,18 @@ input{
 
   <div class="row">
 
-    <div class="pref">
+    <div
+      class="pref"
+      id="prefix"
+    >
       +34
     </div>
 
     <input
       id="phone"
       placeholder="Teléfono"
+      inputmode="tel"
+      autocomplete="tel-national"
       style="margin:0;flex:1"
     >
 
@@ -204,6 +218,7 @@ input{
 
 
   <div
+    id="countryInfo"
     style="
       text-align:left;
       color:#8fbf94;
@@ -229,6 +244,365 @@ input{
 
 <script>
 
+/* ================================================
+   VOBIXCHAT
+   INTERNACIONALIZACIÓN
+================================================ */
+
+let COUNTRY_CODE = 'ES';
+let COUNTRY_NAME = 'España';
+let CALLING_CODE = '+34';
+
+
+/* ================================================
+   IDIOMAS
+================================================ */
+
+const translations = {
+
+  es:{
+    todo:'TODO EN UNO',
+    sub:'SEGURO • RAPIDO • PRIVADO',
+    e2e:'🔒 Cifrado de extremo a extremo',
+    user:'Nombre de usuario',
+    phone:'Teléfono',
+    country:'País detectado',
+    prefix:'Prefijo',
+    button:'ENVIARME PIN POR SMS',
+    sending:'ENVIANDO...',
+    missing:'Pon nombre y teléfono',
+    pin:'Escribe tu PIN para entrar:',
+    wrong:'PIN incorrecto',
+    error:'No se pudo completar el registro'
+  },
+
+  en:{
+    todo:'ALL IN ONE',
+    sub:'SECURE • FAST • PRIVATE',
+    e2e:'🔒 End-to-end encryption',
+    user:'Username',
+    phone:'Phone',
+    country:'Detected country',
+    prefix:'Prefix',
+    button:'SEND ME PIN BY SMS',
+    sending:'SENDING...',
+    missing:'Enter your name and phone number',
+    pin:'Enter your PIN:',
+    wrong:'Incorrect PIN',
+    error:'Registration could not be completed'
+  },
+
+  fr:{
+    todo:'TOUT EN UN',
+    sub:'SÛR • RAPIDE • PRIVÉ',
+    e2e:'🔒 Chiffrement de bout en bout',
+    user:"Nom d'utilisateur",
+    phone:'Téléphone',
+    country:'Pays détecté',
+    prefix:'Préfixe',
+    button:'ENVOYER LE PIN PAR SMS',
+    sending:'ENVOI...',
+    missing:'Entrez votre nom et téléphone',
+    pin:'Entrez votre PIN :',
+    wrong:'PIN incorrect',
+    error:"L'inscription n'a pas pu être terminée"
+  },
+
+  de:{
+    todo:'ALLES IN EINEM',
+    sub:'SICHER • SCHNELL • PRIVAT',
+    e2e:'🔒 Ende-zu-Ende-Verschlüsselung',
+    user:'Benutzername',
+    phone:'Telefon',
+    country:'Erkanntes Land',
+    prefix:'Vorwahl',
+    button:'PIN PER SMS SENDEN',
+    sending:'WIRD GESENDET...',
+    missing:'Name und Telefonnummer eingeben',
+    pin:'PIN eingeben:',
+    wrong:'Falsche PIN',
+    error:'Registrierung konnte nicht abgeschlossen werden'
+  },
+
+  it:{
+    todo:'TUTTO IN UNO',
+    sub:'SICURO • VELOCE • PRIVATO',
+    e2e:'🔒 Crittografia end-to-end',
+    user:'Nome utente',
+    phone:'Telefono',
+    country:'Paese rilevato',
+    prefix:'Prefisso',
+    button:'INVIA PIN VIA SMS',
+    sending:'INVIO...',
+    missing:'Inserisci nome e telefono',
+    pin:'Inserisci il PIN:',
+    wrong:'PIN errato',
+    error:'Registrazione non completata'
+  },
+
+  pt:{
+    todo:'TUDO EM UM',
+    sub:'SEGURO • RÁPIDO • PRIVADO',
+    e2e:'🔒 Criptografia de ponta a ponta',
+    user:'Nome de usuário',
+    phone:'Telefone',
+    country:'País detectado',
+    prefix:'Prefixo',
+    button:'ENVIAR PIN POR SMS',
+    sending:'ENVIANDO...',
+    missing:'Digite nome e telefone',
+    pin:'Digite seu PIN:',
+    wrong:'PIN incorreto',
+    error:'Não foi possível concluir o registro'
+  }
+
+};
+
+
+/* ================================================
+   DETECTAR IDIOMA DEL MÓVIL / NAVEGADOR
+================================================ */
+
+function detectLanguage(){
+
+  const browserLanguage =
+    (
+      navigator.languages &&
+      navigator.languages.length
+        ? navigator.languages[0]
+        : navigator.language
+    ) || 'es';
+
+  const language =
+    browserLanguage
+      .toLowerCase()
+      .split('-')[0];
+
+  if(translations[language]){
+    return language;
+  }
+
+  return 'en';
+}
+
+
+let LANG = detectLanguage();
+
+
+function t(key){
+
+  return (
+    translations[LANG][key] ||
+    translations.en[key] ||
+    key
+  );
+
+}
+
+
+/* ================================================
+   APLICAR IDIOMA
+================================================ */
+
+function applyLanguage(){
+
+  document.documentElement.lang = LANG;
+
+  document.getElementById('txtTodo')
+    .textContent = t('todo');
+
+  document.getElementById('txtSub')
+    .textContent = t('sub');
+
+  document.getElementById('txtE2E')
+    .textContent = t('e2e');
+
+  document.getElementById('user')
+    .placeholder = t('user');
+
+  document.getElementById('phone')
+    .placeholder = t('phone');
+
+  document.getElementById('btn')
+    .textContent = t('button');
+
+  updateCountryText();
+
+}
+
+
+/* ================================================
+   MOSTRAR PAÍS Y PREFIJO
+================================================ */
+
+function updateCountryText(){
+
+  document.getElementById('prefix')
+    .textContent = CALLING_CODE;
+
+  document.getElementById('countryInfo')
+    .textContent =
+      t('country') +
+      ': ' +
+      COUNTRY_CODE +
+      ' - ' +
+      t('prefix') +
+      ' ' +
+      CALLING_CODE;
+
+}
+
+
+/* ================================================
+   DETECTAR PAÍS APROXIMADO POR IP
+================================================ */
+
+async function detectCountry(){
+
+  try{
+
+    const response =
+      await fetch(
+        'https://ipapi.co/json/'
+      );
+
+    if(!response.ok){
+      throw new Error('IP lookup failed');
+    }
+
+    const data =
+      await response.json();
+
+    if(data.error){
+      throw new Error('IP lookup error');
+    }
+
+    if(data.country_code){
+
+      COUNTRY_CODE =
+        data.country_code
+          .toUpperCase();
+
+    }
+
+    if(data.country_name){
+
+      COUNTRY_NAME =
+        data.country_name;
+
+    }
+
+    if(data.country_calling_code){
+
+      CALLING_CODE =
+        data.country_calling_code
+          .split(',')[0]
+          .trim();
+
+    }
+
+    updateCountryText();
+
+  }catch(error){
+
+    console.warn(
+      'No se pudo detectar país por IP.',
+      error
+    );
+
+    /*
+      Si falla la detección IP,
+      mantenemos España +34 como respaldo
+      durante esta fase de pruebas.
+    */
+
+    updateCountryText();
+
+  }
+
+}
+
+
+/* ================================================
+   NORMALIZAR TELÉFONO
+================================================ */
+
+function normalizePhone(number){
+
+  let phone =
+    String(number || '')
+      .trim();
+
+  /*
+    Quitamos espacios, guiones,
+    paréntesis y caracteres que
+    no sean números o +
+  */
+
+  phone =
+    phone.replace(
+      /[^\d+]/g,
+      ''
+    );
+
+
+  /*
+    00XXXXXXXX
+    se transforma en
+    +XXXXXXXX
+  */
+
+  if(phone.startsWith('00')){
+
+    phone =
+      '+' +
+      phone.substring(2);
+
+  }
+
+
+  /*
+    Si el usuario ya escribió
+    +34..., +33..., etc.,
+    respetamos ese formato.
+  */
+
+  if(phone.startsWith('+')){
+
+    return phone;
+
+  }
+
+
+  /*
+    Quitamos ceros iniciales
+    del número nacional.
+  */
+
+  phone =
+    phone.replace(
+      /^0+/,
+      ''
+    );
+
+
+  /*
+    Añadimos el prefijo
+    detectado.
+  */
+
+  return (
+    CALLING_CODE +
+    phone
+  );
+
+}
+
+
+/* ================================================
+   ENVIAR PIN
+================================================ */
+
 async function send(){
 
   const u =
@@ -237,7 +611,7 @@ async function send(){
       .value
       .trim();
 
-  const p =
+  const rawPhone =
     document
       .getElementById('phone')
       .value
@@ -247,17 +621,27 @@ async function send(){
     document.getElementById('btn');
 
 
-  if(!u || !p){
+  if(!u || !rawPhone){
 
     return alert(
-      'Pon nombre y teléfono'
+      t('missing')
     );
 
   }
 
 
-  btn.innerText =
-    'ENVIANDO...';
+  const internationalPhone =
+    normalizePhone(rawPhone);
+
+
+  console.log(
+    'Teléfono normalizado:',
+    internationalPhone
+  );
+
+
+  btn.textContent =
+    t('sending');
 
   btn.disabled = true;
 
@@ -265,9 +649,9 @@ async function send(){
   try{
 
 
-    // ================================================
-    // PEDIR PIN AL SERVIDOR
-    // ================================================
+    /* ============================================
+       PEDIR PIN
+    ============================================ */
 
     const r =
       await fetch(
@@ -285,7 +669,13 @@ async function send(){
 
             user:u,
 
-            phone:p
+            phone:internationalPhone,
+
+            country:COUNTRY_CODE,
+
+            callingCode:CALLING_CODE,
+
+            language:LANG
 
           })
 
@@ -301,7 +691,7 @@ async function send(){
 
       alert(
         d.msg ||
-        'No se pudo generar el PIN'
+        t('error')
       );
 
       return;
@@ -309,15 +699,18 @@ async function send(){
     }
 
 
-    // ================================================
-    // PIN DE PRUEBAS
-    // ================================================
+    /* ============================================
+       PIN DE PRUEBAS
+    ============================================ */
 
     const pin =
       prompt(
-        'Tu PIN es: ' +
-        d.pin +
-        '\nEscríbelo para entrar:'
+        (
+          d.pin
+            ? 'PIN: ' + d.pin + '\n\n'
+            : ''
+        ) +
+        t('pin')
       );
 
 
@@ -328,9 +721,9 @@ async function send(){
     }
 
 
-    // ================================================
-    // VERIFICAR PIN EN EL SERVIDOR
-    // ================================================
+    /* ============================================
+       VERIFICAR PIN EN SERVIDOR
+    ============================================ */
 
     const vr =
       await fetch(
@@ -346,9 +739,15 @@ async function send(){
 
           body:JSON.stringify({
 
-            phone:p,
+            phone:internationalPhone,
 
-            pin:pin.trim()
+            pin:pin.trim(),
+
+            country:COUNTRY_CODE,
+
+            callingCode:CALLING_CODE,
+
+            language:LANG
 
           })
 
@@ -364,7 +763,7 @@ async function send(){
 
       alert(
         verified.msg ||
-        'PIN incorrecto'
+        t('wrong')
       );
 
       return;
@@ -372,9 +771,9 @@ async function send(){
     }
 
 
-    // ================================================
-    // GUARDAR SESIÓN LOCAL
-    // ================================================
+    /* ============================================
+       GUARDAR DATOS TEMPORALES DE SESIÓN
+    ============================================ */
 
     localStorage.setItem(
       'vobix_user',
@@ -386,7 +785,19 @@ async function send(){
 
     localStorage.setItem(
       'vobix_phone',
-      p
+      internationalPhone
+    );
+
+
+    localStorage.setItem(
+      'vobix_country',
+      COUNTRY_CODE
+    );
+
+
+    localStorage.setItem(
+      'vobix_language',
+      LANG
     );
 
 
@@ -403,9 +814,9 @@ async function send(){
     }
 
 
-    // ================================================
-    // ENTRAR A VOBIXCHAT
-    // ================================================
+    /* ============================================
+       ENTRAR
+    ============================================ */
 
     location.href =
       'chat.html';
@@ -418,15 +829,15 @@ async function send(){
 
 
     alert(
-      'No se pudo completar el registro'
+      t('error')
     );
 
 
   }finally{
 
 
-    btn.innerText =
-      'ENVIARME PIN POR SMS';
+    btn.textContent =
+      t('button');
 
 
     btn.disabled = false;
@@ -435,6 +846,14 @@ async function send(){
   }
 
 }
+
+
+/* ================================================
+   INICIAR
+================================================ */
+
+applyLanguage();
+detectCountry();
 
 </script>
 
