@@ -7,6 +7,7 @@ const path = require('path');
 
 const config = require('./config');
 const database = require('./database/db');
+const { normalizePhone } = require('./core/users');
 
 const app = express();
 const server = http.createServer(app);
@@ -21,27 +22,30 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
 
-// ========================================================
-// VOBIXCHAT
-// PIN TEMPORAL DE PRUEBAS
-// ========================================================
+// ======================================================
+// VOBIXCHAT - REGISTRO / PIN DE PRUEBAS
+// ======================================================
 
 const pins = {};
-const users = {};
+const pendingUsers = {};
 
 
-// ========================================================
+// ======================================================
 // GENERAR PIN
-// ========================================================
+// ======================================================
 
 function sendPin(req, res) {
 
-  const phone = req.body.phone;
+  const phone = normalizePhone(
+    req.body.phone || ''
+  );
 
-  // Compatibilidad con index.html y app.js
-  const username =
+  const username = String(
     req.body.username ||
-    req.body.user;
+    req.body.user ||
+    ''
+  ).trim();
+
 
   if (!phone || !username) {
 
@@ -52,6 +56,7 @@ function sendPin(req, res) {
 
   }
 
+
   if (!config.TEST_PIN_MODE) {
 
     return res.status(503).json({
@@ -61,69 +66,211 @@ function sendPin(req, res) {
 
   }
 
-  const pin = config.TEST_PIN;
+
+  const pin = String(config.TEST_PIN);
 
   pins[phone] = pin;
-  users[phone] = username;
+
+  pendingUsers[phone] = {
+    username,
+    createdAt: Date.now()
+  };
+
 
   console.log(
-    `VOBIXCHAT | PIN PRUEBAS | ${username} | PIN ${pin}`
+    `VOBIXCHAT | PIN PRUEBAS GENERADO | ${username}`
   );
+
 
   return res.json({
     ok: true,
     pin,
     testMode: true
   });
+
 }
 
-
-// Las dos versiones actuales del frontend funcionan.
 
 app.post('/send-pin', sendPin);
 app.post('/api/send-pin', sendPin);
 
 
-// ========================================================
+// ======================================================
 // VERIFICAR PIN
-// ========================================================
+// ======================================================
 
-app.post('/verify-pin', (req, res) => {
+app.post('/verify-pin', async (req, res) => {
 
-  const phone = req.body.phone;
-  const pin = req.body.pin;
+  const phone = normalizePhone(
+    req.body.phone || ''
+  );
 
-  if (
-    !phone ||
-    !pin ||
-    pins[phone] !== pin
-  ) {
+  const pin = String(
+    req.body.pin || ''
+  ).trim();
 
-    return res.json({
-      ok: false
+
+  if (!phone || !pin) {
+
+    return res.status(400).json({
+      ok: false,
+      msg: 'Faltan datos'
     });
 
   }
 
-  return res.json({
-    ok: true,
-    username: users[phone]
-  });
+
+  if (!pins[phone]) {
+
+    return res.json({
+      ok: false,
+      msg: 'Solicita un PIN primero'
+    });
+
+  }
+
+
+  if (pins[phone] !== pin) {
+
+    return res.json({
+      ok: false,
+      msg: 'PIN incorrecto'
+    });
+
+  }
+
+
+  const pending =
+    pendingUsers[phone];
+
+
+  if (!pending) {
+
+    return res.json({
+      ok: false,
+      msg: 'Registro no encontrado'
+    });
+
+  }
+
+
+  try {
+
+    const result =
+      await database.query(
+        `
+        INSERT INTO users
+        (
+          username,
+          phone,
+          verified,
+          online,
+          created_at,
+          updated_at
+        )
+
+        VALUES
+        (
+          $1,
+          $2,
+          true,
+          false,
+          NOW(),
+          NOW()
+        )
+
+        ON CONFLICT (phone)
+
+        DO UPDATE SET
+
+          username = EXCLUDED.username,
+
+          verified = true,
+
+          updated_at = NOW()
+
+        RETURNING
+          id,
+          username,
+          phone,
+          verified,
+          created_at,
+          updated_at
+        `,
+        [
+          pending.username,
+          phone
+        ]
+      );
+
+
+    const user =
+      result.rows[0];
+
+
+    delete pins[phone];
+    delete pendingUsers[phone];
+
+
+    console.log(
+      `VOBIXCHAT | USUARIO GUARDADO | ${user.username}`
+    );
+
+
+    return res.json({
+
+      ok: true,
+
+      user: {
+
+        id: user.id,
+
+        username:
+          user.username,
+
+        verified:
+          user.verified
+
+      }
+
+    });
+
+
+  } catch (error) {
+
+    console.error(
+      'VOBIXCHAT DATABASE REGISTER ERROR:',
+      error.message
+    );
+
+
+    return res.status(500).json({
+
+      ok: false,
+
+      msg:
+        'No se pudo guardar el usuario'
+
+    });
+
+  }
 
 });
 
 
-// ========================================================
-// COMPROBACIÓN INTERNA DE SALUD
-// ========================================================
+// ======================================================
+// ESTADO DE LA BASE DE DATOS
+// ======================================================
 
 app.get('/api/health', async (req, res) => {
 
   try {
 
-    const result = await database.query(
-      'SELECT NOW() AS server_time'
-    );
+    const result =
+      await database.query(
+        'SELECT NOW() AS server_time'
+      );
+
 
     return res.json({
 
@@ -138,12 +285,14 @@ app.get('/api/health', async (req, res) => {
 
     });
 
+
   } catch (error) {
 
     console.error(
       'VOBIXCHAT DATABASE ERROR:',
       error.message
     );
+
 
     return res.status(500).json({
 
@@ -160,11 +309,16 @@ app.get('/api/health', async (req, res) => {
 });
 
 
-// ========================================================
+// ======================================================
 // SOCKET.IO
-// ========================================================
+// ======================================================
 
 io.on('connection', socket => {
+
+
+  // ----------------------------------------------------
+  // USUARIO
+  // ----------------------------------------------------
 
   socket.on('set-user', user => {
 
@@ -173,12 +327,20 @@ io.on('connection', socket => {
   });
 
 
+  // ----------------------------------------------------
+  // CHAT ACTUAL
+  // ----------------------------------------------------
+
   socket.on('chat', data => {
 
     io.emit('chat', data);
 
   });
 
+
+  // ----------------------------------------------------
+  // REUNIONES
+  // ----------------------------------------------------
 
   socket.on(
     'meet-join',
@@ -188,7 +350,9 @@ io.on('connection', socket => {
         return;
       }
 
+
       socket.join(room);
+
 
       socket
         .to(room)
@@ -199,16 +363,22 @@ io.on('connection', socket => {
           }
         );
 
+
       const others =
         Array.from(
           io.sockets.adapter.rooms.get(room) || []
         )
+
           .filter(
             id => id !== socket.id
           )
+
           .map(
-            id => ({ id })
+            id => ({
+              id
+            })
           );
+
 
       io
         .to(socket.id)
@@ -228,6 +398,7 @@ io.on('connection', socket => {
       if (!to || !signal) {
         return;
       }
+
 
       io
         .to(to)
@@ -251,7 +422,9 @@ io.on('connection', socket => {
         return;
       }
 
+
       socket.leave(room);
+
 
       socket
         .to(room)
@@ -273,12 +446,13 @@ io.on('connection', socket => {
 
   });
 
+
 });
 
 
-// ========================================================
-// INICIAR SERVIDOR
-// ========================================================
+// ======================================================
+// ARRANQUE DEL SERVIDOR
+// ======================================================
 
 const PORT =
   process.env.PORT || 3000;
@@ -290,6 +464,7 @@ server.listen(PORT, async () => {
     `VobixChat LISTO | Puerto ${PORT}`
   );
 
+
   console.log(
     `PIN pruebas: ${
       config.TEST_PIN_MODE
@@ -298,10 +473,6 @@ server.listen(PORT, async () => {
     }`
   );
 
-
-  // ------------------------------------------------------
-  // PRUEBA AUTOMÁTICA DE POSTGRESQL
-  // ------------------------------------------------------
 
   const connected =
     await database.testConnection();
