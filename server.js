@@ -1,5 +1,23 @@
 'use strict';
 
+/*
+==========================================================
+ VOBIXCHAT SERVER
+ server.js
+
+ Núcleo actual:
+ - Express
+ - PostgreSQL / Supabase
+ - Inicialización automática del schema
+ - Registro y PIN
+ - Sesiones
+ - Health check
+ - Socket.IO
+ - Chat
+ - Reuniones
+==========================================================
+*/
+
 const express = require('express');
 const http = require('http');
 const crypto = require('crypto');
@@ -8,19 +26,42 @@ const path = require('path');
 
 const config = require('./config');
 const database = require('./database/db');
+const { initializeDatabase } = require('./database/schema');
 const { normalizePhone } = require('./core/users');
+
+
+// ======================================================
+// APP / SERVIDOR
+// ======================================================
 
 const app = express();
 const server = http.createServer(app);
 
+
+// ======================================================
+// SOCKET.IO
+// ======================================================
+
 const io = new Server(server, {
+
   cors: {
     origin: '*'
   }
+
 });
 
+
+// ======================================================
+// MIDDLEWARE
+// ======================================================
+
 app.use(express.json());
-app.use(express.static(path.join(__dirname, 'public')));
+
+app.use(
+  express.static(
+    path.join(__dirname, 'public')
+  )
+);
 
 
 // ======================================================
@@ -28,11 +69,13 @@ app.use(express.static(path.join(__dirname, 'public')));
 // ======================================================
 
 const pins = {};
+
 const pendingUsers = {};
+
 const sessions = {};
 
 const SESSION_TTL_MS =
-  7 * 24 * 60 * 60 * 1000; // 7 días
+  7 * 24 * 60 * 60 * 1000;
 
 
 // ======================================================
@@ -119,8 +162,12 @@ function sendPin(req, res) {
   if (!phone || !username) {
 
     return res.status(400).json({
+
       ok: false,
-      msg: 'Falta usuario o teléfono'
+
+      msg:
+        'Falta usuario o teléfono'
+
     });
 
   }
@@ -129,8 +176,12 @@ function sendPin(req, res) {
   if (!config.TEST_PIN_MODE) {
 
     return res.status(503).json({
+
       ok: false,
-      msg: 'SMS real todavía no configurado'
+
+      msg:
+        'SMS real todavía no configurado'
+
     });
 
   }
@@ -179,6 +230,10 @@ function sendPin(req, res) {
 
 }
 
+
+// ======================================================
+// RUTAS PIN
+// ======================================================
 
 app.post(
   '/send-pin',
@@ -249,6 +304,7 @@ async function verifyPin(req, res) {
   ) {
 
     delete pins[phone];
+
     delete pendingUsers[phone];
 
 
@@ -274,6 +330,7 @@ async function verifyPin(req, res) {
   ) {
 
     delete pins[phone];
+
     delete pendingUsers[phone];
 
 
@@ -424,9 +481,12 @@ async function verifyPin(req, res) {
     };
 
 
-    // PIN YA NO SE PUEDE REUTILIZAR
+    // ==================================================
+    // PIN NO SE PUEDE REUTILIZAR
+    // ==================================================
 
     delete pins[phone];
+
     delete pendingUsers[phone];
 
 
@@ -481,6 +541,10 @@ async function verifyPin(req, res) {
 
 }
 
+
+// ======================================================
+// RUTAS VERIFICAR PIN
+// ======================================================
 
 app.post(
   '/verify-pin',
@@ -673,7 +737,7 @@ app.post(
 
 
 // ======================================================
-// ESTADO DE LA BASE DE DATOS
+// ESTADO DE VOBIXCHAT / BASE DE DATOS
 // ======================================================
 
 app.get(
@@ -758,6 +822,10 @@ io.on(
 
     // --------------------------------------------------
     // CHAT ACTUAL
+    //
+    // Se mantiene para no romper la versión actual.
+    // Más adelante será sustituido por conversaciones
+    // privadas persistentes.
     // --------------------------------------------------
 
     socket.on(
@@ -926,42 +994,117 @@ const PORT =
   3000;
 
 
-server.listen(
-  PORT,
-  async () => {
+// ======================================================
+// INICIAR VOBIXCHAT
+// ======================================================
 
-    console.log(
-      `VobixChat LISTO | Puerto ${PORT}`
+async function startVobixChat() {
+
+  console.log(
+    'VOBIXCHAT CORE: iniciando...'
+  );
+
+
+  // ====================================================
+  // 1. COMPROBAR POSTGRESQL
+  // ====================================================
+
+  const connected =
+    await database.testConnection();
+
+
+  if (!connected) {
+
+    console.error(
+      'VOBIXCHAT CORE: PostgreSQL NO conectado'
     );
 
-
-    console.log(
-      `PIN pruebas: ${
-        config.TEST_PIN_MODE
-          ? 'ACTIVADO'
-          : 'DESACTIVADO'
-      }`
+    console.error(
+      'VOBIXCHAT CORE: servidor no iniciado'
     );
 
+    process.exit(1);
 
-    const connected =
-      await database
-        .testConnection();
+  }
 
 
-    if (connected) {
+  console.log(
+    'VOBIXCHAT CORE: PostgreSQL conectado correctamente'
+  );
+
+
+  // ====================================================
+  // 2. PREPARAR ESTRUCTURA DE BASE DE DATOS
+  // ====================================================
+
+  const schemaReady =
+    await initializeDatabase();
+
+
+  if (!schemaReady) {
+
+    console.error(
+      'VOBIXCHAT CORE: ERROR preparando la base de datos'
+    );
+
+    console.error(
+      'VOBIXCHAT CORE: servidor no iniciado'
+    );
+
+    process.exit(1);
+
+  }
+
+
+  console.log(
+    'VOBIXCHAT CORE: Base de datos preparada correctamente'
+  );
+
+
+  // ====================================================
+  // 3. ARRANCAR SERVIDOR
+  // ====================================================
+
+  server.listen(
+    PORT,
+    () => {
 
       console.log(
-        'VOBIXCHAT CORE: PostgreSQL conectado correctamente'
+        `VobixChat LISTO | Puerto ${PORT}`
       );
 
-    } else {
 
-      console.error(
-        'VOBIXCHAT CORE: PostgreSQL NO conectado'
+      console.log(
+        `PIN pruebas: ${
+          config.TEST_PIN_MODE
+            ? 'ACTIVADO'
+            : 'DESACTIVADO'
+        }`
+      );
+
+
+      console.log(
+        'VOBIXCHAT CORE: servidor operativo'
       );
 
     }
+  );
 
-  }
-);
+}
+
+
+// ======================================================
+// ARRANQUE
+// ======================================================
+
+startVobixChat()
+  .catch(error => {
+
+    console.error(
+      'VOBIXCHAT CORE FATAL ERROR:',
+      error.message
+    );
+
+    process.exit(1);
+
+  });
