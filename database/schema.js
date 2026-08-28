@@ -5,14 +5,15 @@
  VOBIXCHAT DATABASE SCHEMA
  database/schema.js
 
- Inicialización + migración automática de PostgreSQL.
+ Inicialización y migración automática PostgreSQL.
 
- OBJETIVO:
- - NO borrar usuarios.
- - NO borrar mensajes.
- - NO borrar conversaciones.
- - NO eliminar tablas.
- - Reparar estructuras antiguas automáticamente.
+ OBJETIVOS:
+ - NO borrar usuarios
+ - NO borrar conversaciones
+ - NO borrar mensajes
+ - NO eliminar tablas existentes
+ - Reparar estructuras antiguas
+ - Mantener compatibilidad con columnas legacy
 ==========================================================
 */
 
@@ -20,7 +21,30 @@ const database = require('./db');
 
 
 // ========================================================
-// FUNCIÓN PRINCIPAL
+// COMPROBAR SI EXISTE UNA COLUMNA
+// ========================================================
+
+async function columnExists(tableName, columnName) {
+
+  const result = await database.query(
+    `
+    SELECT EXISTS (
+      SELECT 1
+      FROM information_schema.columns
+      WHERE table_schema = 'public'
+        AND table_name = $1
+        AND column_name = $2
+    ) AS exists
+    `,
+    [tableName, columnName]
+  );
+
+  return result.rows[0].exists;
+}
+
+
+// ========================================================
+// INICIALIZAR / MIGRAR
 // ========================================================
 
 async function initializeDatabase() {
@@ -126,10 +150,6 @@ async function initializeDatabase() {
       DEFAULT NOW();
     `);
 
-
-    // ====================================================
-    // ÍNDICES USERS
-    // ====================================================
 
     await database.query(`
       CREATE UNIQUE INDEX IF NOT EXISTS
@@ -325,7 +345,7 @@ async function initializeDatabase() {
 
 
     // ====================================================
-    // FK CREATED_BY
+    // FK CONVERSATIONS -> USERS
     // ====================================================
 
     await database.query(`
@@ -333,26 +353,16 @@ async function initializeDatabase() {
       BEGIN
 
         IF NOT EXISTS (
-
           SELECT 1
           FROM pg_constraint
-
-          WHERE
-            conrelid = 'conversations'::regclass
-            AND conname =
-              'conversations_created_by_fkey'
-
+          WHERE conrelid = 'conversations'::regclass
+            AND conname = 'conversations_created_by_fkey'
         ) THEN
 
           ALTER TABLE conversations
-
-          ADD CONSTRAINT
-            conversations_created_by_fkey
-
+          ADD CONSTRAINT conversations_created_by_fkey
           FOREIGN KEY (created_by)
-
           REFERENCES users(id)
-
           ON DELETE SET NULL;
 
         END IF;
@@ -367,8 +377,7 @@ async function initializeDatabase() {
     // ====================================================
 
     await database.query(`
-      CREATE TABLE IF NOT EXISTS
-      conversation_participants (
+      CREATE TABLE IF NOT EXISTS conversation_participants (
 
         id UUID PRIMARY KEY
           DEFAULT gen_random_uuid(),
@@ -402,10 +411,6 @@ async function initializeDatabase() {
     `);
 
 
-    // ====================================================
-    // MIGRACIONES PARTICIPANTS
-    // ====================================================
-
     await database.query(`
       ALTER TABLE conversation_participants
       ADD COLUMN IF NOT EXISTS role VARCHAR(30)
@@ -430,20 +435,17 @@ async function initializeDatabase() {
       DEFAULT FALSE;
     `);
 
+
     await database.query(`
       CREATE INDEX IF NOT EXISTS
       conversation_participants_user_idx
-
       ON conversation_participants(user_id);
     `);
 
     await database.query(`
       CREATE INDEX IF NOT EXISTS
       conversation_participants_conversation_idx
-
-      ON conversation_participants(
-        conversation_id
-      );
+      ON conversation_participants(conversation_id);
     `);
 
 
@@ -473,33 +475,20 @@ async function initializeDatabase() {
 
         reply_to_message_id UUID,
 
-        edited BOOLEAN
-          DEFAULT FALSE,
+        edited BOOLEAN DEFAULT FALSE,
 
-        deleted BOOLEAN
-          DEFAULT FALSE,
+        deleted BOOLEAN DEFAULT FALSE,
 
-        created_at TIMESTAMPTZ
-          DEFAULT NOW(),
+        created_at TIMESTAMPTZ DEFAULT NOW(),
 
-        updated_at TIMESTAMPTZ
-          DEFAULT NOW()
+        updated_at TIMESTAMPTZ DEFAULT NOW()
 
       );
     `);
 
 
     // ====================================================
-    // REPARACIÓN DE MESSAGES ANTIGUA
-    //
-    // IMPORTANTE:
-    // Aquí solucionamos:
-    //
-    // column "sender_user_id"
-    // of relation "messages" does not exist
-    //
-    // También verificamos las demás columnas que necesita
-    // el nuevo sistema privado.
+    // MIGRACIONES MESSAGES
     // ====================================================
 
     await database.query(`
@@ -554,8 +543,82 @@ async function initializeDatabase() {
 
 
     // ====================================================
-    // FOREIGN KEY:
-    // messages -> conversations
+    // COMPATIBILIDAD CON sender_id ANTIGUO
+    //
+    // La tabla vieja puede tener:
+    //
+    // sender_id UUID NOT NULL
+    //
+    // mientras VOBIX nuevo utiliza:
+    //
+    // sender_user_id UUID
+    //
+    // No eliminamos sender_id todavía.
+    // Primero permitimos NULL para que el sistema nuevo
+    // pueda guardar mensajes sin romper datos antiguos.
+    // ====================================================
+
+    const hasLegacySenderId =
+      await columnExists(
+        'messages',
+        'sender_id'
+      );
+
+    if (hasLegacySenderId) {
+
+      console.log(
+        'VOBIXCHAT DATABASE: sender_id legacy detectado'
+      );
+
+      await database.query(`
+        ALTER TABLE messages
+        ALTER COLUMN sender_id DROP NOT NULL;
+      `);
+
+
+      // --------------------------------------------------
+      // Migrar datos antiguos cuando sea posible
+      // --------------------------------------------------
+
+      await database.query(`
+        UPDATE messages
+        SET sender_user_id = sender_id
+        WHERE sender_user_id IS NULL
+          AND sender_id IS NOT NULL;
+      `);
+
+
+      console.log(
+        'VOBIXCHAT DATABASE: compatibilidad sender_id preparada'
+      );
+
+    }
+
+
+    // ====================================================
+    // COMPATIBILIDAD CON COLUMNAS ANTIGUAS DE TEXTO
+    // ====================================================
+
+    const hasLegacyText =
+      await columnExists(
+        'messages',
+        'text'
+      );
+
+    if (hasLegacyText) {
+
+      await database.query(`
+        UPDATE messages
+        SET content = text
+        WHERE content IS NULL
+          AND text IS NOT NULL;
+      `);
+
+    }
+
+
+    // ====================================================
+    // FOREIGN KEY conversation_id
     // ====================================================
 
     await database.query(`
@@ -563,26 +626,16 @@ async function initializeDatabase() {
       BEGIN
 
         IF NOT EXISTS (
-
           SELECT 1
           FROM pg_constraint
-
-          WHERE
-            conrelid = 'messages'::regclass
-            AND conname =
-              'messages_conversation_id_fkey'
-
+          WHERE conrelid = 'messages'::regclass
+            AND conname = 'messages_conversation_id_fkey'
         ) THEN
 
           ALTER TABLE messages
-
-          ADD CONSTRAINT
-            messages_conversation_id_fkey
-
+          ADD CONSTRAINT messages_conversation_id_fkey
           FOREIGN KEY (conversation_id)
-
           REFERENCES conversations(id)
-
           ON DELETE CASCADE;
 
         END IF;
@@ -593,8 +646,7 @@ async function initializeDatabase() {
 
 
     // ====================================================
-    // FOREIGN KEY:
-    // messages -> users
+    // FOREIGN KEY sender_user_id
     // ====================================================
 
     await database.query(`
@@ -602,26 +654,16 @@ async function initializeDatabase() {
       BEGIN
 
         IF NOT EXISTS (
-
           SELECT 1
           FROM pg_constraint
-
-          WHERE
-            conrelid = 'messages'::regclass
-            AND conname =
-              'messages_sender_user_id_fkey'
-
+          WHERE conrelid = 'messages'::regclass
+            AND conname = 'messages_sender_user_id_fkey'
         ) THEN
 
           ALTER TABLE messages
-
-          ADD CONSTRAINT
-            messages_sender_user_id_fkey
-
+          ADD CONSTRAINT messages_sender_user_id_fkey
           FOREIGN KEY (sender_user_id)
-
           REFERENCES users(id)
-
           ON DELETE SET NULL;
 
         END IF;
@@ -638,7 +680,6 @@ async function initializeDatabase() {
     await database.query(`
       CREATE INDEX IF NOT EXISTS
       messages_conversation_created_idx
-
       ON messages(
         conversation_id,
         created_at DESC
@@ -682,9 +723,6 @@ async function initializeDatabase() {
 
     // ====================================================
     // TRUST SIGNALS
-    //
-    // Guarda señales de confianza.
-    // NO bloquea automáticamente usuarios.
     // ====================================================
 
     await database.query(`
@@ -715,17 +753,12 @@ async function initializeDatabase() {
     await database.query(`
       CREATE INDEX IF NOT EXISTS
       trust_signals_user_idx
-
       ON trust_signals(user_id);
     `);
 
 
     // ====================================================
     // AUDIT EVENTS
-    //
-    // Base para:
-    // VOBIX CORE
-    // VOBIX ADMIN
     // ====================================================
 
     await database.query(`
@@ -756,7 +789,6 @@ async function initializeDatabase() {
     await database.query(`
       CREATE INDEX IF NOT EXISTS
       audit_events_created_idx
-
       ON audit_events(
         created_at DESC
       );
@@ -764,7 +796,7 @@ async function initializeDatabase() {
 
 
     // ====================================================
-    // TERMINADO
+    // FINAL
     // ====================================================
 
     console.log(
@@ -781,6 +813,10 @@ async function initializeDatabase() {
 
     console.log(
       'VOBIXCHAT DATABASE: messages verificada'
+    );
+
+    console.log(
+      'VOBIXCHAT DATABASE: compatibilidad legacy verificada'
     );
 
     console.log(
