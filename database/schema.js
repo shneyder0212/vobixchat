@@ -14,7 +14,8 @@
  - NO eliminar tablas existentes
  - Reparar estructuras antiguas
  - Mantener compatibilidad con columnas legacy
- - Preparar mensajes multimedia
+ - Preparar fotos de perfil
+ - Preparar Web Push / iPhone / PWA
 ==========================================================
 */
 
@@ -25,20 +26,27 @@ const database = require('./db');
 // COMPROBAR SI EXISTE UNA COLUMNA
 // ========================================================
 
-async function columnExists(tableName, columnName) {
+async function columnExists(
+  tableName,
+  columnName
+) {
 
-  const result = await database.query(
-    `
-    SELECT EXISTS (
-      SELECT 1
-      FROM information_schema.columns
-      WHERE table_schema = 'public'
-        AND table_name = $1
-        AND column_name = $2
-    ) AS exists
-    `,
-    [tableName, columnName]
-  );
+  const result =
+    await database.query(
+      `
+      SELECT EXISTS (
+        SELECT 1
+        FROM information_schema.columns
+        WHERE table_schema = 'public'
+          AND table_name = $1
+          AND column_name = $2
+      ) AS exists
+      `,
+      [
+        tableName,
+        columnName
+      ]
+    );
 
   return result.rows[0].exists;
 }
@@ -152,6 +160,10 @@ async function initializeDatabase() {
     `);
 
 
+    // ====================================================
+    // ÍNDICES USERS
+    // ====================================================
+
     await database.query(`
       CREATE UNIQUE INDEX IF NOT EXISTS
       users_vobix_id_unique
@@ -205,6 +217,153 @@ async function initializeDatabase() {
 
 
     // ====================================================
+    // PUSH SUBSCRIPTIONS
+    //
+    // IMPORTANTE:
+    // users.id es UUID.
+    // Por eso user_id también es UUID.
+    //
+    // Esta tabla permitirá:
+    //
+    // iPhone
+    // Android
+    // PC
+    // varios dispositivos del mismo usuario
+    //
+    // ====================================================
+
+    await database.query(`
+      CREATE TABLE IF NOT EXISTS push_subscriptions (
+
+        id UUID PRIMARY KEY
+          DEFAULT gen_random_uuid(),
+
+        user_id UUID NOT NULL
+          REFERENCES users(id)
+          ON DELETE CASCADE,
+
+        endpoint TEXT NOT NULL,
+
+        p256dh TEXT NOT NULL,
+
+        auth TEXT NOT NULL,
+
+        user_agent TEXT,
+
+        device_name VARCHAR(150),
+
+        platform VARCHAR(80),
+
+        enabled BOOLEAN NOT NULL
+          DEFAULT TRUE,
+
+        created_at TIMESTAMPTZ NOT NULL
+          DEFAULT NOW(),
+
+        updated_at TIMESTAMPTZ NOT NULL
+          DEFAULT NOW(),
+
+        last_used_at TIMESTAMPTZ,
+
+        last_success_at TIMESTAMPTZ,
+
+        last_failure_at TIMESTAMPTZ,
+
+        failure_count INTEGER NOT NULL
+          DEFAULT 0
+
+      );
+    `);
+
+
+    // ====================================================
+    // MIGRACIONES PUSH
+    // ====================================================
+
+    await database.query(`
+      ALTER TABLE push_subscriptions
+      ADD COLUMN IF NOT EXISTS user_agent TEXT;
+    `);
+
+    await database.query(`
+      ALTER TABLE push_subscriptions
+      ADD COLUMN IF NOT EXISTS device_name VARCHAR(150);
+    `);
+
+    await database.query(`
+      ALTER TABLE push_subscriptions
+      ADD COLUMN IF NOT EXISTS platform VARCHAR(80);
+    `);
+
+    await database.query(`
+      ALTER TABLE push_subscriptions
+      ADD COLUMN IF NOT EXISTS enabled BOOLEAN
+      DEFAULT TRUE;
+    `);
+
+    await database.query(`
+      ALTER TABLE push_subscriptions
+      ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ
+      DEFAULT NOW();
+    `);
+
+    await database.query(`
+      ALTER TABLE push_subscriptions
+      ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ
+      DEFAULT NOW();
+    `);
+
+    await database.query(`
+      ALTER TABLE push_subscriptions
+      ADD COLUMN IF NOT EXISTS last_used_at TIMESTAMPTZ;
+    `);
+
+    await database.query(`
+      ALTER TABLE push_subscriptions
+      ADD COLUMN IF NOT EXISTS last_success_at TIMESTAMPTZ;
+    `);
+
+    await database.query(`
+      ALTER TABLE push_subscriptions
+      ADD COLUMN IF NOT EXISTS last_failure_at TIMESTAMPTZ;
+    `);
+
+    await database.query(`
+      ALTER TABLE push_subscriptions
+      ADD COLUMN IF NOT EXISTS failure_count INTEGER
+      DEFAULT 0;
+    `);
+
+
+    // ====================================================
+    // ENDPOINT PUSH ÚNICO
+    // ====================================================
+
+    await database.query(`
+      CREATE UNIQUE INDEX IF NOT EXISTS
+      push_subscriptions_endpoint_unique
+      ON push_subscriptions(endpoint);
+    `);
+
+
+    await database.query(`
+      CREATE INDEX IF NOT EXISTS
+      push_subscriptions_user_idx
+      ON push_subscriptions(user_id);
+    `);
+
+
+    await database.query(`
+      CREATE INDEX IF NOT EXISTS
+      push_subscriptions_enabled_idx
+      ON push_subscriptions(
+        user_id,
+        enabled
+      );
+    `);
+
+
+    // ====================================================
     // CONTACTS
     // ====================================================
 
@@ -237,6 +396,7 @@ async function initializeDatabase() {
 
       );
     `);
+
 
     await database.query(`
       CREATE INDEX IF NOT EXISTS
@@ -276,6 +436,7 @@ async function initializeDatabase() {
 
       );
     `);
+
 
     await database.query(`
       CREATE INDEX IF NOT EXISTS
@@ -411,6 +572,7 @@ async function initializeDatabase() {
       );
     `);
 
+
     await database.query(`
       ALTER TABLE conversation_participants
       ADD COLUMN IF NOT EXISTS role VARCHAR(30)
@@ -441,6 +603,7 @@ async function initializeDatabase() {
       conversation_participants_user_idx
       ON conversation_participants(user_id);
     `);
+
 
     await database.query(`
       CREATE INDEX IF NOT EXISTS
@@ -473,24 +636,6 @@ async function initializeDatabase() {
 
         content TEXT,
 
-        file_url TEXT,
-
-        file_public_id TEXT,
-
-        file_name TEXT,
-
-        file_mime VARCHAR(255),
-
-        file_size BIGINT,
-
-        file_resource_type VARCHAR(30),
-
-        media_duration NUMERIC(12,3),
-
-        media_width INTEGER,
-
-        media_height INTEGER,
-
         reply_to_message_id UUID,
 
         edited BOOLEAN DEFAULT FALSE,
@@ -506,7 +651,7 @@ async function initializeDatabase() {
 
 
     // ====================================================
-    // MIGRACIONES MESSAGES
+    // MIGRACIONES MESSAGES BÁSICAS
     // ====================================================
 
     await database.query(`
@@ -529,61 +674,6 @@ async function initializeDatabase() {
       ALTER TABLE messages
       ADD COLUMN IF NOT EXISTS content TEXT;
     `);
-
-
-    // ====================================================
-    // MULTIMEDIA
-    // ====================================================
-
-    await database.query(`
-      ALTER TABLE messages
-      ADD COLUMN IF NOT EXISTS file_url TEXT;
-    `);
-
-    await database.query(`
-      ALTER TABLE messages
-      ADD COLUMN IF NOT EXISTS file_public_id TEXT;
-    `);
-
-    await database.query(`
-      ALTER TABLE messages
-      ADD COLUMN IF NOT EXISTS file_name TEXT;
-    `);
-
-    await database.query(`
-      ALTER TABLE messages
-      ADD COLUMN IF NOT EXISTS file_mime VARCHAR(255);
-    `);
-
-    await database.query(`
-      ALTER TABLE messages
-      ADD COLUMN IF NOT EXISTS file_size BIGINT;
-    `);
-
-    await database.query(`
-      ALTER TABLE messages
-      ADD COLUMN IF NOT EXISTS file_resource_type VARCHAR(30);
-    `);
-
-    await database.query(`
-      ALTER TABLE messages
-      ADD COLUMN IF NOT EXISTS media_duration NUMERIC(12,3);
-    `);
-
-    await database.query(`
-      ALTER TABLE messages
-      ADD COLUMN IF NOT EXISTS media_width INTEGER;
-    `);
-
-    await database.query(`
-      ALTER TABLE messages
-      ADD COLUMN IF NOT EXISTS media_height INTEGER;
-    `);
-
-
-    // ====================================================
-    // RESTO DE COLUMNAS MESSAGES
-    // ====================================================
 
     await database.query(`
       ALTER TABLE messages
@@ -616,19 +706,62 @@ async function initializeDatabase() {
 
 
     // ====================================================
-    // NORMALIZAR MESSAGE_TYPE
+    // MULTIMEDIA
+    //
+    // Fotos
+    // Vídeos
+    // Notas de voz
+    // Documentos
     // ====================================================
 
     await database.query(`
-      UPDATE messages
-      SET message_type = 'text'
-      WHERE message_type IS NULL
-         OR BTRIM(message_type) = '';
+      ALTER TABLE messages
+      ADD COLUMN IF NOT EXISTS file_url TEXT;
+    `);
+
+    await database.query(`
+      ALTER TABLE messages
+      ADD COLUMN IF NOT EXISTS file_public_id TEXT;
+    `);
+
+    await database.query(`
+      ALTER TABLE messages
+      ADD COLUMN IF NOT EXISTS file_name TEXT;
+    `);
+
+    await database.query(`
+      ALTER TABLE messages
+      ADD COLUMN IF NOT EXISTS file_mime TEXT;
+    `);
+
+    await database.query(`
+      ALTER TABLE messages
+      ADD COLUMN IF NOT EXISTS file_size BIGINT;
+    `);
+
+    await database.query(`
+      ALTER TABLE messages
+      ADD COLUMN IF NOT EXISTS file_resource_type VARCHAR(40);
+    `);
+
+    await database.query(`
+      ALTER TABLE messages
+      ADD COLUMN IF NOT EXISTS media_duration NUMERIC;
+    `);
+
+    await database.query(`
+      ALTER TABLE messages
+      ADD COLUMN IF NOT EXISTS media_width INTEGER;
+    `);
+
+    await database.query(`
+      ALTER TABLE messages
+      ADD COLUMN IF NOT EXISTS media_height INTEGER;
     `);
 
 
     // ====================================================
-    // COMPATIBILIDAD CON sender_id ANTIGUO
+    // COMPATIBILIDAD sender_id ANTIGUO
     // ====================================================
 
     const hasLegacySenderId =
@@ -637,16 +770,19 @@ async function initializeDatabase() {
         'sender_id'
       );
 
+
     if (hasLegacySenderId) {
 
       console.log(
         'VOBIXCHAT DATABASE: sender_id legacy detectado'
       );
 
+
       await database.query(`
         ALTER TABLE messages
         ALTER COLUMN sender_id DROP NOT NULL;
       `);
+
 
       await database.query(`
         UPDATE messages
@@ -654,6 +790,7 @@ async function initializeDatabase() {
         WHERE sender_user_id IS NULL
           AND sender_id IS NOT NULL;
       `);
+
 
       console.log(
         'VOBIXCHAT DATABASE: compatibilidad sender_id preparada'
@@ -663,7 +800,7 @@ async function initializeDatabase() {
 
 
     // ====================================================
-    // COMPATIBILIDAD CON COLUMNAS ANTIGUAS DE TEXTO
+    // COMPATIBILIDAD COLUMNA text ANTIGUA
     // ====================================================
 
     const hasLegacyText =
@@ -671,6 +808,7 @@ async function initializeDatabase() {
         'messages',
         'text'
       );
+
 
     if (hasLegacyText) {
 
@@ -741,7 +879,7 @@ async function initializeDatabase() {
 
 
     // ====================================================
-    // ÍNDICES MENSAJES
+    // ÍNDICE MENSAJES
     // ====================================================
 
     await database.query(`
@@ -751,12 +889,6 @@ async function initializeDatabase() {
         conversation_id,
         created_at DESC
       );
-    `);
-
-    await database.query(`
-      CREATE INDEX IF NOT EXISTS
-      messages_type_idx
-      ON messages(message_type);
     `);
 
 
@@ -823,6 +955,7 @@ async function initializeDatabase() {
       );
     `);
 
+
     await database.query(`
       CREATE INDEX IF NOT EXISTS
       trust_signals_user_idx
@@ -859,6 +992,7 @@ async function initializeDatabase() {
       );
     `);
 
+
     await database.query(`
       CREATE INDEX IF NOT EXISTS
       audit_events_created_idx
@@ -877,6 +1011,14 @@ async function initializeDatabase() {
     );
 
     console.log(
+      'VOBIXCHAT DATABASE: users verificada'
+    );
+
+    console.log(
+      'VOBIXCHAT DATABASE: avatar_url verificado'
+    );
+
+    console.log(
       'VOBIXCHAT DATABASE: conversations verificada'
     );
 
@@ -889,7 +1031,11 @@ async function initializeDatabase() {
     );
 
     console.log(
-      'VOBIXCHAT DATABASE: multimedia preparada'
+      'VOBIXCHAT DATABASE: multimedia verificada'
+    );
+
+    console.log(
+      'VOBIXCHAT DATABASE: push_subscriptions verificada'
     );
 
     console.log(
@@ -900,6 +1046,7 @@ async function initializeDatabase() {
       'VOBIXCHAT DATABASE: migraciones completadas'
     );
 
+
     return true;
 
 
@@ -909,6 +1056,12 @@ async function initializeDatabase() {
       'VOBIXCHAT DATABASE SCHEMA ERROR:',
       error.message
     );
+
+
+    console.error(
+      error
+    );
+
 
     return false;
 
