@@ -57,19 +57,14 @@ const io = new Server(server, {
 
 
 // ======================================================
-// VOBIXCHAT — CONECTAR EXPRESS CON SOCKET.IO
+// CORRECCIÓN REALTIME
 //
-// IMPORTANTE:
-//
-// routes/chat.js utiliza:
+// routes/chat.js usa:
 //
 // const io = req.app.get('io');
 //
-// para emitir el mensaje inmediatamente después
-// de guardarlo en PostgreSQL.
-//
-// Sin esta línea el mensaje se guarda, pero la ruta
-// HTTP no tiene acceso a Socket.IO.
+// Por eso Express debe tener acceso a la MISMA
+// instancia de Socket.IO creada arriba.
 // ======================================================
 
 app.set('io', io);
@@ -272,6 +267,7 @@ async function requireAuth(
 
       delete sessions[token];
 
+
       return res
         .status(401)
         .json({
@@ -292,6 +288,7 @@ async function requireAuth(
     if (!user.verified) {
 
       delete sessions[token];
+
 
       return res
         .status(401)
@@ -414,7 +411,9 @@ function sendPin(req, res) {
     attempts: 0
 
   };
-   pendingUsers[phone] = {
+
+
+  pendingUsers[phone] = {
 
     username,
 
@@ -516,10 +515,6 @@ async function verifyPin(
   }
 
 
-  // ====================================================
-  // CADUCIDAD DEL PIN
-  // ====================================================
-
   if (
     Date.now() -
     pinData.createdAt >
@@ -545,10 +540,6 @@ async function verifyPin(
   }
 
 
-  // ====================================================
-  // LÍMITE DE INTENTOS
-  // ====================================================
-
   if (
     pinData.attempts >=
     config.PIN_MAX_ATTEMPTS
@@ -572,10 +563,6 @@ async function verifyPin(
 
   }
 
-
-  // ====================================================
-  // COMPROBAR PIN
-  // ====================================================
 
   if (
     pinData.pin !== pin
@@ -626,10 +613,6 @@ async function verifyPin(
 
 
   try {
-
-    // ==================================================
-    // GUARDAR / ACTUALIZAR USUARIO
-    // ==================================================
 
     const result =
       await database.query(
@@ -689,10 +672,6 @@ async function verifyPin(
       result.rows[0];
 
 
-    // ==================================================
-    // CREAR SESIÓN
-    // ==================================================
-
     const token =
       createSessionToken();
 
@@ -713,10 +692,6 @@ async function verifyPin(
 
     };
 
-
-    // ==================================================
-    // PIN NO REUTILIZABLE
-    // ==================================================
 
     delete pins[phone];
 
@@ -815,7 +790,9 @@ app.get(
 
     const session =
       getSessionByToken(token);
-       if (!session) {
+
+
+    if (!session) {
 
       return res
         .status(401)
@@ -1079,14 +1056,6 @@ io.use(
         ).trim();
 
 
-      // --------------------------------------------------
-      // COMPATIBILIDAD TEMPORAL
-      //
-      // Si el frontend actual todavía no manda token,
-      // permitimos conexión para no romper reuniones.
-      // Las salas privadas sí exigirán autenticación.
-      // --------------------------------------------------
-
       if (!token) {
 
         socket.vobixAuthenticated =
@@ -1216,7 +1185,7 @@ io.on(
             0,
             100
           );
-                );
+
       }
     );
 
@@ -1404,10 +1373,6 @@ io.on(
 
     // --------------------------------------------------
     // MENSAJE PRIVADO EN TIEMPO REAL
-    //
-    // La persistencia principal sigue pasando por
-    // /api/chat/.../messages.
-    // Este evento distribuye mensajes ya guardados.
     // --------------------------------------------------
 
     socket.on(
@@ -1616,7 +1581,7 @@ io.on(
 
 
           socket
-                    .to(
+            .to(
               `conversation:${id}`
             )
             .emit(
@@ -1654,9 +1619,6 @@ io.on(
 
     // --------------------------------------------------
     // CHAT ANTIGUO
-    //
-    // Se conserva temporalmente para no romper
-    // la interfaz existente.
     // --------------------------------------------------
 
     socket.on(
@@ -1882,10 +1844,6 @@ async function startVobixChat() {
   );
 
 
-  // ====================================================
-  // 1. POSTGRESQL
-  // ====================================================
-
   const connected =
     await database
       .testConnection();
@@ -1911,10 +1869,6 @@ async function startVobixChat() {
   );
 
 
-  // ====================================================
-  // 2. SCHEMA
-  // ====================================================
-
   const schemaReady =
     await initializeDatabase();
 
@@ -1938,10 +1892,6 @@ async function startVobixChat() {
     'VOBIXCHAT CORE: Base de datos preparada correctamente'
   );
 
-
-  // ====================================================
-  // 3. SERVIDOR
-  // ====================================================
 
   server.listen(
     PORT,
@@ -1995,4 +1945,4 @@ startVobixChat()
 
     process.exit(1);
 
-  }); 
+  });
