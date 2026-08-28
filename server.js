@@ -57,14 +57,7 @@ const io = new Server(server, {
 
 
 // ======================================================
-// CORRECCIÓN REALTIME
-//
-// routes/chat.js usa:
-//
-// const io = req.app.get('io');
-//
-// Por eso Express debe tener acceso a la MISMA
-// instancia de Socket.IO creada arriba.
+// COMPARTIR SOCKET.IO CON LAS RUTAS EXPRESS
 // ======================================================
 
 app.set('io', io);
@@ -267,7 +260,6 @@ async function requireAuth(
 
       delete sessions[token];
 
-
       return res
         .status(401)
         .json({
@@ -288,7 +280,6 @@ async function requireAuth(
     if (!user.verified) {
 
       delete sessions[token];
-
 
       return res
         .status(401)
@@ -522,9 +513,7 @@ async function verifyPin(
   ) {
 
     delete pins[phone];
-
     delete pendingUsers[phone];
-
 
     return res
       .status(400)
@@ -546,9 +535,7 @@ async function verifyPin(
   ) {
 
     delete pins[phone];
-
     delete pendingUsers[phone];
-
 
     return res
       .status(429)
@@ -569,7 +556,6 @@ async function verifyPin(
   ) {
 
     pinData.attempts += 1;
-
 
     return res
       .status(400)
@@ -694,7 +680,6 @@ async function verifyPin(
 
 
     delete pins[phone];
-
     delete pendingUsers[phone];
 
 
@@ -783,10 +768,8 @@ app.get(
 
     cleanExpiredSessions();
 
-
     const token =
       getToken(req);
-
 
     const session =
       getSessionByToken(token);
@@ -840,7 +823,6 @@ app.get(
 
         delete sessions[token];
 
-
         return res
           .status(401)
           .json({
@@ -861,7 +843,6 @@ app.get(
       if (!user.verified) {
 
         delete sessions[token];
-
 
         return res
           .status(401)
@@ -1084,14 +1065,11 @@ io.use(
       socket.vobixAuthenticated =
         true;
 
-
       socket.vobixToken =
         token;
 
-
       socket.vobixUserId =
         session.userId;
-
 
       socket.vobixUsername =
         session.username;
@@ -1170,10 +1148,6 @@ io.on(
   socket => {
 
 
-    // --------------------------------------------------
-    // USUARIO - COMPATIBILIDAD ACTUAL
-    // --------------------------------------------------
-
     socket.on(
       'set-user',
       user => {
@@ -1190,9 +1164,9 @@ io.on(
     );
 
 
-    // --------------------------------------------------
-    // ENTRAR A UNA CONVERSACIÓN PRIVADA
-    // --------------------------------------------------
+    // ==================================================
+    // ENTRAR A CONVERSACIÓN PRIVADA
+    // ==================================================
 
     socket.on(
       'conversation-join',
@@ -1342,9 +1316,9 @@ io.on(
     );
 
 
-    // --------------------------------------------------
+    // ==================================================
     // SALIR DE CONVERSACIÓN
-    // --------------------------------------------------
+    // ==================================================
 
     socket.on(
       'conversation-leave',
@@ -1371,9 +1345,9 @@ io.on(
     );
 
 
-    // --------------------------------------------------
-    // MENSAJE PRIVADO EN TIEMPO REAL
-    // --------------------------------------------------
+    // ==================================================
+    // MENSAJE PRIVADO
+    // ==================================================
 
     socket.on(
       'conversation-message',
@@ -1536,9 +1510,9 @@ io.on(
     );
 
 
-    // --------------------------------------------------
-    // ESCRIBIENDO...
-    // --------------------------------------------------
+    // ==================================================
+    // ESCRIBIENDO
+    // ==================================================
 
     socket.on(
       'conversation-typing',
@@ -1617,9 +1591,9 @@ io.on(
     );
 
 
-    // --------------------------------------------------
+    // ==================================================
     // CHAT ANTIGUO
-    // --------------------------------------------------
+    // ==================================================
 
     socket.on(
       'chat',
@@ -1634,9 +1608,9 @@ io.on(
     );
 
 
-    // --------------------------------------------------
+    // ==================================================
     // REUNIONES
-    // --------------------------------------------------
+    // ==================================================
 
     socket.on(
       'meet-join',
@@ -1711,10 +1685,6 @@ io.on(
     );
 
 
-    // --------------------------------------------------
-    // SEÑAL WEBRTC
-    // --------------------------------------------------
-
     socket.on(
       'meet-signal',
       ({
@@ -1747,10 +1717,6 @@ io.on(
       }
     );
 
-
-    // --------------------------------------------------
-    // SALIR DE REUNIÓN
-    // --------------------------------------------------
 
     socket.on(
       'meet-leave',
@@ -1792,10 +1758,6 @@ io.on(
       }
     );
 
-
-    // --------------------------------------------------
-    // DESCONEXIÓN
-    // --------------------------------------------------
 
     socket.on(
       'disconnect',
