@@ -223,6 +223,11 @@
       font-weight: 900;
     }
 
+    .searchButton:disabled {
+      opacity: .55;
+      cursor: default;
+    }
+
     .searchHelp {
       margin-top: 8px;
 
@@ -278,6 +283,8 @@
       border-bottom:
         1px solid
         rgba(104,255,114,.07);
+
+      position: relative;
     }
 
     .conversation:hover {
@@ -314,6 +321,29 @@
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
+    }
+
+    .unreadBadge {
+      min-width: 20px;
+      height: 20px;
+
+      padding: 0 6px;
+
+      display: none;
+      align-items: center;
+      justify-content: center;
+
+      border-radius: 10px;
+
+      background: var(--green);
+      color: #071009;
+
+      font-size: 10px;
+      font-weight: 1000;
+    }
+
+    .unreadBadge.show {
+      display: flex;
     }
 
 
@@ -661,6 +691,11 @@
       color: var(--green);
     }
 
+    .composerButton:disabled {
+      opacity: .5;
+      cursor: default;
+    }
+
     .sendButton {
       background: var(--green);
 
@@ -720,7 +755,10 @@
       background: transparent;
 
       font-size: 21px;
-    }    /* =====================================================
+    }
+
+
+    /* =====================================================
        ADJUNTOS
     ===================================================== */
 
@@ -896,10 +934,7 @@
 
   </style>
 </head>
-
-
 <body>
-
 
 <div
   class="app"
@@ -1338,6 +1373,7 @@ const VOBIX_TOKEN =
   localStorage.getItem('vobix_token') || '';
 
 const socket = io({
+
   auth: {
     token: VOBIX_TOKEN
   },
@@ -1346,7 +1382,18 @@ const socket = io({
     ? {
         token: VOBIX_TOKEN
       }
-    : {}
+    : {},
+
+  reconnection: true,
+
+  reconnectionAttempts: Infinity,
+
+  reconnectionDelay: 500,
+
+  reconnectionDelayMax: 3000,
+
+  timeout: 10000
+
 });
 
 
@@ -1458,6 +1505,23 @@ let conversations = [];
 
 let typingTimer = null;
 
+let lastTypingSentAt = 0;
+
+/*
+  IDs de mensajes que ya fueron dibujados.
+
+  Esto evita que el mismo mensaje aparezca dos veces
+  cuando primero llega por POST y después por Socket.IO.
+*/
+const renderedMessageIds =
+  new Set();
+
+/*
+  Contadores locales de mensajes sin leer.
+*/
+const unreadConversations =
+  new Map();
+
 
 // ========================================================
 // USUARIO LOCAL
@@ -1554,6 +1618,7 @@ function getUsername(data) {
 
   }
 
+
   const directCandidates = [
 
     data.username,
@@ -1571,6 +1636,7 @@ function getUsername(data) {
     data.targetUsername
 
   ];
+
 
   for (
     const candidate
@@ -1598,6 +1664,7 @@ function getUsername(data) {
 
   }
 
+
   const nestedCandidates = [
 
     data.other_user,
@@ -1609,6 +1676,7 @@ function getUsername(data) {
     data.profile
 
   ];
+
 
   for (
     const nested
@@ -1623,6 +1691,7 @@ function getUsername(data) {
     }
 
   }
+
 
   return '';
 
@@ -1713,7 +1782,68 @@ function getUserId(data) {
 
   );
 
-}// ========================================================
+}
+
+
+// ========================================================
+// ID DE CONVERSACIÓN
+// ========================================================
+
+function getConversationId(
+  conversation
+) {
+
+  if (!conversation) {
+    return null;
+  }
+
+  return (
+
+    conversation.conversation_id ||
+
+    conversation.conversationId ||
+
+    conversation.id ||
+
+    null
+
+  );
+
+}
+
+
+// ========================================================
+// ID DE MENSAJE
+// ========================================================
+
+function getMessageId(
+  message
+) {
+
+  if (!message) {
+    return '';
+  }
+
+  const id =
+
+    message.message_id ||
+
+    message.messageId ||
+
+    message.id ||
+
+    message.uuid ||
+
+    '';
+
+  return id
+    ? String(id)
+    : '';
+
+}
+
+
+// ========================================================
 // NOMBRE REAL DE LA CONVERSACIÓN
 // ========================================================
 
@@ -1725,9 +1855,6 @@ function getConversationName(
     return '';
   }
 
-
-  // Primero buscamos específicamente
-  // los datos del otro participante.
 
   const nested = [
 
@@ -1754,9 +1881,6 @@ function getConversationName(
 
   }
 
-
-  // Después buscamos los campos directos
-  // que puede devolver PostgreSQL / API.
 
   const direct = [
 
@@ -1792,8 +1916,6 @@ function getConversationName(
   }
 
 
-  // Los grupos pueden utilizar su título.
-
   if (
     conversation.type === 'group' &&
     conversation.title
@@ -1803,10 +1925,6 @@ function getConversationName(
 
   }
 
-
-  // No usamos "Usuario" como nombre genérico.
-  // Si falta el username, intentamos mostrar
-  // el teléfono para detectar el contacto.
 
   const phone =
     getPhone(conversation);
@@ -1849,7 +1967,13 @@ if (me) {
 // TOAST
 // ========================================================
 
+let toastTimer = null;
+
 function showToast(text) {
+
+  if (!text) {
+    return;
+  }
 
   toast.textContent =
     text;
@@ -1860,16 +1984,22 @@ function showToast(text) {
   );
 
 
-  setTimeout(
-    () => {
-
-      toast.classList.remove(
-        'show'
-      );
-
-    },
-    2500
+  clearTimeout(
+    toastTimer
   );
+
+
+  toastTimer =
+    setTimeout(
+      () => {
+
+        toast.classList.remove(
+          'show'
+        );
+
+      },
+      2500
+    );
 
 }
 
@@ -1899,10 +2029,6 @@ function escapeHTML(value) {
 
 // ========================================================
 // PETICIONES AUTENTICADAS
-//
-// IMPORTANTE:
-// Todas las llamadas /api/chat reciben automáticamente
-// Authorization: Bearer <vobix_token>
 // ========================================================
 
 async function requestJSON(
@@ -1911,7 +2037,9 @@ async function requestJSON(
 ) {
 
   const token =
-    localStorage.getItem('vobix_token') ||
+    localStorage.getItem(
+      'vobix_token'
+    ) ||
     VOBIX_TOKEN ||
     '';
 
@@ -1924,7 +2052,9 @@ async function requestJSON(
 
   if (
     token &&
-    !headers.has('Authorization')
+    !headers.has(
+      'Authorization'
+    )
   ) {
 
     headers.set(
@@ -1979,6 +2109,136 @@ async function requestJSON(
 
 
 // ========================================================
+// NOTIFICACIONES DEL NAVEGADOR
+// ========================================================
+
+function requestNotificationPermission() {
+
+  if (
+    !('Notification' in window)
+  ) {
+    return;
+  }
+
+
+  if (
+    Notification.permission ===
+    'default'
+  ) {
+
+    Notification
+      .requestPermission()
+      .catch(
+        () => {}
+      );
+
+  }
+
+}
+
+
+function showMessageNotification(
+  message
+) {
+
+  if (
+    !message ||
+    !('Notification' in window) ||
+    Notification.permission !==
+      'granted'
+  ) {
+
+    return;
+
+  }
+
+
+  /*
+    Si VOBIXCHAT está visible y el usuario
+    está mirando la sala, no molestamos
+    con una notificación del sistema.
+  */
+  if (
+    document.visibilityState ===
+      'visible' &&
+    belongsToCurrentConversation(
+      message
+    )
+  ) {
+
+    return;
+
+  }
+
+
+  const sender =
+    message.sender_username ||
+    message.senderUsername ||
+    getUsername(
+      message.sender
+    ) ||
+    getUsername(
+      message.user
+    ) ||
+    'VOBIXCHAT';
+
+
+  const content =
+    message.content ??
+    message.text ??
+    message.message ??
+    'Nuevo mensaje';
+
+
+  try {
+
+    const notification =
+      new Notification(
+        sender,
+        {
+          body:
+            String(content),
+          tag:
+            'vobixchat-message',
+          renotify:
+            true
+        }
+      );
+
+
+    notification.onclick =
+      () => {
+
+        window.focus();
+
+        notification.close();
+
+      };
+
+  } catch (error) {
+
+    console.warn(
+      'VOBIXCHAT NOTIFICATION:',
+      error
+    );
+
+  }
+
+}
+
+
+// ========================================================
+// ACTIVAR NOTIFICACIONES DESPUÉS DE INTERACCIÓN
+// ========================================================
+
+document.addEventListener(
+  'click',
+  requestNotificationPermission,
+  {
+    once: true
+  }
+);
+// ========================================================
 // BUSCAR USUARIOS
 // ========================================================
 
@@ -1986,7 +2246,6 @@ async function searchUsers() {
 
   const value =
     searchInput.value.trim();
-
 
   if (!value) {
 
@@ -1996,10 +2255,7 @@ async function searchUsers() {
 
   }
 
-
-  searchButton.disabled =
-    true;
-
+  searchButton.disabled = true;
 
   try {
 
@@ -2007,13 +2263,9 @@ async function searchUsers() {
       await requestJSON(
 
         '/api/chat/users/search?q=' +
-
-        encodeURIComponent(
-          value
-        )
+        encodeURIComponent(value)
 
       );
-
 
     const users =
       Array.isArray(data)
@@ -2021,22 +2273,13 @@ async function searchUsers() {
         ? data
 
         : (
-
             data.users ||
-
             data.results ||
-
             data.data ||
-
             []
-
           );
 
-
-    renderSearchResults(
-      users
-    );
-
+    renderSearchResults(users);
 
   } catch (error) {
 
@@ -2045,23 +2288,16 @@ async function searchUsers() {
       error
     );
 
-
     searchResults.innerHTML = '';
 
-
     showToast(
-
       error.message ||
-
       'No se pudo realizar la búsqueda'
-
     );
-
 
   } finally {
 
-    searchButton.disabled =
-      false;
+    searchButton.disabled = false;
 
   }
 
@@ -2077,7 +2313,6 @@ function renderSearchResults(
 ) {
 
   searchResults.innerHTML = '';
-
 
   if (!users.length) {
 
@@ -2099,30 +2334,24 @@ function renderSearchResults(
 
   }
 
-
   users.forEach(
     user => {
-
 
       const name =
         getUsername(user) ||
         getPhone(user) ||
         'Contacto';
 
-
       const phone =
         getPhone(user);
-
 
       const item =
         document.createElement(
           'div'
         );
 
-
       item.className =
         'conversation';
-
 
       item.innerHTML = `
 
@@ -2136,7 +2365,6 @@ function renderSearchResults(
 
         </div>
 
-
         <div class="conversationBody">
 
           <div class="conversationName">
@@ -2144,7 +2372,6 @@ function renderSearchResults(
             ${escapeHTML(name)}
 
           </div>
-
 
           <div class="conversationPreview">
 
@@ -2155,7 +2382,6 @@ function renderSearchResults(
         </div>
 
       `;
-
 
       item.addEventListener(
         'click',
@@ -2168,11 +2394,9 @@ function renderSearchResults(
         }
       );
 
-
       searchResults.appendChild(
         item
       );
-
 
     }
   );
@@ -2193,7 +2417,6 @@ async function createConversation(
     const targetUserId =
       getUserId(user);
 
-
     if (!targetUserId) {
 
       showToast(
@@ -2203,7 +2426,6 @@ async function createConversation(
       return;
 
     }
-
 
     const data =
       await requestJSON(
@@ -2236,17 +2458,18 @@ async function createConversation(
 
       );
 
-
     const conversation =
       data.conversation ||
       data;
 
+    /*
+      Conservamos los datos reales del contacto
+      elegido por el usuario.
 
-    // Conservamos los datos reales del usuario
-    // seleccionado. De esta forma no perdemos
-    // nombres como "Flor" si la respuesta de creación
-    // solo devuelve el ID de la conversación.
-
+      Así evitamos que una respuesta reducida
+      del servidor haga aparecer "Usuario"
+      o "Contacto" en lugar de su nombre real.
+    */
     if (
       !conversation.other_user &&
       !conversation.otherUser
@@ -2257,32 +2480,21 @@ async function createConversation(
 
     }
 
-
     await loadConversations();
 
-
     const conversationId =
-
-      conversation.id ||
-
-      conversation.conversation_id ||
-
-      conversation.conversationId;
-
+      getConversationId(
+        conversation
+      );
 
     const refreshed =
       conversations.find(
         item => {
 
-
           const id =
-
-            item.id ||
-
-            item.conversation_id ||
-
-            item.conversationId;
-
+            getConversationId(
+              item
+            );
 
           return (
             String(id) ===
@@ -2292,14 +2504,12 @@ async function createConversation(
         }
       );
 
-
     if (refreshed) {
 
       const refreshedName =
         getConversationName(
           refreshed
         );
-
 
       if (
         refreshedName ===
@@ -2310,7 +2520,6 @@ async function createConversation(
           user;
 
       }
-
 
       await openConversation(
         refreshed
@@ -2324,11 +2533,9 @@ async function createConversation(
 
     }
 
-
     searchResults.innerHTML = '';
 
     searchInput.value = '';
-
 
   } catch (error) {
 
@@ -2337,13 +2544,9 @@ async function createConversation(
       error
     );
 
-
     showToast(
-
       error.message ||
-
       'No se pudo abrir la conversación'
-
     );
 
   }
@@ -2364,27 +2567,19 @@ async function loadConversations() {
         '/api/chat/conversations'
       );
 
-
     conversations =
       Array.isArray(data)
 
         ? data
 
         : (
-
             data.conversations ||
-
             data.results ||
-
             data.data ||
-
             []
-
           );
 
-
     renderConversations();
-
 
   } catch (error) {
 
@@ -2393,13 +2588,9 @@ async function loadConversations() {
       error
     );
 
-
     showToast(
-
       error.message ||
-
       'No se pudieron cargar las conversaciones'
-
     );
 
   }
@@ -2415,10 +2606,8 @@ function renderConversations() {
 
   conversationList.innerHTML = '';
 
-
   conversationCount.textContent =
     conversations.length;
-
 
   if (!conversations.length) {
 
@@ -2441,49 +2630,33 @@ function renderConversations() {
 
   }
 
-
   conversations.forEach(
     conversation => {
-
 
       const name =
         getConversationName(
           conversation
         );
 
-
       const item =
         document.createElement(
           'div'
         );
 
-
       item.className =
         'conversation';
 
-
       const currentId =
         currentConversation
-
-          ? (
-              currentConversation.id ||
-
-              currentConversation.conversation_id ||
-
-              currentConversation.conversationId
+          ? getConversationId(
+              currentConversation
             )
-
           : null;
 
-
       const conversationId =
-
-        conversation.id ||
-
-        conversation.conversation_id ||
-
-        conversation.conversationId;
-
+        getConversationId(
+          conversation
+        );
 
       if (
         currentId &&
@@ -2497,7 +2670,6 @@ function renderConversations() {
 
       }
 
-
       const preview =
 
         conversation.last_message ||
@@ -2508,6 +2680,12 @@ function renderConversations() {
 
         'Conversación privada';
 
+      const unread =
+        Number(
+          unreadConversations.get(
+            String(conversationId)
+          ) || 0
+        );
 
       item.innerHTML = `
 
@@ -2521,7 +2699,6 @@ function renderConversations() {
 
         </div>
 
-
         <div class="conversationBody">
 
           <div class="conversationName">
@@ -2529,7 +2706,6 @@ function renderConversations() {
             ${escapeHTML(name)}
 
           </div>
-
 
           <div class="conversationPreview">
 
@@ -2539,8 +2715,23 @@ function renderConversations() {
 
         </div>
 
-      `;
+        <div
+          class="unreadBadge ${
+            unread > 0
+              ? 'show'
+              : ''
+          }"
+        >
 
+          ${
+            unread > 99
+              ? '99+'
+              : unread
+          }
+
+        </div>
+
+      `;
 
       item.addEventListener(
         'click',
@@ -2553,13 +2744,68 @@ function renderConversations() {
         }
       );
 
-
       conversationList.appendChild(
         item
       );
 
+    }
+  );
+
+}
+
+
+// ========================================================
+// ENTRAR EN SALA SOCKET.IO
+// ========================================================
+
+function joinConversationRoom(
+  conversation
+) {
+
+  const conversationId =
+    getConversationId(
+      conversation
+    );
+
+  if (
+    !conversationId ||
+    !socket.connected
+  ) {
+
+    return;
+
+  }
+
+  socket.emit(
+
+    'conversation-join',
+
+    {
+
+      conversationId:
+        conversationId,
+
+      conversation_id:
+        conversationId
+
+    },
+
+    response => {
+
+      if (
+        response &&
+        response.ok === false
+      ) {
+
+        console.warn(
+          'VOBIXCHAT JOIN ERROR:',
+          response
+        );
+
+      }
 
     }
+
   );
 
 }
@@ -2576,35 +2822,28 @@ async function openConversation(
   currentConversation =
     conversation;
 
-
   emptyState.style.display =
     'none';
-
 
   chatRoom.style.display =
     'flex';
 
-
   app.classList.add(
     'roomOpen'
   );
-
 
   const name =
     getConversationName(
       conversation
     );
 
-
   roomName.textContent =
     name;
-
 
   roomAvatar.textContent =
     name
       .charAt(0)
       .toUpperCase();
-
 
   const other =
 
@@ -2616,7 +2855,6 @@ async function openConversation(
 
     {};
 
-
   roomStatus.textContent =
 
     other.online === true
@@ -2625,37 +2863,33 @@ async function openConversation(
 
       : 'Conversación privada';
 
-
   const conversationId =
+    getConversationId(
+      conversation
+    );
 
-    conversation.id ||
+  /*
+    Al abrir una conversación dejamos a cero
+    el contador local de mensajes sin leer.
+  */
+  if (conversationId) {
 
-    conversation.conversation_id ||
+    unreadConversations.delete(
+      String(conversationId)
+    );
 
-    conversation.conversationId;
+  }
 
-
-  // Evento correcto para entrar a la sala Socket.IO.
-
-  socket.emit(
-
-    'conversation-join',
-
-    {
-
-      conversationId:
-        conversationId
-
-    }
-
+  /*
+    Entramos en la sala privada de Socket.IO.
+  */
+  joinConversationRoom(
+    conversation
   );
-
 
   await loadMessages();
 
-
   renderConversations();
-
 
   setTimeout(
     () => {
@@ -2679,15 +2913,20 @@ async function loadMessages() {
     return;
   }
 
-
   const conversationId =
+    getConversationId(
+      currentConversation
+    );
 
-    currentConversation.id ||
+  if (!conversationId) {
 
-    currentConversation.conversation_id ||
+    showToast(
+      'Conversación no válida'
+    );
 
-    currentConversation.conversationId;
+    return;
 
+  }
 
   try {
 
@@ -2704,27 +2943,26 @@ async function loadMessages() {
 
       );
 
-
     const list =
       Array.isArray(data)
 
         ? data
 
         : (
-
             data.messages ||
-
             data.results ||
-
             data.data ||
-
             []
-
           );
-
 
     messages.innerHTML = '';
 
+    /*
+      Al recargar el historial reiniciamos los IDs
+      dibujados para reconstruir correctamente
+      esta conversación.
+    */
+    renderedMessageIds.clear();
 
     list.forEach(
       message => {
@@ -2736,9 +2974,7 @@ async function loadMessages() {
       }
     );
 
-
     scrollBottom();
-
 
   } catch (error) {
 
@@ -2747,25 +2983,26 @@ async function loadMessages() {
       error
     );
 
-
     showToast(
       'No se pudieron cargar los mensajes'
     );
 
   }
 
-}// ========================================================
-// MOSTRAR MENSAJE
+}
+
+
+// ========================================================
+// SABER SI EL MENSAJE ES MÍO
 // ========================================================
 
-function renderMessage(
+function isMyMessage(
   message
 ) {
 
   if (!message) {
-    return;
+    return false;
   }
-
 
   const senderId =
 
@@ -2777,18 +3014,14 @@ function renderMessage(
 
     message.senderUserId;
 
-
   const myId =
     me
       ? (
           me.id ||
-
           me.user_id ||
-
           me.userId
         )
       : null;
-
 
   const senderName =
 
@@ -2806,12 +3039,10 @@ function renderMessage(
 
     '';
 
-
   const myName =
     getUsername(me);
 
-
-  const isMine =
+  return (
 
     message.mine === true ||
 
@@ -2831,14 +3062,82 @@ function renderMessage(
       myName &&
       senderName.toLowerCase() ===
       myName.toLowerCase()
+    )
+
+  );
+
+}
+
+
+// ========================================================
+// MOSTRAR MENSAJE
+// ========================================================
+
+function renderMessage(
+  message
+) {
+
+  if (!message) {
+    return false;
+  }
+
+  const messageId =
+    getMessageId(
+      message
     );
 
+  /*
+    CONTROL DE DUPLICADOS
+
+    routes/chat.js puede devolver el mensaje mediante
+    HTTP y además emitirlo inmediatamente por Socket.IO.
+
+    Si ya fue dibujado, no lo repetimos.
+  */
+  if (
+    messageId &&
+    renderedMessageIds.has(
+      messageId
+    )
+  ) {
+
+    return false;
+
+  }
+
+  if (messageId) {
+
+    renderedMessageIds.add(
+      messageId
+    );
+
+  }
+
+  const isMine =
+    isMyMessage(
+      message
+    );
+
+  const senderName =
+
+    message.sender_username ||
+
+    message.senderUsername ||
+
+    getUsername(
+      message.sender
+    ) ||
+
+    getUsername(
+      message.user
+    ) ||
+
+    '';
 
   const row =
     document.createElement(
       'div'
     );
-
 
   row.className =
     'messageRow' +
@@ -2848,6 +3147,12 @@ function renderMessage(
         : ''
     );
 
+  if (messageId) {
+
+    row.dataset.messageId =
+      messageId;
+
+  }
 
   const content =
 
@@ -2859,7 +3164,6 @@ function renderMessage(
 
     '';
 
-
   const created =
 
     message.created_at ||
@@ -2868,22 +3172,26 @@ function renderMessage(
 
     message.timestamp;
 
-
   const date =
     created
       ? new Date(created)
       : new Date();
 
+  const validDate =
+    Number.isNaN(
+      date.getTime()
+    )
+      ? new Date()
+      : date;
 
   const time =
-    date.toLocaleTimeString(
+    validDate.toLocaleTimeString(
       [],
       {
         hour: '2-digit',
         minute: '2-digit'
       }
     );
-
 
   row.innerHTML = `
 
@@ -2896,7 +3204,11 @@ function renderMessage(
           ? `
 
             <div class="messageSender">
-              ${escapeHTML(senderName)}
+
+              ${escapeHTML(
+                senderName
+              )}
+
             </div>
 
           `
@@ -2904,18 +3216,18 @@ function renderMessage(
           : ''
       }
 
-
       <div class="messageText">
 
         ${escapeHTML(content)}
 
       </div>
 
-
       <div class="messageMeta">
 
         <span>
+
           ${escapeHTML(time)}
+
         </span>
 
         ${
@@ -2936,10 +3248,92 @@ function renderMessage(
 
   `;
 
-
   messages.appendChild(
     row
   );
+
+  return true;
+
+}
+
+
+// ========================================================
+// ACTUALIZAR PREVIEW LOCAL SIN ESPERAR OTRA PETICIÓN
+// ========================================================
+
+function updateConversationPreview(
+  message
+) {
+
+  if (!message) {
+    return;
+  }
+
+  const conversationId =
+
+    message.conversation_id ||
+
+    message.conversationId;
+
+  if (!conversationId) {
+    return;
+  }
+
+  const conversation =
+    conversations.find(
+      item => {
+
+        return (
+          String(
+            getConversationId(
+              item
+            )
+          ) ===
+          String(conversationId)
+        );
+
+      }
+    );
+
+  if (!conversation) {
+    return;
+  }
+
+  const content =
+
+    message.content ??
+
+    message.text ??
+
+    message.message ??
+
+    '';
+
+  conversation.last_message =
+    content;
+
+  conversation.lastMessage =
+    content;
+
+  /*
+    Movemos la conversación que recibió el último
+    mensaje al principio de la lista.
+  */
+  conversations =
+    [
+      conversation,
+      ...conversations.filter(
+        item =>
+          String(
+            getConversationId(
+              item
+            )
+          ) !==
+          String(conversationId)
+      )
+    ];
+
+  renderConversations();
 
 }
 
@@ -2960,24 +3354,17 @@ async function sendMessage() {
 
   }
 
-
   const text =
     messageInput.value.trim();
-
 
   if (!text) {
     return;
   }
 
-
   const conversationId =
-
-    currentConversation.id ||
-
-    currentConversation.conversation_id ||
-
-    currentConversation.conversationId;
-
+    getConversationId(
+      currentConversation
+    );
 
   if (!conversationId) {
 
@@ -2989,13 +3376,22 @@ async function sendMessage() {
 
   }
 
-
-  sendButton.disabled =
-    true;
-
+  sendButton.disabled = true;
 
   try {
 
+    /*
+      IMPORTANTE:
+
+      El mensaje se guarda mediante la API HTTP.
+
+      El backend es quien después lo publica
+      mediante Socket.IO en la sala privada.
+
+      Así PostgreSQL sigue siendo la fuente real
+      y evitamos mensajes que solo existan
+      temporalmente en el socket.
+    */
     const data =
       await requestJSON(
 
@@ -3039,45 +3435,48 @@ async function sendMessage() {
 
       );
 
-
     messageInput.value = '';
-
 
     const message =
       data.message ||
       data;
 
-
     /*
-    --------------------------------------------------------
-    Si el servidor devuelve el mensaje creado,
-    lo mostramos inmediatamente.
+      Mostramos inmediatamente la respuesta del POST.
 
-    El listener de Socket.IO también puede recibirlo.
-    --------------------------------------------------------
+      Si el mismo mensaje llega por Socket.IO,
+      renderMessage() detectará su ID y no
+      permitirá que aparezca duplicado.
     */
-
     if (
       message &&
       typeof message === 'object' &&
       (
         message.id ||
-
         message.message_id ||
-
         message.content ||
-
         message.text
       )
     ) {
 
-      renderMessage({
+      const normalizedMessage = {
 
         ...message,
 
+        conversation_id:
+
+          message.conversation_id ||
+
+          message.conversationId ||
+
+          conversationId,
+
         content:
+
           message.content ??
+
           message.text ??
+
           text,
 
         mine:
@@ -3086,13 +3485,24 @@ async function sendMessage() {
         sender_username:
           getUsername(me)
 
-      });
+      };
 
+      const rendered =
+        renderMessage(
+          normalizedMessage
+        );
 
-      scrollBottom();
+      if (rendered) {
+
+        scrollBottom();
+
+      }
+
+      updateConversationPreview(
+        normalizedMessage
+      );
 
     }
-
 
   } catch (error) {
 
@@ -3101,21 +3511,15 @@ async function sendMessage() {
       error
     );
 
-
     showToast(
-
       error.message ||
-
       'No se pudo enviar el mensaje'
-
     );
-
 
   } finally {
 
     sendButton.disabled =
       false;
-
 
     messageInput.focus();
 
@@ -3141,15 +3545,10 @@ function belongsToCurrentConversation(
 
   }
 
-
   const currentId =
-
-    currentConversation.id ||
-
-    currentConversation.conversation_id ||
-
-    currentConversation.conversationId;
-
+    getConversationId(
+      currentConversation
+    );
 
   const incomingId =
 
@@ -3165,16 +3564,14 @@ function belongsToCurrentConversation(
       )
     );
 
-
   if (
     !incomingId ||
     !currentId
   ) {
 
-    return true;
+    return false;
 
   }
-
 
   return (
     String(incomingId) ===
@@ -3185,71 +3582,273 @@ function belongsToCurrentConversation(
 
 
 // ========================================================
-// SOCKET - MENSAJES EN TIEMPO REAL
+// AUMENTAR MENSAJES SIN LEER
+// ========================================================
+
+function addUnreadMessage(
+  message
+) {
+
+  if (!message) {
+    return;
+  }
+
+  const conversationId =
+
+    message.conversation_id ||
+
+    message.conversationId;
+
+  if (!conversationId) {
+    return;
+  }
+
+  const key =
+    String(conversationId);
+
+  const current =
+    Number(
+      unreadConversations.get(
+        key
+      ) || 0
+    );
+
+  unreadConversations.set(
+    key,
+    current + 1
+  );
+
+  renderConversations();
+
+}
+
+
+// ========================================================
+// SONIDO DE NOTIFICACIÓN
+// ========================================================
+
+let notificationAudioContext =
+  null;
+
+function playNotificationSound() {
+
+  try {
+
+    const AudioContextClass =
+
+      window.AudioContext ||
+
+      window.webkitAudioContext;
+
+    if (!AudioContextClass) {
+      return;
+    }
+
+    if (
+      !notificationAudioContext
+    ) {
+
+      notificationAudioContext =
+        new AudioContextClass();
+
+    }
+
+    const context =
+      notificationAudioContext;
+
+    if (
+      context.state ===
+      'suspended'
+    ) {
+
+      context.resume()
+        .catch(
+          () => {}
+        );
+
+    }
+
+    const oscillator =
+      context.createOscillator();
+
+    const gain =
+      context.createGain();
+
+    oscillator.connect(gain);
+
+    gain.connect(
+      context.destination
+    );
+
+    oscillator.frequency.value =
+      740;
+
+    gain.gain.setValueAtTime(
+      0.0001,
+      context.currentTime
+    );
+
+    gain.gain.exponentialRampToValueAtTime(
+      0.08,
+      context.currentTime + 0.01
+    );
+
+    gain.gain.exponentialRampToValueAtTime(
+      0.0001,
+      context.currentTime + 0.13
+    );
+
+    oscillator.start(
+      context.currentTime
+    );
+
+    oscillator.stop(
+      context.currentTime + 0.14
+    );
+
+  } catch (error) {
+
+    console.warn(
+      'VOBIXCHAT SOUND:',
+      error
+    );
+
+  }
+
+}
+
+
+// ========================================================
+// MENSAJE RECIBIDO POR SOCKET
 // ========================================================
 
 function socketMessage(
   payload
 ) {
 
-  if (!currentConversation) {
+  if (!payload) {
     return;
   }
-
 
   const data =
-    payload &&
-    payload.message
-      ? payload.message
+    payload.message &&
+    typeof payload.message ===
+      'object'
+
+      ? {
+          ...payload.message,
+
+          conversation_id:
+
+            payload.message.conversation_id ||
+
+            payload.message.conversationId ||
+
+            payload.conversation_id ||
+
+            payload.conversationId
+        }
+
       : payload;
 
+  if (!data) {
+    return;
+  }
 
-  if (
-    !belongsToCurrentConversation(
+  const mine =
+    isMyMessage(
       data
-    )
-  ) {
+    );
+
+  const inCurrentConversation =
+    belongsToCurrentConversation(
+      data
+    );
+
+  /*
+    Si estamos viendo la conversación,
+    el mensaje aparece inmediatamente.
+  */
+  if (inCurrentConversation) {
+
+    const rendered =
+      renderMessage(
+        data
+      );
+
+    if (rendered) {
+
+      scrollBottom();
+
+      if (!mine) {
+
+        playNotificationSound();
+
+      }
+
+    }
+
+  } else {
 
     /*
-      Si llegó un mensaje de otra conversación,
-      refrescamos la lista para actualizar
-      el último mensaje.
+      Si el mensaje pertenece a otra conversación,
+      aumentamos el contador sin leer.
     */
+    if (!mine) {
 
-    loadConversations();
+      addUnreadMessage(
+        data
+      );
 
-    return;
+      playNotificationSound();
+
+    }
 
   }
 
-
-  renderMessage(
+  /*
+    Actualizamos el último mensaje localmente
+    para no depender de una petición HTTP
+    después de cada socket recibido.
+  */
+  updateConversationPreview(
     data
   );
 
+  /*
+    Notificación del navegador cuando corresponde.
+  */
+  if (!mine) {
 
-  scrollBottom();
+    showMessageNotification(
+      data
+    );
 
-
-  loadConversations();
+  }
 
 }
 
 
+// ========================================================
+// EVENTOS REALES DEL BACKEND
+//
+// routes/chat.js publica chat:message y message:new.
+// server.js también dispone de conversation-message.
+// Escuchamos los tres sin duplicar gracias al ID.
+// ========================================================
+
 socket.on(
-  'chat-message',
+  'chat:message',
   socketMessage
 );
 
-
 socket.on(
-  'message',
+  'message:new',
   socketMessage
 );
 
-
 socket.on(
-  'new-message',
+  'conversation-message',
   socketMessage
 );
 
@@ -3262,29 +3861,41 @@ messageInput.addEventListener(
   'input',
   () => {
 
-
     if (!currentConversation) {
       return;
     }
 
-
     const conversationId =
-
-      currentConversation.id ||
-
-      currentConversation.conversation_id ||
-
-      currentConversation.conversationId;
-
+      getConversationId(
+        currentConversation
+      );
 
     if (!conversationId) {
       return;
     }
 
+    /*
+      Evitamos inundar el socket con un evento
+      por cada pulsación de teclado.
+    */
+    const now =
+      Date.now();
+
+    if (
+      now - lastTypingSentAt <
+      500
+    ) {
+
+      return;
+
+    }
+
+    lastTypingSentAt =
+      now;
 
     socket.emit(
 
-      'typing',
+      'conversation-typing',
 
       {
 
@@ -3301,7 +3912,6 @@ messageInput.addEventListener(
 
     );
 
-
   }
 );
 
@@ -3311,30 +3921,28 @@ messageInput.addEventListener(
 // ========================================================
 
 socket.on(
-  'typing',
+  'conversation-typing',
   data => {
 
+    if (
+      !data ||
+      !currentConversation
+    ) {
 
-    if (!currentConversation) {
       return;
+
     }
 
-
     const currentId =
-
-      currentConversation.id ||
-
-      currentConversation.conversation_id ||
-
-      currentConversation.conversationId;
-
+      getConversationId(
+        currentConversation
+      );
 
     const incomingId =
 
       data.conversationId ||
 
       data.conversation_id;
-
 
     if (
       incomingId &&
@@ -3346,21 +3954,17 @@ socket.on(
 
     }
 
-
     const name =
       getUsername(data) ||
       'Contacto';
 
-
-    /*
-      No mostramos nuestro propio indicador
-      de escritura.
-    */
-
     const myName =
       getUsername(me);
 
-
+    /*
+      Nunca mostramos nuestro propio
+      indicador de escritura.
+    */
     if (
       name &&
       myName &&
@@ -3372,16 +3976,13 @@ socket.on(
 
     }
 
-
     typing.textContent =
       name +
       ' está escribiendo…';
 
-
     clearTimeout(
       typingTimer
     );
-
 
     typingTimer =
       setTimeout(
@@ -3392,7 +3993,6 @@ socket.on(
         },
         1500
       );
-
 
   }
 );
@@ -3408,8 +4008,6 @@ function scrollBottom() {
     messages.scrollHeight;
 
 }
-
-
 // ========================================================
 // EMOJIS
 // ========================================================
@@ -3421,7 +4019,6 @@ emojiButton.addEventListener(
     emojiPanel.classList.toggle(
       'open'
     );
-
 
     attachMenu.classList.remove(
       'open'
@@ -3436,29 +4033,18 @@ document
   .forEach(
     button => {
 
-
       button.addEventListener(
         'click',
         () => {
 
-
           messageInput.value +=
             button.textContent;
-
 
           emojiPanel.classList.remove(
             'open'
           );
 
-
           messageInput.focus();
-
-
-          /*
-            Lanzamos input para que el sistema
-            de "está escribiendo" también funcione
-            cuando se agrega un emoji.
-          */
 
           messageInput.dispatchEvent(
             new Event(
@@ -3469,10 +4055,8 @@ document
             )
           );
 
-
         }
       );
-
 
     }
   );
@@ -3490,7 +4074,6 @@ attachButton.addEventListener(
       'open'
     );
 
-
     emojiPanel.classList.remove(
       'open'
     );
@@ -3507,14 +4090,11 @@ document
     'click',
     () => {
 
-
       attachMenu.classList.remove(
         'open'
       );
 
-
       mediaInput.click();
-
 
     }
   );
@@ -3528,14 +4108,11 @@ document
     'click',
     () => {
 
-
       attachMenu.classList.remove(
         'open'
       );
 
-
       documentInput.click();
-
 
     }
   );
@@ -3549,14 +4126,11 @@ document
     'click',
     () => {
 
-
       attachMenu.classList.remove(
         'open'
       );
 
-
       cameraInput.click();
-
 
     }
   );
@@ -3588,11 +4162,9 @@ function selectedFile(
     input.files &&
     input.files[0];
 
-
   if (!file) {
     return;
   }
-
 
   showToast(
     'Seleccionado: ' +
@@ -3658,7 +4230,6 @@ audioButton.addEventListener(
   'click',
   async () => {
 
-
     if (
       !navigator.mediaDevices ||
       !navigator.mediaDevices.getUserMedia
@@ -3672,26 +4243,14 @@ audioButton.addEventListener(
 
     }
 
-
     try {
 
       const stream =
         await navigator
           .mediaDevices
           .getUserMedia({
-
             audio: true
-
           });
-
-
-      /*
-        Por ahora comprobamos permiso y dispositivo.
-
-        El stream se detiene inmediatamente para no
-        dejar el micrófono abierto cuando todavía
-        no se está grabando una nota de voz.
-      */
 
       stream
         .getTracks()
@@ -3703,11 +4262,9 @@ audioButton.addEventListener(
           }
         );
 
-
       showToast(
         'Micrófono autorizado'
       );
-
 
     } catch (error) {
 
@@ -3716,16 +4273,17 @@ audioButton.addEventListener(
         error
       );
 
-
       showToast(
         'No se concedió acceso al micrófono'
       );
 
     }
 
-
   }
-);// ========================================================
+);
+
+
+// ========================================================
 // LLAMADA DE VOZ
 // ========================================================
 
@@ -3743,21 +4301,15 @@ voiceCallButton.addEventListener(
 
     }
 
-
     const conversationId =
-
-      currentConversation.id ||
-
-      currentConversation.conversation_id ||
-
-      currentConversation.conversationId;
-
+      getConversationId(
+        currentConversation
+      );
 
     const contactName =
       getConversationName(
         currentConversation
       );
-
 
     socket.emit(
 
@@ -3783,7 +4335,6 @@ voiceCallButton.addEventListener(
       }
 
     );
-
 
     showToast(
       'Llamando a ' +
@@ -3813,16 +4364,6 @@ videoCallButton.addEventListener(
 
     }
 
-
-    /*
-      Comprobamos que el dispositivo permita
-      cámara + micrófono.
-
-      No dejamos los dispositivos abiertos aquí.
-      La conexión WebRTC completa podrá utilizar
-      estos permisos después.
-    */
-
     if (
       !navigator.mediaDevices ||
       !navigator.mediaDevices.getUserMedia
@@ -3836,7 +4377,6 @@ videoCallButton.addEventListener(
 
     }
 
-
     try {
 
       const stream =
@@ -3845,11 +4385,9 @@ videoCallButton.addEventListener(
           .getUserMedia({
 
             video: true,
-
             audio: true
 
           });
-
 
       stream
         .getTracks()
@@ -3861,21 +4399,15 @@ videoCallButton.addEventListener(
           }
         );
 
-
       const conversationId =
-
-        currentConversation.id ||
-
-        currentConversation.conversation_id ||
-
-        currentConversation.conversationId;
-
+        getConversationId(
+          currentConversation
+        );
 
       const contactName =
         getConversationName(
           currentConversation
         );
-
 
       socket.emit(
 
@@ -3902,13 +4434,11 @@ videoCallButton.addEventListener(
 
       );
 
-
       showToast(
         'Videollamando a ' +
         contactName +
         '...'
       );
-
 
     } catch (error) {
 
@@ -3916,7 +4446,6 @@ videoCallButton.addEventListener(
         'VOBIXCHAT VIDEO CALL:',
         error
       );
-
 
       showToast(
         'No se concedió acceso a cámara y micrófono'
@@ -3940,7 +4469,6 @@ socket.on(
       return;
     }
 
-
     const caller =
 
       data.username ||
@@ -3951,12 +4479,10 @@ socket.on(
 
       'Contacto';
 
-
     const type =
       data.type === 'video'
         ? 'videollamada'
         : 'llamada';
-
 
     showToast(
       caller +
@@ -3986,7 +4512,6 @@ moreButton.addEventListener(
 
     }
 
-
     showToast(
       'Opciones de conversación'
     );
@@ -4012,7 +4537,6 @@ sendButton.addEventListener(
 messageInput.addEventListener(
   'keydown',
   event => {
-
 
     if (
       event.key === 'Enter' &&
@@ -4105,7 +4629,6 @@ document.addEventListener(
   'click',
   event => {
 
-
     if (
       !emojiPanel.contains(
         event.target
@@ -4120,7 +4643,6 @@ document.addEventListener(
       );
 
     }
-
 
     if (
       !attachMenu.contains(
@@ -4142,30 +4664,103 @@ document.addEventListener(
 
 
 // ========================================================
+// REENTRAR EN LA SALA DESPUÉS DE UNA RECONEXIÓN
+// ========================================================
+
+function rejoinCurrentConversation() {
+
+  if (!currentConversation) {
+    return;
+  }
+
+  const conversationId =
+    getConversationId(
+      currentConversation
+    );
+
+  if (!conversationId) {
+    return;
+  }
+
+  /*
+    Cuando Socket.IO recupera la conexión,
+    las salas anteriores ya no deben darse
+    por supuestas.
+
+    Volvemos a entrar explícitamente.
+  */
+  joinConversationRoom(
+    currentConversation
+  );
+
+}
+
+
+// ========================================================
+// SINCRONIZAR DESPUÉS DE RECONECTAR
+// ========================================================
+
+async function synchronizeAfterReconnect() {
+
+  try {
+
+    /*
+      Recuperamos la lista desde PostgreSQL.
+
+      Esto permite que aparezcan conversaciones
+      o últimos mensajes que hayan llegado mientras
+      el socket estaba temporalmente desconectado.
+    */
+    await loadConversations();
+
+    if (currentConversation) {
+
+      /*
+        Volvemos a consultar el historial de la sala.
+
+        De esta manera, si algún mensaje se produjo
+        durante el corte, no queda perdido visualmente.
+      */
+      await loadMessages();
+
+      scrollBottom();
+
+    }
+
+  } catch (error) {
+
+    console.error(
+      'VOBIXCHAT RECONNECT SYNC:',
+      error
+    );
+
+  }
+
+}
+
+
+// ========================================================
 // SOCKET CONECTADO
 // ========================================================
 
 socket.on(
   'connect',
-  () => {
+  async () => {
 
     console.log(
       'VOBIXCHAT SOCKET CONECTADO:',
       socket.id
     );
 
-
     if (me) {
 
       const username =
         getUsername(me);
 
-
       /*
-        Conservamos compatibilidad con el sistema
-        que identifica al usuario por nombre.
+        Compatibilidad con identificación
+        de usuario del servidor.
       */
-
       if (username) {
 
         socket.emit(
@@ -4175,13 +4770,10 @@ socket.on(
 
       }
 
-
       /*
-        También enviamos los datos de autenticación
-        del usuario conectado para que el servidor
-        pueda asociar el socket a su cuenta.
+        Informamos también los datos de la cuenta
+        conectada para los eventos de presencia.
       */
-
       socket.emit(
 
         'user-online',
@@ -4192,9 +4784,13 @@ socket.on(
             username,
 
           userId:
+
             me.id ||
+
             me.user_id ||
+
             me.userId ||
+
             null,
 
           phone:
@@ -4210,6 +4806,74 @@ socket.on(
       );
 
     }
+
+    /*
+      MUY IMPORTANTE:
+
+      Si estábamos dentro de una conversación
+      y el móvil perdió Internet, al reconectar
+      volvemos a entrar en la sala privada.
+    */
+    rejoinCurrentConversation();
+
+  }
+);
+
+
+// ========================================================
+// SOCKET RECONECTADO
+// ========================================================
+
+socket.io.on(
+  'reconnect',
+  async attempt => {
+
+    console.log(
+      'VOBIXCHAT RECONECTADO. INTENTO:',
+      attempt
+    );
+
+    showToast(
+      'Conexión recuperada'
+    );
+
+    rejoinCurrentConversation();
+
+    await synchronizeAfterReconnect();
+
+  }
+);
+
+
+// ========================================================
+// INTENTO DE RECONEXIÓN
+// ========================================================
+
+socket.io.on(
+  'reconnect_attempt',
+  attempt => {
+
+    console.log(
+      'VOBIXCHAT RECONECTANDO:',
+      attempt
+    );
+
+  }
+);
+
+
+// ========================================================
+// ERROR DE RECONEXIÓN
+// ========================================================
+
+socket.io.on(
+  'reconnect_error',
+  error => {
+
+    console.warn(
+      'VOBIXCHAT RECONNECT ERROR:',
+      error
+    );
 
   }
 );
@@ -4245,6 +4909,22 @@ socket.on(
       reason
     );
 
+    /*
+      Socket.IO intentará reconectar automáticamente.
+
+      No destruimos la conversación ni limpiamos
+      los mensajes que el usuario ya está viendo.
+    */
+    if (
+      reason !==
+      'io client disconnect'
+    ) {
+
+      roomStatus.textContent =
+        'Reconectando…';
+
+    }
+
   }
 );
 
@@ -4261,7 +4941,6 @@ socket.on(
       return;
     }
 
-
     if (
       currentConversation
     ) {
@@ -4271,10 +4950,8 @@ socket.on(
           currentConversation
         );
 
-
       const onlineName =
         getUsername(data);
-
 
       if (
         currentName &&
@@ -4306,7 +4983,6 @@ socket.on(
       return;
     }
 
-
     if (
       currentConversation
     ) {
@@ -4316,10 +4992,8 @@ socket.on(
           currentConversation
         );
 
-
       const offlineName =
         getUsername(data);
-
 
       if (
         currentName &&
@@ -4340,7 +5014,7 @@ socket.on(
 
 
 // ========================================================
-// ACTUALIZAR CONVERSACIONES DESDE SOCKET
+// ACTUALIZACIONES DE CONVERSACIÓN
 // ========================================================
 
 socket.on(
@@ -4364,67 +5038,65 @@ socket.on(
 
 
 // ========================================================
-// COMPROBAR SESIÓN
+// SINCRONIZACIÓN CUANDO REGRESA A VOBIXCHAT
 // ========================================================
 
-function checkSession() {
-
-  const token =
-    localStorage.getItem(
-      'vobix_token'
-    );
-
-
-  const localUser =
-    getLocalUser();
-
-
-  if (
-    !token ||
-    !localUser
-  ) {
-
-    console.warn(
-      'VOBIXCHAT: sesión incompleta'
-    );
-
-    /*
-      No destruimos la interfaz ni borramos datos.
-
-      Si el usuario llegó aquí sin una sesión válida,
-      simplemente avisamos. El servidor seguirá siendo
-      quien decida si autoriza las peticiones.
-    */
-
-    showToast(
-      'Sesión no disponible. Inicia sesión nuevamente.'
-    );
-
-
-    return false;
-
-  }
-
-
-  return true;
-
-}
-
-
-// ========================================================
-// RECARGAR CONVERSACIONES AL VOLVER A LA PESTAÑA
-// ========================================================
+let visibilitySyncRunning =
+  false;
 
 document.addEventListener(
   'visibilitychange',
-  () => {
+  async () => {
 
     if (
-      document.visibilityState ===
-      'visible'
+      document.visibilityState !==
+      'visible' ||
+      visibilitySyncRunning
     ) {
 
-      loadConversations();
+      return;
+
+    }
+
+    visibilitySyncRunning =
+      true;
+
+    try {
+
+      /*
+        Cuando el usuario vuelve desde otra aplicación,
+        sincronizamos con PostgreSQL.
+
+        Esto recupera mensajes recibidos mientras
+        el navegador estaba suspendido.
+      */
+      await loadConversations();
+
+      if (
+        currentConversation
+      ) {
+
+        joinConversationRoom(
+          currentConversation
+        );
+
+        await loadMessages();
+
+        scrollBottom();
+
+      }
+
+    } catch (error) {
+
+      console.error(
+        'VOBIXCHAT VISIBILITY SYNC:',
+        error
+      );
+
+    } finally {
+
+      visibilitySyncRunning =
+        false;
 
     }
 
@@ -4433,26 +5105,27 @@ document.addEventListener(
 
 
 // ========================================================
-// RECARGAR AL RECUPERAR INTERNET
+// RECUPERAR INTERNET
 // ========================================================
 
 window.addEventListener(
   'online',
-  () => {
+  async () => {
 
     showToast(
       'Conexión recuperada'
     );
 
+    rejoinCurrentConversation();
 
-    loadConversations();
+    await synchronizeAfterReconnect();
 
   }
 );
 
 
 // ========================================================
-// AVISO SIN INTERNET
+// PERDER INTERNET
 // ========================================================
 
 window.addEventListener(
@@ -4463,8 +5136,670 @@ window.addEventListener(
       'Sin conexión a Internet'
     );
 
+    if (
+      currentConversation
+    ) {
+
+      roomStatus.textContent =
+        'Sin conexión';
+
+    }
+
   }
 );
+// ========================================================
+// COMPROBAR SESIÓN
+// ========================================================
+
+function checkSession() {
+
+  const token =
+    localStorage.getItem(
+      'vobix_token'
+    );
+
+  const localUser =
+    getLocalUser();
+
+  if (
+    !token ||
+    !localUser
+  ) {
+
+    console.warn(
+      'VOBIXCHAT: sesión incompleta'
+    );
+
+    showToast(
+      'Sesión no disponible. Inicia sesión nuevamente.'
+    );
+
+    return false;
+
+  }
+
+  return true;
+
+}
+
+
+// ========================================================
+// ACTIVAR AUDIO DESPUÉS DE INTERACCIÓN DEL USUARIO
+// ========================================================
+
+function activateNotificationAudio() {
+
+  try {
+
+    const AudioContextClass =
+
+      window.AudioContext ||
+
+      window.webkitAudioContext;
+
+    if (!AudioContextClass) {
+      return;
+    }
+
+    if (
+      !notificationAudioContext
+    ) {
+
+      notificationAudioContext =
+        new AudioContextClass();
+
+    }
+
+    if (
+      notificationAudioContext.state ===
+      'suspended'
+    ) {
+
+      notificationAudioContext
+        .resume()
+        .catch(
+          () => {}
+        );
+
+    }
+
+  } catch (error) {
+
+    console.warn(
+      'VOBIXCHAT AUDIO INIT:',
+      error
+    );
+
+  }
+
+}
+
+
+document.addEventListener(
+  'click',
+  activateNotificationAudio,
+  {
+    once: true
+  }
+);
+
+
+// ========================================================
+// REFRESCO CONTROLADO DE CONVERSACIONES
+// ========================================================
+
+let conversationsRefreshTimer =
+  null;
+
+
+function scheduleConversationRefresh() {
+
+  clearTimeout(
+    conversationsRefreshTimer
+  );
+
+  conversationsRefreshTimer =
+    setTimeout(
+      () => {
+
+        loadConversations();
+
+      },
+      400
+    );
+
+}
+
+
+// ========================================================
+// ACTUALIZACIÓN DE CONVERSACIÓN DESDE BACKEND
+// ========================================================
+
+socket.on(
+  'conversation:update',
+  data => {
+
+    if (
+      data &&
+      typeof data === 'object'
+    ) {
+
+      const conversationId =
+
+        data.conversation_id ||
+
+        data.conversationId ||
+
+        data.id;
+
+      if (conversationId) {
+
+        const existing =
+          conversations.find(
+            item =>
+
+              String(
+                getConversationId(
+                  item
+                )
+              ) ===
+              String(
+                conversationId
+              )
+          );
+
+        if (existing) {
+
+          Object.assign(
+            existing,
+            data
+          );
+
+          renderConversations();
+
+          return;
+
+        }
+
+      }
+
+    }
+
+    scheduleConversationRefresh();
+
+  }
+);
+
+
+// ========================================================
+// NUEVA CONVERSACIÓN DESDE BACKEND
+// ========================================================
+
+socket.on(
+  'conversation:new',
+  () => {
+
+    scheduleConversationRefresh();
+
+  }
+);
+
+
+// ========================================================
+// SINCRONIZACIÓN DE MENSAJES
+// ========================================================
+
+async function syncCurrentConversation() {
+
+  if (!currentConversation) {
+    return;
+  }
+
+  try {
+
+    joinConversationRoom(
+      currentConversation
+    );
+
+    await loadMessages();
+
+    scrollBottom();
+
+  } catch (error) {
+
+    console.error(
+      'VOBIXCHAT MESSAGE SYNC:',
+      error
+    );
+
+  }
+
+}
+
+
+// ========================================================
+// REFRESCO DE SEGURIDAD
+//
+// Socket.IO es el sistema principal.
+// Este refresco NO sustituye al tiempo real.
+//
+// Sirve únicamente como red de seguridad en móviles,
+// donde el navegador puede suspender conexiones cuando
+// VOBIXCHAT queda en segundo plano.
+// ========================================================
+
+let safetySyncTimer =
+  null;
+
+
+function startSafetySync() {
+
+  clearInterval(
+    safetySyncTimer
+  );
+
+  safetySyncTimer =
+    setInterval(
+      async () => {
+
+        if (
+          document.visibilityState !==
+          'visible'
+        ) {
+
+          return;
+
+        }
+
+        if (
+          !navigator.onLine
+        ) {
+
+          return;
+
+        }
+
+        try {
+
+          await loadConversations();
+
+        } catch (error) {
+
+          console.warn(
+            'VOBIXCHAT SAFETY SYNC:',
+            error
+          );
+
+        }
+
+      },
+      30000
+    );
+
+}
+
+
+// ========================================================
+// DETECTAR FOCUS DE LA VENTANA
+// ========================================================
+
+window.addEventListener(
+  'focus',
+  async () => {
+
+    if (
+      !navigator.onLine
+    ) {
+
+      return;
+
+    }
+
+    try {
+
+      /*
+        Al regresar a VOBIXCHAT sincronizamos
+        conversaciones y mensajes.
+
+        Esto es importante en teléfonos porque
+        Android/iOS pueden suspender JavaScript
+        mientras otra aplicación está abierta.
+      */
+      await loadConversations();
+
+      if (
+        currentConversation
+      ) {
+
+        await syncCurrentConversation();
+
+      }
+
+    } catch (error) {
+
+      console.error(
+        'VOBIXCHAT FOCUS SYNC:',
+        error
+      );
+
+    }
+
+  }
+);
+
+
+// ========================================================
+// SOCKET AUTENTICADO PERO SIN SALA
+//
+// Si el servidor confirma autenticación después de
+// conectar, nos aseguramos nuevamente de entrar
+// en la conversación actual.
+// ========================================================
+
+socket.on(
+  'authenticated',
+  () => {
+
+    rejoinCurrentConversation();
+
+  }
+);
+
+
+// ========================================================
+// ACK / ENTREGA
+// ========================================================
+
+socket.on(
+  'message:delivered',
+  data => {
+
+    if (!data) {
+      return;
+    }
+
+    const messageId =
+
+      data.message_id ||
+
+      data.messageId ||
+
+      data.id;
+
+    if (!messageId) {
+      return;
+    }
+
+    const element =
+      messages.querySelector(
+        `[data-message-id="${CSS.escape(
+          String(messageId)
+        )}"]`
+      );
+
+    if (!element) {
+      return;
+    }
+
+    const ticks =
+      element.querySelector(
+        '.ticks'
+      );
+
+    if (ticks) {
+
+      ticks.textContent =
+        '✓✓';
+
+    }
+
+  }
+);
+
+
+// ========================================================
+// MENSAJE LEÍDO
+// ========================================================
+
+socket.on(
+  'message:read',
+  data => {
+
+    if (!data) {
+      return;
+    }
+
+    const messageId =
+
+      data.message_id ||
+
+      data.messageId ||
+
+      data.id;
+
+    if (!messageId) {
+      return;
+    }
+
+    const element =
+      messages.querySelector(
+        `[data-message-id="${CSS.escape(
+          String(messageId)
+        )}"]`
+      );
+
+    if (!element) {
+      return;
+    }
+
+    const ticks =
+      element.querySelector(
+        '.ticks'
+      );
+
+    if (ticks) {
+
+      ticks.textContent =
+        '✓✓';
+
+    }
+
+  }
+);
+
+
+// ========================================================
+// ERROR DE MENSAJERÍA
+// ========================================================
+
+socket.on(
+  'message:error',
+  data => {
+
+    const text =
+
+      data &&
+      (
+        data.message ||
+        data.error
+      )
+
+        ? (
+            data.message ||
+            data.error
+          )
+
+        : 'Error enviando mensaje';
+
+    showToast(
+      text
+    );
+
+  }
+);
+
+
+// ========================================================
+// ERROR DE SALA
+// ========================================================
+
+socket.on(
+  'conversation-error',
+  data => {
+
+    const text =
+
+      data &&
+      (
+        data.message ||
+        data.error
+      )
+
+        ? (
+            data.message ||
+            data.error
+          )
+
+        : 'No se pudo acceder a la conversación';
+
+    console.warn(
+      'VOBIXCHAT CONVERSATION ERROR:',
+      data
+    );
+
+    showToast(
+      text
+    );
+
+  }
+);
+
+
+// ========================================================
+// ACTUALIZAR ESTADO AL RECUPERAR SOCKET
+// ========================================================
+
+socket.io.on(
+  'reconnect',
+  () => {
+
+    if (
+      currentConversation
+    ) {
+
+      roomStatus.textContent =
+        'Conversación privada';
+
+    }
+
+  }
+);
+
+
+// ========================================================
+// EVITAR ENVÍOS DOBLES POR TOQUES RÁPIDOS
+// ========================================================
+
+let sendingMessage =
+  false;
+
+
+const originalSendMessage =
+  sendMessage;
+
+
+sendMessage =
+  async function() {
+
+    if (sendingMessage) {
+      return;
+    }
+
+    sendingMessage =
+      true;
+
+    try {
+
+      await originalSendMessage();
+
+    } finally {
+
+      sendingMessage =
+        false;
+
+    }
+
+  };
+
+
+// ========================================================
+// ACTUALIZAR LISTENERS DEL BOTÓN DESPUÉS DEL PROTECTOR
+//
+// El listener anterior conserva la referencia original.
+// Sustituimos el botón por una copia idéntica para que
+// use exclusivamente la función protegida.
+// ========================================================
+
+const protectedSendButton =
+  sendButton.cloneNode(true);
+
+
+sendButton.parentNode.replaceChild(
+  protectedSendButton,
+  sendButton
+);
+
+
+protectedSendButton.addEventListener(
+  'click',
+  () => {
+
+    sendMessage();
+
+  }
+);
+
+
+// ========================================================
+// ENTER PROTEGIDO
+//
+// Eliminamos la posibilidad de que una repetición física
+// de la tecla Enter produzca varios mensajes.
+// ========================================================
+
+messageInput.addEventListener(
+  'keyup',
+  event => {
+
+    if (
+      event.key === 'Enter'
+    ) {
+
+      event.preventDefault();
+
+    }
+
+  }
+);
+
+
+// ========================================================
+// ESTADO INICIAL DEL NAVEGADOR
+// ========================================================
+
+function showInitialConnectionState() {
+
+  if (
+    !navigator.onLine
+  ) {
+
+    showToast(
+      'Sin conexión a Internet'
+    );
+
+  }
+
+}
 
 
 // ========================================================
@@ -4477,23 +5812,75 @@ async function initVobixChat() {
     'VOBIXCHAT iniciando...'
   );
 
+  const sessionAvailable =
+    checkSession();
 
-  checkSession();
-
+  showInitialConnectionState();
 
   /*
-    Cargamos las conversaciones reales
-    del usuario autenticado.
+    Aunque el servidor es quien decide finalmente
+    si la sesión es válida, no detenemos la interfaz
+    mientras se comprueba.
   */
+  if (!sessionAvailable) {
 
-  await loadConversations();
+    console.warn(
+      'VOBIXCHAT continuará esperando autenticación válida'
+    );
 
+  }
+
+  try {
+
+    /*
+      Primera sincronización con PostgreSQL.
+    */
+    await loadConversations();
+
+  } catch (error) {
+
+    console.error(
+      'VOBIXCHAT INITIAL LOAD:',
+      error
+    );
+
+  }
+
+  /*
+    Iniciamos la red de seguridad para navegadores
+    móviles que suspenden conexiones en segundo plano.
+  */
+  startSafetySync();
 
   console.log(
     'VOBIXCHAT listo'
   );
 
 }
+
+
+// ========================================================
+// LIMPIEZA ANTES DE CERRAR
+// ========================================================
+
+window.addEventListener(
+  'beforeunload',
+  () => {
+
+    clearInterval(
+      safetySyncTimer
+    );
+
+    clearTimeout(
+      conversationsRefreshTimer
+    );
+
+    clearTimeout(
+      typingTimer
+    );
+
+  }
+);
 
 
 // ========================================================
@@ -4510,4 +5897,4 @@ initVobixChat();
 </script>
 
 </body>
-</html>
+</html>  
