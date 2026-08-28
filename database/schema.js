@@ -14,6 +14,7 @@
  - NO eliminar tablas existentes
  - Reparar estructuras antiguas
  - Mantener compatibilidad con columnas legacy
+ - Preparar mensajes multimedia
 ==========================================================
 */
 
@@ -410,7 +411,6 @@ async function initializeDatabase() {
       );
     `);
 
-
     await database.query(`
       ALTER TABLE conversation_participants
       ADD COLUMN IF NOT EXISTS role VARCHAR(30)
@@ -473,6 +473,24 @@ async function initializeDatabase() {
 
         content TEXT,
 
+        file_url TEXT,
+
+        file_public_id TEXT,
+
+        file_name TEXT,
+
+        file_mime VARCHAR(255),
+
+        file_size BIGINT,
+
+        file_resource_type VARCHAR(30),
+
+        media_duration NUMERIC(12,3),
+
+        media_width INTEGER,
+
+        media_height INTEGER,
+
         reply_to_message_id UUID,
 
         edited BOOLEAN DEFAULT FALSE,
@@ -512,6 +530,61 @@ async function initializeDatabase() {
       ADD COLUMN IF NOT EXISTS content TEXT;
     `);
 
+
+    // ====================================================
+    // MULTIMEDIA
+    // ====================================================
+
+    await database.query(`
+      ALTER TABLE messages
+      ADD COLUMN IF NOT EXISTS file_url TEXT;
+    `);
+
+    await database.query(`
+      ALTER TABLE messages
+      ADD COLUMN IF NOT EXISTS file_public_id TEXT;
+    `);
+
+    await database.query(`
+      ALTER TABLE messages
+      ADD COLUMN IF NOT EXISTS file_name TEXT;
+    `);
+
+    await database.query(`
+      ALTER TABLE messages
+      ADD COLUMN IF NOT EXISTS file_mime VARCHAR(255);
+    `);
+
+    await database.query(`
+      ALTER TABLE messages
+      ADD COLUMN IF NOT EXISTS file_size BIGINT;
+    `);
+
+    await database.query(`
+      ALTER TABLE messages
+      ADD COLUMN IF NOT EXISTS file_resource_type VARCHAR(30);
+    `);
+
+    await database.query(`
+      ALTER TABLE messages
+      ADD COLUMN IF NOT EXISTS media_duration NUMERIC(12,3);
+    `);
+
+    await database.query(`
+      ALTER TABLE messages
+      ADD COLUMN IF NOT EXISTS media_width INTEGER;
+    `);
+
+    await database.query(`
+      ALTER TABLE messages
+      ADD COLUMN IF NOT EXISTS media_height INTEGER;
+    `);
+
+
+    // ====================================================
+    // RESTO DE COLUMNAS MESSAGES
+    // ====================================================
+
     await database.query(`
       ALTER TABLE messages
       ADD COLUMN IF NOT EXISTS reply_to_message_id UUID;
@@ -543,19 +616,19 @@ async function initializeDatabase() {
 
 
     // ====================================================
+    // NORMALIZAR MESSAGE_TYPE
+    // ====================================================
+
+    await database.query(`
+      UPDATE messages
+      SET message_type = 'text'
+      WHERE message_type IS NULL
+         OR BTRIM(message_type) = '';
+    `);
+
+
+    // ====================================================
     // COMPATIBILIDAD CON sender_id ANTIGUO
-    //
-    // La tabla vieja puede tener:
-    //
-    // sender_id UUID NOT NULL
-    //
-    // mientras VOBIX nuevo utiliza:
-    //
-    // sender_user_id UUID
-    //
-    // No eliminamos sender_id todavía.
-    // Primero permitimos NULL para que el sistema nuevo
-    // pueda guardar mensajes sin romper datos antiguos.
     // ====================================================
 
     const hasLegacySenderId =
@@ -575,18 +648,12 @@ async function initializeDatabase() {
         ALTER COLUMN sender_id DROP NOT NULL;
       `);
 
-
-      // --------------------------------------------------
-      // Migrar datos antiguos cuando sea posible
-      // --------------------------------------------------
-
       await database.query(`
         UPDATE messages
         SET sender_user_id = sender_id
         WHERE sender_user_id IS NULL
           AND sender_id IS NOT NULL;
       `);
-
 
       console.log(
         'VOBIXCHAT DATABASE: compatibilidad sender_id preparada'
@@ -674,7 +741,7 @@ async function initializeDatabase() {
 
 
     // ====================================================
-    // ÍNDICE MENSAJES
+    // ÍNDICES MENSAJES
     // ====================================================
 
     await database.query(`
@@ -684,6 +751,12 @@ async function initializeDatabase() {
         conversation_id,
         created_at DESC
       );
+    `);
+
+    await database.query(`
+      CREATE INDEX IF NOT EXISTS
+      messages_type_idx
+      ON messages(message_type);
     `);
 
 
@@ -813,6 +886,10 @@ async function initializeDatabase() {
 
     console.log(
       'VOBIXCHAT DATABASE: messages verificada'
+    );
+
+    console.log(
+      'VOBIXCHAT DATABASE: multimedia preparada'
     );
 
     console.log(
