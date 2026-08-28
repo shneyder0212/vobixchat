@@ -359,8 +359,11 @@
     id="user"
     type="text"
     placeholder="Nombre de usuario"
-    autocomplete="username"
+    autocomplete="off"
+    autocapitalize="none"
+    spellcheck="false"
     maxlength="100"
+    value=""
   >
 
 
@@ -490,10 +493,6 @@ const statusElement =
 
 /* =======================================================
    PAÍSES Y PREFIJOS
-
-   Los países que comparten +1 siguen apareciendo
-   individualmente para que el usuario pueda escoger
-   correctamente su país.
 ======================================================= */
 
 
@@ -1096,9 +1095,6 @@ function applyLanguage(){
 
 /* =======================================================
    PAÍS DEL NAVEGADOR
-
-   Esto sirve como respaldo inmediato y NO necesita
-   ninguna API externa.
 ======================================================= */
 
 
@@ -1168,11 +1164,6 @@ function detectCountryFromLocale(){
 
 /* =======================================================
    DETECCIÓN POR IP
-
-   IMPORTANTE:
-   - si falla, NO rompe el acceso;
-   - conserva el país del navegador;
-   - el usuario siempre puede elegir manualmente.
 ======================================================= */
 
 
@@ -1257,12 +1248,6 @@ async function detectCountry(){
 
   }catch(error){
 
-    /*
-      No bloqueamos el registro.
-
-      El selector manual sigue funcionando.
-    */
-
     console.warn(
       'VOBIXCHAT: detección automática de país no disponible'
     );
@@ -1274,13 +1259,6 @@ async function detectCountry(){
 
 /* =======================================================
    NORMALIZAR TELÉFONO
-
-   REGLAS:
-   1. El usuario puede escribir solamente su número local.
-   2. También puede pegar +34..., +1..., etc.
-   3. Si ya trae +, NO volvemos a poner el prefijo.
-   4. 00 se convierte en +.
-   5. Eliminamos espacios, guiones y paréntesis.
 ======================================================= */
 
 
@@ -1300,21 +1278,12 @@ function normalizeInternationalPhone(
   }
 
 
-  /*
-    Conservamos únicamente números
-    y un posible + inicial.
-  */
-
   value =
     value.replace(
       /[^\d+]/g,
       ''
     );
 
-
-  /*
-    Evitar varios signos +
-  */
 
   if(
     value.startsWith('+')
@@ -1334,10 +1303,6 @@ function normalizeInternationalPhone(
   }
 
 
-  /*
-    Formato internacional 00...
-  */
-
   if(
     value.startsWith('00')
   ){
@@ -1349,11 +1314,6 @@ function normalizeInternationalPhone(
   }
 
 
-  /*
-    Si ya es internacional,
-    NO duplicamos el prefijo.
-  */
-
   if(
     value.startsWith('+')
   ){
@@ -1362,18 +1322,6 @@ function normalizeInternationalPhone(
 
   }
 
-
-  /*
-    Quitamos el 0 troncal inicial.
-
-    Ejemplo:
-    España:
-    0612345678 -> +34612345678
-
-    En países donde el cero forme parte del número,
-    el backend debe aplicar validación específica
-    posteriormente.
-  */
 
   value =
     value.replace(
@@ -1388,17 +1336,6 @@ function normalizeInternationalPhone(
       ''
     );
 
-
-  /*
-    Si el usuario escribió accidentalmente
-    el prefijo dentro del campo SIN +:
-
-    prefijo visual +34
-    campo: 34612345678
-
-    no generamos:
-    +3434612345678
-  */
 
   if(
     callingDigits &&
@@ -1421,7 +1358,7 @@ function normalizeInternationalPhone(
 
 
 /* =======================================================
-   VALIDACIÓN BÁSICA
+   VALIDACIÓN
 ======================================================= */
 
 
@@ -1439,7 +1376,7 @@ function isValidInternationalPhone(
 
 
 /* =======================================================
-   MENSAJE DE ESTADO
+   ESTADO
 ======================================================= */
 
 
@@ -1480,18 +1417,13 @@ countrySelect.addEventListener(
 
 
 /* =======================================================
-   LIMPIEZA VISUAL DEL TELÉFONO
+   TELÉFONO
 ======================================================= */
 
 
 phoneInput.addEventListener(
   'input',
   () => {
-
-    /*
-      Permitimos +, números, espacios,
-      guiones y paréntesis mientras escribe.
-    */
 
     phoneInput.value =
       phoneInput.value.replace(
@@ -1631,10 +1563,11 @@ async function send(){
 
 
     /*
-      Guardamos el usuario en DOS formatos.
+      AQUÍ SÍ GUARDAMOS EL NOMBRE QUE LA PERSONA
+      ACABA DE ESCRIBIR.
 
-      Esto mantiene compatibilidad con el chat
-      nuevo y con código antiguo.
+      Esto permite que chat.html pueda mostrar
+      correctamente @NOMBRE.
     */
 
     const localUser = {
@@ -1679,13 +1612,6 @@ async function send(){
       fullPhone
     );
 
-
-    /*
-      MODO DE PRUEBAS ACTUAL.
-
-      Tu backend actual devuelve el PIN
-      cuando TEST_PIN_MODE está activo.
-    */
 
     if(
       data.pin != null
@@ -1734,16 +1660,10 @@ async function send(){
       }
 
 
-      /*
-        IMPORTANTE:
-
-        Intentamos verificar también contra
-        el backend para obtener la sesión/token.
-      */
-
       await verifyAndEnter(
         fullPhone,
-        String(data.pin)
+        String(data.pin),
+        username
       );
 
 
@@ -1751,11 +1671,6 @@ async function send(){
 
     }
 
-
-    /*
-      Si más adelante el SMS es real y el backend
-      deja de devolver el PIN, pedimos que lo escriba.
-    */
 
     const enteredPin =
       prompt(
@@ -1779,7 +1694,8 @@ async function send(){
       fullPhone,
       String(
         enteredPin
-      ).trim()
+      ).trim(),
+      username
     );
 
 
@@ -1814,15 +1730,13 @@ async function send(){
 
 /* =======================================================
    VERIFICAR PIN Y ENTRAR
-
-   Probamos las rutas compatibles con el backend
-   sin obligarte a modificar server.js ahora.
 ======================================================= */
 
 
 async function verifyAndEnter(
   fullPhone,
-  pin
+  pin,
+  username
 ){
 
   const routes = [
@@ -1864,18 +1778,19 @@ async function verifyAndEnter(
                   fullPhone,
 
                 pin:
-                  pin
+                  pin,
+
+                username:
+                  username,
+
+                user:
+                  username
 
               })
 
           }
         );
 
-
-      /*
-        Si la ruta no existe,
-        probamos la siguiente.
-      */
 
       if(
         response.status === 404
@@ -1912,11 +1827,6 @@ async function verifyAndEnter(
       }
 
 
-      /*
-        Guardamos token con los nombres que
-        entiende el chat que acabamos de montar.
-      */
-
       const token =
 
         data.token ||
@@ -1952,11 +1862,6 @@ async function verifyAndEnter(
       }
 
 
-      /*
-        Si el servidor devuelve el usuario
-        completo, lo conservamos.
-      */
-
       const serverUser =
 
         data.user ||
@@ -1966,31 +1871,70 @@ async function verifyAndEnter(
         null;
 
 
+      /*
+        IMPORTANTE:
+
+        Conservamos SIEMPRE el username que la persona
+        acaba de escribir, incluso si el backend devuelve
+        un objeto que todavía no contiene username.
+      */
+
+      let finalUser = {
+
+        username:
+          username,
+
+        phone:
+          fullPhone,
+
+        country:
+          COUNTRY_CODE,
+
+        callingCode:
+          CALLING_CODE
+
+      };
+
+
       if(
         serverUser &&
         typeof serverUser === 'object'
       ){
 
-        const previous =
-          JSON.parse(
-            localStorage.getItem(
-              'vobix_user'
-            ) || '{}'
-          );
+        finalUser = {
 
+          ...finalUser,
 
-        localStorage.setItem(
-          'vobix_user',
-          JSON.stringify({
+          ...serverUser,
 
-            ...previous,
+          username:
+            serverUser.username ||
+            serverUser.user_name ||
+            username
 
-            ...serverUser
-
-          })
-        );
+        };
 
       }
+
+
+      localStorage.setItem(
+        'vobix_user',
+        JSON.stringify(
+          finalUser
+        )
+      );
+
+
+      localStorage.setItem(
+        'vobix_username',
+        finalUser.username
+      );
+
+
+      localStorage.setItem(
+        'username',
+        finalUser.username
+      );
 
 
       location.href =
@@ -2008,11 +1952,6 @@ async function verifyAndEnter(
 
   }
 
-
-  /*
-    Si ambas rutas fallan realmente,
-    no fingimos una sesión válida.
-  */
 
   throw (
     lastError ||
@@ -2078,6 +2017,12 @@ phoneInput.addEventListener(
 
 /* =======================================================
    INICIAR
+
+   CORRECCIÓN OBLIGATORIA:
+   EL NOMBRE SIEMPRE EMPIEZA VACÍO.
+
+   NO recuperamos vobix_user,
+   vobix_username ni username para rellenar este campo.
 ======================================================= */
 
 
@@ -2086,11 +2031,6 @@ async function init(){
   buildCountrySelect();
 
 
-  /*
-    España queda como respaldo mientras
-    se realiza la detección.
-  */
-
   setCountry('ES');
 
 
@@ -2098,77 +2038,43 @@ async function init(){
 
 
   /*
-    Recuperar nombre si ya se había escrito antes.
+    SIEMPRE VACÍO EN LA PANTALLA DE ENTRADA.
   */
 
-  try{
-
-    const stored =
-      localStorage.getItem(
-        'vobix_user'
-      );
-
-
-    if(stored){
-
-      try{
-
-        const parsed =
-          JSON.parse(stored);
-
-
-        if(
-          parsed &&
-          typeof parsed === 'object'
-        ){
-
-          if(parsed.username){
-
-            userInput.value =
-              parsed.username;
-
-          }
-
-
-          if(
-            parsed.country &&
-            getCountryByCode(
-              parsed.country
-            )
-          ){
-
-            setCountry(
-              parsed.country
-            );
-
-          }
-
-        }
-
-      }catch(error){
-
-        if(
-          typeof stored === 'string'
-        ){
-
-          userInput.value =
-            stored;
-
-        }
-
-      }
-
-    }
-
-  }catch(error){}
+  userInput.value = '';
 
 
   /*
-    Ahora intentamos detección automática.
-    Si falla, el selector manual permanece.
+    Tampoco recuperamos un teléfono anterior.
+  */
+
+  phoneInput.value = '';
+
+
+  /*
+    País/prefijo sí se detecta automáticamente.
   */
 
   await detectCountry();
+
+
+  /*
+    Lo repetimos después de la detección para evitar
+    que cualquier autocompletado del navegador deje
+    un nombre anterior durante la carga.
+  */
+
+  userInput.value = '';
+
+
+  setTimeout(
+    () => {
+
+      userInput.value = '';
+
+    },
+    50
+  );
 
 }
 
