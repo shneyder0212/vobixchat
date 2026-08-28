@@ -13,51 +13,19 @@
  - Crear conversación privada
  - Listar conversaciones
  - Cargar mensajes
- - Enviar mensajes de texto
+ - Enviar mensajes
  - Fotos
  - Vídeos
- - Notas de voz / audio
+ - Notas de voz
  - Documentos
- - Cloudinary
  - Compatibilidad frontend VOBIXCHAT
 ==========================================================
 */
 
 const express = require('express');
-const multer = require('multer');
-const streamifier = require('streamifier');
-const { v2: cloudinary } = require('cloudinary');
-
 const database = require('../database/db');
 
 const router = express.Router();
-
-
-// ========================================================
-// CLOUDINARY
-// ========================================================
-
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-  secure: true
-});
-
-
-// ========================================================
-// MULTER - MEMORIA
-// ========================================================
-
-const upload = multer({
-
-  storage: multer.memoryStorage(),
-
-  limits: {
-    fileSize: 50 * 1024 * 1024
-  }
-
-});
 
 
 // ========================================================
@@ -90,235 +58,36 @@ function cleanMessage(value) {
 }
 
 
-function cleanFileName(value) {
-
-  return String(value || 'archivo')
-    .replace(/[\r\n]/g, '')
-    .trim()
-    .slice(0, 255) || 'archivo';
-
-}
-
-
 // ========================================================
-// COMPROBAR CLOUDINARY
+// COMPROBAR ACCESO A CONVERSACIÓN
 // ========================================================
 
-function cloudinaryIsConfigured() {
-
-  return Boolean(
-    process.env.CLOUDINARY_CLOUD_NAME &&
-    process.env.CLOUDINARY_API_KEY &&
-    process.env.CLOUDINARY_API_SECRET
-  );
-
-}
-
-
-// ========================================================
-// DETERMINAR TIPO DEL MENSAJE
-// ========================================================
-
-function getMessageType(file, requestedType) {
-
-  const mime =
-    String(
-      file?.mimetype || ''
-    ).toLowerCase();
-
-  const requested =
-    String(
-      requestedType || ''
-    ).toLowerCase();
-
-
-  if (
-    requested === 'voice' ||
-    requested === 'audio' ||
-    mime.startsWith('audio/')
-  ) {
-
-    return 'audio';
-
-  }
-
-
-  if (
-    requested === 'camera' ||
-    mime.startsWith('image/')
-  ) {
-
-    return 'image';
-
-  }
-
-
-  if (
-    mime.startsWith('video/')
-  ) {
-
-    return 'video';
-
-  }
-
-
-  return 'document';
-
-}
-
-
-// ========================================================
-// RESOURCE TYPE CLOUDINARY
-// ========================================================
-
-function getCloudinaryResourceType(messageType) {
-
-  if (
-    messageType === 'video' ||
-    messageType === 'audio'
-  ) {
-
-    return 'video';
-
-  }
-
-
-  if (messageType === 'image') {
-
-    return 'image';
-
-  }
-
-
-  return 'raw';
-
-}
-
-
-// ========================================================
-// SUBIR BUFFER A CLOUDINARY
-// ========================================================
-
-function uploadBufferToCloudinary(
-  file,
-  messageType
-) {
-
-  return new Promise(
-    (resolve, reject) => {
-
-      const resourceType =
-        getCloudinaryResourceType(
-          messageType
-        );
-
-
-      const options = {
-
-        folder: 'vobixchat/messages',
-
-        resource_type:
-          resourceType,
-
-        use_filename:
-          true,
-
-        unique_filename:
-          true,
-
-        overwrite:
-          false
-
-      };
-
-
-      const uploadStream =
-        cloudinary.uploader.upload_stream(
-          options,
-          (error, result) => {
-
-            if (error) {
-
-              reject(error);
-
-              return;
-
-            }
-
-
-            resolve(result);
-
-          }
-        );
-
-
-      streamifier
-        .createReadStream(
-          file.buffer
-        )
-        .pipe(
-          uploadStream
-        );
-
-    }
-  );
-
-}
-
-
-// ========================================================
-// BORRAR CLOUDINARY SI FALLA LA BD
-// ========================================================
-
-async function destroyCloudinaryFile(
-  publicId,
-  resourceType
-) {
-
-  if (!publicId) {
-    return;
-  }
-
-
-  try {
-
-    await cloudinary.uploader.destroy(
-      publicId,
-      {
-        resource_type:
-          resourceType || 'image'
-      }
-    );
-
-  } catch (error) {
-
-    console.error(
-      'VOBIXCHAT CLOUDINARY CLEANUP ERROR:',
-      error.message
-    );
-
-  }
-
-}
-
-
-// ========================================================
-// COMPROBAR PARTICIPACIÓN
-// ========================================================
-
-async function userCanAccessConversation(
+async function canAccessConversation(
   conversationId,
   userId
 ) {
+
+  if (
+    !conversationId ||
+    !userId
+  ) {
+
+    return false;
+
+  }
+
 
   const result =
     await database.query(
       `
       SELECT 1
+
       FROM conversation_participants
+
       WHERE
         conversation_id = $1
         AND user_id = $2
+
       LIMIT 1
       `,
       [
@@ -336,7 +105,7 @@ async function userCanAccessConversation(
 
 
 // ========================================================
-// COMPROBAR BLOQUEO EN CONVERSACIÓN
+// COMPROBAR BLOQUEO ENTRE PARTICIPANTES
 // ========================================================
 
 async function conversationIsBlocked(
@@ -347,30 +116,31 @@ async function conversationIsBlocked(
   const blocked =
     await database.query(
       `
-      SELECT ub.id
+      SELECT 1
 
-      FROM user_blocks ub
+      FROM conversation_participants cp
 
-      INNER JOIN conversation_participants cp
-        ON cp.conversation_id = $1
-
-      WHERE
-        cp.user_id <> $2
-
-        AND
+      INNER JOIN user_blocks ub
+        ON
         (
           (
             ub.blocker_user_id = $2
-            AND ub.blocked_user_id = cp.user_id
+            AND
+            ub.blocked_user_id = cp.user_id
           )
 
           OR
 
           (
             ub.blocker_user_id = cp.user_id
-            AND ub.blocked_user_id = $2
+            AND
+            ub.blocked_user_id = $2
           )
         )
+
+      WHERE
+        cp.conversation_id = $1
+        AND cp.user_id <> $2
 
       LIMIT 1
       `,
@@ -389,240 +159,163 @@ async function conversationIsBlocked(
 
 
 // ========================================================
-// NORMALIZAR MENSAJE PARA FRONTEND
-// ========================================================
-
-function normalizeMessage(
-  row,
-  senderUsername
-) {
-
-  if (!row) {
-    return null;
-  }
-
-
-  return {
-
-    ...row,
-
-    text:
-      row.content,
-
-    senderId:
-      row.sender_user_id,
-
-    senderUsername:
-      senderUsername ??
-      row.sender_username ??
-      null,
-
-    fileUrl:
-      row.file_url || null,
-
-    fileName:
-      row.file_name || null,
-
-    fileMime:
-      row.file_mime || null,
-
-    fileSize:
-      row.file_size == null
-        ? null
-        : Number(row.file_size),
-
-    mediaDuration:
-      row.media_duration == null
-        ? null
-        : Number(row.media_duration),
-
-    mediaWidth:
-      row.media_width == null
-        ? null
-        : Number(row.media_width),
-
-    mediaHeight:
-      row.media_height == null
-        ? null
-        : Number(row.media_height)
-
-  };
-
-}
-
-
-// ========================================================
-// EMITIR MENSAJE
-// ========================================================
-
-function emitMessage(
-  req,
-  conversationId,
-  message
-) {
-
-  const io =
-    req.app.get('io');
-
-
-  if (!io) {
-    return;
-  }
-
-
-  const room =
-    `conversation:${conversationId}`;
-
-
-  io
-    .to(room)
-    .emit(
-      'chat:message',
-      message
-    );
-
-
-  io
-    .to(room)
-    .emit(
-      'message:new',
-      message
-    );
-
-
-  /*
-    Compatibilidad directa con el chat.html
-    que utiliza conversation-message.
-  */
-
-  io
-    .to(room)
-    .emit(
-      'conversation-message',
-      {
-        conversationId,
-        conversation_id:
-          conversationId,
-        message
-      }
-    );
-
-}
-
-
-// ========================================================
 // BUSCAR USUARIOS
+// ========================================================
+
+async function searchUsersHandler(
+  req,
+  res
+) {
+
+  const currentUserId =
+    req.vobixUser.id;
+
+
+  const search =
+    cleanSearch(
+      req.query.q
+    );
+
+
+  if (
+    search.length < 2
+  ) {
+
+    return res.json({
+
+      ok: true,
+
+      users: []
+
+    });
+
+  }
+
+
+  try {
+
+    const result =
+      await database.query(
+        `
+        SELECT
+          id,
+          username,
+          vobix_id,
+          phone,
+          avatar_url,
+          bio,
+          verified,
+          online,
+          last_seen
+
+        FROM users
+
+        WHERE
+          id <> $1
+          AND verified = TRUE
+
+          AND
+          (
+            LOWER(username)
+              LIKE LOWER($2)
+
+            OR
+
+            (
+              discover_by_vobix_id = TRUE
+              AND vobix_id IS NOT NULL
+              AND LOWER(vobix_id)
+                LIKE LOWER($2)
+            )
+
+            OR
+
+            (
+              discover_by_phone = TRUE
+              AND phone LIKE $3
+            )
+          )
+
+        ORDER BY
+
+          CASE
+
+            WHEN
+              LOWER(username) =
+              LOWER($4)
+
+            THEN 0
+
+            ELSE 1
+
+          END,
+
+          username ASC
+
+        LIMIT 30
+        `,
+        [
+          currentUserId,
+          `%${search}%`,
+          `%${search}%`,
+          search
+        ]
+      );
+
+
+    return res.json({
+
+      ok: true,
+
+      users:
+        result.rows
+
+    });
+
+
+  } catch (error) {
+
+    console.error(
+      'VOBIXCHAT USER SEARCH ERROR:',
+      error.message
+    );
+
+
+    return res
+      .status(500)
+      .json({
+
+        ok: false,
+
+        msg:
+          'No se pudo realizar la búsqueda'
+
+      });
+
+  }
+
+}
+
+
+// ========================================================
+// RUTAS DE BÚSQUEDA
+//
+// Dejamos ambas porque el chat.html nuevo usa:
+// /api/chat/search?q=...
+//
+// y tu backend anterior utilizaba:
+// /api/chat/users/search?q=...
 // ========================================================
 
 router.get(
   '/users/search',
-  async (req, res) => {
-
-    const currentUserId =
-      req.vobixUser.id;
+  searchUsersHandler
+);
 
 
-    const search =
-      cleanSearch(
-        req.query.q
-      );
-
-
-    if (search.length < 2) {
-
-      return res.json({
-        ok: true,
-        users: []
-      });
-
-    }
-
-
-    try {
-
-      const result =
-        await database.query(
-          `
-          SELECT
-            id,
-            username,
-            vobix_id,
-            phone,
-            avatar_url,
-            bio,
-            verified,
-            online,
-            last_seen
-
-          FROM users
-
-          WHERE
-            id <> $1
-            AND verified = TRUE
-
-            AND
-            (
-              LOWER(username)
-                LIKE LOWER($2)
-
-              OR
-              (
-                discover_by_vobix_id = TRUE
-                AND vobix_id IS NOT NULL
-                AND LOWER(vobix_id)
-                  LIKE LOWER($2)
-              )
-
-              OR
-              (
-                discover_by_phone = TRUE
-                AND phone LIKE $3
-              )
-            )
-
-          ORDER BY
-            CASE
-              WHEN LOWER(username)
-                = LOWER($4)
-              THEN 0
-              ELSE 1
-            END,
-            username ASC
-
-          LIMIT 30
-          `,
-          [
-            currentUserId,
-            `%${search}%`,
-            `%${search}%`,
-            search
-          ]
-        );
-
-
-      return res.json({
-        ok: true,
-        users: result.rows
-      });
-
-
-    } catch (error) {
-
-      console.error(
-        'VOBIXCHAT USER SEARCH ERROR:',
-        error.message
-      );
-
-
-      return res.status(500).json({
-        ok: false,
-        msg:
-          'No se pudo realizar la búsqueda'
-      });
-
-    }
-
-  }
+router.get(
+  '/search',
+  searchUsersHandler
 );
 
 
@@ -632,7 +325,10 @@ router.get(
 
 router.get(
   '/contacts',
-  async (req, res) => {
+  async (
+    req,
+    res
+  ) => {
 
     const userId =
       req.vobixUser.id;
@@ -672,14 +368,19 @@ router.get(
               u.username
             ) ASC
           `,
-          [userId]
+          [
+            userId
+          ]
         );
 
 
       return res.json({
+
         ok: true,
+
         contacts:
           result.rows
+
       });
 
 
@@ -691,11 +392,16 @@ router.get(
       );
 
 
-      return res.status(500).json({
-        ok: false,
-        msg:
-          'No se pudieron cargar los contactos'
-      });
+      return res
+        .status(500)
+        .json({
+
+          ok: false,
+
+          msg:
+            'No se pudieron cargar los contactos'
+
+        });
 
     }
 
@@ -704,12 +410,15 @@ router.get(
 
 
 // ========================================================
-// AÑADIR CONTACTO
+// AGREGAR CONTACTO
 // ========================================================
 
 router.post(
   '/contacts',
-  async (req, res) => {
+  async (
+    req,
+    res
+  ) => {
 
     const ownerUserId =
       req.vobixUser.id;
@@ -717,7 +426,9 @@ router.post(
 
     const contactUserId =
       cleanId(
-        req.body.userId
+        req.body.userId ||
+        req.body.contactUserId ||
+        req.body.contact_user_id
       );
 
 
@@ -726,29 +437,47 @@ router.post(
         req.body.alias || ''
       )
         .trim()
-        .slice(0, 100);
+        .slice(
+          0,
+          100
+        );
 
 
     if (!contactUserId) {
 
-      return res.status(400).json({
-        ok: false,
-        msg: 'Falta el usuario'
-      });
+      return res
+        .status(400)
+        .json({
+
+          ok: false,
+
+          msg:
+            'Contacto no válido'
+
+        });
 
     }
 
 
     if (
-      String(ownerUserId) ===
-      String(contactUserId)
+      String(
+        ownerUserId
+      ) ===
+      String(
+        contactUserId
+      )
     ) {
 
-      return res.status(400).json({
-        ok: false,
-        msg:
-          'No puedes añadirte a ti mismo'
-      });
+      return res
+        .status(400)
+        .json({
+
+          ok: false,
+
+          msg:
+            'No puedes agregarte a ti mismo'
+
+        });
 
     }
 
@@ -761,74 +490,101 @@ router.post(
           SELECT
             id,
             username,
-            verified
+            vobix_id,
+            phone,
+            avatar_url
 
           FROM users
 
-          WHERE id = $1
+          WHERE
+            id = $1
+            AND verified = TRUE
 
           LIMIT 1
           `,
-          [contactUserId]
+          [
+            contactUserId
+          ]
         );
 
 
       if (
-        userResult.rows.length === 0 ||
-        !userResult.rows[0].verified
+        userResult.rows.length === 0
       ) {
 
-        return res.status(404).json({
-          ok: false,
-          msg:
-            'Usuario no encontrado'
-        });
+        return res
+          .status(404)
+          .json({
+
+            ok: false,
+
+            msg:
+              'Usuario no encontrado'
+
+          });
 
       }
 
 
-      await database.query(
-        `
-        INSERT INTO contacts
-        (
-          owner_user_id,
-          contact_user_id,
-          alias
-        )
-        VALUES
-        (
-          $1,
-          $2,
-          $3
-        )
+      const result =
+        await database.query(
+          `
+          INSERT INTO contacts
+          (
+            owner_user_id,
+            contact_user_id,
+            alias,
+            created_at
+          )
 
-        ON CONFLICT
-        (
-          owner_user_id,
-          contact_user_id
-        )
+          VALUES
+          (
+            $1,
+            $2,
+            NULLIF($3, ''),
+            NOW()
+          )
 
-        DO UPDATE SET
-          alias =
-            CASE
-              WHEN EXCLUDED.alias IS NULL
-                OR EXCLUDED.alias = ''
-              THEN contacts.alias
-              ELSE EXCLUDED.alias
-            END
-        `,
-        [
-          ownerUserId,
-          contactUserId,
-          alias || null
-        ]
-      );
+          ON CONFLICT
+          (
+            owner_user_id,
+            contact_user_id
+          )
+
+          DO UPDATE SET
+            alias =
+              COALESCE(
+                NULLIF(
+                  EXCLUDED.alias,
+                  ''
+                ),
+                contacts.alias
+              )
+
+          RETURNING
+            owner_user_id,
+            contact_user_id,
+            alias,
+            created_at
+          `,
+          [
+            ownerUserId,
+            contactUserId,
+            alias
+          ]
+        );
 
 
       return res.json({
+
         ok: true,
+
         contact:
+          result.rows[0],
+
+        user:
           userResult.rows[0]
+
       });
 
 
@@ -840,11 +596,16 @@ router.post(
       );
 
 
-      return res.status(500).json({
-        ok: false,
-        msg:
-          'No se pudo añadir el contacto'
-      });
+      return res
+        .status(500)
+        .json({
+
+          ok: false,
+
+          msg:
+            'No se pudo agregar el contacto'
+
+        });
 
     }
 
@@ -858,7 +619,10 @@ router.post(
 
 router.delete(
   '/contacts/:userId',
-  async (req, res) => {
+  async (
+    req,
+    res
+  ) => {
 
     const ownerUserId =
       req.vobixUser.id;
@@ -868,6 +632,22 @@ router.delete(
       cleanId(
         req.params.userId
       );
+
+
+    if (!contactUserId) {
+
+      return res
+        .status(400)
+        .json({
+
+          ok: false,
+
+          msg:
+            'Contacto no válido'
+
+        });
+
+    }
 
 
     try {
@@ -888,7 +668,9 @@ router.delete(
 
 
       return res.json({
+
         ok: true
+
       });
 
 
@@ -900,11 +682,16 @@ router.delete(
       );
 
 
-      return res.status(500).json({
-        ok: false,
-        msg:
-          'No se pudo eliminar el contacto'
-      });
+      return res
+        .status(500)
+        .json({
+
+          ok: false,
+
+          msg:
+            'No se pudo eliminar el contacto'
+
+        });
 
     }
 
@@ -917,8 +704,11 @@ router.delete(
 // ========================================================
 
 router.post(
-  '/blocks/:userId',
-  async (req, res) => {
+  '/blocks',
+  async (
+    req,
+    res
+  ) => {
 
     const blockerUserId =
       req.vobixUser.id;
@@ -926,62 +716,67 @@ router.post(
 
     const blockedUserId =
       cleanId(
-        req.params.userId
+        req.body.userId ||
+        req.body.blockedUserId ||
+        req.body.blocked_user_id
       );
 
 
+    if (!blockedUserId) {
+
+      return res
+        .status(400)
+        .json({
+
+          ok: false,
+
+          msg:
+            'Usuario no válido'
+
+        });
+
+    }
+
+
     if (
-      String(blockerUserId) ===
-      String(blockedUserId)
+      String(
+        blockerUserId
+      ) ===
+      String(
+        blockedUserId
+      )
     ) {
 
-      return res.status(400).json({
-        ok: false,
-        msg:
-          'No puedes bloquearte a ti mismo'
-      });
+      return res
+        .status(400)
+        .json({
+
+          ok: false,
+
+          msg:
+            'No puedes bloquearte a ti mismo'
+
+        });
 
     }
 
 
     try {
 
-      const exists =
-        await database.query(
-          `
-          SELECT id
-          FROM users
-          WHERE id = $1
-          LIMIT 1
-          `,
-          [blockedUserId]
-        );
-
-
-      if (
-        exists.rows.length === 0
-      ) {
-
-        return res.status(404).json({
-          ok: false,
-          msg:
-            'Usuario no encontrado'
-        });
-
-      }
-
-
       await database.query(
         `
         INSERT INTO user_blocks
         (
           blocker_user_id,
-          blocked_user_id
+          blocked_user_id,
+          created_at
         )
+
         VALUES
         (
           $1,
-          $2
+          $2,
+          NOW()
         )
 
         ON CONFLICT
@@ -1000,23 +795,30 @@ router.post(
 
 
       return res.json({
+
         ok: true
+
       });
 
 
     } catch (error) {
 
       console.error(
-        'VOBIXCHAT BLOCK ERROR:',
+        'VOBIXCHAT BLOCK USER ERROR:',
         error.message
       );
 
 
-      return res.status(500).json({
-        ok: false,
-        msg:
-          'No se pudo bloquear el usuario'
-      });
+      return res
+        .status(500)
+        .json({
+
+          ok: false,
+
+          msg:
+            'No se pudo bloquear el usuario'
+
+        });
 
     }
 
@@ -1030,7 +832,10 @@ router.post(
 
 router.delete(
   '/blocks/:userId',
-  async (req, res) => {
+  async (
+    req,
+    res
+  ) => {
 
     const blockerUserId =
       req.vobixUser.id;
@@ -1040,6 +845,22 @@ router.delete(
       cleanId(
         req.params.userId
       );
+
+
+    if (!blockedUserId) {
+
+      return res
+        .status(400)
+        .json({
+
+          ok: false,
+
+          msg:
+            'Usuario no válido'
+
+        });
+
+    }
 
 
     try {
@@ -1060,23 +881,30 @@ router.delete(
 
 
       return res.json({
+
         ok: true
+
       });
 
 
     } catch (error) {
 
       console.error(
-        'VOBIXCHAT UNBLOCK ERROR:',
+        'VOBIXCHAT UNBLOCK USER ERROR:',
         error.message
       );
 
 
-      return res.status(500).json({
-        ok: false,
-        msg:
-          'No se pudo desbloquear el usuario'
-      });
+      return res
+        .status(500)
+        .json({
+
+          ok: false,
+
+          msg:
+            'No se pudo desbloquear el usuario'
+
+        });
 
     }
 
@@ -1088,374 +916,405 @@ router.delete(
 // CREAR / RECUPERAR CONVERSACIÓN PRIVADA
 // ========================================================
 
-async function createPrivateConversation(
-  req,
-  res
-) {
+router.post(
+  '/conversations',
+  async (
+    req,
+    res
+  ) => {
 
-  const currentUserId =
-    req.vobixUser.id;
-
-
-  const otherUserId =
-    cleanId(
-      req.body.userId ||
-      req.body.user_id ||
-      req.body.otherUserId
-    );
+    const currentUserId =
+      req.vobixUser.id;
 
 
-  if (!otherUserId) {
-
-    return res.status(400).json({
-      ok: false,
-      msg: 'Falta el usuario'
-    });
-
-  }
-
-
-  if (
-    String(currentUserId) ===
-    String(otherUserId)
-  ) {
-
-    return res.status(400).json({
-      ok: false,
-      msg:
-        'No puedes crear un chat contigo mismo'
-    });
-
-  }
-
-
-  const client =
-    await database.pool.connect();
-
-
-  try {
-
-    await client.query(
-      'BEGIN'
-    );
-
-
-    const userResult =
-      await client.query(
-        `
-        SELECT
-          id,
-          username,
-          vobix_id,
-          phone,
-          avatar_url,
-          bio,
-          verified,
-          online,
-          last_seen
-
-        FROM users
-
-        WHERE id = $1
-
-        LIMIT 1
-        `,
-        [otherUserId]
+    const otherUserId =
+      cleanId(
+        req.body.userId ||
+        req.body.otherUserId ||
+        req.body.other_user_id
       );
 
 
-    if (
-      userResult.rows.length === 0 ||
-      !userResult.rows[0].verified
-    ) {
+    if (!otherUserId) {
 
-      await client.query(
-        'ROLLBACK'
-      );
+      return res
+        .status(400)
+        .json({
 
+          ok: false,
 
-      return res.status(404).json({
-        ok: false,
-        msg:
-          'Usuario no encontrado'
-      });
+          msg:
+            'Usuario no válido'
+
+        });
 
     }
 
 
-    // ====================================================
-    // BLOQUEOS
-    // ====================================================
-
-    const blockResult =
-      await client.query(
-        `
-        SELECT id
-
-        FROM user_blocks
-
-        WHERE
-          (
-            blocker_user_id = $1
-            AND blocked_user_id = $2
-          )
-
-          OR
-
-          (
-            blocker_user_id = $2
-            AND blocked_user_id = $1
-          )
-
-        LIMIT 1
-        `,
-        [
-          currentUserId,
-          otherUserId
-        ]
-      );
-
-
     if (
-      blockResult.rows.length > 0
-    ) {
-
-      await client.query(
-        'ROLLBACK'
-      );
-
-
-      return res.status(403).json({
-        ok: false,
-        msg:
-          'No se puede iniciar esta conversación'
-      });
-
-    }
-
-
-    // ====================================================
-    // BUSCAR PRIVADA EXISTENTE
-    // ====================================================
-
-    const existing =
-      await client.query(
-        `
-        SELECT
-          c.id,
-          c.type,
-          c.title,
-          c.created_at,
-          c.updated_at
-
-        FROM conversations c
-
-        INNER JOIN conversation_participants p1
-          ON p1.conversation_id =
-            c.id
-
-        INNER JOIN conversation_participants p2
-          ON p2.conversation_id =
-            c.id
-
-        WHERE
-          c.type = 'private'
-          AND p1.user_id = $1
-          AND p2.user_id = $2
-
-          AND
-          (
-            SELECT COUNT(*)
-
-            FROM conversation_participants cp
-
-            WHERE
-              cp.conversation_id =
-                c.id
-          ) = 2
-
-        LIMIT 1
-        `,
-        [
-          currentUserId,
-          otherUserId
-        ]
-      );
-
-
-    if (
-      existing.rows.length > 0
-    ) {
-
-      await client.query(
-        'COMMIT'
-      );
-
-
-      const conversation =
-        existing.rows[0];
-
-
-      return res.json({
-        ok: true,
-        created: false,
-
-        conversation,
-
-        conversationId:
-          conversation.id,
-
-        user:
-          userResult.rows[0]
-      });
-
-    }
-
-
-    // ====================================================
-    // CREAR CONVERSACIÓN
-    // ====================================================
-
-    const conversationResult =
-      await client.query(
-        `
-        INSERT INTO conversations
-        (
-          type,
-          created_by,
-          created_at,
-          updated_at
-        )
-        VALUES
-        (
-          'private',
-          $1,
-          NOW(),
-          NOW()
-        )
-
-        RETURNING
-          id,
-          type,
-          title,
-          created_at,
-          updated_at
-        `,
-        [currentUserId]
-      );
-
-
-    const conversation =
-      conversationResult.rows[0];
-
-
-    // ====================================================
-    // PARTICIPANTES
-    // ====================================================
-
-    await client.query(
-      `
-      INSERT INTO conversation_participants
-      (
-        conversation_id,
-        user_id,
-        role
-      )
-      VALUES
-      (
-        $1,
-        $2,
-        'member'
-      ),
-      (
-        $1,
-        $3,
-        'member'
-      )
-      `,
-      [
-        conversation.id,
-        currentUserId,
+      String(
+        currentUserId
+      ) ===
+      String(
         otherUserId
-      ]
-    );
+      )
+    ) {
 
+      return res
+        .status(400)
+        .json({
 
-    await client.query(
-      'COMMIT'
-    );
+          ok: false,
 
+          msg:
+            'No puedes crear una conversación contigo mismo'
 
-    return res.json({
-      ok: true,
-      created: true,
+        });
 
-      conversation,
+    }
 
-      conversationId:
-        conversation.id,
-
-      user:
-        userResult.rows[0]
-    });
-
-
-  } catch (error) {
 
     try {
 
-      await client.query(
-        'ROLLBACK'
+      const otherUserResult =
+        await database.query(
+          `
+          SELECT
+            id,
+            username,
+            vobix_id,
+            phone,
+            avatar_url,
+            online,
+            last_seen
+
+          FROM users
+
+          WHERE
+            id = $1
+            AND verified = TRUE
+
+          LIMIT 1
+          `,
+          [
+            otherUserId
+          ]
+        );
+
+
+      if (
+        otherUserResult.rows.length === 0
+      ) {
+
+        return res
+          .status(404)
+          .json({
+
+            ok: false,
+
+            msg:
+              'Usuario no encontrado'
+
+          });
+
+      }
+
+
+      const blocked =
+        await database.query(
+          `
+          SELECT 1
+
+          FROM user_blocks
+
+          WHERE
+            (
+              blocker_user_id = $1
+              AND blocked_user_id = $2
+            )
+
+            OR
+
+            (
+              blocker_user_id = $2
+              AND blocked_user_id = $1
+            )
+
+          LIMIT 1
+          `,
+          [
+            currentUserId,
+            otherUserId
+          ]
+        );
+
+
+      if (
+        blocked.rows.length > 0
+      ) {
+
+        return res
+          .status(403)
+          .json({
+
+            ok: false,
+
+            msg:
+              'No se puede iniciar esta conversación'
+
+          });
+
+      }
+
+
+      /*
+        Buscar conversación privada existente
+        formada exactamente por estos dos usuarios.
+      */
+
+      const existing =
+        await database.query(
+          `
+          SELECT
+            c.id,
+            c.created_at,
+            c.updated_at
+
+          FROM conversations c
+
+          INNER JOIN conversation_participants me
+            ON
+              me.conversation_id = c.id
+              AND me.user_id = $1
+
+          INNER JOIN conversation_participants other
+            ON
+              other.conversation_id = c.id
+              AND other.user_id = $2
+
+          WHERE
+            NOT EXISTS
+            (
+              SELECT 1
+
+              FROM conversation_participants extra
+
+              WHERE
+                extra.conversation_id = c.id
+                AND extra.user_id
+                  NOT IN ($1, $2)
+            )
+
+          ORDER BY
+            c.updated_at DESC
+
+          LIMIT 1
+          `,
+          [
+            currentUserId,
+            otherUserId
+          ]
+        );
+
+
+      if (
+        existing.rows.length > 0
+      ) {
+
+        const conversation =
+          existing.rows[0];
+
+
+        const otherUser =
+          otherUserResult.rows[0];
+
+
+        return res.json({
+
+          ok: true,
+
+          conversation: {
+
+            ...conversation,
+
+            otherUserId:
+              otherUser.id,
+
+            otherUsername:
+              otherUser.username,
+
+            otherAvatarUrl:
+              otherUser.avatar_url,
+
+            online:
+              otherUser.online,
+
+            lastSeen:
+              otherUser.last_seen
+
+          }
+
+        });
+
+      }
+
+
+      /*
+        Crear conversación nueva dentro de
+        una transacción.
+      */
+
+      const client =
+        await database.pool.connect();
+
+
+      try {
+
+        await client.query(
+          'BEGIN'
+        );
+
+
+        const created =
+          await client.query(
+            `
+            INSERT INTO conversations
+            (
+              created_at,
+              updated_at
+            )
+
+            VALUES
+            (
+              NOW(),
+              NOW()
+            )
+
+            RETURNING
+              id,
+              created_at,
+              updated_at
+            `
+          );
+
+
+        const conversation =
+          created.rows[0];
+
+
+        await client.query(
+          `
+          INSERT INTO conversation_participants
+          (
+            conversation_id,
+            user_id,
+            joined_at
+          )
+
+          VALUES
+            ($1, $2, NOW()),
+            ($1, $3, NOW())
+          `,
+          [
+            conversation.id,
+            currentUserId,
+            otherUserId
+          ]
+        );
+
+
+        await client.query(
+          'COMMIT'
+        );
+
+
+        const otherUser =
+          otherUserResult.rows[0];
+
+
+        return res.json({
+
+          ok: true,
+
+          conversation: {
+
+            ...conversation,
+
+            otherUserId:
+              otherUser.id,
+
+            otherUsername:
+              otherUser.username,
+
+            otherAvatarUrl:
+              otherUser.avatar_url,
+
+            online:
+              otherUser.online,
+
+            lastSeen:
+              otherUser.last_seen
+
+          }
+
+        });
+
+
+      } catch (error) {
+
+        await client.query(
+          'ROLLBACK'
+        );
+
+
+        throw error;
+
+
+      } finally {
+
+        client.release();
+
+      }
+
+
+    } catch (error) {
+
+      console.error(
+        'VOBIXCHAT CREATE CONVERSATION ERROR:',
+        error.message
       );
 
-    } catch (_) {}
 
+      return res
+        .status(500)
+        .json({
 
-    console.error(
-      'VOBIXCHAT PRIVATE CHAT ERROR:',
-      error.message
-    );
+          ok: false,
 
+          msg:
+            'No se pudo crear la conversación'
 
-    return res.status(500).json({
-      ok: false,
-      msg:
-        'No se pudo crear la conversación'
-    });
+        });
 
-
-  } finally {
-
-    client.release();
+    }
 
   }
-
-}
-
-
-// ========================================================
-// RUTAS COMPATIBLES PARA CREAR CHAT
-// ========================================================
-
-router.post(
-  '/conversations',
-  createPrivateConversation
 );
 
 
-router.post(
-  '/conversations/private',
-  createPrivateConversation
-);
-
-
+// ========================================================
+// FIN BLOQUE 1/3
+// ========================================================
 // ========================================================
 // LISTAR CONVERSACIONES
 // ========================================================
 
 router.get(
   '/conversations',
-  async (req, res) => {
+  async (
+    req,
+    res
+  ) => {
 
     const userId =
       req.vobixUser.id;
@@ -1467,10 +1326,7 @@ router.get(
         await database.query(
           `
           SELECT
-
             c.id,
-            c.type,
-            c.title,
             c.created_at,
             c.updated_at,
 
@@ -1498,79 +1354,86 @@ router.get(
             last_message.id
               AS last_message_id,
 
-            last_message.content
-              AS last_message_content,
-
             last_message.message_type
               AS last_message_type,
 
-            last_message.file_name
-              AS last_message_file_name,
+            last_message.content
+              AS last_message,
 
             last_message.created_at
-              AS last_message_at
+              AS last_message_created_at
 
           FROM conversations c
 
-          INNER JOIN conversation_participants mine
-            ON mine.conversation_id =
-              c.id
-            AND mine.user_id =
-              $1
+          INNER JOIN conversation_participants me
+            ON
+              me.conversation_id = c.id
+              AND me.user_id = $1
 
           LEFT JOIN LATERAL
           (
-            SELECT u.*
+            SELECT
+              u.id,
+              u.username,
+              u.vobix_id,
+              u.phone,
+              u.avatar_url,
+              u.online,
+              u.last_seen
 
             FROM conversation_participants cp
 
             INNER JOIN users u
-              ON u.id =
-                cp.user_id
+              ON u.id = cp.user_id
 
             WHERE
-              cp.conversation_id =
-                c.id
-              AND cp.user_id <>
-                $1
+              cp.conversation_id = c.id
+              AND cp.user_id <> $1
+
+            ORDER BY
+              cp.joined_at ASC
 
             LIMIT 1
-
-          ) other_user
+          )
+          AS other_user
           ON TRUE
 
           LEFT JOIN LATERAL
           (
             SELECT
               m.id,
-              m.content,
               m.message_type,
-              m.file_name,
+              m.content,
               m.created_at
 
             FROM messages m
 
             WHERE
-              m.conversation_id =
-                c.id
-              AND m.deleted =
+              m.conversation_id = c.id
+              AND COALESCE(
+                m.deleted,
                 FALSE
+              ) = FALSE
 
             ORDER BY
-              m.created_at DESC
+              m.created_at DESC,
+              m.id DESC
 
             LIMIT 1
-
-          ) last_message
+          )
+          AS last_message
           ON TRUE
 
           ORDER BY
             COALESCE(
               last_message.created_at,
-              c.updated_at
+              c.updated_at,
+              c.created_at
             ) DESC
           `,
-          [userId]
+          [
+            userId
+          ]
         );
 
 
@@ -1578,85 +1441,105 @@ router.get(
         result.rows.map(
           row => {
 
-            let lastMessage =
-              row.last_message_content ||
-              null;
+            let preview =
+              row.last_message ||
+              'Conversación privada';
 
 
-            if (!lastMessage) {
+            if (
+              row.last_message_type ===
+              'image'
+            ) {
 
-              if (
-                row.last_message_type ===
-                'image'
-              ) {
+              preview =
+                '📷 Foto';
 
-                lastMessage =
-                  '📷 Foto';
+            }
 
-              } else if (
-                row.last_message_type ===
-                'video'
-              ) {
 
-                lastMessage =
-                  '🎥 Vídeo';
+            if (
+              row.last_message_type ===
+              'video'
+            ) {
 
-              } else if (
-                row.last_message_type ===
-                'audio'
-              ) {
+              preview =
+                '🎥 Vídeo';
 
-                lastMessage =
-                  '🎤 Nota de voz';
+            }
 
-              } else if (
-                row.last_message_type ===
-                'document'
-              ) {
 
-                lastMessage =
-                  '📎 ' +
-                  (
-                    row.last_message_file_name ||
-                    'Documento'
-                  );
+            if (
+              row.last_message_type ===
+                'audio' ||
+              row.last_message_type ===
+                'voice'
+            ) {
 
-              }
+              preview =
+                '🎤 Nota de voz';
+
+            }
+
+
+            if (
+              row.last_message_type ===
+                'document' ||
+              row.last_message_type ===
+                'file'
+            ) {
+
+              preview =
+                '📄 Documento';
 
             }
 
 
             return {
 
-              ...row,
+              id:
+                row.id,
 
-              user:
-                row.other_user_id
-                  ? {
-                      id:
-                        row.other_user_id,
+              conversationId:
+                row.id,
 
-                      username:
-                        row.other_username,
+              createdAt:
+                row.created_at,
 
-                      vobix_id:
-                        row.other_vobix_id,
+              updatedAt:
+                row.updated_at,
 
-                      phone:
-                        row.other_phone,
+              otherUserId:
+                row.other_user_id,
 
-                      avatar_url:
-                        row.other_avatar_url,
+              otherUsername:
+                row.other_username,
 
-                      online:
-                        row.other_online,
+              otherVobixId:
+                row.other_vobix_id,
 
-                      last_seen:
-                        row.other_last_seen
-                    }
-                  : null,
+              otherPhone:
+                row.other_phone,
 
-              lastMessage
+              otherAvatarUrl:
+                row.other_avatar_url,
+
+              online:
+                row.other_online,
+
+              lastSeen:
+                row.other_last_seen,
+
+              lastMessageId:
+                row.last_message_id,
+
+              lastMessageType:
+                row.last_message_type,
+
+              lastMessage:
+                preview,
+
+              lastMessageCreatedAt:
+                row.last_message_created_at
 
             };
 
@@ -1665,24 +1548,32 @@ router.get(
 
 
       return res.json({
+
         ok: true,
+
         conversations
+
       });
 
 
     } catch (error) {
 
       console.error(
-        'VOBIXCHAT CONVERSATION LIST ERROR:',
-        error.message
+        'VOBIXCHAT LIST CONVERSATIONS ERROR:',
+        error
       );
 
 
-      return res.status(500).json({
-        ok: false,
-        msg:
-          'No se pudieron cargar las conversaciones'
-      });
+      return res
+        .status(500)
+        .json({
+
+          ok: false,
+
+          msg:
+            'No se pudieron cargar las conversaciones'
+
+        });
 
     }
 
@@ -1691,12 +1582,15 @@ router.get(
 
 
 // ========================================================
-// CARGAR MENSAJES
+// CARGAR MENSAJES DE UNA CONVERSACIÓN
 // ========================================================
 
 router.get(
   '/conversations/:conversationId/messages',
-  async (req, res) => {
+  async (
+    req,
+    res
+  ) => {
 
     const userId =
       req.vobixUser.id;
@@ -1708,10 +1602,26 @@ router.get(
       );
 
 
+    if (!conversationId) {
+
+      return res
+        .status(400)
+        .json({
+
+          ok: false,
+
+          msg:
+            'Conversación no válida'
+
+        });
+
+    }
+
+
     try {
 
       const allowed =
-        await userCanAccessConversation(
+        await canAccessConversation(
           conversationId,
           userId
         );
@@ -1719,11 +1629,16 @@ router.get(
 
       if (!allowed) {
 
-        return res.status(403).json({
-          ok: false,
-          msg:
-            'No tienes acceso a esta conversación'
-        });
+        return res
+          .status(403)
+          .json({
+
+            ok: false,
+
+            msg:
+              'No tienes acceso a esta conversación'
+
+          });
 
       }
 
@@ -1732,24 +1647,11 @@ router.get(
         await database.query(
           `
           SELECT
-
             m.id,
             m.conversation_id,
             m.sender_user_id,
             m.message_type,
             m.content,
-
-            m.file_url,
-            m.file_public_id,
-            m.file_name,
-            m.file_mime,
-            m.file_size,
-            m.file_resource_type,
-
-            m.media_duration,
-            m.media_width,
-            m.media_height,
-
             m.reply_to_message_id,
             m.edited,
             m.deleted,
@@ -1764,51 +1666,58 @@ router.get(
 
           FROM messages m
 
-          LEFT JOIN users u
+          INNER JOIN users u
             ON u.id =
               m.sender_user_id
 
           WHERE
-            m.conversation_id =
-              $1
+            m.conversation_id = $1
 
           ORDER BY
-            m.created_at ASC
+            m.created_at ASC,
+            m.id ASC
 
-          LIMIT 200
+          LIMIT 1000
           `,
-          [conversationId]
+          [
+            conversationId
+          ]
         );
 
 
       const messages =
         result.rows.map(
-          message =>
-            normalizeMessage(
-              message
-            )
+          normalizeMessage
         );
 
 
       return res.json({
+
         ok: true,
+
         messages
+
       });
 
 
     } catch (error) {
 
       console.error(
-        'VOBIXCHAT MESSAGE LIST ERROR:',
-        error.message
+        'VOBIXCHAT LOAD MESSAGES ERROR:',
+        error
       );
 
 
-      return res.status(500).json({
-        ok: false,
-        msg:
-          'No se pudieron cargar los mensajes'
-      });
+      return res
+        .status(500)
+        .json({
+
+          ok: false,
+
+          msg:
+            'No se pudieron cargar los mensajes'
+
+        });
 
     }
 
@@ -1817,12 +1726,153 @@ router.get(
 
 
 // ========================================================
-// ENVIAR MENSAJE DE TEXTO
+// NORMALIZAR MENSAJE PARA EL FRONTEND
+// ========================================================
+
+function normalizeMessage(
+  row
+) {
+
+  if (!row) {
+
+    return null;
+
+  }
+
+
+  const messageType =
+    String(
+      row.message_type ||
+      row.messageType ||
+      'text'
+    );
+
+
+  const content =
+    row.content == null
+      ? ''
+      : String(
+          row.content
+        );
+
+
+  /*
+    Por ahora el URL del archivo multimedia
+    se almacena en messages.content.
+
+    De esta forma NO necesitamos agregar todavía
+    columnas nuevas a la tabla messages.
+  */
+
+  const isMedia =
+    [
+      'image',
+      'photo',
+      'video',
+      'audio',
+      'voice',
+      'document',
+      'file'
+    ].includes(
+      messageType
+    );
+
+
+  return {
+
+    id:
+      row.id,
+
+    conversationId:
+      row.conversation_id,
+
+    conversation_id:
+      row.conversation_id,
+
+    senderId:
+      row.sender_user_id,
+
+    sender_user_id:
+      row.sender_user_id,
+
+    senderUsername:
+      row.sender_username ||
+      null,
+
+    sender_username:
+      row.sender_username ||
+      null,
+
+    senderAvatarUrl:
+      row.sender_avatar_url ||
+      null,
+
+    messageType,
+
+    message_type:
+      messageType,
+
+    content,
+
+    mediaUrl:
+      isMedia
+        ? content
+        : null,
+
+    media_url:
+      isMedia
+        ? content
+        : null,
+
+    fileName:
+      row.file_name ||
+      row.fileName ||
+      null,
+
+    replyToMessageId:
+      row.reply_to_message_id ||
+      null,
+
+    edited:
+      Boolean(
+        row.edited
+      ),
+
+    deleted:
+      Boolean(
+        row.deleted
+      ),
+
+    createdAt:
+      row.created_at,
+
+    created_at:
+      row.created_at,
+
+    updatedAt:
+      row.updated_at,
+
+    updated_at:
+      row.updated_at
+
+  };
+
+}
+
+
+// ========================================================
+// ENVIAR MENSAJE DE TEXTO POR HTTP
+//
+// Mantenemos esta ruta porque tu routes/chat.js anterior
+// ya tenía envío de mensajes por backend.
 // ========================================================
 
 router.post(
   '/conversations/:conversationId/messages',
-  async (req, res) => {
+  async (
+    req,
+    res
+  ) => {
 
     const userId =
       req.vobixUser.id;
@@ -1836,19 +1886,40 @@ router.post(
 
     const content =
       cleanMessage(
-        req.body.text ??
-        req.body.content ??
+        req.body.content ||
+        req.body.text ||
         req.body.message
       );
 
 
+    if (!conversationId) {
+
+      return res
+        .status(400)
+        .json({
+
+          ok: false,
+
+          msg:
+            'Conversación no válida'
+
+        });
+
+    }
+
+
     if (!content) {
 
-      return res.status(400).json({
-        ok: false,
-        msg:
-          'El mensaje está vacío'
-      });
+      return res
+        .status(400)
+        .json({
+
+          ok: false,
+
+          msg:
+            'El mensaje está vacío'
+
+        });
 
     }
 
@@ -1856,7 +1927,7 @@ router.post(
     try {
 
       const allowed =
-        await userCanAccessConversation(
+        await canAccessConversation(
           conversationId,
           userId
         );
@@ -1864,11 +1935,16 @@ router.post(
 
       if (!allowed) {
 
-        return res.status(403).json({
-          ok: false,
-          msg:
-            'No tienes acceso a esta conversación'
-        });
+        return res
+          .status(403)
+          .json({
+
+            ok: false,
+
+            msg:
+              'No tienes acceso a esta conversación'
+
+          });
 
       }
 
@@ -1882,11 +1958,16 @@ router.post(
 
       if (blocked) {
 
-        return res.status(403).json({
-          ok: false,
-          msg:
-            'No se puede enviar el mensaje'
-        });
+        return res
+          .status(403)
+          .json({
+
+            ok: false,
+
+            msg:
+              'No se puede enviar el mensaje'
+
+          });
 
       }
 
@@ -1903,6 +1984,7 @@ router.post(
             created_at,
             updated_at
           )
+
           VALUES
           (
             $1,
@@ -1919,18 +2001,6 @@ router.post(
             sender_user_id,
             message_type,
             content,
-
-            file_url,
-            file_public_id,
-            file_name,
-            file_mime,
-            file_size,
-            file_resource_type,
-
-            media_duration,
-            media_width,
-            media_height,
-
             reply_to_message_id,
             edited,
             deleted,
@@ -1948,31 +2018,31 @@ router.post(
       await database.query(
         `
         UPDATE conversations
-        SET updated_at = NOW()
-        WHERE id = $1
+
+        SET
+          updated_at = NOW()
+
+        WHERE
+          id = $1
         `,
-        [conversationId]
+        [
+          conversationId
+        ]
       );
 
 
       const message =
         normalizeMessage(
-          result.rows[0],
-          req.vobixUser.username ||
-          null
+          result.rows[0]
         );
 
 
-      emitMessage(
-        req,
-        conversationId,
-        message
-      );
-
-
       return res.json({
+
         ok: true,
+
         message
+
       });
 
 
@@ -1980,15 +2050,20 @@ router.post(
 
       console.error(
         'VOBIXCHAT SEND MESSAGE ERROR:',
-        error.message
+        error
       );
 
 
-      return res.status(500).json({
-        ok: false,
-        msg:
-          'No se pudo enviar el mensaje'
-      });
+      return res
+        .status(500)
+        .json({
+
+          ok: false,
+
+          msg:
+            'No se pudo enviar el mensaje'
+
+        });
 
     }
 
@@ -1997,23 +2072,762 @@ router.post(
 
 
 // ========================================================
-// ENVIAR ARCHIVO
+// MULTIMEDIA
+// ========================================================
 //
-// POST
-// /api/chat/conversations/:conversationId/files
+// IMPORTANTE:
 //
-// multipart/form-data
+// El chat.html que acabamos de montar envía:
 //
-// file = archivo
-// type = media | camera | voice | document
+// POST /api/chat/upload
+//
+// como multipart/form-data con:
+//
+// file
+// conversationId
+// messageType
+//
+// Para recibirlo usaremos MULTER.
+//
+// En el BLOQUE 3/3 agregaremos:
+//
+// const multer = require('multer');
+//
+// almacenamiento seguro,
+// límites,
+// tipos permitidos,
+// creación de /public/uploads/chat,
+// POST /upload,
+// guardado en PostgreSQL,
+// y emisión Socket.IO.
+//
+// ========================================================
+
+
+// ========================================================
+// TIPOS MULTIMEDIA PERMITIDOS
+// ========================================================
+
+const ALLOWED_MESSAGE_TYPES =
+  new Set([
+
+    'image',
+
+    'photo',
+
+    'video',
+
+    'audio',
+
+    'voice',
+
+    'document',
+
+    'file'
+
+  ]);
+
+
+// ========================================================
+// NORMALIZAR TIPO MULTIMEDIA
+// ========================================================
+
+function normalizeMediaType(
+  requestedType,
+  mimeType
+) {
+
+  const requested =
+    String(
+      requestedType ||
+      ''
+    )
+      .trim()
+      .toLowerCase();
+
+
+  if (
+    ALLOWED_MESSAGE_TYPES.has(
+      requested
+    )
+  ) {
+
+    if (
+      requested === 'photo'
+    ) {
+
+      return 'image';
+
+    }
+
+
+    if (
+      requested === 'voice'
+    ) {
+
+      return 'audio';
+
+    }
+
+
+    if (
+      requested === 'file'
+    ) {
+
+      return 'document';
+
+    }
+
+
+    return requested;
+
+  }
+
+
+  const mime =
+    String(
+      mimeType ||
+      ''
+    ).toLowerCase();
+
+
+  if (
+    mime.startsWith(
+      'image/'
+    )
+  ) {
+
+    return 'image';
+
+  }
+
+
+  if (
+    mime.startsWith(
+      'video/'
+    )
+  ) {
+
+    return 'video';
+
+  }
+
+
+  if (
+    mime.startsWith(
+      'audio/'
+    )
+  ) {
+
+    return 'audio';
+
+  }
+
+
+  return 'document';
+
+}
+
+
+// ========================================================
+// NOMBRE SEGURO PARA ARCHIVOS
+// ========================================================
+
+function safeFileName(
+  value
+) {
+
+  const original =
+    String(
+      value ||
+      'archivo'
+    );
+
+
+  const cleaned =
+    original
+      .normalize(
+        'NFKD'
+      )
+      .replace(
+        /[\u0300-\u036f]/g,
+        ''
+      )
+      .replace(
+        /[^a-zA-Z0-9._-]/g,
+        '-'
+      )
+      .replace(
+        /-+/g,
+        '-'
+      )
+      .replace(
+        /^[-.]+|[-.]+$/g,
+        ''
+      )
+      .slice(
+        0,
+        120
+      );
+
+
+  return (
+    cleaned ||
+    'archivo'
+  );
+
+}
+
+
+// ========================================================
+// OBTENER EXTENSIÓN
+// ========================================================
+
+function getFileExtension(
+  fileName,
+  mimeType
+) {
+
+  const name =
+    String(
+      fileName ||
+      ''
+    );
+
+
+  const lastDot =
+    name.lastIndexOf(
+      '.'
+    );
+
+
+  if (
+    lastDot > -1 &&
+    lastDot <
+      name.length - 1
+  ) {
+
+    return name
+      .slice(
+        lastDot
+      )
+      .toLowerCase()
+      .replace(
+        /[^a-z0-9.]/g,
+        ''
+      )
+      .slice(
+        0,
+        12
+      );
+
+  }
+
+
+  const mime =
+    String(
+      mimeType ||
+      ''
+    ).toLowerCase();
+
+
+  const extensions = {
+
+    'image/jpeg':
+      '.jpg',
+
+    'image/png':
+      '.png',
+
+    'image/webp':
+      '.webp',
+
+    'image/gif':
+      '.gif',
+
+    'image/heic':
+      '.heic',
+
+    'image/heif':
+      '.heif',
+
+    'video/mp4':
+      '.mp4',
+
+    'video/quicktime':
+      '.mov',
+
+    'video/webm':
+      '.webm',
+
+    'audio/mp4':
+      '.m4a',
+
+    'audio/mpeg':
+      '.mp3',
+
+    'audio/webm':
+      '.webm',
+
+    'audio/ogg':
+      '.ogg',
+
+    'audio/wav':
+      '.wav',
+
+    'application/pdf':
+      '.pdf',
+
+    'text/plain':
+      '.txt'
+
+  };
+
+
+  return (
+    extensions[mime] ||
+    ''
+  );
+
+}
+
+
+// ========================================================
+// VALIDAR MIME TYPE
+// ========================================================
+
+function isAllowedMimeType(
+  mimeType
+) {
+
+  const mime =
+    String(
+      mimeType ||
+      ''
+    ).toLowerCase();
+
+
+  if (
+    mime.startsWith(
+      'image/'
+    )
+  ) {
+
+    return true;
+
+  }
+
+
+  if (
+    mime.startsWith(
+      'video/'
+    )
+  ) {
+
+    return true;
+
+  }
+
+
+  if (
+    mime.startsWith(
+      'audio/'
+    )
+  ) {
+
+    return true;
+
+  }
+
+
+  const documents =
+    new Set([
+
+      'application/pdf',
+
+      'text/plain',
+
+      'text/csv',
+
+      'application/msword',
+
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+
+      'application/vnd.ms-excel',
+
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+
+      'application/vnd.ms-powerpoint',
+
+      'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+
+      'application/zip',
+
+      'application/x-zip-compressed',
+
+      'application/octet-stream'
+
+    ]);
+
+
+  return documents.has(
+    mime
+  );
+
+}
+
+
+// ========================================================
+// LÍMITES MULTIMEDIA
+// ========================================================
+
+const CHAT_UPLOAD_MAX_BYTES =
+  50 * 1024 * 1024;
+
+
+// ========================================================
+// FIN BLOQUE 2/3
+// ========================================================
+// ========================================================
+// MULTER / SISTEMA DE ARCHIVOS
+// ========================================================
+
+const multer =
+  require('multer');
+
+const path =
+  require('path');
+
+const fs =
+  require('fs');
+
+const crypto =
+  require('crypto');
+
+
+// ========================================================
+// CARPETA DE ARCHIVOS DEL CHAT
+// ========================================================
+
+const CHAT_UPLOAD_DIR =
+  path.join(
+    __dirname,
+    '..',
+    'public',
+    'uploads',
+    'chat'
+  );
+
+
+/*
+  Crear la carpeta automáticamente si todavía
+  no existe.
+
+  Resultado:
+
+  /public/uploads/chat/
+*/
+
+fs.mkdirSync(
+  CHAT_UPLOAD_DIR,
+  {
+    recursive: true
+  }
+);
+
+
+// ========================================================
+// STORAGE DE MULTER
+// ========================================================
+
+const chatStorage =
+  multer.diskStorage({
+
+    destination: (
+      req,
+      file,
+      callback
+    ) => {
+
+      callback(
+        null,
+        CHAT_UPLOAD_DIR
+      );
+
+    },
+
+
+    filename: (
+      req,
+      file,
+      callback
+    ) => {
+
+      const extension =
+        getFileExtension(
+          file.originalname,
+          file.mimetype
+        );
+
+
+      let randomId;
+
+
+      try {
+
+        randomId =
+          crypto.randomBytes(
+            16
+          ).toString(
+            'hex'
+          );
+
+      } catch (_) {
+
+        randomId =
+          `${Date.now()}-${Math.random()
+            .toString(16)
+            .slice(2)}`;
+
+      }
+
+
+      const finalName =
+        `${Date.now()}-${randomId}${extension}`;
+
+
+      callback(
+        null,
+        finalName
+      );
+
+    }
+
+  });
+
+
+// ========================================================
+// CONFIGURACIÓN DE MULTER
+// ========================================================
+
+const chatUpload =
+  multer({
+
+    storage:
+      chatStorage,
+
+
+    limits: {
+
+      fileSize:
+        CHAT_UPLOAD_MAX_BYTES,
+
+      files:
+        1
+
+    },
+
+
+    fileFilter: (
+      req,
+      file,
+      callback
+    ) => {
+
+      if (
+        !isAllowedMimeType(
+          file.mimetype
+        )
+      ) {
+
+        const error =
+          new Error(
+            'Tipo de archivo no permitido'
+          );
+
+
+        error.code =
+          'VOBIX_INVALID_FILE_TYPE';
+
+
+        return callback(
+          error
+        );
+
+      }
+
+
+      callback(
+        null,
+        true
+      );
+
+    }
+
+  });
+
+
+// ========================================================
+// BORRAR ARCHIVO SI FALLA LA OPERACIÓN
+// ========================================================
+
+function removeUploadedFile(
+  file
+) {
+
+  if (
+    !file ||
+    !file.path
+  ) {
+
+    return;
+
+  }
+
+
+  try {
+
+    if (
+      fs.existsSync(
+        file.path
+      )
+    ) {
+
+      fs.unlinkSync(
+        file.path
+      );
+
+    }
+
+  } catch (error) {
+
+    console.error(
+      'VOBIXCHAT DELETE UPLOAD ERROR:',
+      error.message
+    );
+
+  }
+
+}
+
+
+// ========================================================
+// MIDDLEWARE DE SUBIDA
+// ========================================================
+
+function uploadSingleChatFile(
+  req,
+  res,
+  next
+) {
+
+  chatUpload.single(
+    'file'
+  )(
+    req,
+    res,
+    error => {
+
+      if (!error) {
+
+        return next();
+
+      }
+
+
+      console.error(
+        'VOBIXCHAT MULTER ERROR:',
+        error.message
+      );
+
+
+      if (
+        error instanceof
+          multer.MulterError
+      ) {
+
+        if (
+          error.code ===
+          'LIMIT_FILE_SIZE'
+        ) {
+
+          return res
+            .status(413)
+            .json({
+
+              ok: false,
+
+              msg:
+                'El archivo supera el límite de 50 MB'
+
+            });
+
+        }
+
+
+        return res
+          .status(400)
+          .json({
+
+            ok: false,
+
+            msg:
+              'No se pudo procesar el archivo'
+
+          });
+
+      }
+
+
+      if (
+        error.code ===
+        'VOBIX_INVALID_FILE_TYPE'
+      ) {
+
+        return res
+          .status(415)
+          .json({
+
+            ok: false,
+
+            msg:
+              'Este tipo de archivo no está permitido'
+
+          });
+
+      }
+
+
+      return res
+        .status(500)
+        .json({
+
+          ok: false,
+
+          msg:
+            'Error procesando el archivo'
+
+        });
+
+    }
+  );
+
+}
+
+
+// ========================================================
+// POST /api/chat/upload
 // ========================================================
 
 router.post(
-  '/conversations/:conversationId/files',
+  '/upload',
 
-  upload.single('file'),
+  uploadSingleChatFile,
 
-  async (req, res) => {
+  async (
+    req,
+    res
+  ) => {
 
     const userId =
       req.vobixUser.id;
@@ -2021,47 +2835,56 @@ router.post(
 
     const conversationId =
       cleanId(
-        req.params.conversationId
+        req.body.conversationId ||
+        req.body.conversation_id
       );
+
+
+    if (!conversationId) {
+
+      removeUploadedFile(
+        req.file
+      );
+
+
+      return res
+        .status(400)
+        .json({
+
+          ok: false,
+
+          msg:
+            'Conversación no válida'
+
+        });
+
+    }
 
 
     if (!req.file) {
 
-      return res.status(400).json({
-        ok: false,
-        msg:
-          'No se recibió ningún archivo'
-      });
+      return res
+        .status(400)
+        .json({
+
+          ok: false,
+
+          msg:
+            'No se recibió ningún archivo'
+
+        });
 
     }
-
-
-    if (!cloudinaryIsConfigured()) {
-
-      return res.status(503).json({
-        ok: false,
-        msg:
-          'El almacenamiento multimedia no está configurado'
-      });
-
-    }
-
-
-    const messageType =
-      getMessageType(
-        req.file,
-        req.body.type
-      );
-
-
-    let cloudinaryResult =
-      null;
 
 
     try {
 
+      // ==================================================
+      // COMPROBAR QUE EL USUARIO ESTÁ EN LA CONVERSACIÓN
+      // ==================================================
+
       const allowed =
-        await userCanAccessConversation(
+        await canAccessConversation(
           conversationId,
           userId
         );
@@ -2069,14 +2892,28 @@ router.post(
 
       if (!allowed) {
 
-        return res.status(403).json({
-          ok: false,
-          msg:
-            'No tienes acceso a esta conversación'
-        });
+        removeUploadedFile(
+          req.file
+        );
+
+
+        return res
+          .status(403)
+          .json({
+
+            ok: false,
+
+            msg:
+              'No tienes acceso a esta conversación'
+
+          });
 
       }
 
+
+      // ==================================================
+      // COMPROBAR BLOQUEO
+      // ==================================================
 
       const blocked =
         await conversationIsBlocked(
@@ -2087,149 +2924,49 @@ router.post(
 
       if (blocked) {
 
-        return res.status(403).json({
-          ok: false,
-          msg:
-            'No se puede enviar el archivo'
-        });
+        removeUploadedFile(
+          req.file
+        );
+
+
+        return res
+          .status(403)
+          .json({
+
+            ok: false,
+
+            msg:
+              'No se puede enviar el archivo'
+
+          });
 
       }
 
 
       // ==================================================
-      // SUBIR A CLOUDINARY
+      // TIPO REAL DEL MENSAJE
       // ==================================================
 
-      cloudinaryResult =
-        await uploadBufferToCloudinary(
-          req.file,
-          messageType
+      const messageType =
+        normalizeMediaType(
+          req.body.messageType ||
+          req.body.message_type,
+          req.file.mimetype
         );
 
 
-      const fileUrl =
-        cloudinaryResult.secure_url ||
-        cloudinaryResult.url;
+      // ==================================================
+      // URL PÚBLICA DEL ARCHIVO
+      // ==================================================
 
-
-      if (!fileUrl) {
-
-        throw new Error(
-          'Cloudinary no devolvió URL'
-        );
-
-      }
-
-
-      const fileName =
-        cleanFileName(
-          req.file.originalname
-        );
-
-
-      const fileMime =
-        String(
-          req.file.mimetype ||
-          'application/octet-stream'
-        )
-          .trim()
-          .slice(0, 255);
-
-
-      const fileSize =
-        Number(
-          req.file.size || 0
-        );
-
-
-      const resourceType =
-        String(
-          cloudinaryResult.resource_type ||
-          getCloudinaryResourceType(
-            messageType
-          )
-        )
-          .slice(0, 30);
-
-
-      const duration =
-        Number.isFinite(
-          Number(
-            cloudinaryResult.duration
-          )
-        )
-          ? Number(
-              cloudinaryResult.duration
-            )
-          : null;
-
-
-      const width =
-        Number.isFinite(
-          Number(
-            cloudinaryResult.width
-          )
-        )
-          ? Number(
-              cloudinaryResult.width
-            )
-          : null;
-
-
-      const height =
-        Number.isFinite(
-          Number(
-            cloudinaryResult.height
-          )
-        )
-          ? Number(
-              cloudinaryResult.height
-            )
-          : null;
+      const mediaUrl =
+        `/uploads/chat/${encodeURIComponent(
+          req.file.filename
+        )}`;
 
 
       // ==================================================
-      // CONTENIDO DESCRIPTIVO
-      // ==================================================
-
-      let content =
-        'Archivo';
-
-
-      if (
-        messageType === 'image'
-      ) {
-
-        content =
-          '📷 Foto';
-
-      } else if (
-        messageType === 'video'
-      ) {
-
-        content =
-          '🎥 Vídeo';
-
-      } else if (
-        messageType === 'audio'
-      ) {
-
-        content =
-          '🎤 Nota de voz';
-
-      } else if (
-        messageType === 'document'
-      ) {
-
-        content =
-          '📎 ' +
-          fileName;
-
-      }
-
-
-      // ==================================================
-      // GUARDAR MENSAJE MULTIMEDIA
+      // GUARDAR MENSAJE EN POSTGRESQL
       // ==================================================
 
       const result =
@@ -2241,18 +2978,6 @@ router.post(
             sender_user_id,
             message_type,
             content,
-
-            file_url,
-            file_public_id,
-            file_name,
-            file_mime,
-            file_size,
-            file_resource_type,
-
-            media_duration,
-            media_width,
-            media_height,
-
             created_at,
             updated_at
           )
@@ -2263,18 +2988,6 @@ router.post(
             $2,
             $3,
             $4,
-
-            $5,
-            $6,
-            $7,
-            $8,
-            $9,
-            $10,
-
-            $11,
-            $12,
-            $13,
-
             NOW(),
             NOW()
           )
@@ -2285,18 +2998,6 @@ router.post(
             sender_user_id,
             message_type,
             content,
-
-            file_url,
-            file_public_id,
-            file_name,
-            file_mime,
-            file_size,
-            file_resource_type,
-
-            media_duration,
-            media_width,
-            media_height,
-
             reply_to_message_id,
             edited,
             deleted,
@@ -2307,87 +3008,197 @@ router.post(
             conversationId,
             userId,
             messageType,
-            content,
-
-            fileUrl,
-            cloudinaryResult.public_id ||
-              null,
-
-            fileName,
-            fileMime,
-            fileSize,
-            resourceType,
-
-            duration,
-            width,
-            height
+            mediaUrl
           ]
         );
 
 
+      // ==================================================
+      // ACTUALIZAR CONVERSACIÓN
+      // ==================================================
+
       await database.query(
         `
         UPDATE conversations
-        SET updated_at = NOW()
-        WHERE id = $1
+
+        SET
+          updated_at = NOW()
+
+        WHERE
+          id = $1
         `,
-        [conversationId]
+        [
+          conversationId
+        ]
       );
+
+
+      // ==================================================
+      // OBTENER DATOS DEL REMITENTE
+      // ==================================================
+
+      const senderResult =
+        await database.query(
+          `
+          SELECT
+            username,
+            avatar_url
+
+          FROM users
+
+          WHERE
+            id = $1
+
+          LIMIT 1
+          `,
+          [
+            userId
+          ]
+        );
+
+
+      const row =
+        result.rows[0];
+
+
+      if (
+        senderResult.rows.length
+      ) {
+
+        row.sender_username =
+          senderResult.rows[0]
+            .username;
+
+
+        row.sender_avatar_url =
+          senderResult.rows[0]
+            .avatar_url;
+
+      }
 
 
       const message =
         normalizeMessage(
-          result.rows[0],
-          req.vobixUser.username ||
-          null
+          row
         );
 
 
-      emitMessage(
-        req,
-        conversationId,
-        message
-      );
+      /*
+        Conservamos el nombre original para
+        documentos y otros archivos.
+      */
+
+      message.fileName =
+        safeFileName(
+          req.file.originalname
+        );
+
+
+      message.mimeType =
+        req.file.mimetype;
+
+
+      message.size =
+        req.file.size;
+
+
+      // ==================================================
+      // SOCKET.IO
+      // ==================================================
+      //
+      // routes/chat.js no debe crear otro servidor Socket.IO.
+      //
+      // server.js puede colocar su instancia en:
+      //
+      // app.set('io', io);
+      //
+      // Entonces la recuperamos desde req.app.
+      // ==================================================
+
+      const io =
+        req.app.get(
+          'io'
+        );
+
+
+      let broadcasted =
+        false;
+
+
+      if (io) {
+
+        /*
+          Esta sala debe coincidir con la que utiliza
+          server.js cuando recibe conversation-join.
+
+          En caso de que tu server.js use:
+          conversation:${conversationId}
+
+          el mensaje llegará inmediatamente a ambos.
+        */
+
+        io
+          .to(
+            `conversation:${conversationId}`
+          )
+          .emit(
+            'conversation-message',
+            {
+
+              conversationId,
+
+              message
+
+            }
+          );
+
+
+        broadcasted =
+          true;
+
+      }
 
 
       return res.json({
+
         ok: true,
-        message
+
+        message,
+
+        broadcasted
+
       });
 
 
     } catch (error) {
 
+      /*
+        Si PostgreSQL falla después de que Multer
+        guardó el archivo, eliminamos el archivo para
+        no dejar basura en el servidor.
+      */
+
+      removeUploadedFile(
+        req.file
+      );
+
+
       console.error(
-        'VOBIXCHAT FILE UPLOAD ERROR:',
+        'VOBIXCHAT CHAT UPLOAD ERROR:',
         error
       );
 
 
-      /*
-        Si Cloudinary recibió el archivo pero
-        PostgreSQL falló, eliminamos el archivo
-        para no dejar basura huérfana.
-      */
+      return res
+        .status(500)
+        .json({
 
-      if (
-        cloudinaryResult &&
-        cloudinaryResult.public_id
-      ) {
+          ok: false,
 
-        await destroyCloudinaryFile(
-          cloudinaryResult.public_id,
-          cloudinaryResult.resource_type
-        );
+          msg:
+            'No se pudo enviar el archivo'
 
-      }
-
-
-      return res.status(500).json({
-        ok: false,
-        msg:
-          'No se pudo enviar el archivo'
-      });
+        });
 
     }
 
@@ -2396,7 +3207,49 @@ router.post(
 
 
 // ========================================================
-// ERROR DE MULTER
+// INFORMACIÓN DE ARCHIVO / SEGURIDAD
+// ========================================================
+
+router.get(
+  '/media/status',
+  (
+    req,
+    res
+  ) => {
+
+    return res.json({
+
+      ok: true,
+
+      enabled:
+        true,
+
+      maxFileSize:
+        CHAT_UPLOAD_MAX_BYTES,
+
+      maxFileSizeMb:
+        50,
+
+      types: [
+
+        'image',
+
+        'video',
+
+        'audio',
+
+        'document'
+
+      ]
+
+    });
+
+  }
+);
+
+
+// ========================================================
+// MANEJO DE ERRORES DEL ROUTER
 // ========================================================
 
 router.use(
@@ -2407,42 +3260,46 @@ router.use(
     next
   ) => {
 
+    console.error(
+      'VOBIXCHAT CHAT ROUTER ERROR:',
+      error
+    );
+
+
     if (
-      error instanceof
-      multer.MulterError
+      res.headersSent
     ) {
 
-      if (
-        error.code ===
-        'LIMIT_FILE_SIZE'
-      ) {
-
-        return res.status(413).json({
-          ok: false,
-          msg:
-            'El archivo supera el límite de 50 MB'
-        });
-
-      }
-
-
-      return res.status(400).json({
-        ok: false,
-        msg:
-          'No se pudo procesar el archivo'
-      });
+      return next(
+        error
+      );
 
     }
 
 
-    next(error);
+    return res
+      .status(500)
+      .json({
+
+        ok: false,
+
+        msg:
+          'Error interno del chat'
+
+      });
 
   }
 );
 
 
 // ========================================================
-// EXPORTAR
+// EXPORTAR ROUTER
 // ========================================================
 
-module.exports = router;
+module.exports =
+  router;
+
+
+// ========================================================
+// FIN routes/chat.js
+// ========================================================
