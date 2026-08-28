@@ -12,7 +12,7 @@
  - NO borra mensajes.
  - NO elimina tablas.
  - Añade columnas nuevas de forma segura.
- - Preparado para futuras actualizaciones de VOBIXCHAT.
+ - Repara estructuras antiguas de VOBIXCHAT.
 ==========================================================
 */
 
@@ -42,10 +42,6 @@ async function initializeDatabase() {
 
     // ====================================================
     // USUARIOS
-    //
-    // Esta tabla puede existir de versiones anteriores.
-    // Por eso primero garantizamos su existencia y después
-    // añadimos las columnas que falten.
     // ====================================================
 
     await database.query(`
@@ -138,9 +134,7 @@ async function initializeDatabase() {
     await database.query(`
       CREATE UNIQUE INDEX IF NOT EXISTS
       users_vobix_id_unique
-
       ON users (LOWER(vobix_id))
-
       WHERE vobix_id IS NOT NULL;
     `);
 
@@ -152,7 +146,6 @@ async function initializeDatabase() {
     await database.query(`
       CREATE INDEX IF NOT EXISTS
       users_phone_idx
-
       ON users (phone);
     `);
 
@@ -188,11 +181,9 @@ async function initializeDatabase() {
       );
     `);
 
-
     await database.query(`
       CREATE INDEX IF NOT EXISTS
       sessions_user_idx
-
       ON sessions(user_id);
     `);
 
@@ -231,11 +222,9 @@ async function initializeDatabase() {
       );
     `);
 
-
     await database.query(`
       CREATE INDEX IF NOT EXISTS
       contacts_owner_idx
-
       ON contacts(owner_user_id);
     `);
 
@@ -272,11 +261,9 @@ async function initializeDatabase() {
       );
     `);
 
-
     await database.query(`
       CREATE INDEX IF NOT EXISTS
       blocks_blocker_idx
-
       ON user_blocks(blocker_user_id);
     `);
 
@@ -310,10 +297,72 @@ async function initializeDatabase() {
 
 
     // ====================================================
-    // PARTICIPANTES
+    // REPARAR / ACTUALIZAR CONVERSACIONES ANTIGUAS
     //
-    // Usamos el nombre conversation_participants porque
-    // tu proyecto ya venía trabajando con esa estructura.
+    // ESTA ES LA CORRECCIÓN DEL ERROR:
+    // column "created_by" does not exist
+    // ====================================================
+
+    await database.query(`
+      ALTER TABLE conversations
+      ADD COLUMN IF NOT EXISTS type VARCHAR(30)
+      DEFAULT 'private';
+    `);
+
+    await database.query(`
+      ALTER TABLE conversations
+      ADD COLUMN IF NOT EXISTS title VARCHAR(150);
+    `);
+
+    await database.query(`
+      ALTER TABLE conversations
+      ADD COLUMN IF NOT EXISTS created_by UUID;
+    `);
+
+    await database.query(`
+      ALTER TABLE conversations
+      ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ
+      DEFAULT NOW();
+    `);
+
+    await database.query(`
+      ALTER TABLE conversations
+      ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ
+      DEFAULT NOW();
+    `);
+
+
+    // ====================================================
+    // FOREIGN KEY DE CREATED_BY
+    //
+    // La añadimos únicamente si todavía no existe.
+    // ====================================================
+
+    await database.query(`
+      DO $$
+      BEGIN
+
+        IF NOT EXISTS (
+          SELECT 1
+          FROM pg_constraint
+          WHERE conname = 'conversations_created_by_fkey'
+        ) THEN
+
+          ALTER TABLE conversations
+          ADD CONSTRAINT conversations_created_by_fkey
+          FOREIGN KEY (created_by)
+          REFERENCES users(id)
+          ON DELETE SET NULL;
+
+        END IF;
+
+      END
+      $$;
+    `);
+
+
+    // ====================================================
+    // PARTICIPANTES
     // ====================================================
 
     await database.query(`
@@ -348,11 +397,44 @@ async function initializeDatabase() {
     `);
 
 
+    // ====================================================
+    // ACTUALIZAR PARTICIPANTES ANTIGUOS
+    // ====================================================
+
+    await database.query(`
+      ALTER TABLE conversation_participants
+      ADD COLUMN IF NOT EXISTS role VARCHAR(30)
+      DEFAULT 'member';
+    `);
+
+    await database.query(`
+      ALTER TABLE conversation_participants
+      ADD COLUMN IF NOT EXISTS joined_at TIMESTAMPTZ
+      DEFAULT NOW();
+    `);
+
+    await database.query(`
+      ALTER TABLE conversation_participants
+      ADD COLUMN IF NOT EXISTS muted BOOLEAN
+      DEFAULT FALSE;
+    `);
+
+    await database.query(`
+      ALTER TABLE conversation_participants
+      ADD COLUMN IF NOT EXISTS archived BOOLEAN
+      DEFAULT FALSE;
+    `);
+
     await database.query(`
       CREATE INDEX IF NOT EXISTS
       conversation_participants_user_idx
-
       ON conversation_participants(user_id);
+    `);
+
+    await database.query(`
+      CREATE INDEX IF NOT EXISTS
+      conversation_participants_conversation_idx
+      ON conversation_participants(conversation_id);
     `);
 
 
@@ -427,11 +509,9 @@ async function initializeDatabase() {
       DEFAULT NOW();
     `);
 
-
     await database.query(`
       CREATE INDEX IF NOT EXISTS
       messages_conversation_created_idx
-
       ON messages(
         conversation_id,
         created_at DESC
@@ -503,11 +583,9 @@ async function initializeDatabase() {
       );
     `);
 
-
     await database.query(`
       CREATE INDEX IF NOT EXISTS
       trust_signals_user_idx
-
       ON trust_signals(user_id);
     `);
 
@@ -544,11 +622,9 @@ async function initializeDatabase() {
       );
     `);
 
-
     await database.query(`
       CREATE INDEX IF NOT EXISTS
       audit_events_created_idx
-
       ON audit_events(
         created_at DESC
       );
@@ -561,6 +637,10 @@ async function initializeDatabase() {
 
     console.log(
       'VOBIXCHAT DATABASE: estructura preparada correctamente'
+    );
+
+    console.log(
+      'VOBIXCHAT DATABASE: migraciones verificadas correctamente'
     );
 
     return true;
