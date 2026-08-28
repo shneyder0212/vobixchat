@@ -31,6 +31,7 @@
       --muted: #8da891;
       --bubble: #15251a;
       --bubbleMe: #155d35;
+      --danger: #ff4d4d;
     }
 
     html,
@@ -530,12 +531,228 @@
       opacity: 0;
       pointer-events: none;
       transition: .2s;
-      z-index: 1000;
+      z-index: 3000;
     }
 
     .toast.show {
       opacity: 1;
       transform: translateX(-50%) translateY(0);
+    }
+
+
+    /* ==================================================
+       LLAMADAS VOBIXCHAT
+       ================================================== */
+
+    .callScreen {
+      position: fixed;
+      inset: 0;
+      display: none;
+      z-index: 2000;
+      background:
+        radial-gradient(
+          circle at 50% 20%,
+          rgba(104,255,114,.16),
+          transparent 35%
+        ),
+        #030a05;
+    }
+
+    .callScreen.open {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .callVideoArea {
+      position: relative;
+      flex: 1;
+      min-height: 0;
+      overflow: hidden;
+      display: grid;
+      place-items: center;
+    }
+
+    .remoteVideo {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      background: #020603;
+    }
+
+    .localVideo {
+      position: absolute;
+      right: 18px;
+      top: 18px;
+      width: min(28vw,220px);
+      aspect-ratio: 3/4;
+      object-fit: cover;
+      border-radius: 18px;
+      border: 2px solid rgba(104,255,114,.45);
+      background: #0b160d;
+      box-shadow: 0 10px 35px rgba(0,0,0,.45);
+      z-index: 5;
+    }
+
+    .audioCallIdentity {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      pointer-events: none;
+    }
+
+    .audioCallAvatar {
+      width: 120px;
+      height: 120px;
+      margin: auto;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: #17341d;
+      border: 2px solid rgba(104,255,114,.35);
+      color: var(--green);
+      font-size: 52px;
+      font-weight: 1000;
+      box-shadow: 0 0 55px rgba(104,255,114,.14);
+    }
+
+    .audioCallName {
+      margin-top: 20px;
+      font-size: 25px;
+      font-weight: 900;
+    }
+
+    .audioCallStatus {
+      margin-top: 7px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .callTop {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 0;
+      z-index: 10;
+      padding: 22px;
+      text-align: center;
+      pointer-events: none;
+    }
+
+    .callTopName {
+      font-size: 19px;
+      font-weight: 900;
+    }
+
+    .callTopStatus {
+      margin-top: 4px;
+      color: #b9d9be;
+      font-size: 12px;
+    }
+
+    .callControls {
+      min-height: 112px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 18px;
+      padding: 20px;
+      background: rgba(3,10,5,.94);
+    }
+
+    .callControl {
+      width: 60px;
+      height: 60px;
+      border: 0;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: #18261b;
+      color: white;
+      font-size: 23px;
+    }
+
+    .callControl.active {
+      background: #344137;
+    }
+
+    .callControl.end {
+      background: var(--danger);
+    }
+
+    .incomingCall {
+      position: fixed;
+      inset: 0;
+      z-index: 2500;
+      display: none;
+      place-items: center;
+      padding: 22px;
+      background: rgba(1,7,3,.94);
+      backdrop-filter: blur(12px);
+    }
+
+    .incomingCall.open {
+      display: grid;
+    }
+
+    .incomingCard {
+      width: min(100%,390px);
+      padding: 32px 22px 26px;
+      border: 1px solid rgba(104,255,114,.25);
+      border-radius: 28px;
+      background: #0b160d;
+      text-align: center;
+      box-shadow: 0 25px 80px rgba(0,0,0,.55);
+    }
+
+    .incomingAvatar {
+      width: 100px;
+      height: 100px;
+      margin: auto;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      background: #17341d;
+      color: var(--green);
+      border: 2px solid rgba(104,255,114,.35);
+      font-size: 43px;
+      font-weight: 1000;
+    }
+
+    .incomingName {
+      margin-top: 18px;
+      font-size: 24px;
+      font-weight: 900;
+    }
+
+    .incomingType {
+      margin-top: 7px;
+      color: var(--muted);
+    }
+
+    .incomingActions {
+      display: flex;
+      justify-content: center;
+      gap: 42px;
+      margin-top: 32px;
+    }
+
+    .incomingButton {
+      width: 68px;
+      height: 68px;
+      border: 0;
+      border-radius: 50%;
+      color: white;
+      font-size: 26px;
+    }
+
+    .incomingButton.reject {
+      background: var(--danger);
+    }
+
+    .incomingButton.accept {
+      background: #25c85a;
     }
 
     @media(max-width:720px) {
@@ -594,6 +811,23 @@
         left: 7px;
         width: calc(100% - 14px);
       }
+
+      .localVideo {
+        width: 105px;
+        right: 12px;
+        top: 12px;
+      }
+
+      .callControls {
+        min-height: 100px;
+        gap: 13px;
+      }
+
+      .callControl {
+        width: 56px;
+        height: 56px;
+      }
+
     }
 
   </style>
@@ -617,13 +851,19 @@
           VOBIXCHAT
         </div>
 
-        <div class="username" id="myUsername">
+        <div
+          class="username"
+          id="myUsername"
+        >
           @
         </div>
 
       </div>
 
-      <div class="avatar" id="myAvatar">
+      <div
+        class="avatar"
+        id="myAvatar"
+      >
         V
       </div>
 
@@ -679,6 +919,7 @@
 
   </aside>
 
+
   <main class="chat">
 
     <section
@@ -707,6 +948,7 @@
       </div>
 
     </section>
+
 
     <section
       class="chatRoom"
@@ -779,15 +1021,18 @@
 
       </header>
 
+
       <div
         class="messages"
         id="messages"
       ></div>
 
+
       <div
         class="typing"
         id="typing"
       ></div>
+
 
       <div class="composer">
 
@@ -843,6 +1088,7 @@
           ➤
         </button>
 
+
         <div
           class="emojiPanel"
           id="emojiPanel"
@@ -873,6 +1119,7 @@
           <button class="emoji">🚀</button>
 
         </div>
+
 
         <div
           class="attachMenu"
@@ -907,6 +1154,7 @@
 
       </div>
 
+
       <input
         type="file"
         id="mediaInput"
@@ -934,10 +1182,192 @@
 
 </div>
 
+
+<!-- ====================================================
+     PANTALLA DE LLAMADA
+     ==================================================== -->
+
+<div
+  class="callScreen"
+  id="callScreen"
+>
+
+  <div class="callVideoArea">
+
+    <video
+      class="remoteVideo"
+      id="remoteVideo"
+      autoplay
+      playsinline
+    ></video>
+
+    <video
+      class="localVideo"
+      id="localVideo"
+      autoplay
+      muted
+      playsinline
+    ></video>
+
+
+    <div
+      class="audioCallIdentity"
+      id="audioCallIdentity"
+    >
+
+      <div>
+
+        <div
+          class="audioCallAvatar"
+          id="audioCallAvatar"
+        >
+          V
+        </div>
+
+        <div
+          class="audioCallName"
+          id="audioCallName"
+        >
+          VOBIXCHAT
+        </div>
+
+        <div
+          class="audioCallStatus"
+          id="audioCallStatus"
+        >
+          Conectando...
+        </div>
+
+      </div>
+
+    </div>
+
+
+    <div class="callTop">
+
+      <div
+        class="callTopName"
+        id="callTopName"
+      ></div>
+
+      <div
+        class="callTopStatus"
+        id="callTopStatus"
+      >
+        Conectando...
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <div class="callControls">
+
+    <button
+      class="callControl"
+      id="callMuteButton"
+      type="button"
+      title="Silenciar micrófono"
+    >
+      🎤
+    </button>
+
+    <button
+      class="callControl"
+      id="callCameraButton"
+      type="button"
+      title="Activar/desactivar cámara"
+    >
+      📹
+    </button>
+
+    <button
+      class="callControl end"
+      id="callEndButton"
+      type="button"
+      title="Colgar"
+    >
+      ☎
+    </button>
+
+  </div>
+
+</div>
+
+
+<!-- ====================================================
+     LLAMADA ENTRANTE
+     ==================================================== -->
+
+<div
+  class="incomingCall"
+  id="incomingCall"
+>
+
+  <div class="incomingCard">
+
+    <div
+      class="incomingAvatar"
+      id="incomingAvatar"
+    >
+      V
+    </div>
+
+    <div
+      class="incomingName"
+      id="incomingName"
+    >
+      Contacto
+    </div>
+
+    <div
+      class="incomingType"
+      id="incomingType"
+    >
+      Llamada entrante
+    </div>
+
+    <div class="incomingActions">
+
+      <button
+        class="incomingButton reject"
+        id="rejectCallButton"
+        type="button"
+        title="Rechazar"
+      >
+        ✕
+      </button>
+
+      <button
+        class="incomingButton accept"
+        id="acceptCallButton"
+        type="button"
+        title="Aceptar"
+      >
+        ☎
+      </button>
+
+    </div>
+
+  </div>
+
+</div>
+
+
+<!-- AUDIO REMOTO DE LLAMADAS DE VOZ -->
+
+<audio
+  id="remoteAudio"
+  autoplay
+></audio>
+
+
 <div
   class="toast"
   id="toast"
 ></div>
+
 
 <script>
 
@@ -946,14 +1376,6 @@
 
 // ========================================================
 // AUTENTICACIÓN
-//
-// El mismo token se utilizará para:
-// 1. Socket.IO.
-// 2. Todas las peticiones HTTP del chat.
-// 3. Subida de archivos.
-//
-// Así evitamos que el socket esté autenticado mientras
-// fetch() llega al backend sin Authorization.
 // ========================================================
 
 const VOBIX_TOKEN =
@@ -963,7 +1385,7 @@ const VOBIX_TOKEN =
 
 
 // ========================================================
-// SOCKET — AUTENTICADO DESDE EL HANDSHAKE
+// SOCKET.IO AUTENTICADO
 // ========================================================
 
 const socket = io({
@@ -986,7 +1408,7 @@ const socket = io({
 
 
 // ========================================================
-// ELEMENTOS
+// ELEMENTOS PRINCIPALES
 // ========================================================
 
 const app =
@@ -1028,7 +1450,8 @@ const conversationCount =
   document.getElementById(
     'conversationCount'
   );
- const emptyState =
+
+const emptyState =
   document.getElementById(
     'emptyState'
   );
@@ -1145,7 +1568,107 @@ const toast =
 
 
 // ========================================================
-// ESTADO
+// ELEMENTOS DE LLAMADA
+// ========================================================
+
+const callScreen =
+  document.getElementById(
+    'callScreen'
+  );
+
+const remoteVideo =
+  document.getElementById(
+    'remoteVideo'
+  );
+
+const localVideo =
+  document.getElementById(
+    'localVideo'
+  );
+
+const remoteAudio =
+  document.getElementById(
+    'remoteAudio'
+  );
+
+const audioCallIdentity =
+  document.getElementById(
+    'audioCallIdentity'
+  );
+
+const audioCallAvatar =
+  document.getElementById(
+    'audioCallAvatar'
+  );
+
+const audioCallName =
+  document.getElementById(
+    'audioCallName'
+  );
+
+const audioCallStatus =
+  document.getElementById(
+    'audioCallStatus'
+  );
+
+const callTopName =
+  document.getElementById(
+    'callTopName'
+  );
+
+const callTopStatus =
+  document.getElementById(
+    'callTopStatus'
+  );
+
+const callMuteButton =
+  document.getElementById(
+    'callMuteButton'
+  );
+
+const callCameraButton =
+  document.getElementById(
+    'callCameraButton'
+  );
+
+const callEndButton =
+  document.getElementById(
+    'callEndButton'
+  );
+
+const incomingCall =
+  document.getElementById(
+    'incomingCall'
+  );
+
+const incomingAvatar =
+  document.getElementById(
+    'incomingAvatar'
+  );
+
+const incomingName =
+  document.getElementById(
+    'incomingName'
+  );
+
+const incomingType =
+  document.getElementById(
+    'incomingType'
+  );
+
+const rejectCallButton =
+  document.getElementById(
+    'rejectCallButton'
+  );
+
+const acceptCallButton =
+  document.getElementById(
+    'acceptCallButton'
+  );
+
+
+// ========================================================
+// ESTADO GENERAL
 // ========================================================
 
 let currentConversation =
@@ -1158,6 +1681,66 @@ let typingTimer =
   null;
 
 
+// ========================================================
+// ESTADO WEBRTC
+// ========================================================
+
+let peerConnection =
+  null;
+
+let localCallStream =
+  null;
+
+let remoteCallStream =
+  null;
+
+let currentCall =
+  null;
+
+let pendingIncomingCall =
+  null;
+
+let pendingIceCandidates =
+  [];
+
+let microphoneMuted =
+  false;
+
+let cameraDisabled =
+  false;
+
+let callTimer =
+  null;
+
+let callStartedAt =
+  null;
+
+
+// ========================================================
+// CONFIGURACIÓN WEBRTC
+//
+// STUN permite descubrir las direcciones de red.
+// TURN se añadirá posteriormente para garantizar llamadas
+// en redes que no permiten conexión directa.
+// ========================================================
+
+const RTC_CONFIGURATION = {
+
+  iceServers: [
+
+    {
+      urls:
+        'stun:stun.l.google.com:19302'
+    },
+
+    {
+      urls:
+        'stun:stun1.l.google.com:19302'
+    }
+
+  ]
+
+};
 // ========================================================
 // CACHE LOCAL DE NOMBRES
 // ========================================================
@@ -1238,8 +1821,6 @@ function cachedContactName(
 
 // ========================================================
 // USUARIO LOCAL
-//
-// EL NOMBRE ESCRITO EN index.html TIENE PRIORIDAD.
 // ========================================================
 
 function getLocalUser() {
@@ -1414,8 +1995,7 @@ function getUsername(
 
     if (
       value &&
-      value
-        .toLowerCase() !==
+      value.toLowerCase() !==
         'usuario'
     ) {
 
@@ -1469,8 +2049,7 @@ function getUsername(
 
       if (
         value &&
-        value
-          .toLowerCase() !==
+        value.toLowerCase() !==
           'usuario'
       ) {
 
@@ -1756,7 +2335,7 @@ function getConversationName(
 
 
 // ========================================================
-// PERFIL DEL USUARIO ACTUAL
+// PERFIL DEL USUARIO
 // ========================================================
 
 function renderMyProfile() {
@@ -1789,10 +2368,8 @@ function renderMyProfile() {
     myUsername.textContent =
       '@';
 
-
     myAvatar.textContent =
       'V';
-
 
     return;
 
@@ -1880,7 +2457,7 @@ function escapeHTML(
 
 
 // ========================================================
-// HEADERS AUTENTICADOS
+// AUTORIZACIÓN HTTP
 // ========================================================
 
 function buildAuthHeaders(
@@ -1892,13 +2469,6 @@ function buildAuthHeaders(
       headers || {}
     );
 
-
-  /*
-    CORRECCIÓN PRINCIPAL:
-
-    Todas las peticiones privadas del chat deben
-    llevar el mismo token que utiliza Socket.IO.
-  */
 
   if (VOBIX_TOKEN) {
 
@@ -1917,7 +2487,7 @@ function buildAuthHeaders(
 
 
 // ========================================================
-// REQUEST JSON AUTENTICADO
+// REQUEST JSON
 // ========================================================
 
 async function requestJSON(
@@ -1955,22 +2525,10 @@ async function requestJSON(
   } catch (error) {}
 
 
-  /*
-    Si el servidor responde 401, ya sabemos que
-    no es un fallo visual del chat: la sesión/token
-    no es válida.
-  */
-
   if (
     response.status ===
     401
   ) {
-
-    console.error(
-      'VOBIXCHAT AUTH 401:',
-      data
-    );
-
 
     throw new Error(
       data.message ||
@@ -1985,12 +2543,10 @@ async function requestJSON(
   if (!response.ok) {
 
     throw new Error(
-
       data.message ||
       data.msg ||
       data.error ||
       'Error del servidor'
-
     );
 
   }
@@ -2017,7 +2573,6 @@ async function searchUsers() {
 
     searchResults.innerHTML =
       '';
-
 
     return;
 
@@ -2103,7 +2658,6 @@ function renderSearchResults(
       </div>
 
     `;
-
 
     return;
 
@@ -2241,7 +2795,6 @@ async function createConversation(
         'No encontramos el ID de este contacto'
       );
 
-
       return;
 
     }
@@ -2284,11 +2837,6 @@ async function createConversation(
       data.conversation ||
       data;
 
-
-    /*
-      Conservamos los datos del usuario encontrado
-      si la respuesta de creación no los incluye.
-    */
 
     if (
       !conversation.other_user &&
@@ -2403,7 +2951,6 @@ async function createConversation(
 
     searchResults.innerHTML =
       '';
-
 
     searchInput.value =
       '';
@@ -2542,7 +3089,6 @@ function renderConversations() {
 
     `;
 
-
     return;
 
   }
@@ -2570,11 +3116,13 @@ function renderConversations() {
 
       const currentId =
         currentConversation
+
           ? (
               currentConversation.id ||
               currentConversation.conversation_id ||
               currentConversation.conversationId
             )
+
           : null;
 
 
@@ -2585,26 +3133,9 @@ function renderConversations() {
 
 
       if (
-        name &&
-        name !==
-          'Contacto'
-      ) {
-
-        saveContactName(
-          'c:' +
-          conversationId,
-          name
-        );
-
-      }
-
-
-      if (
         currentId &&
         String(currentId) ===
-        String(
-          conversationId
-        )
+        String(conversationId)
       ) {
 
         item.classList.add(
@@ -2679,7 +3210,7 @@ function renderConversations() {
 
 
 // ========================================================
-// ENTRAR EN SALA PRIVADA SOCKET.IO
+// ENTRAR EN SALA PRIVADA
 // ========================================================
 
 function joinConversationRoom(
@@ -2740,7 +3271,9 @@ function joinConversationRoom(
       try {
 
         socket.emit(
+
           'conversation-join',
+
           {
 
             conversationId:
@@ -2774,16 +3307,10 @@ function joinConversationRoom(
             }
 
 
-            console.log(
-              'VOBIXCHAT JOIN CONFIRMADO:',
-              conversationId,
-              ack || ''
-            );
-
-
             finish(true);
 
           }
+
         );
 
 
@@ -2803,6 +3330,8 @@ function joinConversationRoom(
   );
 
 }
+
+
 // ========================================================
 // ABRIR CONVERSACIÓN
 // ========================================================
@@ -2889,6 +3418,497 @@ async function openConversation(
   );
 
 }
+// ========================================================
+// VOLVER A LISTA EN MÓVIL
+// ========================================================
+
+backButton.addEventListener(
+  'click',
+  () => {
+
+    app.classList.remove(
+      'roomOpen'
+    );
+
+  }
+);
+
+
+// ========================================================
+// BUSCADOR
+// ========================================================
+
+searchButton.addEventListener(
+  'click',
+  searchUsers
+);
+
+
+searchInput.addEventListener(
+  'keydown',
+  event => {
+
+    if (
+      event.key ===
+      'Enter'
+    ) {
+
+      searchUsers();
+
+    }
+
+  }
+);
+
+
+// ========================================================
+// ID DE CONVERSACIÓN DEL MENSAJE
+// ========================================================
+
+function getMessageConversationId(
+  message
+) {
+
+  if (!message) {
+    return null;
+  }
+
+
+  return (
+
+    message.conversation_id ||
+    message.conversationId ||
+    (
+      message.conversation &&
+      (
+        message.conversation.id ||
+        message.conversation.conversation_id
+      )
+    ) ||
+    null
+
+  );
+
+}
+
+
+// ========================================================
+// ID DEL REMITENTE
+// ========================================================
+
+function getMessageSenderId(
+  message
+) {
+
+  if (!message) {
+    return null;
+  }
+
+
+  return (
+
+    message.sender_id ||
+    message.senderId ||
+    message.user_id ||
+    message.userId ||
+    (
+      message.sender &&
+      getUserId(
+        message.sender
+      )
+    ) ||
+    (
+      message.user &&
+      getUserId(
+        message.user
+      )
+    ) ||
+    null
+
+  );
+
+}
+
+
+// ========================================================
+// ¿ES MENSAJE MÍO?
+// ========================================================
+
+function isMyMessage(
+  message
+) {
+
+  if (!message) {
+    return false;
+  }
+
+
+  if (
+    message.mine === true ||
+    message.isMine === true ||
+    message.is_mine === true
+  ) {
+
+    return true;
+
+  }
+
+
+  const senderId =
+    getMessageSenderId(
+      message
+    );
+
+
+  const myId =
+    getUserId(
+      me
+    );
+
+
+  if (
+    senderId != null &&
+    myId != null
+  ) {
+
+    return (
+      String(senderId) ===
+      String(myId)
+    );
+
+  }
+
+
+  const senderName =
+    getUsername(
+      message.sender ||
+      message.user ||
+      {
+        username:
+          message.sender_username ||
+          message.senderUsername
+      }
+    );
+
+
+  const myName =
+    getUsername(
+      me
+    );
+
+
+  if (
+    senderName &&
+    myName
+  ) {
+
+    return (
+      senderName
+        .toLowerCase() ===
+      myName
+        .toLowerCase()
+    );
+
+  }
+
+
+  return false;
+
+}
+
+
+// ========================================================
+// TEXTO DEL MENSAJE
+// ========================================================
+
+function getMessageText(
+  message
+) {
+
+  if (!message) {
+    return '';
+  }
+
+
+  if (
+    typeof message ===
+    'string'
+  ) {
+
+    return message;
+
+  }
+
+
+  return (
+
+    message.text ||
+    message.content ||
+    message.body ||
+    message.message ||
+    ''
+
+  );
+
+}
+
+
+// ========================================================
+// HORA DEL MENSAJE
+// ========================================================
+
+function getMessageTime(
+  message
+) {
+
+  const value =
+    message &&
+    (
+      message.created_at ||
+      message.createdAt ||
+      message.timestamp ||
+      message.sent_at ||
+      message.sentAt
+    );
+
+
+  if (!value) {
+    return '';
+  }
+
+
+  const date =
+    new Date(
+      value
+    );
+
+
+  if (
+    Number.isNaN(
+      date.getTime()
+    )
+  ) {
+
+    return '';
+
+  }
+
+
+  return date.toLocaleTimeString(
+    [],
+    {
+      hour:
+        '2-digit',
+
+      minute:
+        '2-digit'
+    }
+  );
+
+}
+
+
+// ========================================================
+// EVITAR MENSAJES DUPLICADOS
+// ========================================================
+
+function messageAlreadyRendered(
+  message
+) {
+
+  const id =
+    message &&
+    (
+      message.id ||
+      message.message_id ||
+      message.messageId
+    );
+
+
+  if (!id) {
+    return false;
+  }
+
+
+  return Boolean(
+    messages.querySelector(
+      '[data-message-id="' +
+      CSS.escape(
+        String(id)
+      ) +
+      '"]'
+    )
+  );
+
+}
+
+
+// ========================================================
+// RENDERIZAR MENSAJE
+// ========================================================
+
+function renderMessage(
+  message
+) {
+
+  if (
+    !message ||
+    messageAlreadyRendered(
+      message
+    )
+  ) {
+
+    return;
+
+  }
+
+
+  const mine =
+    isMyMessage(
+      message
+    );
+
+
+  const row =
+    document.createElement(
+      'div'
+    );
+
+
+  row.className =
+    'messageRow' +
+    (
+      mine
+        ? ' me'
+        : ''
+    );
+
+
+  const id =
+    message.id ||
+    message.message_id ||
+    message.messageId;
+
+
+  if (id != null) {
+
+    row.dataset.messageId =
+      String(id);
+
+  }
+
+
+  const senderName =
+    getUsername(
+      message.sender ||
+      message.user ||
+      {
+        username:
+          message.sender_username ||
+          message.senderUsername
+      }
+    );
+
+
+  const text =
+    getMessageText(
+      message
+    );
+
+
+  const time =
+    getMessageTime(
+      message
+    );
+
+
+  const status =
+    message.read_at ||
+    message.readAt
+
+      ? '✓✓'
+
+      : message.delivered_at ||
+        message.deliveredAt
+
+        ? '✓✓'
+
+        : '✓';
+
+
+  row.innerHTML = `
+
+    <div class="bubble">
+
+      ${
+        !mine &&
+        senderName
+
+          ? `
+
+            <div class="messageSender">
+
+              ${escapeHTML(
+                senderName
+              )}
+
+            </div>
+
+          `
+
+          : ''
+      }
+
+      <div class="messageText">
+
+        ${escapeHTML(
+          text
+        )}
+
+      </div>
+
+      <div class="messageMeta">
+
+        <span>
+
+          ${escapeHTML(
+            time
+          )}
+
+        </span>
+
+        ${
+          mine
+
+            ? `
+
+              <span class="ticks">
+
+                ${status}
+
+              </span>
+
+            `
+
+            : ''
+        }
+
+      </div>
+
+    </div>
+
+  `;
+
+
+  messages.appendChild(
+    row
+  );
+
+
+  messages.scrollTop =
+    messages.scrollHeight;
+
+}
 
 
 // ========================================================
@@ -2909,13 +3929,7 @@ async function loadMessages() {
 
 
   if (!conversationId) {
-
-    showToast(
-      'Conversación no válida'
-    );
-
     return;
-
   }
 
 
@@ -2955,17 +3969,12 @@ async function loadMessages() {
 
 
     list.forEach(
-      message => {
-
-        renderMessage(
-          message
-        );
-
-      }
+      renderMessage
     );
 
 
-    scrollMessagesToBottom();
+    messages.scrollTop =
+      messages.scrollHeight;
 
 
   } catch (error) {
@@ -2987,812 +3996,6 @@ async function loadMessages() {
 
 
 // ========================================================
-// ID DEL REMITENTE
-// ========================================================
-
-function getMessageSenderId(
-  message
-) {
-
-  if (!message) {
-    return null;
-  }
-
-
-  return (
-
-    message.sender_user_id ||
-    message.senderUserId ||
-    message.sender_id ||
-    message.senderId ||
-    message.user_id ||
-    message.userId ||
-
-    (
-      message.sender &&
-      getUserId(
-        message.sender
-      )
-    ) ||
-
-    (
-      message.user &&
-      getUserId(
-        message.user
-      )
-    ) ||
-
-    null
-
-  );
-
-}
-
-
-// ========================================================
-// ID DE CONVERSACIÓN DEL MENSAJE
-// ========================================================
-
-function getMessageConversationId(
-  message
-) {
-
-  if (!message) {
-    return null;
-  }
-
-
-  return (
-
-    message.conversation_id ||
-    message.conversationId ||
-
-    (
-      message.conversation &&
-      (
-        message.conversation.id ||
-        message.conversation.conversation_id ||
-        message.conversation.conversationId
-      )
-    ) ||
-
-    null
-
-  );
-
-}
-
-
-// ========================================================
-// TEXTO DEL MENSAJE
-// ========================================================
-
-function getMessageText(
-  message
-) {
-
-  if (!message) {
-    return '';
-  }
-
-
-  return (
-
-    message.content ||
-    message.text ||
-    message.message ||
-    message.body ||
-    ''
-
-  );
-
-}
-
-
-// ========================================================
-// SABER SI EL MENSAJE ES MÍO
-// ========================================================
-
-function isMyMessage(
-  message
-) {
-
-  if (!message) {
-    return false;
-  }
-
-
-  if (
-    message.mine === true ||
-    message.is_mine === true ||
-    message.isMine === true
-  ) {
-
-    return true;
-
-  }
-
-
-  const senderId =
-    getMessageSenderId(
-      message
-    );
-
-
-  const myId =
-    getUserId(
-      me
-    );
-
-
-  if (
-    senderId != null &&
-    myId != null
-  ) {
-
-    return (
-      String(senderId) ===
-      String(myId)
-    );
-
-  }
-
-
-  const senderName =
-    getUsername(
-      message.sender ||
-      message.user ||
-      message
-    );
-
-
-  const myName =
-    getUsername(
-      me
-    );
-
-
-  if (
-    senderName &&
-    myName
-  ) {
-
-    return (
-      senderName.toLowerCase() ===
-      myName.toLowerCase()
-    );
-
-  }
-
-
-  return false;
-
-}
-
-
-// ========================================================
-// HORA DEL MENSAJE
-// ========================================================
-
-function getMessageTime(
-  message
-) {
-
-  const raw =
-    message.created_at ||
-    message.createdAt ||
-    message.timestamp ||
-    message.sent_at ||
-    message.sentAt ||
-    null;
-
-
-  if (!raw) {
-    return '';
-  }
-
-
-  const date =
-    new Date(
-      raw
-    );
-
-
-  if (
-    Number.isNaN(
-      date.getTime()
-    )
-  ) {
-
-    return '';
-
-  }
-
-
-  return date.toLocaleTimeString(
-    [],
-    {
-
-      hour:
-        '2-digit',
-
-      minute:
-        '2-digit'
-
-    }
-  );
-
-}
-
-
-// ========================================================
-// RENDERIZAR MENSAJE
-// ========================================================
-
-function renderMessage(
-  message
-) {
-
-  if (!message) {
-    return;
-  }
-
-
-  const text =
-    getMessageText(
-      message
-    );
-
-
-  if (!text) {
-    return;
-  }
-
-
-  const messageId =
-    message.id ||
-    message.message_id ||
-    message.messageId ||
-    null;
-
-
-  /*
-    Evitamos duplicar el mismo mensaje cuando llega
-    primero por HTTP y después por Socket.IO.
-  */
-
-  if (messageId != null) {
-
-    const existing =
-      messages.querySelector(
-        '[data-message-id="' +
-        CSS.escape(
-          String(
-            messageId
-          )
-        ) +
-        '"]'
-      );
-
-
-    if (existing) {
-      return;
-    }
-
-  }
-
-
-  const mine =
-    isMyMessage(
-      message
-    );
-
-
-  const row =
-    document.createElement(
-      'div'
-    );
-
-
-  row.className =
-    mine
-      ? 'messageRow me'
-      : 'messageRow';
-
-
-  if (messageId != null) {
-
-    row.dataset.messageId =
-      String(
-        messageId
-      );
-
-  }
-
-
-  const bubble =
-    document.createElement(
-      'div'
-    );
-
-
-  bubble.className =
-    'bubble';
-
-
-  if (!mine) {
-
-    const senderName =
-      getUsername(
-        message.sender ||
-        message.user ||
-        message
-      ) ||
-      getConversationName(
-        currentConversation
-      );
-
-
-    if (senderName) {
-
-      const sender =
-        document.createElement(
-          'div'
-        );
-
-
-      sender.className =
-        'messageSender';
-
-
-      sender.textContent =
-        senderName;
-
-
-      bubble.appendChild(
-        sender
-      );
-
-    }
-
-  }
-
-
-  const textElement =
-    document.createElement(
-      'div'
-    );
-
-
-  textElement.className =
-    'messageText';
-
-
-  textElement.textContent =
-    text;
-
-
-  bubble.appendChild(
-    textElement
-  );
-
-
-  const meta =
-    document.createElement(
-      'div'
-    );
-
-
-  meta.className =
-    'messageMeta';
-
-
-  const time =
-    document.createElement(
-      'span'
-    );
-
-
-  time.textContent =
-    getMessageTime(
-      message
-    );
-
-
-  meta.appendChild(
-    time
-  );
-
-
-  if (mine) {
-
-    const ticks =
-      document.createElement(
-        'span'
-      );
-
-
-    ticks.className =
-      'ticks';
-
-
-    ticks.textContent =
-      message.read_at ||
-      message.readAt
-        ? '✓✓'
-        : '✓';
-
-
-    meta.appendChild(
-      ticks
-    );
-
-  }
-
-
-  bubble.appendChild(
-    meta
-  );
-
-
-  row.appendChild(
-    bubble
-  );
-
-
-  messages.appendChild(
-    row
-  );
-
-
-  scrollMessagesToBottom();
-
-}
-
-
-// ========================================================
-// BAJAR AUTOMÁTICAMENTE AL ÚLTIMO MENSAJE
-// ========================================================
-
-function scrollMessagesToBottom() {
-
-  requestAnimationFrame(
-    () => {
-
-      messages.scrollTop =
-        messages.scrollHeight;
-
-    }
-  );
-
-}
-
-
-// ========================================================
-// MENSAJES EN TIEMPO REAL
-// ========================================================
-
-function socketMessage(
-  rawMessage
-) {
-
-  if (!rawMessage) {
-    return;
-  }
-
-
-  const message =
-    rawMessage.message ||
-    rawMessage.data ||
-    rawMessage;
-
-
-  /*
-    Algunos eventos pueden traer conversation_id
-    fuera del objeto message.
-
-    Lo copiamos al mensaje para normalizarlo.
-  */
-
-  if (
-    message &&
-    typeof message ===
-      'object' &&
-    !getMessageConversationId(
-      message
-    )
-  ) {
-
-    const envelopeConversationId =
-      rawMessage.conversation_id ||
-      rawMessage.conversationId ||
-
-      (
-        rawMessage.conversation &&
-        (
-          rawMessage.conversation.id ||
-          rawMessage.conversation.conversation_id ||
-          rawMessage.conversation.conversationId
-        )
-      ) ||
-
-      null;
-
-
-    if (
-      envelopeConversationId != null
-    ) {
-
-      message.conversation_id =
-        envelopeConversationId;
-
-
-      message.conversationId =
-        envelopeConversationId;
-
-    }
-
-  }
-
-
-  if (
-    !message ||
-    typeof message !==
-      'object'
-  ) {
-
-    return;
-
-  }
-
-
-  const messageConversationId =
-    getMessageConversationId(
-      message
-    );
-
-
-  if (!messageConversationId) {
-
-    console.warn(
-      'VOBIXCHAT: mensaje realtime sin conversation_id',
-      message
-    );
-
-
-    return;
-
-  }
-
-
-  const currentConversationId =
-    currentConversation
-
-      ? (
-
-          currentConversation.id ||
-          currentConversation.conversation_id ||
-          currentConversation.conversationId
-
-        )
-
-      : null;
-
-
-  console.log(
-    '[VOBIXCHAT REALTIME]',
-    {
-
-      messageId:
-        message.id,
-
-      messageConversationId:
-        String(
-          messageConversationId
-        ),
-
-      currentConversationId:
-        currentConversationId != null
-          ? String(
-              currentConversationId
-            )
-          : null,
-
-      sameRoom:
-        (
-          currentConversationId != null &&
-          String(
-            messageConversationId
-          ) ===
-          String(
-            currentConversationId
-          )
-        )
-
-    }
-  );
-
-
-  /*
-    Si tenemos abierta la conversación exacta,
-    mostramos el mensaje inmediatamente.
-  */
-
-  if (
-    currentConversationId != null &&
-    String(
-      messageConversationId
-    ) ===
-    String(
-      currentConversationId
-    )
-  ) {
-
-    renderMessage(
-      message
-    );
-
-
-    return;
-
-  }
-
-
-  /*
-    Si el mensaje pertenece a otra conversación,
-    actualizamos la lista lateral sin sacar al usuario
-    de la conversación que está viendo.
-  */
-
-  updateConversationFromMessage(
-    message
-  );
-
-}
-
-
-// ========================================================
-// ACTUALIZAR CONVERSACIÓN DESDE MENSAJE REALTIME
-// ========================================================
-
-function updateConversationFromMessage(
-  message
-) {
-
-  const conversationId =
-    getMessageConversationId(
-      message
-    );
-
-
-  if (!conversationId) {
-    return;
-  }
-
-
-  const index =
-    conversations.findIndex(
-      conversation => {
-
-        const id =
-          conversation.id ||
-          conversation.conversation_id ||
-          conversation.conversationId;
-
-
-        return (
-          String(id) ===
-          String(
-            conversationId
-          )
-        );
-
-      }
-    );
-
-
-  if (index === -1) {
-
-    /*
-      Puede ser la primera conversación que nos
-      llega desde otro usuario.
-
-      La pedimos al backend para que aparezca
-      correctamente en la lista.
-    */
-
-    loadConversations();
-
-
-    return;
-
-  }
-
-
-  const conversation =
-    conversations[
-      index
-    ];
-
-
-  const text =
-    getMessageText(
-      message
-    );
-
-
-  conversation.last_message =
-    text;
-
-
-  conversation.lastMessage =
-    text;
-
-
-  /*
-    La conversación con actividad nueva
-    sube al primer lugar.
-  */
-
-  if (index > 0) {
-
-    conversations.splice(
-      index,
-      1
-    );
-
-
-    conversations.unshift(
-      conversation
-    );
-
-  }
-
-
-  renderConversations();
-
-}
-
-
-// ========================================================
-// EVENTOS DE MENSAJES REALTIME
-//
-// routes/chat.js emite chat:message y message:new.
-// Conservamos además compatibilidad con otros nombres
-// que pueda utilizar el servidor.
-// ========================================================
-
-socket.on(
-  'chat:message',
-  socketMessage
-);
-
-
-socket.on(
-  'message:new',
-  socketMessage
-);
-
-
-socket.on(
-  'conversation-message',
-  socketMessage
-);
-
-
-socket.on(
-  'chat-message',
-  socketMessage
-);
-
-
-socket.on(
-  'new-message',
-  socketMessage
-);
-
-
-// ========================================================
 // ENVIAR MENSAJE
 // ========================================================
 
@@ -3804,17 +4007,10 @@ async function sendMessage() {
       .trim();
 
 
-  if (!text) {
-    return;
-  }
-
-
-  if (!currentConversation) {
-
-    showToast(
-      'Selecciona una conversación'
-    );
-
+  if (
+    !text ||
+    !currentConversation
+  ) {
 
     return;
 
@@ -3833,30 +4029,25 @@ async function sendMessage() {
       'Conversación no válida'
     );
 
-
     return;
 
   }
-
-
-  const outgoingText =
-    text;
 
 
   messageInput.value =
     '';
 
 
-  sendButton.disabled =
-    true;
-
-
   try {
 
-    /*
-      requestJSON() añade automáticamente:
-      Authorization: Bearer VOBIX_TOKEN
-    */
+    socket.emit(
+      'conversation-typing',
+      {
+        conversationId,
+        typing: false
+      }
+    );
+
 
     const data =
       await requestJSON(
@@ -3884,14 +4075,11 @@ async function sendMessage() {
           body:
             JSON.stringify({
 
+              text,
               content:
-                outgoingText,
-
-              text:
-                outgoingText,
-
+                text,
               message:
-                outgoingText
+                text
 
             })
 
@@ -3903,12 +4091,7 @@ async function sendMessage() {
     const createdMessage =
       data.message ||
       data.data ||
-
-      (
-        data.id
-          ? data
-          : null
-      );
+      data;
 
 
     if (
@@ -3926,103 +4109,48 @@ async function sendMessage() {
         createdMessage.conversation_id =
           conversationId;
 
-
-        createdMessage.conversationId =
-          conversationId;
-
       }
 
-
-      /*
-        Si el backend no incluye explícitamente
-        el remitente, marcamos el mensaje como mío.
-      */
 
       if (
         !getMessageSenderId(
           createdMessage
-        ) &&
-        !createdMessage.sender &&
-        !createdMessage.user
+        )
       ) {
 
-        createdMessage.mine =
-          true;
-
-
-        createdMessage.sender =
-          me || {};
+        createdMessage.sender_id =
+          getUserId(
+            me
+          );
 
       }
+
+
+      createdMessage.mine =
+        true;
 
 
       renderMessage(
         createdMessage
       );
 
-    }
 
+      socket.emit(
+        'conversation-message',
+        {
 
-    const conversationIndex =
-      conversations.findIndex(
-        conversation => {
+          conversationId,
 
-          const id =
-            conversation.id ||
-            conversation.conversation_id ||
-            conversation.conversationId;
-
-
-          return (
-            String(id) ===
-            String(
-              conversationId
-            )
-          );
+          message:
+            createdMessage
 
         }
       );
 
-
-    if (
-      conversationIndex !== -1
-    ) {
-
-      conversations[
-        conversationIndex
-      ].last_message =
-        outgoingText;
-
-
-      conversations[
-        conversationIndex
-      ].lastMessage =
-        outgoingText;
-
-
-      if (
-        conversationIndex > 0
-      ) {
-
-        const [
-          conversation
-        ] =
-          conversations.splice(
-            conversationIndex,
-            1
-          );
-
-
-        conversations.unshift(
-          conversation
-        );
-
-      }
-
-
-      renderConversations();
-
     }
+
+
+    await loadConversations();
 
 
   } catch (error) {
@@ -4033,36 +4161,14 @@ async function sendMessage() {
     );
 
 
-    /*
-      Si falla el envío, devolvemos el texto
-      al campo para que no se pierda.
-    */
-
-    if (
-      !messageInput
-        .value
-        .trim()
-    ) {
-
-      messageInput.value =
-        outgoingText;
-
-    }
+    messageInput.value =
+      text;
 
 
     showToast(
       error.message ||
       'No se pudo enviar el mensaje'
     );
-
-
-  } finally {
-
-    sendButton.disabled =
-      false;
-
-
-    messageInput.focus();
 
   }
 
@@ -4095,7 +4201,6 @@ messageInput.addEventListener(
 
       event.preventDefault();
 
-
       sendMessage();
 
     }
@@ -4105,80 +4210,11 @@ messageInput.addEventListener(
 
 
 // ========================================================
-// BUSCADOR
+// ESTÁ ESCRIBIENDO
 // ========================================================
 
-searchButton.addEventListener(
-  'click',
-  searchUsers
-);
-
-
-searchInput.addEventListener(
-  'keydown',
-  event => {
-
-    if (
-      event.key ===
-      'Enter'
-    ) {
-
-      event.preventDefault();
-
-
-      searchUsers();
-
-    }
-
-  }
-);
-
-
-searchInput.addEventListener(
-  'input',
-  () => {
-
-    if (
-      !searchInput
-        .value
-        .trim()
-    ) {
-
-      searchResults.innerHTML =
-        '';
-
-    }
-
-  }
-);
-
-
-// ========================================================
-// VOLVER EN MÓVIL
-// ========================================================
-
-backButton.addEventListener(
-  'click',
-  () => {
-
-    app.classList.remove(
-      'roomOpen'
-    );
-
-  }
-);
-
-
-// ========================================================
-// INDICADOR "ESTÁ ESCRIBIENDO"
-//
-// IMPORTANTE:
-// Aquí corregimos el nombre del evento para coincidir
-// con server.js: conversation-typing.
-// ========================================================
-
-let lastTypingAt =
-  0;
+let localTypingTimer =
+  null;
 
 
 messageInput.addEventListener(
@@ -4190,66 +4226,125 @@ messageInput.addEventListener(
     }
 
 
-    if (!socket.connected) {
-      return;
-    }
-
-
-    const now =
-      Date.now();
-
-
-    if (
-      now -
-      lastTypingAt <
-      700
-    ) {
-
-      return;
-
-    }
-
-
-    lastTypingAt =
-      now;
-
-
     const conversationId =
       currentConversation.id ||
       currentConversation.conversation_id ||
       currentConversation.conversationId;
 
 
+    if (!conversationId) {
+      return;
+    }
+
+
     socket.emit(
-
       'conversation-typing',
-
       {
 
-        conversationId:
-          conversationId,
+        conversationId,
 
-        conversation_id:
-          conversationId,
-
-        username:
-          getUsername(
-            me
-          ),
-
-        typing:
-          true
+        typing: true
 
       }
-
     );
+
+
+    clearTimeout(
+      localTypingTimer
+    );
+
+
+    localTypingTimer =
+      setTimeout(
+        () => {
+
+          socket.emit(
+            'conversation-typing',
+            {
+
+              conversationId,
+
+              typing: false
+
+            }
+          );
+
+        },
+        900
+      );
 
   }
 );
 
 
 // ========================================================
-// RECIBIR "ESTÁ ESCRIBIENDO"
+// RECIBIR MENSAJES EN TIEMPO REAL
+// ========================================================
+
+socket.on(
+  'conversation-message',
+  data => {
+
+    const incomingMessage =
+      data &&
+      (
+        data.message ||
+        data.data ||
+        data
+      );
+
+
+    if (
+      !incomingMessage ||
+      !currentConversation
+    ) {
+
+      loadConversations();
+
+      return;
+
+    }
+
+
+    const currentId =
+      currentConversation.id ||
+      currentConversation.conversation_id ||
+      currentConversation.conversationId;
+
+
+    const incomingConversationId =
+      getMessageConversationId(
+        incomingMessage
+      ) ||
+      data.conversationId ||
+      data.conversation_id;
+
+
+    if (
+      incomingConversationId != null &&
+      String(
+        incomingConversationId
+      ) ===
+      String(
+        currentId
+      )
+    ) {
+
+      renderMessage(
+        incomingMessage
+      );
+
+    }
+
+
+    loadConversations();
+
+  }
+);
+
+
+// ========================================================
+// RECIBIR ESTADO ESCRIBIENDO
 // ========================================================
 
 socket.on(
@@ -4266,26 +4361,21 @@ socket.on(
     }
 
 
-    const incomingConversationId =
-      data.conversation_id ||
-      data.conversationId ||
-      null;
-
-
-    const currentConversationId =
+    const currentId =
       currentConversation.id ||
       currentConversation.conversation_id ||
       currentConversation.conversationId;
 
 
+    const incomingId =
+      data.conversationId ||
+      data.conversation_id;
+
+
     if (
-      incomingConversationId != null &&
-      String(
-        incomingConversationId
-      ) !==
-      String(
-        currentConversationId
-      )
+      incomingId == null ||
+      String(incomingId) !==
+      String(currentId)
     ) {
 
       return;
@@ -4293,24 +4383,13 @@ socket.on(
     }
 
 
-    const username =
-      data.username ||
-      data.user_name ||
-      getUsername(
-        data.user
-      ) ||
-      '';
-
-
-    /*
-      No mostramos nuestro propio evento.
-    */
-
     if (
-      username &&
-      getUsername(me) &&
-      username.toLowerCase() ===
-      getUsername(me).toLowerCase()
+      data.userId != null &&
+      getUserId(me) != null &&
+      String(data.userId) ===
+      String(
+        getUserId(me)
+      )
     ) {
 
       return;
@@ -4325,16 +4404,22 @@ socket.on(
       typing.textContent =
         '';
 
-
       return;
 
     }
 
 
+    const username =
+      getUsername(
+        data
+      );
+
+
     typing.textContent =
       username
-          ? username + ' está escribiendo...'
-      : 'Escribiendo...';
+        ? username +
+          ' está escribiendo...'
+        : 'Escribiendo...';
 
 
     clearTimeout(
@@ -4600,13 +4685,6 @@ cameraButton.addEventListener(
 
 // ========================================================
 // SUBIR ARCHIVO
-//
-// CORRECCIÓN:
-// Esta petición también debe llevar:
-// Authorization: Bearer VOBIX_TOKEN
-//
-// FormData configura automáticamente su Content-Type,
-// por eso NO ponemos manualmente multipart/form-data.
 // ========================================================
 
 async function uploadFile(
@@ -4625,7 +4703,6 @@ async function uploadFile(
       'Selecciona una conversación'
     );
 
-
     return;
 
   }
@@ -4642,7 +4719,6 @@ async function uploadFile(
     showToast(
       'Conversación no válida'
     );
-
 
     return;
 
@@ -4684,10 +4760,6 @@ async function uploadFile(
     );
 
 
-    const headers =
-      buildAuthHeaders();
-
-
     const response =
       await fetch(
 
@@ -4705,7 +4777,7 @@ async function uploadFile(
             'POST',
 
           headers:
-            headers,
+            buildAuthHeaders(),
 
           body:
             form
@@ -4724,21 +4796,6 @@ async function uploadFile(
         await response.json();
 
     } catch (error) {}
-
-
-    if (
-      response.status ===
-      401
-    ) {
-
-      throw new Error(
-        data.message ||
-        data.msg ||
-        data.error ||
-        'La sesión no es válida'
-      );
-
-    }
 
 
     if (!response.ok) {
@@ -4780,33 +4837,28 @@ async function uploadFile(
         createdMessage.conversation_id =
           conversationId;
 
-
-        createdMessage.conversationId =
-          conversationId;
-
       }
 
 
-      if (
-        !getMessageSenderId(
-          createdMessage
-        ) &&
-        !createdMessage.sender &&
-        !createdMessage.user
-      ) {
-
-        createdMessage.mine =
-          true;
-
-
-        createdMessage.sender =
-          me || {};
-
-      }
+      createdMessage.mine =
+        true;
 
 
       renderMessage(
         createdMessage
+      );
+
+
+      socket.emit(
+        'conversation-message',
+        {
+
+          conversationId,
+
+          message:
+            createdMessage
+
+        }
       );
 
     }
@@ -4926,7 +4978,7 @@ cameraInput.addEventListener(
 
 
 // ========================================================
-// NOTA DE VOZ
+// NOTAS DE VOZ
 // ========================================================
 
 let mediaRecorder =
@@ -4943,7 +4995,7 @@ let recordingStartedAt =
 
 
 // ========================================================
-// INICIAR GRABACIÓN
+// INICIAR NOTA DE VOZ
 // ========================================================
 
 async function startVoiceRecording() {
@@ -4957,7 +5009,6 @@ async function startVoiceRecording() {
       'Tu navegador no permite grabar audio'
     );
 
-
     return;
 
   }
@@ -4969,7 +5020,6 @@ async function startVoiceRecording() {
       'Selecciona una conversación'
     );
 
-
     return;
 
   }
@@ -4980,7 +5030,9 @@ async function startVoiceRecording() {
     recordingStream =
       await navigator.mediaDevices
         .getUserMedia({
+
           audio: true
+
         });
 
 
@@ -4988,9 +5040,28 @@ async function startVoiceRecording() {
       [];
 
 
+    let options = {};
+
+
+    if (
+      typeof MediaRecorder !==
+        'undefined' &&
+      MediaRecorder.isTypeSupported &&
+      MediaRecorder.isTypeSupported(
+        'audio/webm;codecs=opus'
+      )
+    ) {
+
+      options.mimeType =
+        'audio/webm;codecs=opus';
+
+    }
+
+
     mediaRecorder =
       new MediaRecorder(
-        recordingStream
+        recordingStream,
+        options
       );
 
 
@@ -5075,7 +5146,6 @@ async function startVoiceRecording() {
             'La nota de voz está vacía'
           );
 
-
           return;
 
         }
@@ -5124,7 +5194,9 @@ async function startVoiceRecording() {
     );
 
 
-    mediaRecorder.start();
+    mediaRecorder.start(
+      250
+    );
 
 
     recordingStartedAt =
@@ -5170,13 +5242,30 @@ async function startVoiceRecording() {
     recordingStream =
       null;
 
-
     mediaRecorder =
       null;
 
-
     audioButton.textContent =
       '🎤';
+
+
+    if (
+      error &&
+      (
+        error.name ===
+          'NotAllowedError' ||
+        error.name ===
+          'PermissionDeniedError'
+      )
+    ) {
+
+      showToast(
+        'Debes permitir el acceso al micrófono'
+      );
+
+      return;
+
+    }
 
 
     showToast(
@@ -5189,7 +5278,7 @@ async function startVoiceRecording() {
 
 
 // ========================================================
-// DETENER GRABACIÓN
+// DETENER NOTA DE VOZ
 // ========================================================
 
 function stopVoiceRecording() {
@@ -5219,7 +5308,6 @@ function stopVoiceRecording() {
       300 - elapsed
     );
 
-
     return;
 
   }
@@ -5246,7 +5334,6 @@ audioButton.addEventListener(
 
       stopVoiceRecording();
 
-
       return;
 
     }
@@ -5259,16 +5346,956 @@ audioButton.addEventListener(
 
 
 // ========================================================
-// LLAMADAS
-//
-// Conservamos la preparación existente.
-// La comunicación audiovisual WebRTC completa requiere
-// también la señalización correspondiente del backend.
+// NOMBRE DEL CONTACTO DE LA LLAMADA
 // ========================================================
 
-function emitCall(
-  callType
+function getCurrentCallContactName() {
+
+  if (
+    currentCall &&
+    currentCall.contactName
+  ) {
+
+    return currentCall.contactName;
+
+  }
+
+
+  if (currentConversation) {
+
+    return (
+      getConversationName(
+        currentConversation
+      ) ||
+      'Contacto'
+    );
+
+  }
+
+
+  return 'Contacto';
+
+}
+
+
+// ========================================================
+// ID DE CONVERSACIÓN ACTUAL
+// ========================================================
+
+function getCurrentConversationId() {
+
+  if (!currentConversation) {
+    return '';
+  }
+
+
+  return String(
+
+    currentConversation.id ||
+    currentConversation.conversation_id ||
+    currentConversation.conversationId ||
+    ''
+
+  ).trim();
+
+}
+
+
+// ========================================================
+// DETENER STREAM LOCAL DE LLAMADA
+// ========================================================
+
+function stopLocalCallStream() {
+
+  if (!localCallStream) {
+    return;
+  }
+
+
+  localCallStream
+    .getTracks()
+    .forEach(
+      track => {
+
+        try {
+
+          track.stop();
+
+        } catch (error) {}
+
+      }
+    );
+
+
+  localCallStream =
+    null;
+
+
+  localVideo.srcObject =
+    null;
+
+}
+
+
+// ========================================================
+// DETENER STREAM REMOTO
+// ========================================================
+
+function stopRemoteCallStream() {
+
+  remoteCallStream =
+    null;
+
+
+  remoteVideo.srcObject =
+    null;
+
+  remoteAudio.srcObject =
+    null;
+
+}
+
+
+// ========================================================
+// CERRAR PEER CONNECTION
+// ========================================================
+
+function closePeerConnection() {
+
+  if (!peerConnection) {
+    return;
+  }
+
+
+  try {
+
+    peerConnection.onicecandidate =
+      null;
+
+    peerConnection.ontrack =
+      null;
+
+    peerConnection.onconnectionstatechange =
+      null;
+
+    peerConnection.oniceconnectionstatechange =
+      null;
+
+    peerConnection.close();
+
+  } catch (error) {}
+
+
+  peerConnection =
+    null;
+
+}
+
+
+// ========================================================
+// LIMPIAR TEMPORIZADOR DE LLAMADA
+// ========================================================
+
+function stopCallTimer() {
+
+  if (callTimer) {
+
+    clearInterval(
+      callTimer
+    );
+
+  }
+
+
+  callTimer =
+    null;
+
+  callStartedAt =
+    null;
+
+}
+
+
+// ========================================================
+// FORMATEAR DURACIÓN DE LLAMADA
+// ========================================================
+
+function formatCallDuration(
+  milliseconds
 ) {
+
+  const totalSeconds =
+    Math.max(
+      0,
+      Math.floor(
+        milliseconds /
+        1000
+      )
+    );
+
+
+  const minutes =
+    Math.floor(
+      totalSeconds /
+      60
+    );
+
+
+  const seconds =
+    totalSeconds %
+    60;
+
+
+  return (
+    String(minutes)
+      .padStart(
+        2,
+        '0'
+      ) +
+    ':' +
+    String(seconds)
+      .padStart(
+        2,
+        '0'
+      )
+  );
+
+}
+
+
+// ========================================================
+// INICIAR TEMPORIZADOR DE LLAMADA
+// ========================================================
+
+function startCallTimer() {
+
+  stopCallTimer();
+
+
+  callStartedAt =
+    Date.now();
+
+
+  const update =
+    () => {
+
+      if (!callStartedAt) {
+        return;
+      }
+
+
+      const duration =
+        formatCallDuration(
+          Date.now() -
+          callStartedAt
+        );
+
+
+      callTopStatus.textContent =
+        duration;
+
+      audioCallStatus.textContent =
+        duration;
+
+    };
+
+
+  update();
+
+
+  callTimer =
+    setInterval(
+      update,
+      1000
+    );
+
+}
+// ========================================================
+// MOSTRAR PANTALLA DE LLAMADA
+// ========================================================
+
+function showCallScreen(
+  type,
+  contactName
+) {
+
+  const name =
+    contactName ||
+    'Contacto';
+
+
+  callScreen.classList.add(
+    'open'
+  );
+
+
+  callTopName.textContent =
+    name;
+
+  audioCallName.textContent =
+    name;
+
+
+  const initial =
+    name
+      .charAt(0)
+      .toUpperCase() ||
+    'V';
+
+
+  audioCallAvatar.textContent =
+    initial;
+
+
+  callTopStatus.textContent =
+    'Conectando...';
+
+  audioCallStatus.textContent =
+    'Conectando...';
+
+
+  if (
+    type ===
+    'video'
+  ) {
+
+    remoteVideo.style.display =
+      'block';
+
+    localVideo.style.display =
+      'block';
+
+    audioCallIdentity.style.display =
+      'none';
+
+    callCameraButton.style.display =
+      'grid';
+
+  } else {
+
+    remoteVideo.style.display =
+      'none';
+
+    localVideo.style.display =
+      'none';
+
+    audioCallIdentity.style.display =
+      'grid';
+
+    callCameraButton.style.display =
+      'none';
+
+  }
+
+}
+
+
+// ========================================================
+// OCULTAR PANTALLA DE LLAMADA
+// ========================================================
+
+function hideCallScreen() {
+
+  callScreen.classList.remove(
+    'open'
+  );
+
+
+  incomingCall.classList.remove(
+    'open'
+  );
+
+}
+
+
+// ========================================================
+// RESTABLECER BOTONES DE LLAMADA
+// ========================================================
+
+function resetCallButtons() {
+
+  microphoneMuted =
+    false;
+
+  cameraDisabled =
+    false;
+
+
+  callMuteButton.textContent =
+    '🎤';
+
+  callMuteButton.classList.remove(
+    'active'
+  );
+
+
+  callCameraButton.textContent =
+    '📹';
+
+  callCameraButton.classList.remove(
+    'active'
+  );
+
+}
+
+
+// ========================================================
+// LIMPIAR LLAMADA LOCAL
+// ========================================================
+
+function cleanupCall() {
+
+  stopCallTimer();
+
+  stopLocalCallStream();
+
+  stopRemoteCallStream();
+
+  closePeerConnection();
+
+
+  pendingIceCandidates =
+    [];
+
+
+  currentCall =
+    null;
+
+  pendingIncomingCall =
+    null;
+
+
+  resetCallButtons();
+
+  hideCallScreen();
+
+}
+
+
+// ========================================================
+// OBTENER MICRÓFONO / CÁMARA PARA LLAMADA
+// ========================================================
+
+async function getCallMedia(
+  type
+) {
+
+  if (
+    !navigator.mediaDevices ||
+    !navigator.mediaDevices.getUserMedia
+  ) {
+
+    throw new Error(
+      'Este navegador no permite llamadas'
+    );
+
+  }
+
+
+  const constraints = {
+
+    audio: {
+
+      echoCancellation:
+        true,
+
+      noiseSuppression:
+        true,
+
+      autoGainControl:
+        true
+
+    },
+
+    video:
+      type ===
+      'video'
+
+        ? {
+
+            facingMode:
+              'user',
+
+            width: {
+              ideal: 1280
+            },
+
+            height: {
+              ideal: 720
+            }
+
+          }
+
+        : false
+
+  };
+
+
+  const stream =
+    await navigator.mediaDevices
+      .getUserMedia(
+        constraints
+      );
+
+
+  localCallStream =
+    stream;
+
+
+  if (
+    type ===
+    'video'
+  ) {
+
+    localVideo.srcObject =
+      stream;
+
+
+    try {
+
+      await localVideo.play();
+
+    } catch (error) {}
+
+  }
+
+
+  return stream;
+
+}
+
+
+// ========================================================
+// CREAR CONEXIÓN WEBRTC
+// ========================================================
+
+function createPeerConnection() {
+
+  closePeerConnection();
+
+
+  peerConnection =
+    new RTCPeerConnection(
+      RTC_CONFIGURATION
+    );
+
+
+  remoteCallStream =
+    new MediaStream();
+
+
+  remoteVideo.srcObject =
+    remoteCallStream;
+
+  remoteAudio.srcObject =
+    remoteCallStream;
+
+
+  peerConnection.onicecandidate =
+    event => {
+
+      if (
+        !event.candidate ||
+        !currentCall
+      ) {
+
+        return;
+
+      }
+
+
+      socket.emit(
+        'call:ice',
+        {
+
+          callId:
+            currentCall.callId,
+
+          conversationId:
+            currentCall.conversationId,
+
+          conversation_id:
+            currentCall.conversationId,
+
+          candidate:
+            event.candidate
+
+        }
+      );
+
+    };
+
+
+  peerConnection.ontrack =
+    event => {
+
+      const streams =
+        event.streams || [];
+
+
+      if (
+        streams[0]
+      ) {
+
+        streams[0]
+          .getTracks()
+          .forEach(
+            track => {
+
+              const exists =
+                remoteCallStream
+                  .getTracks()
+                  .some(
+                    currentTrack =>
+                      currentTrack.id ===
+                      track.id
+                  );
+
+
+              if (!exists) {
+
+                remoteCallStream.addTrack(
+                  track
+                );
+
+              }
+
+            }
+          );
+
+      } else if (
+        event.track
+      ) {
+
+        const exists =
+          remoteCallStream
+            .getTracks()
+            .some(
+              currentTrack =>
+                currentTrack.id ===
+                event.track.id
+            );
+
+
+        if (!exists) {
+
+          remoteCallStream.addTrack(
+            event.track
+          );
+
+        }
+
+      }
+
+
+      if (
+        currentCall &&
+        currentCall.type ===
+          'video'
+      ) {
+
+        remoteVideo.srcObject =
+          remoteCallStream;
+
+
+        remoteVideo
+          .play()
+          .catch(
+            () => {}
+          );
+
+      }
+
+
+      remoteAudio.srcObject =
+        remoteCallStream;
+
+
+      remoteAudio
+        .play()
+        .catch(
+          () => {}
+        );
+
+    };
+
+
+  peerConnection.onconnectionstatechange =
+    () => {
+
+      if (!peerConnection) {
+        return;
+      }
+
+
+      const state =
+        peerConnection
+          .connectionState;
+
+
+      if (
+        state ===
+        'connected'
+      ) {
+
+        callTopStatus.textContent =
+          'Conectado';
+
+        audioCallStatus.textContent =
+          'Conectado';
+
+
+        if (!callStartedAt) {
+
+          startCallTimer();
+
+        }
+
+      }
+
+
+      if (
+        state ===
+          'failed' ||
+        state ===
+          'closed'
+      ) {
+
+        showToast(
+          'La llamada terminó'
+        );
+
+
+        cleanupCall();
+
+      }
+
+
+      if (
+        state ===
+        'disconnected'
+      ) {
+
+        callTopStatus.textContent =
+          'Reconectando...';
+
+        audioCallStatus.textContent =
+          'Reconectando...';
+
+      }
+
+    };
+
+
+  peerConnection.oniceconnectionstatechange =
+    () => {
+
+      if (!peerConnection) {
+        return;
+      }
+
+
+      const state =
+        peerConnection
+          .iceConnectionState;
+
+
+      if (
+        state ===
+        'failed'
+      ) {
+
+        callTopStatus.textContent =
+          'Error de conexión';
+
+        audioCallStatus.textContent =
+          'Error de conexión';
+
+      }
+
+    };
+
+
+  return peerConnection;
+
+}
+
+
+// ========================================================
+// AÑADIR STREAM LOCAL A WEBRTC
+// ========================================================
+
+function addLocalTracksToPeer() {
+
+  if (
+    !peerConnection ||
+    !localCallStream
+  ) {
+
+    return;
+
+  }
+
+
+  localCallStream
+    .getTracks()
+    .forEach(
+      track => {
+
+        peerConnection.addTrack(
+          track,
+          localCallStream
+        );
+
+      }
+    );
+
+}
+
+
+// ========================================================
+// PROCESAR ICE PENDIENTES
+// ========================================================
+
+async function flushPendingIceCandidates() {
+
+  if (
+    !peerConnection ||
+    !peerConnection.remoteDescription
+  ) {
+
+    return;
+
+  }
+
+
+  const candidates =
+    [
+      ...pendingIceCandidates
+    ];
+
+
+  pendingIceCandidates =
+    [];
+
+
+  for (
+    const candidate
+    of candidates
+  ) {
+
+    try {
+
+      await peerConnection
+        .addIceCandidate(
+          new RTCIceCandidate(
+            candidate
+          )
+        );
+
+    } catch (error) {
+
+      console.error(
+        'VOBIXCHAT ICE PENDIENTE:',
+        error
+      );
+
+    }
+
+  }
+
+}
+
+
+// ========================================================
+// CREAR OFFER
+// ========================================================
+
+async function createAndSendOffer() {
+
+  if (
+    !peerConnection ||
+    !currentCall
+  ) {
+
+    return;
+
+  }
+
+
+  const offer =
+    await peerConnection
+      .createOffer();
+
+
+  await peerConnection
+    .setLocalDescription(
+      offer
+    );
+
+
+  socket.emit(
+    'call:offer',
+    {
+
+      callId:
+        currentCall.callId,
+
+      conversationId:
+        currentCall.conversationId,
+
+      conversation_id:
+        currentCall.conversationId,
+
+      type:
+        currentCall.type,
+
+      offer:
+        peerConnection.localDescription
+
+    },
+
+    ack => {
+
+      if (
+        ack &&
+        ack.ok === false
+      ) {
+
+        console.error(
+          'VOBIXCHAT OFFER RECHAZADA:',
+          ack
+        );
+
+      }
+
+    }
+  );
+
+}
+
+
+// ========================================================
+// PREPARAR LLAMADA SALIENTE
+// ========================================================
+
+async function startOutgoingCall(
+  type
+) {
+
+  if (
+    currentCall ||
+    pendingIncomingCall
+  ) {
+
+    showToast(
+      'Ya hay una llamada activa'
+    );
+
+    return;
+
+  }
+
 
   if (!currentConversation) {
 
@@ -5276,16 +6303,13 @@ function emitCall(
       'Selecciona una conversación'
     );
 
-
     return;
 
   }
 
 
   const conversationId =
-    currentConversation.id ||
-    currentConversation.conversation_id ||
-    currentConversation.conversationId;
+    getCurrentConversationId();
 
 
   if (!conversationId) {
@@ -5294,89 +6318,189 @@ function emitCall(
       'Conversación no válida'
     );
 
-
     return;
 
   }
 
 
-  const otherUser =
-    currentConversation.other_user ||
-    currentConversation.otherUser ||
-    currentConversation.contact ||
-    currentConversation.participant ||
-    null;
+  const contactName =
+    getConversationName(
+      currentConversation
+    ) ||
+    'Contacto';
 
 
-  const targetUserId =
-    getUserId(
-      otherUser
+  try {
+
+    showCallScreen(
+      type,
+      contactName
     );
 
 
-  socket.emit(
-    'call:start',
-    {
+    callTopStatus.textContent =
+      'Preparando ' +
+      (
+        type === 'video'
+          ? 'cámara...'
+          : 'micrófono...'
+      );
 
-      conversationId:
+
+    audioCallStatus.textContent =
+      'Preparando micrófono...';
+
+
+    await getCallMedia(
+      type
+    );
+
+
+    callTopStatus.textContent =
+      'Llamando...';
+
+    audioCallStatus.textContent =
+      'Llamando...';
+
+
+    socket.emit(
+      'call:start',
+      {
+
         conversationId,
 
-      conversation_id:
-        conversationId,
+        conversation_id:
+          conversationId,
 
-      targetUserId:
-        targetUserId,
+        type
 
-      target_user_id:
-        targetUserId,
+      },
 
-      type:
-        callType
+      async ack => {
 
-    },
+        if (
+          !ack ||
+          ack.ok === false
+        ) {
 
-    ack => {
+          showToast(
+            (
+              ack &&
+              (
+                ack.msg ||
+                ack.message
+              )
+            ) ||
+            'No se pudo iniciar la llamada'
+          );
 
-      if (
-        ack &&
-        (
-          ack.ok === false ||
-          ack.success === false
-        )
-      ) {
 
-        showToast(
-          ack.message ||
-          'No se pudo iniciar la llamada'
-        );
+          cleanupCall();
+
+          return;
+
+        }
+
+
+        currentCall = {
+
+          callId:
+            ack.callId,
+
+          conversationId,
+
+          type,
+
+          direction:
+            'outgoing',
+
+          contactName
+
+        };
+
+
+        createPeerConnection();
+
+        addLocalTracksToPeer();
+
+
+        /*
+          La oferta se crea después de que
+          el receptor acepte la llamada.
+        */
 
       }
+    );
+
+
+  } catch (error) {
+
+    console.error(
+      'VOBIXCHAT START CALL:',
+      error
+    );
+
+
+    cleanupCall();
+
+
+    if (
+      error &&
+      (
+        error.name ===
+          'NotAllowedError' ||
+        error.name ===
+          'PermissionDeniedError'
+      )
+    ) {
+
+      showToast(
+        type === 'video'
+          ? 'Debes permitir cámara y micrófono'
+          : 'Debes permitir el micrófono'
+      );
+
+      return;
 
     }
-  );
 
 
-  showToast(
-    callType ===
-      'video'
+    if (
+      error &&
+      error.name ===
+        'NotFoundError'
+    ) {
 
-      ? 'Iniciando videollamada...'
+      showToast(
+        type === 'video'
+          ? 'No encontramos cámara o micrófono'
+          : 'No encontramos un micrófono'
+      );
 
-      : 'Iniciando llamada...'
-  );
+      return;
+
+    }
+
+
+    showToast(
+      error.message ||
+      'No se pudo iniciar la llamada'
+    );
+
+  }
 
 }
 
 
 // ========================================================
-// LLAMADA DE VOZ
+// BOTÓN LLAMADA DE VOZ
 // ========================================================
 
 voiceCallButton.addEventListener(
   'click',
   () => {
 
-    emitCall(
+    startOutgoingCall(
       'audio'
     );
 
@@ -5385,14 +6509,14 @@ voiceCallButton.addEventListener(
 
 
 // ========================================================
-// VIDEOLLAMADA
+// BOTÓN VIDEOLLAMADA
 // ========================================================
 
 videoCallButton.addEventListener(
   'click',
   () => {
 
-    emitCall(
+    startOutgoingCall(
       'video'
     );
 
@@ -5408,32 +6532,119 @@ socket.on(
   'call:incoming',
   data => {
 
+    if (!data) {
+      return;
+    }
+
+
+    if (
+      currentCall ||
+      pendingIncomingCall
+    ) {
+
+      socket.emit(
+        'call:reject',
+        {
+
+          callId:
+            data.callId,
+
+          conversationId:
+            data.conversationId ||
+            data.conversation_id,
+
+          reason:
+            'busy'
+
+        }
+      );
+
+
+      return;
+
+    }
+
+
+    const conversationId =
+      String(
+        data.conversationId ||
+        data.conversation_id ||
+        ''
+      ).trim();
+
+
+    if (!conversationId) {
+      return;
+    }
+
+
     const callerName =
       getUsername(
-        data &&
-        (
-          data.caller ||
-          data.user ||
-          data
-        )
+        data.caller
       ) ||
-      'Un contacto';
+      data.callerUsername ||
+      data.fromUsername ||
+      'Contacto';
 
 
     const type =
-      data &&
       data.type ===
         'video'
 
-        ? 'videollamada'
+        ? 'video'
 
-        : 'llamada';
+        : 'audio';
 
 
-    showToast(
-      callerName +
-      ' está iniciando una ' +
-      type
+    pendingIncomingCall = {
+
+      callId:
+        data.callId,
+
+      conversationId,
+
+      type,
+
+      direction:
+        'incoming',
+
+      contactName:
+        callerName
+
+    };
+
+
+    incomingName.textContent =
+      callerName;
+
+
+    incomingAvatar.textContent =
+      callerName
+        .charAt(0)
+        .toUpperCase() ||
+      'V';
+
+
+    incomingType.textContent =
+      type ===
+        'video'
+
+        ? 'Videollamada entrante'
+
+        : 'Llamada de voz entrante';
+
+
+    acceptCallButton.textContent =
+      type ===
+        'video'
+
+        ? '🎥'
+
+        : '☎';
+
+
+    incomingCall.classList.add(
+      'open'
     );
 
   }
@@ -5441,18 +6652,854 @@ socket.on(
 
 
 // ========================================================
-// ERROR DE LLAMADA
+// ACEPTAR LLAMADA ENTRANTE
+// ========================================================
+
+acceptCallButton.addEventListener(
+  'click',
+  async () => {
+
+    if (!pendingIncomingCall) {
+      return;
+    }
+
+
+    const incoming = {
+
+      ...pendingIncomingCall
+
+    };
+
+
+    try {
+
+      incomingCall.classList.remove(
+        'open'
+      );
+
+
+      showCallScreen(
+        incoming.type,
+        incoming.contactName
+      );
+
+
+      callTopStatus.textContent =
+        'Preparando conexión...';
+
+      audioCallStatus.textContent =
+        'Preparando conexión...';
+
+
+      await getCallMedia(
+        incoming.type
+      );
+
+
+      currentCall =
+        incoming;
+
+
+      pendingIncomingCall =
+        null;
+
+
+      createPeerConnection();
+
+      addLocalTracksToPeer();
+
+
+      socket.emit(
+        'call:accept',
+        {
+
+          callId:
+            currentCall.callId,
+
+          conversationId:
+            currentCall.conversationId,
+
+          conversation_id:
+            currentCall.conversationId
+
+        },
+
+        ack => {
+
+          if (
+            ack &&
+            ack.ok === false
+          ) {
+
+            showToast(
+              ack.msg ||
+              'No se pudo aceptar la llamada'
+            );
+
+
+            cleanupCall();
+
+          }
+
+        }
+      );
+
+
+      callTopStatus.textContent =
+        'Conectando...';
+
+      audioCallStatus.textContent =
+        'Conectando...';
+
+
+    } catch (error) {
+
+      console.error(
+        'VOBIXCHAT ACCEPT CALL:',
+        error
+      );
+
+
+      socket.emit(
+        'call:reject',
+        {
+
+          callId:
+            incoming.callId,
+
+          conversationId:
+            incoming.conversationId,
+
+          reason:
+            'media-error'
+
+        }
+      );
+
+
+      cleanupCall();
+
+
+      if (
+        error &&
+        (
+          error.name ===
+            'NotAllowedError' ||
+          error.name ===
+            'PermissionDeniedError'
+        )
+      ) {
+
+        showToast(
+          incoming.type ===
+            'video'
+            ? 'Debes permitir cámara y micrófono'
+            : 'Debes permitir el micrófono'
+        );
+
+        return;
+
+      }
+
+
+      showToast(
+        'No se pudo aceptar la llamada'
+      );
+
+    }
+
+  }
+);
+
+
+// ========================================================
+// RECHAZAR LLAMADA
+// ========================================================
+
+rejectCallButton.addEventListener(
+  'click',
+  () => {
+
+    if (!pendingIncomingCall) {
+
+      incomingCall.classList.remove(
+        'open'
+      );
+
+      return;
+
+    }
+
+
+    socket.emit(
+      'call:reject',
+      {
+
+        callId:
+          pendingIncomingCall.callId,
+
+        conversationId:
+          pendingIncomingCall.conversationId,
+
+        conversation_id:
+          pendingIncomingCall.conversationId,
+
+        reason:
+          'rejected'
+
+      }
+    );
+
+
+    pendingIncomingCall =
+      null;
+
+
+    incomingCall.classList.remove(
+      'open'
+    );
+
+
+    showToast(
+      'Llamada rechazada'
+    );
+
+  }
+);
+
+
+// ========================================================
+// EL RECEPTOR ACEPTÓ
+// ========================================================
+
+socket.on(
+  'call:accepted',
+  async data => {
+
+    if (
+      !currentCall ||
+      !data
+    ) {
+
+      return;
+
+    }
+
+
+    if (
+      data.callId &&
+      currentCall.callId &&
+      String(data.callId) !==
+      String(currentCall.callId)
+    ) {
+
+      return;
+
+    }
+
+
+    try {
+
+      callTopStatus.textContent =
+        'Conectando...';
+
+      audioCallStatus.textContent =
+        'Conectando...';
+
+
+      await createAndSendOffer();
+
+
+    } catch (error) {
+
+      console.error(
+        'VOBIXCHAT CREATE OFFER:',
+        error
+      );
+
+
+      showToast(
+        'No se pudo conectar la llamada'
+      );
+
+
+      endCurrentCall(
+        true
+      );
+
+    }
+
+  }
+);
+
+
+// ========================================================
+// RECIBIR OFFER
+// ========================================================
+
+socket.on(
+  'call:offer',
+  async data => {
+
+    if (
+      !currentCall ||
+      !data ||
+      !data.offer
+    ) {
+
+      return;
+
+    }
+
+
+    if (
+      data.callId &&
+      currentCall.callId &&
+      String(data.callId) !==
+      String(currentCall.callId)
+    ) {
+
+      return;
+
+    }
+
+
+    try {
+
+      if (!peerConnection) {
+
+        createPeerConnection();
+
+        addLocalTracksToPeer();
+
+      }
+
+
+      await peerConnection
+        .setRemoteDescription(
+          new RTCSessionDescription(
+            data.offer
+          )
+        );
+
+
+      await flushPendingIceCandidates();
+
+
+      const answer =
+        await peerConnection
+          .createAnswer();
+
+
+      await peerConnection
+        .setLocalDescription(
+          answer
+        );
+
+
+      socket.emit(
+        'call:answer',
+        {
+
+          callId:
+            currentCall.callId,
+
+          conversationId:
+            currentCall.conversationId,
+
+          conversation_id:
+            currentCall.conversationId,
+
+          answer:
+            peerConnection.localDescription
+
+        }
+      );
+
+
+    } catch (error) {
+
+      console.error(
+        'VOBIXCHAT RECEIVE OFFER:',
+        error
+      );
+
+
+      showToast(
+        'Error conectando la llamada'
+      );
+
+
+      endCurrentCall(
+        true
+      );
+
+    }
+
+  }
+);
+
+
+// ========================================================
+// RECIBIR ANSWER
+// ========================================================
+
+socket.on(
+  'call:answer',
+  async data => {
+
+    if (
+      !currentCall ||
+      !peerConnection ||
+      !data ||
+      !data.answer
+    ) {
+
+      return;
+
+    }
+
+
+    if (
+      data.callId &&
+      currentCall.callId &&
+      String(data.callId) !==
+      String(currentCall.callId)
+    ) {
+
+      return;
+
+    }
+
+
+    try {
+
+      await peerConnection
+        .setRemoteDescription(
+          new RTCSessionDescription(
+            data.answer
+          )
+        );
+
+
+      await flushPendingIceCandidates();
+
+
+    } catch (error) {
+
+      console.error(
+        'VOBIXCHAT RECEIVE ANSWER:',
+        error
+      );
+
+
+      showToast(
+        'Error completando la llamada'
+      );
+
+    }
+
+  }
+);
+
+
+// ========================================================
+// RECIBIR ICE
+// ========================================================
+
+socket.on(
+  'call:ice',
+  async data => {
+
+    if (
+      !currentCall ||
+      !data ||
+      !data.candidate
+    ) {
+
+      return;
+
+    }
+
+
+    if (
+      data.callId &&
+      currentCall.callId &&
+      String(data.callId) !==
+      String(currentCall.callId)
+    ) {
+
+      return;
+
+    }
+
+
+    if (
+      !peerConnection ||
+      !peerConnection.remoteDescription
+    ) {
+
+      pendingIceCandidates.push(
+        data.candidate
+      );
+
+      return;
+
+    }
+
+
+    try {
+
+      await peerConnection
+        .addIceCandidate(
+          new RTCIceCandidate(
+            data.candidate
+          )
+        );
+
+
+    } catch (error) {
+
+      console.error(
+        'VOBIXCHAT ADD ICE:',
+        error
+      );
+
+    }
+
+  }
+);
+
+
+// ========================================================
+// LLAMADA RECHAZADA
+// ========================================================
+
+socket.on(
+  'call:rejected',
+  data => {
+
+    if (!currentCall) {
+      return;
+    }
+
+
+    if (
+      data &&
+      data.callId &&
+      currentCall.callId &&
+      String(data.callId) !==
+      String(currentCall.callId)
+    ) {
+
+      return;
+
+    }
+
+
+    showToast(
+      'Llamada rechazada'
+    );
+
+
+    cleanupCall();
+
+  }
+);
+
+
+// ========================================================
+// USUARIO NO DISPONIBLE
+// ========================================================
+
+socket.on(
+  'call:unavailable',
+  data => {
+
+    if (
+      currentCall &&
+      data &&
+      data.callId &&
+      currentCall.callId &&
+      String(data.callId) !==
+      String(currentCall.callId)
+    ) {
+
+      return;
+
+    }
+
+
+    showToast(
+      (
+        data &&
+        data.message
+      ) ||
+      'El usuario no está conectado'
+    );
+
+
+    cleanupCall();
+
+  }
+);
+
+
+// ========================================================
+// FINALIZAR LLAMADA
+// ========================================================
+
+function endCurrentCall(
+  notifyRemote = true
+) {
+
+  if (
+    notifyRemote &&
+    currentCall
+  ) {
+
+    socket.emit(
+      'call:end',
+      {
+
+        callId:
+          currentCall.callId,
+
+        conversationId:
+          currentCall.conversationId,
+
+        conversation_id:
+          currentCall.conversationId,
+
+        reason:
+          'ended'
+
+      }
+    );
+
+  }
+
+
+  cleanupCall();
+
+}
+
+
+// ========================================================
+// BOTÓN COLGAR
+// ========================================================
+
+callEndButton.addEventListener(
+  'click',
+  () => {
+
+    endCurrentCall(
+      true
+    );
+
+  }
+);
+
+
+// ========================================================
+// EL OTRO USUARIO COLGÓ
+// ========================================================
+
+socket.on(
+  'call:ended',
+  data => {
+
+    if (
+      currentCall &&
+      data &&
+      data.callId &&
+      currentCall.callId &&
+      String(data.callId) !==
+      String(currentCall.callId)
+    ) {
+
+      return;
+
+    }
+
+
+    if (
+      !currentCall &&
+      pendingIncomingCall
+    ) {
+
+      if (
+        !data ||
+        !data.callId ||
+        !pendingIncomingCall.callId ||
+        String(data.callId) ===
+        String(
+          pendingIncomingCall.callId
+        )
+      ) {
+
+        pendingIncomingCall =
+          null;
+
+
+        incomingCall.classList.remove(
+          'open'
+        );
+
+      }
+
+
+      return;
+
+    }
+
+
+    if (!currentCall) {
+      return;
+    }
+
+
+    showToast(
+      'Llamada finalizada'
+    );
+
+
+    cleanupCall();
+
+  }
+);
+
+
+// ========================================================
+// SILENCIAR / ACTIVAR MICRÓFONO
+// ========================================================
+
+callMuteButton.addEventListener(
+  'click',
+  () => {
+
+    if (!localCallStream) {
+      return;
+    }
+
+
+    const audioTracks =
+      localCallStream
+        .getAudioTracks();
+
+
+    if (!audioTracks.length) {
+      return;
+    }
+
+
+    microphoneMuted =
+      !microphoneMuted;
+
+
+    audioTracks.forEach(
+      track => {
+
+        track.enabled =
+          !microphoneMuted;
+
+      }
+    );
+
+
+    callMuteButton.textContent =
+      microphoneMuted
+        ? '🔇'
+        : '🎤';
+
+
+    callMuteButton.classList.toggle(
+      'active',
+      microphoneMuted
+    );
+
+  }
+);
+
+
+// ========================================================
+// APAGAR / ENCENDER CÁMARA
+// ========================================================
+
+callCameraButton.addEventListener(
+  'click',
+  () => {
+
+    if (!localCallStream) {
+      return;
+    }
+
+
+    const videoTracks =
+      localCallStream
+        .getVideoTracks();
+
+
+    if (!videoTracks.length) {
+
+      showToast(
+        'No hay cámara activa'
+      );
+
+      return;
+
+    }
+
+
+    cameraDisabled =
+      !cameraDisabled;
+
+
+    videoTracks.forEach(
+      track => {
+
+        track.enabled =
+          !cameraDisabled;
+
+      }
+    );
+
+
+    callCameraButton.textContent =
+      cameraDisabled
+        ? '🚫'
+        : '📹';
+
+
+    callCameraButton.classList.toggle(
+      'active',
+      cameraDisabled
+    );
+
+  }
+);
+
+
+// ========================================================
+// ERROR DE LLAMADA DESDE SERVIDOR
 // ========================================================
 
 socket.on(
   'call:error',
   data => {
 
+    console.error(
+      'VOBIXCHAT CALL ERROR:',
+      data
+    );
+
+
     showToast(
       (
         data &&
         (
           data.message ||
+          data.msg ||
           data.error
         )
       ) ||
@@ -5461,8 +7508,6 @@ socket.on(
 
   }
 );
-
-
 // ========================================================
 // MÁS OPCIONES
 // ========================================================
@@ -5473,65 +7518,6 @@ moreButton.addEventListener(
 
     showToast(
       'Opciones de conversación'
-    );
-
-  }
-);
-
-
-// ========================================================
-// SOCKET CONECTADO
-// ========================================================
-
-socket.on(
-  'connect',
-  () => {
-
-    console.log(
-      'VOBIXCHAT SOCKET CONECTADO:',
-      socket.id
-    );
-
-
-    /*
-      Si Socket.IO se reconecta mientras existe
-      una conversación abierta, volvemos a entrar
-      automáticamente en su sala privada.
-    */
-
-    if (currentConversation) {
-
-      const conversationId =
-        currentConversation.id ||
-        currentConversation.conversation_id ||
-        currentConversation.conversationId;
-
-
-      if (conversationId) {
-
-        joinConversationRoom(
-          conversationId
-        );
-
-      }
-
-    }
-
-  }
-);
-
-
-// ========================================================
-// ERROR DE CONEXIÓN SOCKET
-// ========================================================
-
-socket.on(
-  'connect_error',
-  error => {
-
-    console.error(
-      'VOBIXCHAT SOCKET ERROR:',
-      error
     );
 
   }
@@ -5570,14 +7556,17 @@ async function loadMyProfile() {
   renderMyProfile();
 
 
+  /*
+    En esta instalación la sesión válida puede
+    recuperarse directamente desde /api/session.
+  */
+
   const routes = [
 
+    '/api/session',
     '/api/auth/me',
-
     '/api/me',
-
     '/api/users/me',
-
     '/api/profile'
 
   ];
@@ -5589,11 +7578,6 @@ async function loadMyProfile() {
   ) {
 
     try {
-
-      /*
-        requestJSON() añade automáticamente
-        Authorization: Bearer VOBIX_TOKEN.
-      */
 
       const data =
         await requestJSON(
@@ -5626,8 +7610,8 @@ async function loadMyProfile() {
 
 
       /*
-        El nombre introducido en index.html
-        mantiene prioridad sobre nombres antiguos.
+        Conservamos como prioridad el nombre
+        introducido al entrar en VOBIXCHAT.
       */
 
       const finalUsername =
@@ -5686,7 +7670,7 @@ async function loadMyProfile() {
     } catch (error) {
 
       /*
-        Si una instalación no tiene esta ruta,
+        Si una ruta no existe,
         probamos la siguiente.
       */
 
@@ -5698,83 +7682,73 @@ async function loadMyProfile() {
   renderMyProfile();
 
 }
+
+
 // ========================================================
-// ARRANQUE GENERAL DE VOBIXCHAT
+// SOCKET CONECTADO
 // ========================================================
 
-async function initVobixChat() {
+socket.on(
+  'connect',
+  () => {
 
-  /*
-    ORDEN DE ARRANQUE:
-
-    1. Mostrar inmediatamente el nombre local.
-    2. Completar el perfil autenticado desde backend.
-    3. Cargar conversaciones privadas.
-  */
-
-  renderMyProfile();
-
-
-  /*
-    Si no existe token, dejamos constancia clara.
-    No inventamos una sesión.
-  */
-
-  if (!VOBIX_TOKEN) {
-
-    console.warn(
-      'VOBIXCHAT: no se encontró token de sesión'
+    console.log(
+      'VOBIXCHAT SOCKET CONECTADO:',
+      socket.id
     );
 
 
-    showToast(
-      'No encontramos una sesión válida'
-    );
+    if (currentConversation) {
+
+      const conversationId =
+        getCurrentConversationId();
 
 
-    return;
+      if (conversationId) {
+
+        joinConversationRoom(
+          conversationId
+        );
+
+      }
+
+    }
 
   }
+);
 
 
-  /*
-    El perfil no debe impedir que intentemos
-    cargar las conversaciones si una ruta de perfil
-    concreta no existe.
-  */
+// ========================================================
+// ERROR DE CONEXIÓN SOCKET
+// ========================================================
 
-  try {
-
-    await loadMyProfile();
-
-  } catch (error) {
-
-    console.warn(
-      'VOBIXCHAT PROFILE:',
-      error
-    );
-
-  }
-
-
-  try {
-
-    await loadConversations();
-
-  } catch (error) {
+socket.on(
+  'connect_error',
+  error => {
 
     console.error(
-      'VOBIXCHAT INIT CONVERSATIONS:',
+      'VOBIXCHAT SOCKET ERROR:',
       error
     );
 
-  }
 
-}
+    if (
+      error &&
+      error.message
+    ) {
+
+      console.warn(
+        error.message
+      );
+
+    }
+
+  }
+);
 
 
 // ========================================================
-// SOCKET — DESCONEXIÓN
+// SOCKET DESCONECTADO
 // ========================================================
 
 socket.on(
@@ -5794,12 +7768,21 @@ socket.on(
 
     }
 
+
+    /*
+      Si existe una llamada, no destruimos inmediatamente
+      WebRTC por una desconexión breve de Socket.IO.
+
+      WebRTC puede seguir transportando audio/vídeo
+      independientemente del socket.
+    */
+
   }
 );
 
 
 // ========================================================
-// SOCKET — RECONEXIÓN
+// SOCKET RECONECTADO
 // ========================================================
 
 socket.io.on(
@@ -5811,11 +7794,6 @@ socket.io.on(
       attempt
     );
 
-
-    /*
-      Volvemos a cargar conversaciones para recuperar
-      cualquier cambio ocurrido durante la desconexión.
-    */
 
     try {
 
@@ -5831,17 +7809,10 @@ socket.io.on(
     }
 
 
-    /*
-      Si había una conversación abierta,
-      volvemos a entrar en su sala privada.
-    */
-
     if (currentConversation) {
 
       const conversationId =
-        currentConversation.id ||
-        currentConversation.conversation_id ||
-        currentConversation.conversationId;
+        getCurrentConversationId();
 
 
       if (conversationId) {
@@ -5894,149 +7865,7 @@ socket.io.on(
 
 
 // ========================================================
-// CUANDO LA PÁGINA VUELVE A ESTAR VISIBLE
-// ========================================================
-
-document.addEventListener(
-  'visibilitychange',
-  async () => {
-
-    if (
-      document.visibilityState !==
-      'visible'
-    ) {
-
-      return;
-
-    }
-
-
-    /*
-      Volvemos a leer el nombre local.
-
-      Esto conserva el nombre que la persona escribió
-      al entrar desde index.html.
-    */
-
-    const latestUser =
-      getLocalUser();
-
-
-    if (latestUser) {
-
-      me = {
-
-        ...(me || {}),
-
-        ...latestUser
-
-      };
-
-
-      renderMyProfile();
-
-    }
-
-
-    /*
-      Actualizamos conversaciones al volver a la app.
-    */
-
-    if (VOBIX_TOKEN) {
-
-      try {
-
-        await loadConversations();
-
-      } catch (error) {
-
-        console.error(
-          'VOBIXCHAT VISIBILITY CONVERSATIONS:',
-          error
-        );
-
-      }
-
-    }
-
-  }
-);
-
-
-// ========================================================
-// CUANDO RECUPERAMOS INTERNET
-// ========================================================
-
-window.addEventListener(
-  'online',
-  async () => {
-
-    console.log(
-      'VOBIXCHAT: conexión a Internet recuperada'
-    );
-
-
-    if (
-      !socket.connected
-    ) {
-
-      socket.connect();
-
-    }
-
-
-    if (VOBIX_TOKEN) {
-
-      try {
-
-        await loadConversations();
-
-      } catch (error) {
-
-        console.error(
-          'VOBIXCHAT ONLINE CONVERSATIONS:',
-          error
-        );
-
-      }
-
-    }
-
-  }
-);
-
-
-// ========================================================
-// CUANDO PERDEMOS INTERNET
-// ========================================================
-
-window.addEventListener(
-  'offline',
-  () => {
-
-    console.warn(
-      'VOBIXCHAT: sin conexión a Internet'
-    );
-
-
-    showToast(
-      'Sin conexión a Internet'
-    );
-
-
-    if (currentConversation) {
-
-      roomStatus.textContent =
-        'Sin conexión';
-
-    }
-
-  }
-);
-
-
-// ========================================================
-// ACTUALIZAR CONVERSACIONES CUANDO LLEGA ACTIVIDAD
+// CONVERSACIÓN NUEVA
 // ========================================================
 
 socket.on(
@@ -6060,6 +7889,10 @@ socket.on(
 );
 
 
+// ========================================================
+// CONVERSACIÓN ACTUALIZADA
+// ========================================================
+
 socket.on(
   'conversation:updated',
   async () => {
@@ -6082,9 +7915,840 @@ socket.on(
 
 
 // ========================================================
-// SEGURIDAD DE INTERFAZ
+// NOTIFICACIONES DEL NAVEGADOR
+// ========================================================
+
+async function requestNotificationPermission() {
+
+  if (
+    !('Notification' in window)
+  ) {
+
+    return false;
+
+  }
+
+
+  if (
+    Notification.permission ===
+    'granted'
+  ) {
+
+    return true;
+
+  }
+
+
+  if (
+    Notification.permission ===
+    'denied'
+  ) {
+
+    return false;
+
+  }
+
+
+  try {
+
+    const permission =
+      await Notification
+        .requestPermission();
+
+
+    return (
+      permission ===
+      'granted'
+    );
+
+
+  } catch (error) {
+
+    return false;
+
+  }
+
+}
+
+
+// ========================================================
+// MOSTRAR NOTIFICACIÓN LOCAL
+// ========================================================
+
+function showMessageNotification(
+  title,
+  body
+) {
+
+  if (
+    !('Notification' in window) ||
+    Notification.permission !==
+      'granted'
+  ) {
+
+    return;
+
+  }
+
+
+  /*
+    Si VOBIXCHAT está visible no necesitamos
+    llenar el sistema de notificaciones.
+  */
+
+  if (
+    document.visibilityState ===
+      'visible'
+  ) {
+
+    return;
+
+  }
+
+
+  try {
+
+    const notification =
+      new Notification(
+        title || 'VOBIXCHAT',
+        {
+
+          body:
+            body || 'Nuevo mensaje',
+
+          tag:
+            'vobix-message',
+
+          renotify:
+            true
+
+        }
+      );
+
+
+    notification.onclick =
+      () => {
+
+        window.focus();
+
+
+        try {
+
+          notification.close();
+
+        } catch (error) {}
+
+      };
+
+
+  } catch (error) {
+
+    console.warn(
+      'VOBIXCHAT NOTIFICATION:',
+      error
+    );
+
+  }
+
+}
+
+
+// ========================================================
+// SONIDO DE MENSAJE
 //
-// Si el usuario pulsa ESC cerramos paneles flotantes.
+// Se genera con Web Audio.
+// No necesitamos descargar ningún archivo de sonido.
+// ========================================================
+
+let notificationAudioContext =
+  null;
+
+
+function playMessageSound() {
+
+  try {
+
+    const AudioContextClass =
+      window.AudioContext ||
+      window.webkitAudioContext;
+
+
+    if (!AudioContextClass) {
+      return;
+    }
+
+
+    if (!notificationAudioContext) {
+
+      notificationAudioContext =
+        new AudioContextClass();
+
+    }
+
+
+    if (
+      notificationAudioContext.state ===
+      'suspended'
+    ) {
+
+      notificationAudioContext
+        .resume()
+        .catch(
+          () => {}
+        );
+
+    }
+
+
+    const oscillator =
+      notificationAudioContext
+        .createOscillator();
+
+
+    const gain =
+      notificationAudioContext
+        .createGain();
+
+
+    oscillator.type =
+      'sine';
+
+
+    oscillator.frequency
+      .setValueAtTime(
+        720,
+        notificationAudioContext.currentTime
+      );
+
+
+    oscillator.frequency
+      .exponentialRampToValueAtTime(
+        980,
+        notificationAudioContext.currentTime +
+        0.11
+      );
+
+
+    gain.gain
+      .setValueAtTime(
+        0.0001,
+        notificationAudioContext.currentTime
+      );
+
+
+    gain.gain
+      .exponentialRampToValueAtTime(
+        0.12,
+        notificationAudioContext.currentTime +
+        0.015
+      );
+
+
+    gain.gain
+      .exponentialRampToValueAtTime(
+        0.0001,
+        notificationAudioContext.currentTime +
+        0.18
+      );
+
+
+    oscillator.connect(
+      gain
+    );
+
+
+    gain.connect(
+      notificationAudioContext.destination
+    );
+
+
+    oscillator.start();
+
+
+    oscillator.stop(
+      notificationAudioContext.currentTime +
+      0.19
+    );
+
+
+  } catch (error) {}
+
+}
+
+
+// ========================================================
+// TIMBRE DE LLAMADA
+// ========================================================
+
+let ringtoneContext =
+  null;
+
+let ringtoneInterval =
+  null;
+
+
+function playRingtonePulse() {
+
+  try {
+
+    const AudioContextClass =
+      window.AudioContext ||
+      window.webkitAudioContext;
+
+
+    if (!AudioContextClass) {
+      return;
+    }
+
+
+    if (!ringtoneContext) {
+
+      ringtoneContext =
+        new AudioContextClass();
+
+    }
+
+
+    if (
+      ringtoneContext.state ===
+      'suspended'
+    ) {
+
+      ringtoneContext
+        .resume()
+        .catch(
+          () => {}
+        );
+
+    }
+
+
+    const oscillator1 =
+      ringtoneContext
+        .createOscillator();
+
+
+    const oscillator2 =
+      ringtoneContext
+        .createOscillator();
+
+
+    const gain =
+      ringtoneContext
+        .createGain();
+
+
+    oscillator1.type =
+      'sine';
+
+    oscillator2.type =
+      'sine';
+
+
+    oscillator1.frequency.value =
+      440;
+
+    oscillator2.frequency.value =
+      520;
+
+
+    gain.gain
+      .setValueAtTime(
+        0.0001,
+        ringtoneContext.currentTime
+      );
+
+
+    gain.gain
+      .exponentialRampToValueAtTime(
+        0.13,
+        ringtoneContext.currentTime +
+        0.03
+      );
+
+
+    gain.gain
+      .setValueAtTime(
+        0.13,
+        ringtoneContext.currentTime +
+        0.42
+      );
+
+
+    gain.gain
+      .exponentialRampToValueAtTime(
+        0.0001,
+        ringtoneContext.currentTime +
+        0.55
+      );
+
+
+    oscillator1.connect(
+      gain
+    );
+
+
+    oscillator2.connect(
+      gain
+    );
+
+
+    gain.connect(
+      ringtoneContext.destination
+    );
+
+
+    oscillator1.start();
+
+    oscillator2.start();
+
+
+    oscillator1.stop(
+      ringtoneContext.currentTime +
+      0.56
+    );
+
+
+    oscillator2.stop(
+      ringtoneContext.currentTime +
+      0.56
+    );
+
+
+  } catch (error) {}
+
+}
+
+
+function startRingtone() {
+
+  stopRingtone();
+
+
+  playRingtonePulse();
+
+
+  ringtoneInterval =
+    setInterval(
+      playRingtonePulse,
+      1600
+    );
+
+}
+
+
+function stopRingtone() {
+
+  if (ringtoneInterval) {
+
+    clearInterval(
+      ringtoneInterval
+    );
+
+  }
+
+
+  ringtoneInterval =
+    null;
+
+}
+
+
+// ========================================================
+// AÑADIR TIMBRE A LLAMADA ENTRANTE
+// ========================================================
+
+socket.on(
+  'call:incoming',
+  () => {
+
+    startRingtone();
+
+  }
+);
+
+
+// ========================================================
+// DETENER TIMBRE AL ACEPTAR
+// ========================================================
+
+acceptCallButton.addEventListener(
+  'click',
+  () => {
+
+    stopRingtone();
+
+  }
+);
+
+
+// ========================================================
+// DETENER TIMBRE AL RECHAZAR
+// ========================================================
+
+rejectCallButton.addEventListener(
+  'click',
+  () => {
+
+    stopRingtone();
+
+  }
+);
+
+
+// ========================================================
+// DETENER TIMBRE SI CANCELAN DESDE EL OTRO LADO
+// ========================================================
+
+socket.on(
+  'call:ended',
+  () => {
+
+    stopRingtone();
+
+  }
+);
+
+
+socket.on(
+  'call:rejected',
+  () => {
+
+    stopRingtone();
+
+  }
+);
+
+
+// ========================================================
+// SONIDO + NOTIFICACIÓN AL RECIBIR MENSAJE
+// ========================================================
+
+socket.on(
+  'conversation-message',
+  data => {
+
+    const incomingMessage =
+      data &&
+      (
+        data.message ||
+        data.data ||
+        data
+      );
+
+
+    if (!incomingMessage) {
+      return;
+    }
+
+
+    /*
+      No reproducimos sonido para nuestros
+      propios mensajes.
+    */
+
+    if (
+      isMyMessage(
+        incomingMessage
+      )
+    ) {
+
+      return;
+
+    }
+
+
+    playMessageSound();
+
+
+    const sender =
+      getUsername(
+        incomingMessage.sender ||
+        incomingMessage.user ||
+        {
+          username:
+            incomingMessage.sender_username ||
+            incomingMessage.senderUsername ||
+            data.senderUsername
+        }
+      ) ||
+      'VOBIXCHAT';
+
+
+    const body =
+      getMessageText(
+        incomingMessage
+      ) ||
+      'Nuevo mensaje';
+
+
+    showMessageNotification(
+      sender,
+      body
+    );
+
+  }
+);
+
+
+// ========================================================
+// ACTIVAR AUDIO DESPUÉS DE LA PRIMERA INTERACCIÓN
+//
+// Los navegadores modernos bloquean audio automático
+// hasta que la persona toca o hace clic en la página.
+// ========================================================
+
+async function unlockAudio() {
+
+  try {
+
+    const AudioContextClass =
+      window.AudioContext ||
+      window.webkitAudioContext;
+
+
+    if (!AudioContextClass) {
+      return;
+    }
+
+
+    if (!notificationAudioContext) {
+
+      notificationAudioContext =
+        new AudioContextClass();
+
+    }
+
+
+    if (
+      notificationAudioContext.state ===
+      'suspended'
+    ) {
+
+      await notificationAudioContext
+        .resume();
+
+    }
+
+
+    if (!ringtoneContext) {
+
+      ringtoneContext =
+        new AudioContextClass();
+
+    }
+
+
+    if (
+      ringtoneContext.state ===
+      'suspended'
+    ) {
+
+      await ringtoneContext
+        .resume();
+
+    }
+
+
+  } catch (error) {}
+
+}
+
+
+document.addEventListener(
+  'pointerdown',
+  unlockAudio,
+  {
+    once: true
+  }
+);
+
+
+document.addEventListener(
+  'keydown',
+  unlockAudio,
+  {
+    once: true
+  }
+);
+
+
+// ========================================================
+// PEDIR NOTIFICACIONES TRAS INTERACCIÓN REAL
+// ========================================================
+
+let notificationPermissionRequested =
+  false;
+
+
+async function requestNotificationsOnce() {
+
+  if (
+    notificationPermissionRequested
+  ) {
+
+    return;
+
+  }
+
+
+  notificationPermissionRequested =
+    true;
+
+
+  await requestNotificationPermission();
+
+}
+
+
+document.addEventListener(
+  'pointerdown',
+  requestNotificationsOnce,
+  {
+    once: true
+  }
+);
+
+
+// ========================================================
+// PÁGINA VISIBLE DE NUEVO
+// ========================================================
+
+document.addEventListener(
+  'visibilitychange',
+  async () => {
+
+    if (
+      document.visibilityState !==
+      'visible'
+    ) {
+
+      return;
+
+    }
+
+
+    const latestUser =
+      getLocalUser();
+
+
+    if (latestUser) {
+
+      me = {
+
+        ...(me || {}),
+
+        ...latestUser
+
+      };
+
+
+      renderMyProfile();
+
+    }
+
+
+    if (VOBIX_TOKEN) {
+
+      try {
+
+        await loadConversations();
+
+      } catch (error) {
+
+        console.error(
+          'VOBIXCHAT VISIBILITY:',
+          error
+        );
+
+      }
+
+    }
+
+  }
+);
+
+
+// ========================================================
+// INTERNET RECUPERADO
+// ========================================================
+
+window.addEventListener(
+  'online',
+  async () => {
+
+    console.log(
+      'VOBIXCHAT: conexión recuperada'
+    );
+
+
+    if (
+      !socket.connected
+    ) {
+
+      socket.connect();
+
+    }
+
+
+    if (VOBIX_TOKEN) {
+
+      try {
+
+        await loadConversations();
+
+      } catch (error) {
+
+        console.error(
+          'VOBIXCHAT ONLINE:',
+          error
+        );
+
+      }
+
+    }
+
+  }
+);
+
+
+// ========================================================
+// SIN INTERNET
+// ========================================================
+
+window.addEventListener(
+  'offline',
+  () => {
+
+    showToast(
+      'Sin conexión a Internet'
+    );
+
+
+    if (currentConversation) {
+
+      roomStatus.textContent =
+        'Sin conexión';
+
+    }
+
+
+    if (currentCall) {
+
+      callTopStatus.textContent =
+        'Sin conexión';
+
+      audioCallStatus.textContent =
+        'Sin conexión';
+
+    }
+
+  }
+);
+
+
+// ========================================================
+// ESC
 // ========================================================
 
 document.addEventListener(
@@ -6122,9 +8786,39 @@ window.addEventListener(
   'beforeunload',
   () => {
 
-    /*
-      Cerramos el micrófono si estaba activo.
-    */
+    stopRingtone();
+
+
+    if (
+      currentCall &&
+      socket.connected
+    ) {
+
+      try {
+
+        socket.emit(
+          'call:end',
+          {
+
+            callId:
+              currentCall.callId,
+
+            conversationId:
+              currentCall.conversationId,
+
+            conversation_id:
+              currentCall.conversationId,
+
+            reason:
+              'page-closed'
+
+          }
+        );
+
+      } catch (error) {}
+
+    }
+
 
     if (recordingStream) {
 
@@ -6144,12 +8838,75 @@ window.addEventListener(
 
     }
 
+
+    stopLocalCallStream();
+
+    stopRemoteCallStream();
+
+    closePeerConnection();
+
   }
 );
 
 
 // ========================================================
-// INICIAR VOBIXCHAT
+// ARRANQUE GENERAL DE VOBIXCHAT
+// ========================================================
+
+async function initVobixChat() {
+
+  renderMyProfile();
+
+
+  if (!VOBIX_TOKEN) {
+
+    console.warn(
+      'VOBIXCHAT: no se encontró token de sesión'
+    );
+
+
+    showToast(
+      'No encontramos una sesión válida'
+    );
+
+
+    return;
+
+  }
+
+
+  try {
+
+    await loadMyProfile();
+
+  } catch (error) {
+
+    console.warn(
+      'VOBIXCHAT PROFILE:',
+      error
+    );
+
+  }
+
+
+  try {
+
+    await loadConversations();
+
+  } catch (error) {
+
+    console.error(
+      'VOBIXCHAT INIT CONVERSATIONS:',
+      error
+    );
+
+  }
+
+}
+
+
+// ========================================================
+// INICIAR
 // ========================================================
 
 initVobixChat();
@@ -6158,4 +8915,4 @@ initVobixChat();
 </script>
 
 </body>
-</html>  
+</html>
