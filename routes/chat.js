@@ -13,12 +13,13 @@
  - Crear conversación privada
  - Listar conversaciones
  - Cargar mensajes
- - Enviar mensajes
+ - Mensajes de texto
  - Fotos
  - Vídeos
  - Notas de voz
  - Documentos
- - Compatibilidad frontend VOBIXCHAT
+ - Multimedia persistida con metadatos
+ - Socket.IO
 ==========================================================
 */
 
@@ -159,6 +160,151 @@ async function conversationIsBlocked(
 
 
 // ========================================================
+// OBTENER PARTICIPANTES
+// ========================================================
+
+async function getConversationParticipants(
+  conversationId
+) {
+
+  const result =
+    await database.query(
+      `
+      SELECT
+        cp.user_id,
+        u.username,
+        u.avatar_url,
+        u.online,
+        u.last_seen
+
+      FROM conversation_participants cp
+
+      INNER JOIN users u
+        ON u.id = cp.user_id
+
+      WHERE
+        cp.conversation_id = $1
+
+      ORDER BY
+        cp.joined_at ASC
+      `,
+      [
+        conversationId
+      ]
+    );
+
+
+  return result.rows;
+
+}
+
+
+// ========================================================
+// EMITIR MENSAJE DESDE UNA RUTA HTTP
+// ========================================================
+
+async function broadcastConversationMessage(
+  req,
+  conversationId,
+  senderUserId,
+  message
+) {
+
+  const io =
+    req.app.get('io');
+
+
+  if (!io) {
+
+    return false;
+
+  }
+
+
+  // Usuarios que tienen esta conversación abierta.
+  io
+    .to(
+      `conversation:${conversationId}`
+    )
+    .emit(
+      'conversation-message',
+      {
+        conversationId,
+        message
+      }
+    );
+
+
+  /*
+    También avisamos mediante la sala permanente del
+    usuario.
+
+    server.js hace:
+
+      socket.join(`user:${userId}`)
+
+    Por eso el destinatario puede recibir el aviso aunque
+    tenga VobixChat abierto en otra pantalla.
+  */
+
+  try {
+
+    const participants =
+      await getConversationParticipants(
+        conversationId
+      );
+
+
+    for (
+      const participant
+      of participants
+    ) {
+
+      if (
+        String(
+          participant.user_id
+        ) ===
+        String(
+          senderUserId
+        )
+      ) {
+
+        continue;
+
+      }
+
+
+      io
+        .to(
+          `user:${participant.user_id}`
+        )
+        .emit(
+          'conversation:new-message',
+          {
+            conversationId,
+            message
+          }
+        );
+
+    }
+
+
+  } catch (error) {
+
+    console.error(
+      'VOBIXCHAT BROADCAST PARTICIPANTS ERROR:',
+      error.message
+    );
+
+  }
+
+
+  return true;
+
+}
+
+
+// ========================================================
 // BUSCAR USUARIOS
 // ========================================================
 
@@ -182,11 +328,8 @@ async function searchUsersHandler(
   ) {
 
     return res.json({
-
       ok: true,
-
       users: []
-
     });
 
   }
@@ -299,12 +442,6 @@ async function searchUsersHandler(
 
 // ========================================================
 // RUTAS DE BÚSQUEDA
-//
-// Dejamos ambas porque el chat.html nuevo usa:
-// /api/chat/search?q=...
-//
-// y tu backend anterior utilizaba:
-// /api/chat/users/search?q=...
 // ========================================================
 
 router.get(
@@ -668,9 +805,7 @@ router.delete(
 
 
       return res.json({
-
         ok: true
-
       });
 
 
@@ -795,9 +930,7 @@ router.post(
 
 
       return res.json({
-
         ok: true
-
       });
 
 
@@ -881,9 +1014,7 @@ router.delete(
 
 
       return res.json({
-
         ok: true
-
       });
 
 
@@ -1067,10 +1198,9 @@ router.post(
       }
 
 
-      /*
-        Buscar conversación privada existente
-        formada exactamente por estos dos usuarios.
-      */
+      // ==================================================
+      // BUSCAR CONVERSACIÓN PRIVADA EXISTENTE
+      // ==================================================
 
       const existing =
         await database.query(
@@ -1159,10 +1289,9 @@ router.post(
       }
 
 
-      /*
-        Crear conversación nueva dentro de
-        una transacción.
-      */
+      // ==================================================
+      // CREAR CONVERSACIÓN NUEVA
+      // ==================================================
 
       const client =
         await database.pool.connect();
@@ -1304,6 +1433,9 @@ router.post(
 
 // ========================================================
 // FIN BLOQUE 1/3
+//
+// NO PONGAS module.exports TODAVÍA.
+// BLOQUE 2/3 VA JUSTO DEBAJO.
 // ========================================================
 // ========================================================
 // LISTAR CONVERSACIONES
@@ -1358,7 +1490,13 @@ router.get(
               AS last_message_type,
 
             last_message.content
-              AS last_message,
+              AS last_message_content,
+
+            last_message.file_url
+              AS last_message_file_url,
+
+            last_message.file_name
+              AS last_message_file_name,
 
             last_message.created_at
               AS last_message_created_at
@@ -1404,6 +1542,8 @@ router.get(
               m.id,
               m.message_type,
               m.content,
+              m.file_url,
+              m.file_name,
               m.created_at
 
             FROM messages m
@@ -1441,14 +1581,21 @@ router.get(
         result.rows.map(
           row => {
 
+            const type =
+              String(
+                row.last_message_type ||
+                ''
+              ).toLowerCase();
+
+
             let preview =
-              row.last_message ||
+              row.last_message_content ||
               'Conversación privada';
 
 
             if (
-              row.last_message_type ===
-              'image'
+              type === 'image' ||
+              type === 'photo'
             ) {
 
               preview =
@@ -1458,8 +1605,7 @@ router.get(
 
 
             if (
-              row.last_message_type ===
-              'video'
+              type === 'video'
             ) {
 
               preview =
@@ -1469,10 +1615,8 @@ router.get(
 
 
             if (
-              row.last_message_type ===
-                'audio' ||
-              row.last_message_type ===
-                'voice'
+              type === 'audio' ||
+              type === 'voice'
             ) {
 
               preview =
@@ -1482,14 +1626,14 @@ router.get(
 
 
             if (
-              row.last_message_type ===
-                'document' ||
-              row.last_message_type ===
-                'file'
+              type === 'document' ||
+              type === 'file'
             ) {
 
               preview =
-                '📄 Documento';
+                row.last_message_file_name
+                  ? `📄 ${row.last_message_file_name}`
+                  : '📄 Documento';
 
             }
 
@@ -1538,6 +1682,14 @@ router.get(
               lastMessage:
                 preview,
 
+              lastMessageFileUrl:
+                row.last_message_file_url ||
+                null,
+
+              lastMessageFileName:
+                row.last_message_file_name ||
+                null,
+
               lastMessageCreatedAt:
                 row.last_message_created_at
 
@@ -1579,6 +1731,266 @@ router.get(
 
   }
 );
+
+
+// ========================================================
+// NORMALIZAR MENSAJE
+// ========================================================
+
+function normalizeMessage(
+  row
+) {
+
+  if (!row) {
+
+    return null;
+
+  }
+
+
+  const messageType =
+    String(
+      row.message_type ||
+      row.messageType ||
+      'text'
+    )
+      .trim()
+      .toLowerCase();
+
+
+  const content =
+    row.content == null
+      ? ''
+      : String(
+          row.content
+        );
+
+
+  const fileUrl =
+    row.file_url ||
+    row.fileUrl ||
+    null;
+
+
+  const fileName =
+    row.file_name ||
+    row.fileName ||
+    null;
+
+
+  const fileMime =
+    row.file_mime ||
+    row.fileMime ||
+    row.mimeType ||
+    null;
+
+
+  const fileSize =
+    row.file_size == null
+      ? (
+          row.fileSize == null
+            ? null
+            : Number(
+                row.fileSize
+              )
+        )
+      : Number(
+          row.file_size
+        );
+
+
+  const fileResourceType =
+    row.file_resource_type ||
+    row.fileResourceType ||
+    null;
+
+
+  const mediaDuration =
+    row.media_duration == null
+      ? (
+          row.mediaDuration == null
+            ? null
+            : Number(
+                row.mediaDuration
+              )
+        )
+      : Number(
+          row.media_duration
+        );
+
+
+  const mediaWidth =
+    row.media_width == null
+      ? (
+          row.mediaWidth == null
+            ? null
+            : Number(
+                row.mediaWidth
+              )
+        )
+      : Number(
+          row.media_width
+        );
+
+
+  const mediaHeight =
+    row.media_height == null
+      ? (
+          row.mediaHeight == null
+            ? null
+            : Number(
+                row.mediaHeight
+              )
+        )
+      : Number(
+          row.media_height
+        );
+
+
+  return {
+
+    id:
+      row.id,
+
+    conversationId:
+      row.conversation_id,
+
+    conversation_id:
+      row.conversation_id,
+
+    senderId:
+      row.sender_user_id,
+
+    sender_user_id:
+      row.sender_user_id,
+
+    senderUsername:
+      row.sender_username ||
+      null,
+
+    sender_username:
+      row.sender_username ||
+      null,
+
+    senderAvatarUrl:
+      row.sender_avatar_url ||
+      null,
+
+    sender_avatar_url:
+      row.sender_avatar_url ||
+      null,
+
+    messageType,
+
+    message_type:
+      messageType,
+
+    content,
+
+    text:
+      content,
+
+    /*
+      Multimedia real.
+
+      YA NO asumimos que content contiene
+      la URL del archivo.
+    */
+
+    mediaUrl:
+      fileUrl,
+
+    media_url:
+      fileUrl,
+
+    fileUrl,
+
+    file_url:
+      fileUrl,
+
+    fileName,
+
+    file_name:
+      fileName,
+
+    mimeType:
+      fileMime,
+
+    fileMime,
+
+    file_mime:
+      fileMime,
+
+    size:
+      fileSize,
+
+    fileSize,
+
+    file_size:
+      fileSize,
+
+    fileResourceType,
+
+    file_resource_type:
+      fileResourceType,
+
+    duration:
+      mediaDuration,
+
+    mediaDuration,
+
+    media_duration:
+      mediaDuration,
+
+    width:
+      mediaWidth,
+
+    mediaWidth,
+
+    media_width:
+      mediaWidth,
+
+    height:
+      mediaHeight,
+
+    mediaHeight,
+
+    media_height:
+      mediaHeight,
+
+    replyToMessageId:
+      row.reply_to_message_id ||
+      null,
+
+    reply_to_message_id:
+      row.reply_to_message_id ||
+      null,
+
+    edited:
+      Boolean(
+        row.edited
+      ),
+
+    deleted:
+      Boolean(
+        row.deleted
+      ),
+
+    createdAt:
+      row.created_at,
+
+    created_at:
+      row.created_at,
+
+    updatedAt:
+      row.updated_at,
+
+    updated_at:
+      row.updated_at
+
+  };
+
+}
 
 
 // ========================================================
@@ -1652,6 +2064,17 @@ router.get(
             m.sender_user_id,
             m.message_type,
             m.content,
+
+            m.file_url,
+            m.file_name,
+            m.file_mime,
+            m.file_size,
+            m.file_resource_type,
+
+            m.media_duration,
+            m.media_width,
+            m.media_height,
+
             m.reply_to_message_id,
             m.edited,
             m.deleted,
@@ -1726,145 +2149,7 @@ router.get(
 
 
 // ========================================================
-// NORMALIZAR MENSAJE PARA EL FRONTEND
-// ========================================================
-
-function normalizeMessage(
-  row
-) {
-
-  if (!row) {
-
-    return null;
-
-  }
-
-
-  const messageType =
-    String(
-      row.message_type ||
-      row.messageType ||
-      'text'
-    );
-
-
-  const content =
-    row.content == null
-      ? ''
-      : String(
-          row.content
-        );
-
-
-  /*
-    Por ahora el URL del archivo multimedia
-    se almacena en messages.content.
-
-    De esta forma NO necesitamos agregar todavía
-    columnas nuevas a la tabla messages.
-  */
-
-  const isMedia =
-    [
-      'image',
-      'photo',
-      'video',
-      'audio',
-      'voice',
-      'document',
-      'file'
-    ].includes(
-      messageType
-    );
-
-
-  return {
-
-    id:
-      row.id,
-
-    conversationId:
-      row.conversation_id,
-
-    conversation_id:
-      row.conversation_id,
-
-    senderId:
-      row.sender_user_id,
-
-    sender_user_id:
-      row.sender_user_id,
-
-    senderUsername:
-      row.sender_username ||
-      null,
-
-    sender_username:
-      row.sender_username ||
-      null,
-
-    senderAvatarUrl:
-      row.sender_avatar_url ||
-      null,
-
-    messageType,
-
-    message_type:
-      messageType,
-
-    content,
-
-    mediaUrl:
-      isMedia
-        ? content
-        : null,
-
-    media_url:
-      isMedia
-        ? content
-        : null,
-
-    fileName:
-      row.file_name ||
-      row.fileName ||
-      null,
-
-    replyToMessageId:
-      row.reply_to_message_id ||
-      null,
-
-    edited:
-      Boolean(
-        row.edited
-      ),
-
-    deleted:
-      Boolean(
-        row.deleted
-      ),
-
-    createdAt:
-      row.created_at,
-
-    created_at:
-      row.created_at,
-
-    updatedAt:
-      row.updated_at,
-
-    updated_at:
-      row.updated_at
-
-  };
-
-}
-
-
-// ========================================================
 // ENVIAR MENSAJE DE TEXTO POR HTTP
-//
-// Mantenemos esta ruta porque tu routes/chat.js anterior
-// ya tenía envío de mensajes por backend.
 // ========================================================
 
 router.post(
@@ -2001,6 +2286,17 @@ router.post(
             sender_user_id,
             message_type,
             content,
+
+            file_url,
+            file_name,
+            file_mime,
+            file_size,
+            file_resource_type,
+
+            media_duration,
+            media_width,
+            media_height,
+
             reply_to_message_id,
             edited,
             deleted,
@@ -2031,9 +2327,31 @@ router.post(
       );
 
 
+      const row =
+        result.rows[0];
+
+
+      row.sender_username =
+        req.vobixUser.username;
+
+
+      row.sender_avatar_url =
+        req.vobixUser.avatar_url ||
+        null;
+
+
       const message =
         normalizeMessage(
-          result.rows[0]
+          row
+        );
+
+
+      const broadcasted =
+        await broadcastConversationMessage(
+          req,
+          conversationId,
+          userId,
+          message
         );
 
 
@@ -2041,7 +2359,9 @@ router.post(
 
         ok: true,
 
-        message
+        message,
+
+        broadcasted
 
       });
 
@@ -2069,39 +2389,6 @@ router.post(
 
   }
 );
-
-
-// ========================================================
-// MULTIMEDIA
-// ========================================================
-//
-// IMPORTANTE:
-//
-// El chat.html que acabamos de montar envía:
-//
-// POST /api/chat/upload
-//
-// como multipart/form-data con:
-//
-// file
-// conversationId
-// messageType
-//
-// Para recibirlo usaremos MULTER.
-//
-// En el BLOQUE 3/3 agregaremos:
-//
-// const multer = require('multer');
-//
-// almacenamiento seguro,
-// límites,
-// tipos permitidos,
-// creación de /public/uploads/chat,
-// POST /upload,
-// guardado en PostgreSQL,
-// y emisión Socket.IO.
-//
-// ========================================================
 
 
 // ========================================================
@@ -2188,7 +2475,9 @@ function normalizeMediaType(
     String(
       mimeType ||
       ''
-    ).toLowerCase();
+    )
+      .trim()
+      .toLowerCase();
 
 
   if (
@@ -2225,6 +2514,42 @@ function normalizeMediaType(
 
 
   return 'document';
+
+}
+
+
+// ========================================================
+// OBTENER RESOURCE TYPE
+// ========================================================
+
+function getFileResourceType(
+  messageType
+) {
+
+  switch (
+    messageType
+  ) {
+
+    case 'image':
+
+      return 'image';
+
+
+    case 'video':
+
+      return 'video';
+
+
+    case 'audio':
+
+      return 'audio';
+
+
+    default:
+
+      return 'raw';
+
+  }
 
 }
 
@@ -2267,7 +2592,7 @@ function safeFileName(
       )
       .slice(
         0,
-        120
+        150
       );
 
 
@@ -2307,19 +2632,30 @@ function getFileExtension(
       name.length - 1
   ) {
 
-    return name
-      .slice(
-        lastDot
-      )
-      .toLowerCase()
-      .replace(
-        /[^a-z0-9.]/g,
-        ''
-      )
-      .slice(
-        0,
-        12
-      );
+    const extension =
+      name
+        .slice(
+          lastDot
+        )
+        .toLowerCase()
+        .replace(
+          /[^a-z0-9.]/g,
+          ''
+        )
+        .slice(
+          0,
+          12
+        );
+
+
+    if (
+      extension &&
+      extension !== '.'
+    ) {
+
+      return extension;
+
+    }
 
   }
 
@@ -2375,6 +2711,9 @@ function getFileExtension(
     'audio/wav':
       '.wav',
 
+    'audio/x-wav':
+      '.wav',
+
     'application/pdf':
       '.pdf',
 
@@ -2404,7 +2743,9 @@ function isAllowedMimeType(
     String(
       mimeType ||
       ''
-    ).toLowerCase();
+    )
+      .trim()
+      .toLowerCase();
 
 
   if (
@@ -2478,7 +2819,7 @@ function isAllowedMimeType(
 
 
 // ========================================================
-// LÍMITES MULTIMEDIA
+// LÍMITE DE SUBIDA
 // ========================================================
 
 const CHAT_UPLOAD_MAX_BYTES =
@@ -2487,6 +2828,9 @@ const CHAT_UPLOAD_MAX_BYTES =
 
 // ========================================================
 // FIN BLOQUE 2/3
+//
+// NO PONGAS module.exports TODAVÍA.
+// BLOQUE 3/3 VA JUSTO DEBAJO.
 // ========================================================
 // ========================================================
 // MULTER / SISTEMA DE ARCHIVOS
@@ -2506,7 +2850,20 @@ const crypto =
 
 
 // ========================================================
-// CARPETA DE ARCHIVOS DEL CHAT
+// CARPETA TEMPORAL/PÚBLICA DEL CHAT
+// ========================================================
+//
+// IMPORTANTE:
+//
+// En Render, el filesystem local NO debe considerarse
+// almacenamiento permanente.
+//
+// Esta implementación permite probar cámara, fotos,
+// vídeos, notas de voz y documentos.
+//
+// Más adelante moveremos los archivos a almacenamiento
+// persistente sin cambiar la estructura de messages,
+// porque schema.js ya tiene file_url y file_public_id.
 // ========================================================
 
 const CHAT_UPLOAD_DIR =
@@ -2519,15 +2876,6 @@ const CHAT_UPLOAD_DIR =
   );
 
 
-/*
-  Crear la carpeta automáticamente si todavía
-  no existe.
-
-  Resultado:
-
-  /public/uploads/chat/
-*/
-
 fs.mkdirSync(
   CHAT_UPLOAD_DIR,
   {
@@ -2537,7 +2885,7 @@ fs.mkdirSync(
 
 
 // ========================================================
-// STORAGE DE MULTER
+// STORAGE MULTER
 // ========================================================
 
 const chatStorage =
@@ -2576,18 +2924,16 @@ const chatStorage =
       try {
 
         randomId =
-          crypto.randomBytes(
-            16
-          ).toString(
-            'hex'
-          );
+          crypto
+            .randomBytes(16)
+            .toString('hex');
 
-      } catch (_) {
+      } catch (error) {
 
         randomId =
-          `${Date.now()}-${Math.random()
+          Math.random()
             .toString(16)
-            .slice(2)}`;
+            .slice(2);
 
       }
 
@@ -2607,7 +2953,7 @@ const chatStorage =
 
 
 // ========================================================
-// CONFIGURACIÓN DE MULTER
+// MULTER
 // ========================================================
 
 const chatUpload =
@@ -2657,7 +3003,7 @@ const chatUpload =
       }
 
 
-      callback(
+      return callback(
         null,
         true
       );
@@ -2668,7 +3014,7 @@ const chatUpload =
 
 
 // ========================================================
-// BORRAR ARCHIVO SI FALLA LA OPERACIÓN
+// ELIMINAR ARCHIVO LOCAL
 // ========================================================
 
 function removeUploadedFile(
@@ -2712,7 +3058,7 @@ function removeUploadedFile(
 
 
 // ========================================================
-// MIDDLEWARE DE SUBIDA
+// MIDDLEWARE UPLOAD
 // ========================================================
 
 function uploadSingleChatFile(
@@ -2743,7 +3089,7 @@ function uploadSingleChatFile(
 
       if (
         error instanceof
-          multer.MulterError
+        multer.MulterError
       ) {
 
         if (
@@ -2816,7 +3162,60 @@ function uploadSingleChatFile(
 
 
 // ========================================================
+// NORMALIZAR NÚMERO OPCIONAL
+// ========================================================
+
+function optionalNumber(
+  value
+) {
+
+  if (
+    value === undefined ||
+    value === null ||
+    value === ''
+  ) {
+
+    return null;
+
+  }
+
+
+  const number =
+    Number(
+      value
+    );
+
+
+  if (
+    !Number.isFinite(
+      number
+    )
+  ) {
+
+    return null;
+
+  }
+
+
+  return number;
+
+}
+
+
+// ========================================================
 // POST /api/chat/upload
+//
+// multipart/form-data:
+//
+// file
+// conversationId
+// messageType
+//
+// OPCIONALES:
+//
+// duration
+// width
+// height
 // ========================================================
 
 router.post(
@@ -2880,7 +3279,7 @@ router.post(
     try {
 
       // ==================================================
-      // COMPROBAR QUE EL USUARIO ESTÁ EN LA CONVERSACIÓN
+      // COMPROBAR ACCESO
       // ==================================================
 
       const allowed =
@@ -2944,7 +3343,7 @@ router.post(
 
 
       // ==================================================
-      // TIPO REAL DEL MENSAJE
+      // NORMALIZAR TIPO
       // ==================================================
 
       const messageType =
@@ -2955,18 +3354,81 @@ router.post(
         );
 
 
+      const resourceType =
+        getFileResourceType(
+          messageType
+        );
+
+
       // ==================================================
-      // URL PÚBLICA DEL ARCHIVO
+      // METADATOS
       // ==================================================
 
-      const mediaUrl =
+      const originalFileName =
+        safeFileName(
+          req.file.originalname
+        );
+
+
+      const fileMime =
+        String(
+          req.file.mimetype ||
+          'application/octet-stream'
+        )
+          .trim()
+          .toLowerCase();
+
+
+      const fileSize =
+        Number(
+          req.file.size ||
+          0
+        );
+
+
+      const mediaDuration =
+        optionalNumber(
+          req.body.duration ||
+          req.body.mediaDuration ||
+          req.body.media_duration
+        );
+
+
+      const mediaWidth =
+        optionalNumber(
+          req.body.width ||
+          req.body.mediaWidth ||
+          req.body.media_width
+        );
+
+
+      const mediaHeight =
+        optionalNumber(
+          req.body.height ||
+          req.body.mediaHeight ||
+          req.body.media_height
+        );
+
+
+      // ==================================================
+      // URL PÚBLICA
+      // ==================================================
+
+      const fileUrl =
         `/uploads/chat/${encodeURIComponent(
           req.file.filename
         )}`;
 
 
       // ==================================================
-      // GUARDAR MENSAJE EN POSTGRESQL
+      // GUARDAR EN POSTGRESQL
+      // ========================================================
+      //
+      // AHORA SÍ utilizamos las columnas multimedia
+      // existentes en schema.js.
+      //
+      // content queda vacío para multimedia.
+      // file_url contiene la URL real.
       // ==================================================
 
       const result =
@@ -2978,6 +3440,17 @@ router.post(
             sender_user_id,
             message_type,
             content,
+
+            file_url,
+            file_name,
+            file_mime,
+            file_size,
+            file_resource_type,
+
+            media_duration,
+            media_width,
+            media_height,
+
             created_at,
             updated_at
           )
@@ -2987,7 +3460,15 @@ router.post(
             $1,
             $2,
             $3,
+            '',
             $4,
+            $5,
+            $6,
+            $7,
+            $8,
+            $9,
+            $10,
+            $11,
             NOW(),
             NOW()
           )
@@ -2998,6 +3479,17 @@ router.post(
             sender_user_id,
             message_type,
             content,
+
+            file_url,
+            file_name,
+            file_mime,
+            file_size,
+            file_resource_type,
+
+            media_duration,
+            media_width,
+            media_height,
+
             reply_to_message_id,
             edited,
             deleted,
@@ -3008,7 +3500,14 @@ router.post(
             conversationId,
             userId,
             messageType,
-            mediaUrl
+            fileUrl,
+            originalFileName,
+            fileMime,
+            fileSize,
+            resourceType,
+            mediaDuration,
+            mediaWidth,
+            mediaHeight
           ]
         );
 
@@ -3034,47 +3533,20 @@ router.post(
 
 
       // ==================================================
-      // OBTENER DATOS DEL REMITENTE
+      // PREPARAR MENSAJE PARA FRONTEND
       // ==================================================
-
-      const senderResult =
-        await database.query(
-          `
-          SELECT
-            username,
-            avatar_url
-
-          FROM users
-
-          WHERE
-            id = $1
-
-          LIMIT 1
-          `,
-          [
-            userId
-          ]
-        );
-
 
       const row =
         result.rows[0];
 
 
-      if (
-        senderResult.rows.length
-      ) {
-
-        row.sender_username =
-          senderResult.rows[0]
-            .username;
+      row.sender_username =
+        req.vobixUser.username;
 
 
-        row.sender_avatar_url =
-          senderResult.rows[0]
-            .avatar_url;
-
-      }
+      row.sender_avatar_url =
+        req.vobixUser.avatar_url ||
+        null;
 
 
       const message =
@@ -3083,81 +3555,22 @@ router.post(
         );
 
 
-      /*
-        Conservamos el nombre original para
-        documentos y otros archivos.
-      */
+      // ==================================================
+      // EMITIR SOCKET.IO
+      // ==================================================
 
-      message.fileName =
-        safeFileName(
-          req.file.originalname
+      const broadcasted =
+        await broadcastConversationMessage(
+          req,
+          conversationId,
+          userId,
+          message
         );
 
 
-      message.mimeType =
-        req.file.mimetype;
-
-
-      message.size =
-        req.file.size;
-
-
       // ==================================================
-      // SOCKET.IO
+      // RESPUESTA
       // ==================================================
-      //
-      // routes/chat.js no debe crear otro servidor Socket.IO.
-      //
-      // server.js puede colocar su instancia en:
-      //
-      // app.set('io', io);
-      //
-      // Entonces la recuperamos desde req.app.
-      // ==================================================
-
-      const io =
-        req.app.get(
-          'io'
-        );
-
-
-      let broadcasted =
-        false;
-
-
-      if (io) {
-
-        /*
-          Esta sala debe coincidir con la que utiliza
-          server.js cuando recibe conversation-join.
-
-          En caso de que tu server.js use:
-          conversation:${conversationId}
-
-          el mensaje llegará inmediatamente a ambos.
-        */
-
-        io
-          .to(
-            `conversation:${conversationId}`
-          )
-          .emit(
-            'conversation-message',
-            {
-
-              conversationId,
-
-              message
-
-            }
-          );
-
-
-        broadcasted =
-          true;
-
-      }
-
 
       return res.json({
 
@@ -3173,9 +3586,8 @@ router.post(
     } catch (error) {
 
       /*
-        Si PostgreSQL falla después de que Multer
-        guardó el archivo, eliminamos el archivo para
-        no dejar basura en el servidor.
+        Si falla PostgreSQL después de subir el archivo,
+        eliminamos el archivo local para no dejar basura.
       */
 
       removeUploadedFile(
@@ -3207,7 +3619,7 @@ router.post(
 
 
 // ========================================================
-// INFORMACIÓN DE ARCHIVO / SEGURIDAD
+// ESTADO MULTIMEDIA
 // ========================================================
 
 router.get(
@@ -3229,6 +3641,9 @@ router.get(
 
       maxFileSizeMb:
         50,
+
+      storage:
+        'local-temporary',
 
       types: [
 
