@@ -17,6 +17,9 @@
  - Mensajes persistentes
  - Socket.IO
  - Salas privadas
+ - Señalización WebRTC privada
+ - Llamadas de voz
+ - Videollamadas
  - Reuniones
  - Health check
 ==========================================================
@@ -83,9 +86,7 @@ app.use(
 // ======================================================
 
 const pins = {};
-
 const pendingUsers = {};
-
 const sessions = {};
 
 const SESSION_TTL_MS =
@@ -931,16 +932,12 @@ app.post(
 
 
     if (token) {
-
       delete sessions[token];
-
     }
 
 
     return res.json({
-
       ok: true
-
     });
 
   }
@@ -1120,7 +1117,6 @@ async function socketCanAccessConversation(
 
       WHERE
         conversation_id = $1
-
         AND user_id = $2
 
       LIMIT 1
@@ -1134,6 +1130,145 @@ async function socketCanAccessConversation(
 
   return (
     result.rows.length > 0
+  );
+
+}
+
+
+// ======================================================
+// OBTENER LOS PARTICIPANTES DE UNA CONVERSACIÓN
+// ======================================================
+
+async function getConversationParticipants(
+  conversationId
+) {
+
+  const result =
+    await database.query(
+      `
+      SELECT
+        cp.user_id,
+        u.username
+
+      FROM conversation_participants cp
+
+      INNER JOIN users u
+        ON u.id = cp.user_id
+
+      WHERE cp.conversation_id = $1
+      `,
+      [
+        conversationId
+      ]
+    );
+
+
+  return result.rows;
+
+}
+
+
+// ======================================================
+// OBTENER SOCKETS ACTIVOS DE UN USUARIO
+// ======================================================
+
+function getUserSockets(
+  userId
+) {
+
+  const sockets = [];
+
+
+  for (
+    const connectedSocket
+    of io.sockets.sockets.values()
+  ) {
+
+    if (
+      connectedSocket.vobixAuthenticated &&
+      connectedSocket.vobixUserId != null &&
+      String(
+        connectedSocket.vobixUserId
+      ) ===
+      String(
+        userId
+      )
+    ) {
+
+      sockets.push(
+        connectedSocket
+      );
+
+    }
+
+  }
+
+
+  return sockets;
+
+}
+
+
+// ======================================================
+// ENVIAR EVENTO A UN USUARIO
+// ======================================================
+
+function emitToUser(
+  userId,
+  eventName,
+  payload
+) {
+
+  const sockets =
+    getUserSockets(
+      userId
+    );
+
+
+  for (
+    const targetSocket
+    of sockets
+  ) {
+
+    targetSocket.emit(
+      eventName,
+      payload
+    );
+
+  }
+
+
+  return sockets.length;
+
+}
+
+
+// ======================================================
+// LOCALIZAR EL OTRO PARTICIPANTE
+// ======================================================
+
+async function getOtherParticipant(
+  conversationId,
+  currentUserId
+) {
+
+  const participants =
+    await getConversationParticipants(
+      conversationId
+    );
+
+
+  return (
+    participants.find(
+      participant =>
+        String(
+          participant.user_id
+        ) !==
+        String(
+          currentUserId
+        )
+    ) ||
+    null
   );
 
 }
@@ -1266,7 +1401,9 @@ io.on(
             `conversation:${id}`;
 
 
-          socket.join(room);
+          socket.join(
+            room
+          );
 
 
           if (
@@ -1592,6 +1729,1015 @@ io.on(
 
 
     // ==================================================
+    // LLAMADA - INICIAR
+    // ==================================================
+
+    socket.on(
+      'call:start',
+      async (
+        data = {},
+        callback
+      ) => {
+
+        try {
+
+          if (
+            !socket.vobixAuthenticated ||
+            !socket.vobixUserId
+          ) {
+
+            if (
+              typeof callback ===
+              'function'
+            ) {
+
+              callback({
+                ok: false,
+                msg:
+                  'Autenticación requerida'
+              });
+
+            }
+
+            return;
+
+          }
+
+
+          const conversationId =
+            String(
+              data.conversationId ||
+              data.conversation_id ||
+              ''
+            ).trim();
+
+
+          const callType =
+            data.type === 'video'
+              ? 'video'
+              : 'audio';
+
+
+          if (!conversationId) {
+
+            if (
+              typeof callback ===
+              'function'
+            ) {
+
+              callback({
+                ok: false,
+                msg:
+                  'Conversación no válida'
+              });
+
+            }
+
+            return;
+
+          }
+
+
+          const allowed =
+            await socketCanAccessConversation(
+              conversationId,
+              socket.vobixUserId
+            );
+
+
+          if (!allowed) {
+
+            if (
+              typeof callback ===
+              'function'
+            ) {
+
+              callback({
+                ok: false,
+                msg:
+                  'No tienes acceso a esta conversación'
+              });
+
+            }
+
+            return;
+
+          }
+
+
+          const target =
+            await getOtherParticipant(
+              conversationId,
+              socket.vobixUserId
+            );
+
+
+          if (!target) {
+
+            if (
+              typeof callback ===
+              'function'
+            ) {
+
+              callback({
+                ok: false,
+                msg:
+                  'No encontramos al destinatario'
+              });
+
+            }
+
+            return;
+
+          }
+
+
+          const callId =
+            crypto
+              .randomBytes(16)
+              .toString('hex');
+
+
+          const payload = {
+
+            callId,
+
+            conversationId,
+
+            conversation_id:
+              conversationId,
+
+            type:
+              callType,
+
+            caller: {
+
+              id:
+                socket.vobixUserId,
+
+              username:
+                socket.vobixUsername
+
+            },
+
+            callerUserId:
+              socket.vobixUserId,
+
+            callerUsername:
+              socket.vobixUsername
+
+          };
+
+
+          const delivered =
+            emitToUser(
+              target.user_id,
+              'call:incoming',
+              payload
+            );
+
+
+          if (
+            delivered === 0
+          ) {
+
+            socket.emit(
+              'call:unavailable',
+              {
+
+                callId,
+
+                conversationId,
+
+                reason:
+                  'offline',
+
+                message:
+                  'El usuario no está conectado'
+
+              }
+            );
+
+          }
+
+
+          if (
+            typeof callback ===
+            'function'
+          ) {
+
+            callback({
+
+              ok:
+                delivered > 0,
+
+              callId,
+
+              conversationId,
+
+              targetUserId:
+                target.user_id,
+
+              online:
+                delivered > 0,
+
+              msg:
+                delivered > 0
+                  ? 'Llamada enviada'
+                  : 'El usuario no está conectado'
+
+            });
+
+          }
+
+
+        } catch (error) {
+
+          console.error(
+            'VOBIXCHAT CALL START ERROR:',
+            error.message
+          );
+
+
+          if (
+            typeof callback ===
+            'function'
+          ) {
+
+            callback({
+
+              ok: false,
+
+              msg:
+                'No se pudo iniciar la llamada'
+
+            });
+
+          }
+
+        }
+
+      }
+    );
+    // ==================================================
+    // LLAMADA - ACEPTAR
+    // ==================================================
+
+    socket.on(
+      'call:accept',
+      async (
+        data = {},
+        callback
+      ) => {
+
+        try {
+
+          if (
+            !socket.vobixAuthenticated ||
+            !socket.vobixUserId
+          ) {
+            return;
+          }
+
+
+          const conversationId =
+            String(
+              data.conversationId ||
+              data.conversation_id ||
+              ''
+            ).trim();
+
+
+          const callId =
+            String(
+              data.callId ||
+              ''
+            ).trim();
+
+
+          if (
+            !conversationId ||
+            !callId
+          ) {
+            return;
+          }
+
+
+          const allowed =
+            await socketCanAccessConversation(
+              conversationId,
+              socket.vobixUserId
+            );
+
+
+          if (!allowed) {
+            return;
+          }
+
+
+          const target =
+            await getOtherParticipant(
+              conversationId,
+              socket.vobixUserId
+            );
+
+
+          if (!target) {
+            return;
+          }
+
+
+          emitToUser(
+            target.user_id,
+            'call:accepted',
+            {
+
+              callId,
+
+              conversationId,
+
+              conversation_id:
+                conversationId,
+
+              userId:
+                socket.vobixUserId,
+
+              username:
+                socket.vobixUsername
+
+            }
+          );
+
+
+          if (
+            typeof callback ===
+            'function'
+          ) {
+
+            callback({
+              ok: true
+            });
+
+          }
+
+
+        } catch (error) {
+
+          console.error(
+            'VOBIXCHAT CALL ACCEPT ERROR:',
+            error.message
+          );
+
+
+          if (
+            typeof callback ===
+            'function'
+          ) {
+
+            callback({
+              ok: false,
+              msg:
+                'No se pudo aceptar la llamada'
+            });
+
+          }
+
+        }
+
+      }
+    );
+
+
+    // ==================================================
+    // LLAMADA - RECHAZAR
+    // ==================================================
+
+    socket.on(
+      'call:reject',
+      async (
+        data = {},
+        callback
+      ) => {
+
+        try {
+
+          if (
+            !socket.vobixAuthenticated ||
+            !socket.vobixUserId
+          ) {
+            return;
+          }
+
+
+          const conversationId =
+            String(
+              data.conversationId ||
+              data.conversation_id ||
+              ''
+            ).trim();
+
+
+          const callId =
+            String(
+              data.callId ||
+              ''
+            ).trim();
+
+
+          if (
+            !conversationId ||
+            !callId
+          ) {
+            return;
+          }
+
+
+          const allowed =
+            await socketCanAccessConversation(
+              conversationId,
+              socket.vobixUserId
+            );
+
+
+          if (!allowed) {
+            return;
+          }
+
+
+          const target =
+            await getOtherParticipant(
+              conversationId,
+              socket.vobixUserId
+            );
+
+
+          if (!target) {
+            return;
+          }
+
+
+          emitToUser(
+            target.user_id,
+            'call:rejected',
+            {
+
+              callId,
+
+              conversationId,
+
+              conversation_id:
+                conversationId,
+
+              userId:
+                socket.vobixUserId,
+
+              username:
+                socket.vobixUsername
+
+            }
+          );
+
+
+          if (
+            typeof callback ===
+            'function'
+          ) {
+
+            callback({
+              ok: true
+            });
+
+          }
+
+
+        } catch (error) {
+
+          console.error(
+            'VOBIXCHAT CALL REJECT ERROR:',
+            error.message
+          );
+
+
+          if (
+            typeof callback ===
+            'function'
+          ) {
+
+            callback({
+              ok: false
+            });
+
+          }
+
+        }
+
+      }
+    );
+
+
+    // ==================================================
+    // LLAMADA - CANCELAR / COLGAR
+    // ==================================================
+
+    socket.on(
+      'call:end',
+      async (
+        data = {},
+        callback
+      ) => {
+
+        try {
+
+          if (
+            !socket.vobixAuthenticated ||
+            !socket.vobixUserId
+          ) {
+            return;
+          }
+
+
+          const conversationId =
+            String(
+              data.conversationId ||
+              data.conversation_id ||
+              ''
+            ).trim();
+
+
+          const callId =
+            String(
+              data.callId ||
+              ''
+            ).trim();
+
+
+          if (!conversationId) {
+            return;
+          }
+
+
+          const allowed =
+            await socketCanAccessConversation(
+              conversationId,
+              socket.vobixUserId
+            );
+
+
+          if (!allowed) {
+            return;
+          }
+
+
+          const target =
+            await getOtherParticipant(
+              conversationId,
+              socket.vobixUserId
+            );
+
+
+          if (!target) {
+            return;
+          }
+
+
+          emitToUser(
+            target.user_id,
+            'call:ended',
+            {
+
+              callId,
+
+              conversationId,
+
+              conversation_id:
+                conversationId,
+
+              userId:
+                socket.vobixUserId,
+
+              username:
+                socket.vobixUsername,
+
+              reason:
+                data.reason ||
+                'ended'
+
+            }
+          );
+
+
+          if (
+            typeof callback ===
+            'function'
+          ) {
+
+            callback({
+              ok: true
+            });
+
+          }
+
+
+        } catch (error) {
+
+          console.error(
+            'VOBIXCHAT CALL END ERROR:',
+            error.message
+          );
+
+
+          if (
+            typeof callback ===
+            'function'
+          ) {
+
+            callback({
+              ok: false
+            });
+
+          }
+
+        }
+
+      }
+    );
+
+
+    // ==================================================
+    // WEBRTC - OFFER
+    // ==================================================
+
+    socket.on(
+      'call:offer',
+      async (
+        data = {},
+        callback
+      ) => {
+
+        try {
+
+          if (
+            !socket.vobixAuthenticated ||
+            !socket.vobixUserId
+          ) {
+            return;
+          }
+
+
+          const conversationId =
+            String(
+              data.conversationId ||
+              data.conversation_id ||
+              ''
+            ).trim();
+
+
+          if (
+            !conversationId ||
+            !data.offer
+          ) {
+            return;
+          }
+
+
+          const allowed =
+            await socketCanAccessConversation(
+              conversationId,
+              socket.vobixUserId
+            );
+
+
+          if (!allowed) {
+            return;
+          }
+
+
+          const target =
+            await getOtherParticipant(
+              conversationId,
+              socket.vobixUserId
+            );
+
+
+          if (!target) {
+            return;
+          }
+
+
+          emitToUser(
+            target.user_id,
+            'call:offer',
+            {
+
+              callId:
+                data.callId || '',
+
+              conversationId,
+
+              conversation_id:
+                conversationId,
+
+              fromUserId:
+                socket.vobixUserId,
+
+              fromUsername:
+                socket.vobixUsername,
+
+              type:
+                data.type === 'video'
+                  ? 'video'
+                  : 'audio',
+
+              offer:
+                data.offer
+
+            }
+          );
+
+
+          if (
+            typeof callback ===
+            'function'
+          ) {
+
+            callback({
+              ok: true
+            });
+
+          }
+
+
+        } catch (error) {
+
+          console.error(
+            'VOBIXCHAT CALL OFFER ERROR:',
+            error.message
+          );
+
+
+          if (
+            typeof callback ===
+            'function'
+          ) {
+
+            callback({
+              ok: false
+            });
+
+          }
+
+        }
+
+      }
+    );
+
+
+    // ==================================================
+    // WEBRTC - ANSWER
+    // ==================================================
+
+    socket.on(
+      'call:answer',
+      async (
+        data = {},
+        callback
+      ) => {
+
+        try {
+
+          if (
+            !socket.vobixAuthenticated ||
+            !socket.vobixUserId
+          ) {
+            return;
+          }
+
+
+          const conversationId =
+            String(
+              data.conversationId ||
+              data.conversation_id ||
+              ''
+            ).trim();
+
+
+          if (
+            !conversationId ||
+            !data.answer
+          ) {
+            return;
+          }
+
+
+          const allowed =
+            await socketCanAccessConversation(
+              conversationId,
+              socket.vobixUserId
+            );
+
+
+          if (!allowed) {
+            return;
+          }
+
+
+          const target =
+            await getOtherParticipant(
+              conversationId,
+              socket.vobixUserId
+            );
+
+
+          if (!target) {
+            return;
+          }
+
+
+          emitToUser(
+            target.user_id,
+            'call:answer',
+            {
+
+              callId:
+                data.callId || '',
+
+              conversationId,
+
+              conversation_id:
+                conversationId,
+
+              fromUserId:
+                socket.vobixUserId,
+
+              fromUsername:
+                socket.vobixUsername,
+
+              answer:
+                data.answer
+
+            }
+          );
+
+
+          if (
+            typeof callback ===
+            'function'
+          ) {
+
+            callback({
+              ok: true
+            });
+
+          }
+
+
+        } catch (error) {
+
+          console.error(
+            'VOBIXCHAT CALL ANSWER ERROR:',
+            error.message
+          );
+
+
+          if (
+            typeof callback ===
+            'function'
+          ) {
+
+            callback({
+              ok: false
+            });
+
+          }
+
+        }
+
+      }
+    );
+
+
+    // ==================================================
+    // WEBRTC - ICE CANDIDATE
+    // ==================================================
+
+    socket.on(
+      'call:ice',
+      async (
+        data = {},
+        callback
+      ) => {
+
+        try {
+
+          if (
+            !socket.vobixAuthenticated ||
+            !socket.vobixUserId
+          ) {
+            return;
+          }
+
+
+          const conversationId =
+            String(
+              data.conversationId ||
+              data.conversation_id ||
+              ''
+            ).trim();
+
+
+          if (
+            !conversationId ||
+            !data.candidate
+          ) {
+            return;
+          }
+
+
+          const allowed =
+            await socketCanAccessConversation(
+              conversationId,
+              socket.vobixUserId
+            );
+
+
+          if (!allowed) {
+            return;
+          }
+
+
+          const target =
+            await getOtherParticipant(
+              conversationId,
+              socket.vobixUserId
+            );
+
+
+          if (!target) {
+            return;
+          }
+
+
+          emitToUser(
+            target.user_id,
+            'call:ice',
+            {
+
+              callId:
+                data.callId || '',
+
+              conversationId,
+
+              conversation_id:
+                conversationId,
+
+              fromUserId:
+                socket.vobixUserId,
+
+              candidate:
+                data.candidate
+
+            }
+          );
+
+
+          if (
+            typeof callback ===
+            'function'
+          ) {
+
+            callback({
+              ok: true
+            });
+
+          }
+
+
+        } catch (error) {
+
+          console.error(
+            'VOBIXCHAT CALL ICE ERROR:',
+            error.message
+          );
+
+
+          if (
+            typeof callback ===
+            'function'
+          ) {
+
+            callback({
+              ok: false
+            });
+
+          }
+
+        }
+
+      }
+    );
+
+
+    // ==================================================
     // CHAT ANTIGUO
     // ==================================================
 
@@ -1661,12 +2807,10 @@ io.on(
               .get(safeRoom) ||
             []
           )
-
             .filter(
               id =>
                 id !== socket.id
             )
-
             .map(
               id => ({
                 id
@@ -1758,6 +2902,10 @@ io.on(
       }
     );
 
+
+    // ==================================================
+    // DESCONEXIÓN
+    // ==================================================
 
     socket.on(
       'disconnect',
@@ -1880,6 +3028,11 @@ async function startVobixChat() {
 
       console.log(
         'VOBIXCHAT CORE: Socket.IO privado preparado'
+      );
+
+
+      console.log(
+        'VOBIXCHAT CORE: señalización de llamadas preparada'
       );
 
 
