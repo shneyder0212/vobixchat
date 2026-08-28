@@ -3,155 +3,314 @@
 
 <head>
 
-<meta charset="UTF-8">
+  <meta charset="UTF-8">
 
-<meta
-  name="viewport"
-  content="width=device-width,initial-scale=1"
->
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1, viewport-fit=cover"
+  >
 
-<title>VobixChat</title>
+  <meta name="theme-color" content="#071009">
 
-<style>
+  <title>VOBIXCHAT</title>
 
-*{
-  box-sizing:border-box;
-  font-family:Inter,system-ui;
-}
+  <style>
 
-body{
-  margin:0;
-  min-height:100vh;
-  background:#070c09;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-}
+    *{
+      box-sizing:border-box;
+    }
 
-body::before{
-  content:"";
-  position:fixed;
-  inset:0;
-  background-image:
-    radial-gradient(
-      #7aff7a 1.5px,
-      transparent 2px
-    );
-  background-size:32px 32px;
-  opacity:.35;
-}
+    html,
+    body{
+      width:100%;
+      min-height:100%;
+      margin:0;
+    }
 
-.card{
-  width:360px;
-  background:
-    linear-gradient(
-      180deg,
-      #132015,
-      #0c1710
-    );
-  border:1.5px solid #6eff7a;
-  border-radius:26px;
-  padding:28px 22px;
-  text-align:center;
-  box-shadow:
-    0 0 15px #6eff7a,
-    0 0 60px rgba(110,255,122,.6);
-  position:relative;
-}
+    body{
+      min-height:100vh;
+      min-height:100dvh;
 
-.logo{
-  width:86px;
-  height:86px;
-  margin:0 auto 16px;
-  background:#6eff7a;
-  border-radius:20px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  font-size:48px;
-  font-weight:900;
-  color:#0f2f17;
-  box-shadow:
-    0 0 20px #6eff7a;
-}
+      display:flex;
+      align-items:center;
+      justify-content:center;
 
-h1{
-  margin:0;
-  color:#fff;
-  font-size:30px;
-  font-weight:900;
-  letter-spacing:.5px;
-}
+      padding:20px;
 
-.todo{
-  color:#6eff7a;
-  font-weight:900;
-  margin:8px 0 2px;
-  font-size:15px;
-  letter-spacing:.3px;
-}
+      background:
+        radial-gradient(
+          circle at 50% 10%,
+          rgba(110,255,122,.13),
+          transparent 32%
+        ),
+        #071009;
 
-.sub{
-  color:#fff;
-  font-size:10px;
-  letter-spacing:2px;
-  font-weight:800;
-}
+      color:#fff;
 
-.e2e{
-  color:#b8ffbe;
-  font-size:11px;
-  margin:14px 0 18px;
-}
+      font-family:
+        system-ui,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
+    }
 
-input{
-  width:100%;
-  background:#132015;
-  border:1.2px solid #3a6b3f;
-  border-radius:14px;
-  padding:14px;
-  color:#fff;
-  outline:none;
-}
+    .card{
+      width:100%;
+      max-width:410px;
 
-.row{
-  display:flex;
-  gap:10px;
-  margin:12px 0;
-}
+      padding:30px 24px;
 
-.pref{
-  width:80px;
-  background:#132015;
-  border:1.2px solid #3a6b3f;
-  border-radius:14px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  color:#fff;
-  font-weight:800;
-}
+      border:
+        1px solid rgba(110,255,122,.18);
 
-.btn{
-  width:100%;
-  background:#6eff7a;
-  border:none;
-  padding:16px;
-  border-radius:14px;
-  font-weight:900;
-  color:#123b1a;
-  cursor:pointer;
-  letter-spacing:.5px;
-  box-shadow:
-    0 0 20px rgba(110,255,122,.6);
-}
+      border-radius:25px;
 
-.btn:disabled{
-  opacity:.65;
-  cursor:not-allowed;
-}
+      background:
+        rgba(10,25,13,.96);
 
-</style>
+      box-shadow:
+        0 20px 70px rgba(0,0,0,.45);
+
+      text-align:center;
+    }
+
+    .logo{
+      width:76px;
+      height:76px;
+
+      margin:0 auto 14px;
+
+      display:grid;
+      place-items:center;
+
+      border-radius:23px;
+
+      background:#6eff7a;
+
+      color:#071009;
+
+      font-size:42px;
+      font-weight:1000;
+
+      box-shadow:
+        0 0 35px rgba(110,255,122,.30);
+    }
+
+    h1{
+      margin:0;
+
+      color:#fff;
+
+      font-size:28px;
+      font-weight:1000;
+      letter-spacing:.5px;
+    }
+
+    .todo{
+      color:#6eff7a;
+
+      font-weight:900;
+
+      margin:8px 0 2px;
+
+      font-size:15px;
+
+      letter-spacing:.3px;
+    }
+
+    .sub{
+      color:#fff;
+
+      font-size:10px;
+
+      letter-spacing:2px;
+
+      font-weight:800;
+    }
+
+    .e2e{
+      color:#b8ffbe;
+
+      font-size:11px;
+
+      margin:14px 0 18px;
+    }
+
+    input,
+    select{
+      width:100%;
+
+      background:#132015;
+
+      border:
+        1.2px solid #3a6b3f;
+
+      border-radius:14px;
+
+      padding:14px;
+
+      color:#fff;
+
+      outline:none;
+
+      font-size:15px;
+    }
+
+    input:focus,
+    select:focus{
+      border-color:#6eff7a;
+
+      box-shadow:
+        0 0 0 2px rgba(110,255,122,.08);
+    }
+
+    select{
+      cursor:pointer;
+
+      appearance:auto;
+    }
+
+    option{
+      background:#132015;
+      color:#fff;
+    }
+
+    .countryBlock{
+      margin-top:12px;
+    }
+
+    .countryLabel{
+      margin:0 0 6px 3px;
+
+      text-align:left;
+
+      color:#8fbf94;
+
+      font-size:10px;
+
+      font-weight:700;
+    }
+
+    .row{
+      display:flex;
+
+      gap:10px;
+
+      margin:10px 0 0;
+    }
+
+    .pref{
+      width:90px;
+      min-width:90px;
+
+      background:#132015;
+
+      border:
+        1.2px solid #3a6b3f;
+
+      border-radius:14px;
+
+      display:flex;
+
+      align-items:center;
+      justify-content:center;
+
+      color:#6eff7a;
+
+      font-weight:1000;
+
+      font-size:16px;
+    }
+
+    #phone{
+      margin:0;
+      flex:1;
+      min-width:0;
+    }
+
+    .countryInfo{
+      min-height:18px;
+
+      text-align:left;
+
+      color:#8fbf94;
+
+      font-size:10px;
+
+      margin:7px 0 12px 4px;
+    }
+
+    .btn{
+      width:100%;
+
+      background:#6eff7a;
+
+      border:none;
+
+      padding:16px;
+
+      border-radius:14px;
+
+      font-weight:1000;
+
+      color:#123b1a;
+
+      cursor:pointer;
+
+      letter-spacing:.5px;
+
+      box-shadow:
+        0 0 20px rgba(110,255,122,.35);
+    }
+
+    .btn:hover{
+      filter:brightness(1.04);
+    }
+
+    .btn:disabled{
+      opacity:.65;
+      cursor:not-allowed;
+    }
+
+    .status{
+      min-height:20px;
+
+      margin-top:12px;
+
+      color:#b8ffbe;
+
+      font-size:11px;
+
+      line-height:1.4;
+    }
+
+    .status.error{
+      color:#ff8d8d;
+    }
+
+    @media(max-width:480px){
+
+      body{
+        padding:12px;
+      }
+
+      .card{
+        padding:25px 17px;
+      }
+
+      .row{
+        gap:7px;
+      }
+
+      .pref{
+        width:78px;
+        min-width:78px;
+      }
+
+    }
+
+  </style>
 
 </head>
 
@@ -198,12 +357,35 @@ input{
 
   <input
     id="user"
+    type="text"
     placeholder="Nombre de usuario"
     autocomplete="username"
+    maxlength="100"
   >
 
 
+  <div class="countryBlock">
+
+
+    <div
+      class="countryLabel"
+      id="countryLabel"
+    >
+      País / prefijo
+    </div>
+
+
+    <select
+      id="countrySelect"
+      aria-label="País y prefijo"
+    ></select>
+
+
+  </div>
+
+
   <div class="row">
+
 
     <div
       class="pref"
@@ -212,37 +394,40 @@ input{
       +34
     </div>
 
+
     <input
       id="phone"
+      type="tel"
       placeholder="Teléfono"
       inputmode="tel"
       autocomplete="tel-national"
-      style="margin:0;flex:1"
     >
+
 
   </div>
 
 
   <div
+    class="countryInfo"
     id="countryInfo"
-    style="
-      text-align:left;
-      color:#8fbf94;
-      font-size:10px;
-      margin:-6px 0 12px 4px
-    "
   >
-    País detectado: ES - Prefijo +34
+    País: España · Prefijo +34
   </div>
 
 
   <button
     class="btn"
     id="btn"
-    onclick="send()"
+    type="button"
   >
     ENVIARME PIN POR SMS
   </button>
+
+
+  <div
+    class="status"
+    id="status"
+  ></div>
 
 
 </div>
@@ -253,10 +438,10 @@ input{
 'use strict';
 
 
-/* ================================================
+/* =======================================================
    VOBIXCHAT
-   INTERNACIONALIZACIÓN
-================================================ */
+   ACCESO INTERNACIONAL
+======================================================= */
 
 
 let COUNTRY_CODE = 'ES';
@@ -266,323 +451,441 @@ let COUNTRY_NAME = 'España';
 let CALLING_CODE = '+34';
 
 
-/* ================================================
+/* =======================================================
+   ELEMENTOS
+======================================================= */
+
+
+const userInput =
+  document.getElementById('user');
+
+
+const phoneInput =
+  document.getElementById('phone');
+
+
+const countrySelect =
+  document.getElementById('countrySelect');
+
+
+const prefixElement =
+  document.getElementById('prefix');
+
+
+const countryInfo =
+  document.getElementById('countryInfo');
+
+
+const countryLabel =
+  document.getElementById('countryLabel');
+
+
+const btn =
+  document.getElementById('btn');
+
+
+const statusElement =
+  document.getElementById('status');
+
+
+/* =======================================================
+   PAÍSES Y PREFIJOS
+
+   Los países que comparten +1 siguen apareciendo
+   individualmente para que el usuario pueda escoger
+   correctamente su país.
+======================================================= */
+
+
+const COUNTRIES = [
+
+  ['AF','Afganistán','+93'],
+  ['AL','Albania','+355'],
+  ['DE','Alemania','+49'],
+  ['AD','Andorra','+376'],
+  ['AO','Angola','+244'],
+  ['AI','Anguila','+1264'],
+  ['AG','Antigua y Barbuda','+1268'],
+  ['SA','Arabia Saudita','+966'],
+  ['DZ','Argelia','+213'],
+  ['AR','Argentina','+54'],
+  ['AM','Armenia','+374'],
+  ['AW','Aruba','+297'],
+  ['AU','Australia','+61'],
+  ['AT','Austria','+43'],
+  ['AZ','Azerbaiyán','+994'],
+
+  ['BS','Bahamas','+1242'],
+  ['BH','Baréin','+973'],
+  ['BD','Bangladés','+880'],
+  ['BB','Barbados','+1246'],
+  ['BE','Bélgica','+32'],
+  ['BZ','Belice','+501'],
+  ['BJ','Benín','+229'],
+  ['BM','Bermudas','+1441'],
+  ['BY','Bielorrusia','+375'],
+  ['BO','Bolivia','+591'],
+  ['BA','Bosnia y Herzegovina','+387'],
+  ['BW','Botsuana','+267'],
+  ['BR','Brasil','+55'],
+  ['BN','Brunéi','+673'],
+  ['BG','Bulgaria','+359'],
+  ['BF','Burkina Faso','+226'],
+  ['BI','Burundi','+257'],
+  ['BT','Bután','+975'],
+
+  ['CV','Cabo Verde','+238'],
+  ['KH','Camboya','+855'],
+  ['CM','Camerún','+237'],
+  ['CA','Canadá','+1'],
+  ['QA','Catar','+974'],
+  ['TD','Chad','+235'],
+  ['CL','Chile','+56'],
+  ['CN','China','+86'],
+  ['CY','Chipre','+357'],
+  ['CO','Colombia','+57'],
+  ['KM','Comoras','+269'],
+  ['CG','Congo','+242'],
+  ['CD','República Democrática del Congo','+243'],
+  ['KR','Corea del Sur','+82'],
+  ['KP','Corea del Norte','+850'],
+  ['CR','Costa Rica','+506'],
+  ['CI','Costa de Marfil','+225'],
+  ['HR','Croacia','+385'],
+  ['CU','Cuba','+53'],
+  ['CW','Curazao','+599'],
+
+  ['DK','Dinamarca','+45'],
+  ['DM','Dominica','+1767'],
+  ['DO','República Dominicana','+1'],
+
+  ['EC','Ecuador','+593'],
+  ['EG','Egipto','+20'],
+  ['SV','El Salvador','+503'],
+  ['AE','Emiratos Árabes Unidos','+971'],
+  ['ER','Eritrea','+291'],
+  ['SK','Eslovaquia','+421'],
+  ['SI','Eslovenia','+386'],
+  ['ES','España','+34'],
+  ['US','Estados Unidos','+1'],
+  ['EE','Estonia','+372'],
+  ['SZ','Esuatini','+268'],
+  ['ET','Etiopía','+251'],
+
+  ['PH','Filipinas','+63'],
+  ['FI','Finlandia','+358'],
+  ['FJ','Fiyi','+679'],
+  ['FR','Francia','+33'],
+
+  ['GA','Gabón','+241'],
+  ['GM','Gambia','+220'],
+  ['GE','Georgia','+995'],
+  ['GH','Ghana','+233'],
+  ['GI','Gibraltar','+350'],
+  ['GD','Granada','+1473'],
+  ['GR','Grecia','+30'],
+  ['GL','Groenlandia','+299'],
+  ['GP','Guadalupe','+590'],
+  ['GU','Guam','+1671'],
+  ['GT','Guatemala','+502'],
+  ['GF','Guayana Francesa','+594'],
+  ['GN','Guinea','+224'],
+  ['GQ','Guinea Ecuatorial','+240'],
+  ['GW','Guinea-Bisáu','+245'],
+  ['GY','Guyana','+592'],
+
+  ['HT','Haití','+509'],
+  ['HN','Honduras','+504'],
+  ['HK','Hong Kong','+852'],
+  ['HU','Hungría','+36'],
+
+  ['IN','India','+91'],
+  ['ID','Indonesia','+62'],
+  ['IQ','Irak','+964'],
+  ['IR','Irán','+98'],
+  ['IE','Irlanda','+353'],
+  ['IS','Islandia','+354'],
+  ['IL','Israel','+972'],
+  ['IT','Italia','+39'],
+
+  ['JM','Jamaica','+1876'],
+  ['JP','Japón','+81'],
+  ['JO','Jordania','+962'],
+
+  ['KZ','Kazajistán','+7'],
+  ['KE','Kenia','+254'],
+  ['KG','Kirguistán','+996'],
+  ['KI','Kiribati','+686'],
+  ['KW','Kuwait','+965'],
+
+  ['LA','Laos','+856'],
+  ['LS','Lesoto','+266'],
+  ['LV','Letonia','+371'],
+  ['LB','Líbano','+961'],
+  ['LR','Liberia','+231'],
+  ['LY','Libia','+218'],
+  ['LI','Liechtenstein','+423'],
+  ['LT','Lituania','+370'],
+  ['LU','Luxemburgo','+352'],
+
+  ['MO','Macao','+853'],
+  ['MK','Macedonia del Norte','+389'],
+  ['MG','Madagascar','+261'],
+  ['MY','Malasia','+60'],
+  ['MW','Malaui','+265'],
+  ['MV','Maldivas','+960'],
+  ['ML','Malí','+223'],
+  ['MT','Malta','+356'],
+  ['MA','Marruecos','+212'],
+  ['MQ','Martinica','+596'],
+  ['MU','Mauricio','+230'],
+  ['MR','Mauritania','+222'],
+  ['MX','México','+52'],
+  ['FM','Micronesia','+691'],
+  ['MD','Moldavia','+373'],
+  ['MC','Mónaco','+377'],
+  ['MN','Mongolia','+976'],
+  ['ME','Montenegro','+382'],
+  ['MS','Montserrat','+1664'],
+  ['MZ','Mozambique','+258'],
+  ['MM','Myanmar','+95'],
+
+  ['NA','Namibia','+264'],
+  ['NR','Nauru','+674'],
+  ['NP','Nepal','+977'],
+  ['NI','Nicaragua','+505'],
+  ['NE','Níger','+227'],
+  ['NG','Nigeria','+234'],
+  ['NO','Noruega','+47'],
+  ['NC','Nueva Caledonia','+687'],
+  ['NZ','Nueva Zelanda','+64'],
+
+  ['OM','Omán','+968'],
+
+  ['NL','Países Bajos','+31'],
+  ['PK','Pakistán','+92'],
+  ['PW','Palaos','+680'],
+  ['PS','Palestina','+970'],
+  ['PA','Panamá','+507'],
+  ['PG','Papúa Nueva Guinea','+675'],
+  ['PY','Paraguay','+595'],
+  ['PE','Perú','+51'],
+  ['PF','Polinesia Francesa','+689'],
+  ['PL','Polonia','+48'],
+  ['PT','Portugal','+351'],
+  ['PR','Puerto Rico','+1'],
+
+  ['GB','Reino Unido','+44'],
+  ['CF','República Centroafricana','+236'],
+  ['CZ','República Checa','+420'],
+  ['RE','Reunión','+262'],
+  ['RO','Rumanía','+40'],
+  ['RU','Rusia','+7'],
+  ['RW','Ruanda','+250'],
+
+  ['WS','Samoa','+685'],
+  ['AS','Samoa Americana','+1684'],
+  ['KN','San Cristóbal y Nieves','+1869'],
+  ['SM','San Marino','+378'],
+  ['MF','San Martín','+590'],
+  ['SX','Sint Maarten','+1721'],
+  ['VC','San Vicente y las Granadinas','+1784'],
+  ['LC','Santa Lucía','+1758'],
+  ['ST','Santo Tomé y Príncipe','+239'],
+  ['SN','Senegal','+221'],
+  ['RS','Serbia','+381'],
+  ['SC','Seychelles','+248'],
+  ['SL','Sierra Leona','+232'],
+  ['SG','Singapur','+65'],
+  ['SY','Siria','+963'],
+  ['SO','Somalia','+252'],
+  ['LK','Sri Lanka','+94'],
+  ['ZA','Sudáfrica','+27'],
+  ['SD','Sudán','+249'],
+  ['SS','Sudán del Sur','+211'],
+  ['SE','Suecia','+46'],
+  ['CH','Suiza','+41'],
+  ['SR','Surinam','+597'],
+
+  ['TH','Tailandia','+66'],
+  ['TW','Taiwán','+886'],
+  ['TZ','Tanzania','+255'],
+  ['TJ','Tayikistán','+992'],
+  ['TL','Timor Oriental','+670'],
+  ['TG','Togo','+228'],
+  ['TO','Tonga','+676'],
+  ['TT','Trinidad y Tobago','+1868'],
+  ['TN','Túnez','+216'],
+  ['TM','Turkmenistán','+993'],
+  ['TC','Islas Turcas y Caicos','+1649'],
+  ['TR','Turquía','+90'],
+  ['TV','Tuvalu','+688'],
+
+  ['UA','Ucrania','+380'],
+  ['UG','Uganda','+256'],
+  ['UY','Uruguay','+598'],
+  ['UZ','Uzbekistán','+998'],
+
+  ['VU','Vanuatu','+678'],
+  ['VA','Ciudad del Vaticano','+39'],
+  ['VE','Venezuela','+58'],
+  ['VN','Vietnam','+84'],
+  ['VG','Islas Vírgenes Británicas','+1284'],
+  ['VI','Islas Vírgenes de EE. UU.','+1340'],
+
+  ['YE','Yemen','+967'],
+
+  ['ZM','Zambia','+260'],
+  ['ZW','Zimbabue','+263']
+
+];
+
+
+/* =======================================================
    IDIOMAS
-================================================ */
+======================================================= */
 
 
 const translations = {
 
-
   es:{
-
-    todo:
-      'TODO EN UNO',
-
-    sub:
-      'SEGURO • RAPIDO • PRIVADO',
-
-    e2e:
-      '🔒 Cifrado de extremo a extremo',
-
-    user:
-      'Nombre de usuario',
-
-    phone:
-      'Teléfono',
-
-    country:
-      'País detectado',
-
-    prefix:
-      'Prefijo',
-
-    button:
-      'ENVIARME PIN POR SMS',
-
-    sending:
-      'ENVIANDO...',
-
-    missing:
-      'Pon nombre y teléfono',
-
-    pin:
-      'Escribe tu PIN para entrar:',
-
-    wrong:
-      'PIN incorrecto',
-
-    error:
-      'No se pudo completar el registro'
-
+    todo:'TODO EN UNO',
+    sub:'SEGURO • RÁPIDO • PRIVADO',
+    e2e:'🔒 Cifrado de extremo a extremo',
+    user:'Nombre de usuario',
+    phone:'Teléfono',
+    countryLabel:'País / prefijo',
+    country:'País',
+    prefix:'Prefijo',
+    button:'ENVIARME PIN POR SMS',
+    sending:'ENVIANDO...',
+    missing:'Pon nombre y teléfono',
+    invalidPhone:'Escribe un teléfono válido',
+    pin:'Escribe tu PIN para entrar:',
+    wrong:'PIN incorrecto',
+    error:'No se pudo completar el registro'
   },
-
 
   en:{
-
-    todo:
-      'ALL IN ONE',
-
-    sub:
-      'SECURE • FAST • PRIVATE',
-
-    e2e:
-      '🔒 End-to-end encryption',
-
-    user:
-      'Username',
-
-    phone:
-      'Phone',
-
-    country:
-      'Detected country',
-
-    prefix:
-      'Prefix',
-
-    button:
-      'SEND ME PIN BY SMS',
-
-    sending:
-      'SENDING...',
-
-    missing:
-      'Enter your name and phone number',
-
-    pin:
-      'Enter your PIN:',
-
-    wrong:
-      'Incorrect PIN',
-
-    error:
-      'Registration could not be completed'
-
+    todo:'ALL IN ONE',
+    sub:'SECURE • FAST • PRIVATE',
+    e2e:'🔒 End-to-end encryption',
+    user:'Username',
+    phone:'Phone',
+    countryLabel:'Country / prefix',
+    country:'Country',
+    prefix:'Prefix',
+    button:'SEND ME PIN BY SMS',
+    sending:'SENDING...',
+    missing:'Enter your name and phone number',
+    invalidPhone:'Enter a valid phone number',
+    pin:'Enter your PIN:',
+    wrong:'Incorrect PIN',
+    error:'Registration could not be completed'
   },
-
 
   fr:{
-
-    todo:
-      'TOUT EN UN',
-
-    sub:
-      'SÛR • RAPIDE • PRIVÉ',
-
-    e2e:
-      '🔒 Chiffrement de bout en bout',
-
-    user:
-      "Nom d'utilisateur",
-
-    phone:
-      'Téléphone',
-
-    country:
-      'Pays détecté',
-
-    prefix:
-      'Préfixe',
-
-    button:
-      'ENVOYER LE PIN PAR SMS',
-
-    sending:
-      'ENVOI...',
-
-    missing:
-      'Entrez votre nom et téléphone',
-
-    pin:
-      'Entrez votre PIN :',
-
-    wrong:
-      'PIN incorrect',
-
-    error:
-      "L'inscription n'a pas pu être terminée"
-
+    todo:'TOUT EN UN',
+    sub:'SÛR • RAPIDE • PRIVÉ',
+    e2e:'🔒 Chiffrement de bout en bout',
+    user:"Nom d'utilisateur",
+    phone:'Téléphone',
+    countryLabel:'Pays / préfixe',
+    country:'Pays',
+    prefix:'Préfixe',
+    button:'ENVOYER LE PIN PAR SMS',
+    sending:'ENVOI...',
+    missing:'Entrez votre nom et téléphone',
+    invalidPhone:'Entrez un numéro valide',
+    pin:'Entrez votre PIN :',
+    wrong:'PIN incorrect',
+    error:"L'inscription n'a pas pu être terminée"
   },
-
 
   de:{
-
-    todo:
-      'ALLES IN EINEM',
-
-    sub:
-      'SICHER • SCHNELL • PRIVAT',
-
-    e2e:
-      '🔒 Ende-zu-Ende-Verschlüsselung',
-
-    user:
-      'Benutzername',
-
-    phone:
-      'Telefon',
-
-    country:
-      'Erkanntes Land',
-
-    prefix:
-      'Vorwahl',
-
-    button:
-      'PIN PER SMS SENDEN',
-
-    sending:
-      'WIRD GESENDET...',
-
-    missing:
-      'Name und Telefonnummer eingeben',
-
-    pin:
-      'PIN eingeben:',
-
-    wrong:
-      'Falsche PIN',
-
-    error:
-      'Registrierung konnte nicht abgeschlossen werden'
-
+    todo:'ALLES IN EINEM',
+    sub:'SICHER • SCHNELL • PRIVAT',
+    e2e:'🔒 Ende-zu-Ende-Verschlüsselung',
+    user:'Benutzername',
+    phone:'Telefon',
+    countryLabel:'Land / Vorwahl',
+    country:'Land',
+    prefix:'Vorwahl',
+    button:'PIN PER SMS SENDEN',
+    sending:'WIRD GESENDET...',
+    missing:'Name und Telefonnummer eingeben',
+    invalidPhone:'Gültige Telefonnummer eingeben',
+    pin:'PIN eingeben:',
+    wrong:'Falsche PIN',
+    error:'Registrierung konnte nicht abgeschlossen werden'
   },
-
 
   it:{
-
-    todo:
-      'TUTTO IN UNO',
-
-    sub:
-      'SICURO • VELOCE • PRIVATO',
-
-    e2e:
-      '🔒 Crittografia end-to-end',
-
-    user:
-      'Nome utente',
-
-    phone:
-      'Telefono',
-
-    country:
-      'Paese rilevato',
-
-    prefix:
-      'Prefisso',
-
-    button:
-      'INVIA PIN VIA SMS',
-
-    sending:
-      'INVIO...',
-
-    missing:
-      'Inserisci nome e telefono',
-
-    pin:
-      'Inserisci il PIN:',
-
-    wrong:
-      'PIN errato',
-
-    error:
-      'Registrazione non completata'
-
+    todo:'TUTTO IN UNO',
+    sub:'SICURO • VELOCE • PRIVATO',
+    e2e:'🔒 Crittografia end-to-end',
+    user:'Nome utente',
+    phone:'Telefono',
+    countryLabel:'Paese / prefisso',
+    country:'Paese',
+    prefix:'Prefisso',
+    button:'INVIA PIN VIA SMS',
+    sending:'INVIO...',
+    missing:'Inserisci nome e telefono',
+    invalidPhone:'Inserisci un numero valido',
+    pin:'Inserisci il PIN:',
+    wrong:'PIN errato',
+    error:'Registrazione non completata'
   },
 
-
   pt:{
-
-    todo:
-      'TUDO EM UM',
-
-    sub:
-      'SEGURO • RÁPIDO • PRIVADO',
-
-    e2e:
-      '🔒 Criptografia de ponta a ponta',
-
-    user:
-      'Nome de usuário',
-
-    phone:
-      'Telefone',
-
-    country:
-      'País detectado',
-
-    prefix:
-      'Prefixo',
-
-    button:
-      'ENVIAR PIN POR SMS',
-
-    sending:
-      'ENVIANDO...',
-
-    missing:
-      'Digite nome e telefone',
-
-    pin:
-      'Digite seu PIN:',
-
-    wrong:
-      'PIN incorreto',
-
-    error:
-      'Não foi possível concluir o registro'
-
+    todo:'TUDO EM UM',
+    sub:'SEGURO • RÁPIDO • PRIVADO',
+    e2e:'🔒 Criptografia de ponta a ponta',
+    user:'Nome de usuário',
+    phone:'Telefone',
+    countryLabel:'País / prefixo',
+    country:'País',
+    prefix:'Prefixo',
+    button:'ENVIAR PIN POR SMS',
+    sending:'ENVIANDO...',
+    missing:'Digite nome e telefone',
+    invalidPhone:'Digite um telefone válido',
+    pin:'Digite seu PIN:',
+    wrong:'PIN incorreto',
+    error:'Não foi possível concluir o registro'
   }
-
 
 };
 
 
-/* ================================================
-   DETECTAR IDIOMA DEL MÓVIL / NAVEGADOR
-================================================ */
+/* =======================================================
+   IDIOMA
+======================================================= */
 
 
 function detectLanguage(){
 
-
   const browserLanguage =
-
     (
-
       navigator.languages &&
-
       navigator.languages.length
 
         ? navigator.languages[0]
 
         : navigator.language
-
     ) || 'es';
 
 
   const language =
-
     browserLanguage
-
       .toLowerCase()
-
       .split('-')[0];
 
 
-  if(
-    translations[language]
-  ){
-
-    return language;
-
-  }
-
-
-  return 'en';
+  return translations[language]
+    ? language
+    : 'en';
 
 }
 
@@ -593,78 +896,197 @@ let LANG =
 
 function t(key){
 
-
   return (
-
     translations[LANG][key] ||
-
     translations.en[key] ||
-
     key
-
   );
 
 }
 
 
-/* ================================================
+/* =======================================================
+   BUSCAR PAÍS
+======================================================= */
+
+
+function getCountryByCode(code){
+
+  const wanted =
+    String(code || '')
+      .trim()
+      .toUpperCase();
+
+
+  return COUNTRIES.find(
+    country =>
+      country[0] === wanted
+  ) || null;
+
+}
+
+
+/* =======================================================
+   CREAR SELECTOR
+======================================================= */
+
+
+function buildCountrySelect(){
+
+  countrySelect.innerHTML = '';
+
+
+  const countries =
+    [...COUNTRIES].sort(
+      (a,b) =>
+        a[1].localeCompare(
+          b[1],
+          'es',
+          {
+            sensitivity:'base'
+          }
+        )
+    );
+
+
+  countries.forEach(
+    country => {
+
+      const option =
+        document.createElement(
+          'option'
+        );
+
+
+      option.value =
+        country[0];
+
+
+      option.textContent =
+        country[1] +
+        ' (' +
+        country[2] +
+        ')';
+
+
+      countrySelect.appendChild(
+        option
+      );
+
+    }
+  );
+
+}
+
+
+/* =======================================================
+   CAMBIAR PAÍS
+======================================================= */
+
+
+function setCountry(code){
+
+  const country =
+    getCountryByCode(code);
+
+
+  if(!country){
+    return false;
+  }
+
+
+  COUNTRY_CODE =
+    country[0];
+
+
+  COUNTRY_NAME =
+    country[1];
+
+
+  CALLING_CODE =
+    country[2];
+
+
+  countrySelect.value =
+    COUNTRY_CODE;
+
+
+  updateCountryText();
+
+
+  return true;
+
+}
+
+
+/* =======================================================
+   MOSTRAR PAÍS / PREFIJO
+======================================================= */
+
+
+function updateCountryText(){
+
+  prefixElement.textContent =
+    CALLING_CODE;
+
+
+  countryInfo.textContent =
+    t('country') +
+    ': ' +
+    COUNTRY_NAME +
+    ' (' +
+    COUNTRY_CODE +
+    ') · ' +
+    t('prefix') +
+    ' ' +
+    CALLING_CODE;
+
+}
+
+
+/* =======================================================
    APLICAR IDIOMA
-================================================ */
+======================================================= */
 
 
 function applyLanguage(){
-
 
   document.documentElement.lang =
     LANG;
 
 
-  document
-    .getElementById(
-      'txtTodo'
-    )
-    .textContent =
-      t('todo');
+  document.getElementById(
+    'txtTodo'
+  ).textContent =
+    t('todo');
 
 
-  document
-    .getElementById(
-      'txtSub'
-    )
-    .textContent =
-      t('sub');
+  document.getElementById(
+    'txtSub'
+  ).textContent =
+    t('sub');
 
 
-  document
-    .getElementById(
-      'txtE2E'
-    )
-    .textContent =
-      t('e2e');
+  document.getElementById(
+    'txtE2E'
+  ).textContent =
+    t('e2e');
 
 
-  document
-    .getElementById(
-      'user'
-    )
-    .placeholder =
-      t('user');
+  userInput.placeholder =
+    t('user');
 
 
-  document
-    .getElementById(
-      'phone'
-    )
-    .placeholder =
-      t('phone');
+  phoneInput.placeholder =
+    t('phone');
 
 
-  document
-    .getElementById(
-      'btn'
-    )
-    .textContent =
-      t('button');
+  countryLabel.textContent =
+    t('countryLabel');
+
+
+  btn.textContent =
+    t('button');
 
 
   updateCountryText();
@@ -672,73 +1094,136 @@ function applyLanguage(){
 }
 
 
-/* ================================================
-   MOSTRAR PAÍS Y PREFIJO
-================================================ */
+/* =======================================================
+   PAÍS DEL NAVEGADOR
+
+   Esto sirve como respaldo inmediato y NO necesita
+   ninguna API externa.
+======================================================= */
 
 
-function updateCountryText(){
+function detectCountryFromLocale(){
+
+  const candidates = [];
 
 
-  document
-    .getElementById(
-      'prefix'
-    )
-    .textContent =
-      CALLING_CODE;
+  if(
+    navigator.languages &&
+    navigator.languages.length
+  ){
+
+    candidates.push(
+      ...navigator.languages
+    );
+
+  }
 
 
-  document
-    .getElementById(
-      'countryInfo'
-    )
-    .textContent =
+  if(navigator.language){
 
-      t('country') +
+    candidates.push(
+      navigator.language
+    );
 
-      ': ' +
+  }
 
-      COUNTRY_CODE +
 
-      ' - ' +
+  for(
+    const locale
+    of candidates
+  ){
 
-      t('prefix') +
+    const parts =
+      String(locale)
+        .replace('_','-')
+        .split('-');
 
-      ' ' +
 
-      CALLING_CODE;
+    if(parts.length >= 2){
+
+      const region =
+        parts[
+          parts.length - 1
+        ].toUpperCase();
+
+
+      if(
+        /^[A-Z]{2}$/.test(region) &&
+        getCountryByCode(region)
+      ){
+
+        return region;
+
+      }
+
+    }
+
+  }
+
+
+  return '';
 
 }
 
 
-/* ================================================
-   DETECTAR PAÍS APROXIMADO POR IP
-================================================ */
+/* =======================================================
+   DETECCIÓN POR IP
+
+   IMPORTANTE:
+   - si falla, NO rompe el acceso;
+   - conserva el país del navegador;
+   - el usuario siempre puede elegir manualmente.
+======================================================= */
 
 
 async function detectCountry(){
 
+  const localeCountry =
+    detectCountryFromLocale();
+
+
+  if(localeCountry){
+
+    setCountry(
+      localeCountry
+    );
+
+  }
+
 
   try{
 
+    const controller =
+      new AbortController();
+
+
+    const timeout =
+      setTimeout(
+        () => controller.abort(),
+        3500
+      );
+
 
     const response =
-
       await fetch(
+        'https://ipapi.co/json/',
+        {
+          signal:
+            controller.signal,
 
-        'https://ipapi.co/json/'
-
+          cache:
+            'no-store'
+        }
       );
 
 
-    if(
-      !response.ok
-    ){
+    clearTimeout(
+      timeout
+    );
 
-      throw new Error(
-        'IP lookup failed'
-      );
 
+    if(!response.ok){
+      return;
     }
 
 
@@ -746,555 +1231,543 @@ async function detectCountry(){
       await response.json();
 
 
+    const detectedCode =
+      String(
+        data.country_code ||
+        data.country ||
+        ''
+      )
+      .trim()
+      .toUpperCase();
+
+
     if(
-      data.error
+      detectedCode &&
+      getCountryByCode(
+        detectedCode
+      )
     ){
 
-      throw new Error(
-        'IP lookup error'
+      setCountry(
+        detectedCode
       );
 
     }
 
 
-    if(
-      data.country_code
-    ){
-
-      COUNTRY_CODE =
-
-        data.country_code
-
-          .toUpperCase();
-
-    }
-
-
-    if(
-      data.country_name
-    ){
-
-      COUNTRY_NAME =
-        data.country_name;
-
-    }
-
-
-    if(
-      data.country_calling_code
-    ){
-
-      CALLING_CODE =
-
-        data.country_calling_code
-
-          .split(',')[0]
-
-          .trim();
-
-    }
-
-
-    updateCountryText();
-
-
   }catch(error){
 
-
-    console.warn(
-
-      'No se pudo detectar país por IP.',
-
-      error
-
-    );
-
-
     /*
-      Si falla la detección IP,
-      mantenemos España +34 como respaldo
-      durante esta fase de pruebas.
+      No bloqueamos el registro.
+
+      El selector manual sigue funcionando.
     */
 
-
-    updateCountryText();
+    console.warn(
+      'VOBIXCHAT: detección automática de país no disponible'
+    );
 
   }
 
 }
 
 
-/* ================================================
+/* =======================================================
    NORMALIZAR TELÉFONO
-================================================ */
+
+   REGLAS:
+   1. El usuario puede escribir solamente su número local.
+   2. También puede pegar +34..., +1..., etc.
+   3. Si ya trae +, NO volvemos a poner el prefijo.
+   4. 00 se convierte en +.
+   5. Eliminamos espacios, guiones y paréntesis.
+======================================================= */
 
 
-function normalizePhone(number){
+function normalizeInternationalPhone(
+  rawPhone
+){
 
-
-  let phone =
-
+  let value =
     String(
-      number || ''
+      rawPhone || ''
     )
+    .trim();
 
-      .trim();
+
+  if(!value){
+    return '';
+  }
 
 
   /*
-    Quitamos espacios, guiones,
-    paréntesis y caracteres que
-    no sean números o +
+    Conservamos únicamente números
+    y un posible + inicial.
   */
 
-
-  phone =
-
-    phone.replace(
-
+  value =
+    value.replace(
       /[^\d+]/g,
-
       ''
-
     );
 
 
   /*
-    00XXXXXXXX
-    se transforma en
-    +XXXXXXXX
+    Evitar varios signos +
   */
 
+  if(
+    value.startsWith('+')
+  ){
+
+    value =
+      '+' +
+      value
+        .slice(1)
+        .replace(/\+/g,'');
+
+  }else{
+
+    value =
+      value.replace(/\+/g,'');
+
+  }
+
+
+  /*
+    Formato internacional 00...
+  */
 
   if(
-    phone.startsWith(
-      '00'
+    value.startsWith('00')
+  ){
+
+    value =
+      '+' +
+      value.slice(2);
+
+  }
+
+
+  /*
+    Si ya es internacional,
+    NO duplicamos el prefijo.
+  */
+
+  if(
+    value.startsWith('+')
+  ){
+
+    return value;
+
+  }
+
+
+  /*
+    Quitamos el 0 troncal inicial.
+
+    Ejemplo:
+    España:
+    0612345678 -> +34612345678
+
+    En países donde el cero forme parte del número,
+    el backend debe aplicar validación específica
+    posteriormente.
+  */
+
+  value =
+    value.replace(
+      /^0+/,
+      ''
+    );
+
+
+  const callingDigits =
+    CALLING_CODE.replace(
+      /\D/g,
+      ''
+    );
+
+
+  /*
+    Si el usuario escribió accidentalmente
+    el prefijo dentro del campo SIN +:
+
+    prefijo visual +34
+    campo: 34612345678
+
+    no generamos:
+    +3434612345678
+  */
+
+  if(
+    callingDigits &&
+    value.startsWith(
+      callingDigits
     )
   ){
 
-    phone =
-
-      '+' +
-
-      phone.substring(2);
+    return '+' + value;
 
   }
-
-
-  /*
-    Si el usuario ya escribió
-    +34..., +33..., etc.,
-    respetamos ese formato.
-  */
-
-
-  if(
-    phone.startsWith('+')
-  ){
-
-    return phone;
-
-  }
-
-
-  /*
-    Quitamos ceros iniciales
-    del número nacional.
-  */
-
-
-  phone =
-
-    phone.replace(
-
-      /^0+/,
-
-      ''
-
-    );
-
-
-  /*
-    Añadimos el prefijo
-    detectado.
-  */
 
 
   return (
-
     CALLING_CODE +
-
-    phone
-
+    value
   );
 
 }
 
 
-/* ================================================
-   LIMPIAR SESIÓN ANTERIOR
-================================================ */
+/* =======================================================
+   VALIDACIÓN BÁSICA
+======================================================= */
 
 
-function clearPreviousSession(){
-
-
-  localStorage.removeItem(
-    'vobix_token'
-  );
-
-
-  localStorage.removeItem(
-    'vobix_user_id'
-  );
-
-}
-
-
-/* ================================================
-   GUARDAR SESIÓN VERIFICADA
-================================================ */
-
-
-function saveVerifiedSession(
-  verified,
-  fallbackUsername,
-  internationalPhone
+function isValidInternationalPhone(
+  phone
 ){
 
-
-  if(
-    !verified ||
-    !verified.token
-  ){
-
-    throw new Error(
-      'El servidor no devolvió token de sesión'
-    );
-
-  }
-
-
-  const serverUser =
-    verified.user || {};
-
-
-  const username =
-
-    serverUser.username ||
-
-    fallbackUsername;
-
-
-  const phone =
-
-    serverUser.phone ||
-
-    internationalPhone;
-
-
-  /*
-    TOKEN PRIVADO DE SESIÓN
-
-    Este token será enviado después
-    mediante Authorization: Bearer
-    a /api/session y /api/chat.
-  */
-
-
-  localStorage.setItem(
-
-    'vobix_token',
-
-    verified.token
-
+  return (
+    /^\+[1-9]\d{6,14}$/.test(
+      phone
+    )
   );
-
-
-  /*
-    Conservamos vobix_user como texto
-    para mantener compatibilidad con
-    los archivos antiguos del proyecto.
-  */
-
-
-  localStorage.setItem(
-
-    'vobix_user',
-
-    username
-
-  );
-
-
-  localStorage.setItem(
-
-    'vobix_phone',
-
-    phone
-
-  );
-
-
-  localStorage.setItem(
-
-    'vobix_country',
-
-    COUNTRY_CODE
-
-  );
-
-
-  localStorage.setItem(
-
-    'vobix_language',
-
-    LANG
-
-  );
-
-
-  if(
-    serverUser.id
-  ){
-
-    localStorage.setItem(
-
-      'vobix_user_id',
-
-      String(
-        serverUser.id
-      )
-
-    );
-
-  }
-
-
-  if(
-    serverUser.vobixId
-  ){
-
-    localStorage.setItem(
-
-      'vobix_id',
-
-      String(
-        serverUser.vobixId
-      )
-
-    );
-
-  }
 
 }
 
 
-/* ================================================
+/* =======================================================
+   MENSAJE DE ESTADO
+======================================================= */
+
+
+function setStatus(
+  text,
+  error = false
+){
+
+  statusElement.textContent =
+    text || '';
+
+
+  statusElement.classList.toggle(
+    'error',
+    Boolean(error)
+  );
+
+}
+
+
+/* =======================================================
+   CAMBIO MANUAL DE PAÍS
+======================================================= */
+
+
+countrySelect.addEventListener(
+  'change',
+  () => {
+
+    setCountry(
+      countrySelect.value
+    );
+
+    phoneInput.focus();
+
+  }
+);
+
+
+/* =======================================================
+   LIMPIEZA VISUAL DEL TELÉFONO
+======================================================= */
+
+
+phoneInput.addEventListener(
+  'input',
+  () => {
+
+    /*
+      Permitimos +, números, espacios,
+      guiones y paréntesis mientras escribe.
+    */
+
+    phoneInput.value =
+      phoneInput.value.replace(
+        /[^\d+\s()\-]/g,
+        ''
+      );
+
+  }
+);
+
+
+/* =======================================================
    ENVIAR PIN
-================================================ */
+======================================================= */
 
 
 async function send(){
 
-
-  const u =
-
-    document
-
-      .getElementById(
-        'user'
-      )
-
-      .value
-
-      .trim();
+  const username =
+    userInput.value.trim();
 
 
   const rawPhone =
-
-    document
-
-      .getElementById(
-        'phone'
-      )
-
-      .value
-
-      .trim();
-
-
-  const btn =
-
-    document.getElementById(
-      'btn'
-    );
+    phoneInput.value.trim();
 
 
   if(
-    !u ||
+    !username ||
     !rawPhone
   ){
 
-    return alert(
-      t('missing')
+    setStatus(
+      t('missing'),
+      true
     );
+
+    return;
 
   }
 
 
-  const internationalPhone =
-
-    normalizePhone(
+  const fullPhone =
+    normalizeInternationalPhone(
       rawPhone
     );
 
 
-  console.log(
+  if(
+    !isValidInternationalPhone(
+      fullPhone
+    )
+  ){
 
-    'Teléfono normalizado:',
+    setStatus(
+      t('invalidPhone'),
+      true
+    );
 
-    internationalPhone
+    return;
 
-  );
-
-
-  btn.textContent =
-    t('sending');
+  }
 
 
   btn.disabled =
     true;
 
 
+  btn.textContent =
+    t('sending');
+
+
+  setStatus('');
+
+
   try{
 
-
-    /*
-      Eliminamos únicamente cualquier
-      token viejo antes de comenzar
-      una nueva verificación.
-    */
-
-
-    clearPreviousSession();
-
-
-    /* ============================================
-       PEDIR PIN
-    ============================================ */
-
-
-    const r =
-
+    const response =
       await fetch(
-
         '/api/send-pin',
-
         {
 
-
-          method:
-            'POST',
-
+          method:'POST',
 
           headers:{
-
             'Content-Type':
               'application/json'
-
           },
-
 
           body:
             JSON.stringify({
 
               user:
-                u,
+                username,
+
+              username:
+                username,
 
               phone:
-                internationalPhone,
+                fullPhone,
 
               country:
                 COUNTRY_CODE,
 
               callingCode:
-                CALLING_CODE,
-
-              language:
-                LANG
+                CALLING_CODE
 
             })
 
-
         }
-
       );
 
 
-    let d = {};
+    let data = {};
 
 
     try{
 
-      d =
-        await r.json();
+      data =
+        await response.json();
 
-    }catch{
-
-      throw new Error(
-        'Respuesta inválida del servidor'
-      );
-
-    }
+    }catch(error){}
 
 
     if(
-      !r.ok ||
-      !d.ok
+      !response.ok ||
+      !data.ok
     ){
 
-      alert(
-
-        d.msg ||
-
+      throw new Error(
+        data.msg ||
+        data.message ||
+        data.error ||
         t('error')
-
       );
+
+    }
+
+
+    /*
+      Guardamos el usuario en DOS formatos.
+
+      Esto mantiene compatibilidad con el chat
+      nuevo y con código antiguo.
+    */
+
+    const localUser = {
+
+      username:
+        username,
+
+      phone:
+        fullPhone,
+
+      country:
+        COUNTRY_CODE,
+
+      callingCode:
+        CALLING_CODE
+
+    };
+
+
+    localStorage.setItem(
+      'vobix_user',
+      JSON.stringify(
+        localUser
+      )
+    );
+
+
+    localStorage.setItem(
+      'vobix_username',
+      username
+    );
+
+
+    localStorage.setItem(
+      'username',
+      username
+    );
+
+
+    localStorage.setItem(
+      'vobix_phone',
+      fullPhone
+    );
+
+
+    /*
+      MODO DE PRUEBAS ACTUAL.
+
+      Tu backend actual devuelve el PIN
+      cuando TEST_PIN_MODE está activo.
+    */
+
+    if(
+      data.pin != null
+    ){
+
+      localStorage.setItem(
+        'vobix_pin',
+        String(data.pin)
+      );
+
+
+      const enteredPin =
+        prompt(
+          'Tu PIN es: ' +
+          data.pin +
+          '\n\n' +
+          t('pin')
+        );
+
+
+      if(
+        enteredPin == null
+      ){
+
+        return;
+
+      }
+
+
+      if(
+        String(
+          enteredPin
+        ).trim() !==
+        String(
+          data.pin
+        ).trim()
+      ){
+
+        setStatus(
+          t('wrong'),
+          true
+        );
+
+        return;
+
+      }
+
+
+      /*
+        IMPORTANTE:
+
+        Intentamos verificar también contra
+        el backend para obtener la sesión/token.
+      */
+
+      await verifyAndEnter(
+        fullPhone,
+        String(data.pin)
+      );
+
 
       return;
 
     }
 
 
-    /* ============================================
-       PIN DE PRUEBAS
-    ============================================ */
+    /*
+      Si más adelante el SMS es real y el backend
+      deja de devolver el PIN, pedimos que lo escriba.
+    */
 
-
-    const pin =
-
+    const enteredPin =
       prompt(
-
-        (
-
-          d.pin
-
-            ? 'PIN: ' +
-              d.pin +
-              '\n\n'
-
-            : ''
-
-        ) +
-
         t('pin')
-
       );
 
 
     if(
-      !pin
+      enteredPin == null ||
+      !String(
+        enteredPin
+      ).trim()
     ){
 
       return;
@@ -1302,193 +1775,409 @@ async function send(){
     }
 
 
-    /* ============================================
-       VERIFICAR PIN EN SERVIDOR
-    ============================================ */
-
-
-    const vr =
-
-      await fetch(
-
-        '/verify-pin',
-
-        {
-
-
-          method:
-            'POST',
-
-
-          headers:{
-
-            'Content-Type':
-              'application/json'
-
-          },
-
-
-          body:
-            JSON.stringify({
-
-              phone:
-                internationalPhone,
-
-              pin:
-                pin.trim(),
-
-              country:
-                COUNTRY_CODE,
-
-              callingCode:
-                CALLING_CODE,
-
-              language:
-                LANG
-
-            })
-
-
-        }
-
-      );
-
-
-    let verified = {};
-
-
-    try{
-
-      verified =
-        await vr.json();
-
-    }catch{
-
-      throw new Error(
-        'Respuesta inválida al verificar PIN'
-      );
-
-    }
-
-
-    if(
-      !vr.ok ||
-      !verified.ok
-    ){
-
-      alert(
-
-        verified.msg ||
-
-        t('wrong')
-
-      );
-
-      return;
-
-    }
-
-
-    /* ============================================
-       GUARDAR SESIÓN SEGURA
-    ============================================ */
-
-
-    saveVerifiedSession(
-
-      verified,
-
-      u,
-
-      internationalPhone
-
+    await verifyAndEnter(
+      fullPhone,
+      String(
+        enteredPin
+      ).trim()
     );
-
-
-    console.log(
-      'VOBIXCHAT: sesión verificada'
-    );
-
-
-    /* ============================================
-       ENTRAR
-    ============================================ */
-
-
-    location.href =
-      'chat.html';
 
 
   }catch(error){
 
-
     console.error(
+      'VOBIXCHAT SEND PIN:',
       error
     );
 
 
-    alert(
-
+    setStatus(
       error.message ||
-
-      t('error')
-
+      t('error'),
+      true
     );
 
 
   }finally{
 
+    btn.disabled =
+      false;
+
 
     btn.textContent =
       t('button');
-
-
-    btn.disabled =
-      false;
 
   }
 
 }
 
 
-/* ================================================
-   ENTER DESDE TELÉFONO
-================================================ */
+/* =======================================================
+   VERIFICAR PIN Y ENTRAR
+
+   Probamos las rutas compatibles con el backend
+   sin obligarte a modificar server.js ahora.
+======================================================= */
 
 
-document
-  .getElementById(
-    'phone'
-  )
-  .addEventListener(
-    'keydown',
-    event => {
+async function verifyAndEnter(
+  fullPhone,
+  pin
+){
+
+  const routes = [
+
+    '/api/verify-pin',
+
+    '/verify-pin'
+
+  ];
+
+
+  let lastError =
+    null;
+
+
+  for(
+    const route
+    of routes
+  ){
+
+    try{
+
+      const response =
+        await fetch(
+          route,
+          {
+
+            method:'POST',
+
+            headers:{
+              'Content-Type':
+                'application/json'
+            },
+
+            body:
+              JSON.stringify({
+
+                phone:
+                  fullPhone,
+
+                pin:
+                  pin
+
+              })
+
+          }
+        );
+
+
+      /*
+        Si la ruta no existe,
+        probamos la siguiente.
+      */
 
       if(
-        event.key ===
-        'Enter'
+        response.status === 404
       ){
 
-        send();
+        continue;
+
+      }
+
+
+      let data = {};
+
+
+      try{
+
+        data =
+          await response.json();
+
+      }catch(error){}
+
+
+      if(
+        !response.ok ||
+        data.ok === false
+      ){
+
+        throw new Error(
+          data.msg ||
+          data.message ||
+          data.error ||
+          t('wrong')
+        );
+
+      }
+
+
+      /*
+        Guardamos token con los nombres que
+        entiende el chat que acabamos de montar.
+      */
+
+      const token =
+
+        data.token ||
+
+        data.sessionToken ||
+
+        data.session_token ||
+
+        (
+          data.session &&
+          (
+            data.session.token ||
+            data.session.sessionToken
+          )
+        ) ||
+
+        '';
+
+
+      if(token){
+
+        localStorage.setItem(
+          'vobix_token',
+          token
+        );
+
+
+        localStorage.setItem(
+          'token',
+          token
+        );
+
+      }
+
+
+      /*
+        Si el servidor devuelve el usuario
+        completo, lo conservamos.
+      */
+
+      const serverUser =
+
+        data.user ||
+
+        data.profile ||
+
+        null;
+
+
+      if(
+        serverUser &&
+        typeof serverUser === 'object'
+      ){
+
+        const previous =
+          JSON.parse(
+            localStorage.getItem(
+              'vobix_user'
+            ) || '{}'
+          );
+
+
+        localStorage.setItem(
+          'vobix_user',
+          JSON.stringify({
+
+            ...previous,
+
+            ...serverUser
+
+          })
+        );
+
+      }
+
+
+      location.href =
+        'chat.html';
+
+
+      return;
+
+    }catch(error){
+
+      lastError =
+        error;
+
+    }
+
+  }
+
+
+  /*
+    Si ambas rutas fallan realmente,
+    no fingimos una sesión válida.
+  */
+
+  throw (
+    lastError ||
+    new Error(
+      t('error')
+    )
+  );
+
+}
+
+
+/* =======================================================
+   BOTÓN
+======================================================= */
+
+
+btn.addEventListener(
+  'click',
+  send
+);
+
+
+/* =======================================================
+   ENTER
+======================================================= */
+
+
+userInput.addEventListener(
+  'keydown',
+  event => {
+
+    if(
+      event.key === 'Enter'
+    ){
+
+      event.preventDefault();
+
+      phoneInput.focus();
+
+    }
+
+  }
+);
+
+
+phoneInput.addEventListener(
+  'keydown',
+  event => {
+
+    if(
+      event.key === 'Enter'
+    ){
+
+      event.preventDefault();
+
+      send();
+
+    }
+
+  }
+);
+
+
+/* =======================================================
+   INICIAR
+======================================================= */
+
+
+async function init(){
+
+  buildCountrySelect();
+
+
+  /*
+    España queda como respaldo mientras
+    se realiza la detección.
+  */
+
+  setCountry('ES');
+
+
+  applyLanguage();
+
+
+  /*
+    Recuperar nombre si ya se había escrito antes.
+  */
+
+  try{
+
+    const stored =
+      localStorage.getItem(
+        'vobix_user'
+      );
+
+
+    if(stored){
+
+      try{
+
+        const parsed =
+          JSON.parse(stored);
+
+
+        if(
+          parsed &&
+          typeof parsed === 'object'
+        ){
+
+          if(parsed.username){
+
+            userInput.value =
+              parsed.username;
+
+          }
+
+
+          if(
+            parsed.country &&
+            getCountryByCode(
+              parsed.country
+            )
+          ){
+
+            setCountry(
+              parsed.country
+            );
+
+          }
+
+        }
+
+      }catch(error){
+
+        if(
+          typeof stored === 'string'
+        ){
+
+          userInput.value =
+            stored;
+
+        }
 
       }
 
     }
-  );
+
+  }catch(error){}
 
 
-/* ================================================
-   INICIAR
-================================================ */
+  /*
+    Ahora intentamos detección automática.
+    Si falla, el selector manual permanece.
+  */
+
+  await detectCountry();
+
+}
 
 
-applyLanguage();
+init();
 
-detectCountry();
 
 </script>
 
 
 </body>
-
 </html>
