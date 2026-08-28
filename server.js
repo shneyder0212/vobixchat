@@ -57,6 +57,25 @@ const io = new Server(server, {
 
 
 // ======================================================
+// VOBIXCHAT — CONECTAR EXPRESS CON SOCKET.IO
+//
+// IMPORTANTE:
+//
+// routes/chat.js utiliza:
+//
+// const io = req.app.get('io');
+//
+// para emitir el mensaje inmediatamente después
+// de guardarlo en PostgreSQL.
+//
+// Sin esta línea el mensaje se guarda, pero la ruta
+// HTTP no tiene acceso a Socket.IO.
+// ======================================================
+
+app.set('io', io);
+
+
+// ======================================================
 // MIDDLEWARE
 // ======================================================
 
@@ -253,7 +272,6 @@ async function requireAuth(
 
       delete sessions[token];
 
-
       return res
         .status(401)
         .json({
@@ -274,7 +292,6 @@ async function requireAuth(
     if (!user.verified) {
 
       delete sessions[token];
-
 
       return res
         .status(401)
@@ -397,9 +414,7 @@ function sendPin(req, res) {
     attempts: 0
 
   };
-
-
-  pendingUsers[phone] = {
+   pendingUsers[phone] = {
 
     username,
 
@@ -797,11 +812,10 @@ app.get(
     const token =
       getToken(req);
 
+
     const session =
       getSessionByToken(token);
-
-
-    if (!session) {
+       if (!session) {
 
       return res
         .status(401)
@@ -1058,6 +1072,7 @@ io.use(
       const auth =
         socket.handshake.auth || {};
 
+
       const token =
         String(
           auth.token || ''
@@ -1100,11 +1115,14 @@ io.use(
       socket.vobixAuthenticated =
         true;
 
+
       socket.vobixToken =
         token;
 
+
       socket.vobixUserId =
         session.userId;
+
 
       socket.vobixUsername =
         session.username;
@@ -1198,7 +1216,7 @@ io.on(
             0,
             100
           );
-
+                );
       }
     );
 
@@ -1598,7 +1616,7 @@ io.on(
 
 
           socket
-            .to(
+                    .to(
               `conversation:${id}`
             )
             .emit(
@@ -1977,4 +1995,4 @@ startVobixChat()
 
     process.exit(1);
 
-  });
+  }); 
