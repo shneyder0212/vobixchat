@@ -1,13 +1,3115 @@
-<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Chat</title>
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+<meta charset="UTF-8">
+
+<meta
+  name="viewport"
+  content="width=device-width,initial-scale=1,viewport-fit=cover"
+>
+
+<meta
+  name="theme-color"
+  content="#07110a"
+>
+
+<title>VobixChat</title>
+
 <script src="/socket.io/socket.io.js"></script>
-<style>body{margin:0;background:#070c09;color:#fff;font-family:system-ui;display:flex;height:100vh}.users{width:220px;background:#0f1f12;border-right:1px solid #2a5a32;padding:12px}.chat{flex:1;display:flex;flex-direction:column}#msgs{flex:1;overflow:auto;padding:12px}.msg{background:#132015;border:1px solid #2a5a32;padding:8px 12px;border-radius:12px;margin-bottom:8px}.input{display:flex;gap:8px;padding:10px;border-top:1px solid #2a5a32}input{flex:1;background:#132015;border:1px solid #2a5a32;border-radius:12px;padding:12px;color:#fff}</style></head><body>
-<div class="users"><b style="color:#6eff7a">VOBIXCHAT</b><div id="list" style="margin-top:12px;font-size:13px"></div></div>
-<div class="chat"><div id="msgs"></div><div class="input"><input id="text" placeholder="Escribe..."><button onclick="send()" style="background:#6eff7a;border:none;border-radius:12px;padding:12px 18px;font-weight:900">➤</button></div></div>
+
+<style>
+
+*{
+  box-sizing:border-box;
+}
+
+html,
+body{
+  margin:0;
+  width:100%;
+  height:100%;
+  overflow:hidden;
+  background:#050906;
+  color:#f4fff5;
+  font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+}
+
+button,
+input{
+  font:inherit;
+}
+
+button{
+  cursor:pointer;
+}
+
+:root{
+  --green:#6eff7a;
+  --green2:#36e85a;
+  --dark:#050906;
+  --panel:#0b130d;
+  --panel2:#101b12;
+  --line:#203825;
+  --muted:#88a98c;
+  --white:#f4fff5;
+  --danger:#ff6b6b;
+}
+
+
+/* =====================================================
+   FONDO
+===================================================== */
+
+body::before{
+  content:"";
+  position:fixed;
+  inset:0;
+
+  background-image:
+    radial-gradient(
+      rgba(110,255,122,.25) 1px,
+      transparent 1.5px
+    );
+
+  background-size:28px 28px;
+
+  pointer-events:none;
+}
+
+
+/* =====================================================
+   APP
+===================================================== */
+
+.shell{
+  position:relative;
+  z-index:1;
+
+  width:100%;
+  height:100%;
+
+  display:grid;
+
+  grid-template-columns:
+    minmax(300px,360px)
+    1fr;
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(10,20,12,.96),
+      rgba(3,8,5,.98)
+    );
+}
+
+
+/* =====================================================
+   SIDEBAR
+===================================================== */
+
+.sidebar{
+  min-width:0;
+
+  display:flex;
+  flex-direction:column;
+
+  background:
+    rgba(8,17,10,.96);
+
+  border-right:
+    1px solid var(--line);
+}
+
+
+/* =====================================================
+   BRAND
+===================================================== */
+
+.brand{
+  min-height:76px;
+
+  display:flex;
+  align-items:center;
+  gap:12px;
+
+  padding:
+    calc(12px + env(safe-area-inset-top))
+    16px
+    12px;
+
+  border-bottom:
+    1px solid var(--line);
+}
+
+.brandLogo{
+  width:46px;
+  height:46px;
+
+  flex:0 0 46px;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  border-radius:14px;
+
+  background:var(--green);
+
+  color:#09240d;
+
+  font-size:27px;
+  font-weight:1000;
+
+  box-shadow:
+    0 0 22px rgba(110,255,122,.42);
+}
+
+.brandText{
+  min-width:0;
+  flex:1;
+}
+
+.brandTitle{
+  font-weight:1000;
+  letter-spacing:.5px;
+}
+
+.brandSub{
+  margin-top:2px;
+
+  color:var(--muted);
+
+  font-size:11px;
+}
+
+.profileButton{
+  width:40px;
+  height:40px;
+
+  border:
+    1px solid var(--line);
+
+  border-radius:50%;
+
+  background:#132017;
+  color:var(--green);
+
+  font-weight:900;
+}
+
+
+/* =====================================================
+   BUSCADOR
+===================================================== */
+
+.searchBox{
+  padding:12px;
+
+  border-bottom:
+    1px solid var(--line);
+}
+
+.searchRow{
+  display:flex;
+  gap:8px;
+}
+
+.searchInput{
+  width:100%;
+
+  min-width:0;
+
+  padding:12px 14px;
+
+  border:
+    1px solid #29462e;
+
+  border-radius:14px;
+
+  outline:none;
+
+  background:#101a12;
+  color:white;
+}
+
+.searchInput:focus{
+  border-color:var(--green);
+
+  box-shadow:
+    0 0 0 2px rgba(110,255,122,.1);
+}
+
+.searchButton{
+  width:48px;
+
+  border:none;
+
+  border-radius:14px;
+
+  background:var(--green);
+
+  color:#08250d;
+
+  font-size:18px;
+  font-weight:1000;
+}
+
+.searchHint{
+  margin-top:7px;
+
+  color:var(--muted);
+
+  font-size:10px;
+}
+
+
+/* =====================================================
+   RESULTADOS
+===================================================== */
+
+.results{
+  display:none;
+
+  max-height:230px;
+
+  overflow:auto;
+
+  padding:6px;
+
+  border-bottom:
+    1px solid var(--line);
+
+  background:#071009;
+}
+
+.results.active{
+  display:block;
+}
+
+.userResult{
+  width:100%;
+
+  display:flex;
+  align-items:center;
+  gap:10px;
+
+  padding:10px;
+
+  border:none;
+
+  border-radius:13px;
+
+  background:transparent;
+  color:white;
+
+  text-align:left;
+}
+
+.userResult:hover{
+  background:#122017;
+}
+
+.avatar{
+  width:42px;
+  height:42px;
+
+  flex:0 0 42px;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  border-radius:50%;
+
+  background:
+    linear-gradient(
+      145deg,
+      #6eff7a,
+      #28c94c
+    );
+
+  color:#08250d;
+
+  font-size:18px;
+  font-weight:1000;
+}
+
+.userInfo{
+  min-width:0;
+  flex:1;
+}
+
+.userName{
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+
+  font-weight:800;
+}
+
+.userId{
+  margin-top:2px;
+
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+
+  color:var(--muted);
+
+  font-size:11px;
+}
+
+
+/* =====================================================
+   LISTA DE CHATS
+===================================================== */
+
+.listHeader{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+
+  padding:12px 14px 7px;
+
+  color:#b8d9bb;
+
+  font-size:11px;
+  font-weight:800;
+
+  letter-spacing:.7px;
+}
+
+.conversations{
+  flex:1;
+  overflow:auto;
+
+  padding:4px 7px 16px;
+}
+
+.conversation{
+  width:100%;
+
+  display:flex;
+  align-items:center;
+  gap:11px;
+
+  padding:11px;
+
+  border:none;
+  border-radius:15px;
+
+  background:transparent;
+  color:white;
+
+  text-align:left;
+}
+
+.conversation:hover,
+.conversation.active{
+  background:#122017;
+}
+
+.conversationText{
+  min-width:0;
+  flex:1;
+}
+
+.conversationTop{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+}
+
+.conversationName{
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+
+  font-weight:850;
+}
+
+.conversationTime{
+  color:var(--muted);
+  font-size:9px;
+}
+
+.conversationPreview{
+  margin-top:4px;
+
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+
+  color:#8fac93;
+
+  font-size:11px;
+}
+
+.emptyList{
+  padding:25px 15px;
+
+  color:var(--muted);
+
+  font-size:12px;
+  text-align:center;
+}
+
+
+/* =====================================================
+   CHAT
+===================================================== */
+
+.chatPanel{
+  min-width:0;
+
+  display:flex;
+  flex-direction:column;
+
+  position:relative;
+
+  background:
+    radial-gradient(
+      circle at 50% 0%,
+      rgba(45,100,52,.11),
+      transparent 42%
+    ),
+    #050906;
+}
+
+
+/* =====================================================
+   PANTALLA VACÍA
+===================================================== */
+
+.welcome{
+  flex:1;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  padding:30px;
+
+  text-align:center;
+}
+
+.welcomeBox{
+  max-width:500px;
+}
+
+.welcomeLogo{
+  width:88px;
+  height:88px;
+
+  margin:0 auto 20px;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  border-radius:25px;
+
+  background:var(--green);
+
+  color:#09240d;
+
+  font-size:50px;
+  font-weight:1000;
+
+  box-shadow:
+    0 0 50px rgba(110,255,122,.35);
+}
+
+.welcome h1{
+  margin:0;
+
+  font-size:31px;
+}
+
+.welcome p{
+  color:var(--muted);
+
+  line-height:1.55;
+}
+
+
+/* =====================================================
+   CONVERSACIÓN ABIERTA
+===================================================== */
+
+.room{
+  display:none;
+
+  height:100%;
+
+  flex-direction:column;
+}
+
+.room.active{
+  display:flex;
+}
+
+
+/* =====================================================
+   HEADER CHAT
+===================================================== */
+
+.chatHeader{
+  min-height:70px;
+
+  display:flex;
+  align-items:center;
+  gap:11px;
+
+  padding:
+    calc(9px + env(safe-area-inset-top))
+    15px
+    9px;
+
+  border-bottom:
+    1px solid var(--line);
+
+  background:
+    rgba(8,17,10,.95);
+
+  backdrop-filter:
+    blur(18px);
+}
+
+.backButton{
+  display:none;
+
+  width:39px;
+  height:39px;
+
+  border:none;
+  border-radius:12px;
+
+  background:#122017;
+  color:white;
+
+  font-size:20px;
+}
+
+.chatIdentity{
+  min-width:0;
+  flex:1;
+}
+
+.chatName{
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+
+  font-weight:900;
+}
+
+.chatStatus{
+  margin-top:2px;
+
+  color:var(--muted);
+
+  font-size:10px;
+}
+
+.chatActions{
+  display:flex;
+  gap:6px;
+}
+
+.iconButton{
+  width:42px;
+  height:42px;
+
+  border:
+    1px solid var(--line);
+
+  border-radius:13px;
+
+  background:#101a12;
+  color:var(--green);
+
+  font-size:18px;
+}
+
+
+/* =====================================================
+   MENSAJES
+===================================================== */
+
+.messages{
+  flex:1;
+
+  overflow-y:auto;
+  overscroll-behavior:contain;
+
+  padding:
+    20px
+    max(18px,5vw);
+
+  scroll-behavior:smooth;
+}
+
+.day{
+  width:max-content;
+
+  max-width:90%;
+
+  margin:8px auto 18px;
+
+  padding:6px 11px;
+
+  border:
+    1px solid var(--line);
+
+  border-radius:20px;
+
+  background:#0e1810;
+
+  color:#8fac93;
+
+  font-size:10px;
+}
+
+.messageRow{
+  display:flex;
+
+  margin:5px 0;
+}
+
+.messageRow.mine{
+  justify-content:flex-end;
+}
+
+.bubble{
+  max-width:
+    min(72%,650px);
+
+  padding:
+    9px 11px
+    6px;
+
+  border:
+    1px solid #223a27;
+
+  border-radius:
+    5px 16px 16px 16px;
+
+  background:#111c14;
+
+  color:#f3fff4;
+
+  line-height:1.35;
+
+  word-break:break-word;
+
+  box-shadow:
+    0 4px 18px rgba(0,0,0,.13);
+}
+
+.messageRow.mine .bubble{
+  border-color:#315f38;
+
+  border-radius:
+    16px 5px 16px 16px;
+
+  background:
+    linear-gradient(
+      145deg,
+      #123a1a,
+      #102d16
+    );
+}
+
+.messageText{
+  white-space:pre-wrap;
+
+  font-size:14px;
+}
+
+.messageMeta{
+  display:flex;
+  justify-content:flex-end;
+  gap:5px;
+
+  margin-top:4px;
+
+  color:#87a98c;
+
+  font-size:9px;
+}
+
+.checks{
+  color:#6eff7a;
+}
+
+
+/* =====================================================
+   ESCRIBIENDO
+===================================================== */
+
+.typing{
+  min-height:20px;
+
+  padding:
+    0
+    max(18px,5vw);
+
+  color:var(--green);
+
+  font-size:10px;
+}
+
+
+/* =====================================================
+   COMPOSER
+===================================================== */
+
+.composer{
+  display:flex;
+  align-items:flex-end;
+  gap:8px;
+
+  padding:
+    10px
+    12px
+    calc(10px + env(safe-area-inset-bottom));
+
+  border-top:
+    1px solid var(--line);
+
+  background:
+    rgba(8,17,10,.97);
+}
+
+.attachButton{
+  width:44px;
+  height:44px;
+
+  flex:0 0 44px;
+
+  border:
+    1px solid var(--line);
+
+  border-radius:14px;
+
+  background:#111c14;
+  color:#a8c9ac;
+
+  font-size:19px;
+}
+
+.messageInput{
+  min-height:44px;
+  max-height:130px;
+
+  flex:1;
+
+  resize:none;
+
+  padding:12px 14px;
+
+  border:
+    1px solid #29462e;
+
+  border-radius:16px;
+
+  outline:none;
+
+  background:#111c14;
+  color:white;
+
+  font:inherit;
+
+  line-height:19px;
+}
+
+.messageInput:focus{
+  border-color:#5ee76b;
+}
+
+.sendButton{
+  width:46px;
+  height:46px;
+
+  flex:0 0 46px;
+
+  border:none;
+
+  border-radius:15px;
+
+  background:var(--green);
+
+  color:#09240d;
+
+  font-size:19px;
+  font-weight:1000;
+
+  box-shadow:
+    0 0 18px rgba(110,255,122,.22);
+}
+
+
+/* =====================================================
+   NOTIFICACIONES
+===================================================== */
+
+.toast{
+  position:fixed;
+
+  left:50%;
+  bottom:
+    calc(25px + env(safe-area-inset-bottom));
+
+  z-index:1000;
+
+  max-width:90%;
+
+  transform:
+    translate(-50%,30px);
+
+  padding:10px 15px;
+
+  border:
+    1px solid #355d3b;
+
+  border-radius:13px;
+
+  background:#102014;
+  color:white;
+
+  font-size:12px;
+
+  opacity:0;
+  pointer-events:none;
+
+  transition:.22s;
+}
+
+.toast.show{
+  opacity:1;
+
+  transform:
+    translate(-50%,0);
+}
+
+
+/* =====================================================
+   MOBILE
+===================================================== */
+
+@media(max-width:760px){
+
+  .shell{
+    display:block;
+  }
+
+  .sidebar{
+    width:100%;
+    height:100%;
+  }
+
+  .chatPanel{
+    position:fixed;
+    inset:0;
+
+    z-index:20;
+
+    transform:
+      translateX(100%);
+
+    transition:
+      transform .22s ease;
+  }
+
+  .chatPanel.mobileOpen{
+    transform:
+      translateX(0);
+  }
+
+  .backButton{
+    display:block;
+  }
+
+  .welcome{
+    display:none;
+  }
+
+  .bubble{
+    max-width:86%;
+  }
+
+  .messages{
+    padding:
+      14px
+      10px;
+  }
+
+  .typing{
+    padding:
+      0
+      12px;
+  }
+
+}
+
+
+/* =====================================================
+   DESKTOP GRANDE
+===================================================== */
+
+@media(min-width:1300px){
+
+  .shell{
+    width:min(1500px,96vw);
+    height:min(940px,96vh);
+
+    margin:auto;
+
+    border:
+      1px solid #1c3521;
+
+    border-radius:22px;
+
+    overflow:hidden;
+
+    box-shadow:
+      0 25px 100px rgba(0,0,0,.5);
+  }
+
+  body{
+    padding:2vh 2vw;
+  }
+
+}
+
+</style>
+</head>
+
+
+<body>
+
+
+<div class="shell">
+
+
+  <!-- =================================================
+       SIDEBAR
+  ================================================== -->
+
+  <aside class="sidebar">
+
+
+    <div class="brand">
+
+      <div class="brandLogo">
+        V
+      </div>
+
+      <div class="brandText">
+
+        <div class="brandTitle">
+          VOBIXCHAT
+        </div>
+
+        <div
+          class="brandSub"
+          id="myIdentity"
+        >
+          Conectando...
+        </div>
+
+      </div>
+
+      <button
+        class="profileButton"
+        id="profileButton"
+        title="Mi perfil"
+      >
+        V
+      </button>
+
+    </div>
+
+
+    <!-- BUSCADOR -->
+
+    <div class="searchBox">
+
+      <div class="searchRow">
+
+        <input
+          id="searchUser"
+          class="searchInput"
+          autocomplete="off"
+          placeholder="Buscar usuario o teléfono"
+        >
+
+        <button
+          id="searchButton"
+          class="searchButton"
+          title="Buscar"
+        >
+          ⌕
+        </button>
+
+      </div>
+
+      <div class="searchHint">
+        Encuentra personas y abre una conversación privada.
+      </div>
+
+    </div>
+
+
+    <div
+      id="results"
+      class="results"
+    ></div>
+
+
+    <div class="listHeader">
+
+      <span>
+        CONVERSACIONES
+      </span>
+
+      <span id="conversationCount">
+        0
+      </span>
+
+    </div>
+
+
+    <div
+      id="conversations"
+      class="conversations"
+    >
+
+      <div class="emptyList">
+        Todavía no tienes conversaciones.
+      </div>
+
+    </div>
+
+
+  </aside>
+
+
+  <!-- =================================================
+       CHAT
+  ================================================== -->
+
+  <main
+    id="chatPanel"
+    class="chatPanel"
+  >
+
+
+    <!-- BIENVENIDA -->
+
+    <section
+      id="welcome"
+      class="welcome"
+    >
+
+      <div class="welcomeBox">
+
+        <div class="welcomeLogo">
+          V
+        </div>
+
+        <h1>
+          VOBIXCHAT
+        </h1>
+
+        <p>
+          Selecciona una conversación o busca
+          una persona para comenzar.
+        </p>
+
+        <p>
+          Tus conversaciones se mantienen
+          separadas en salas privadas.
+        </p>
+
+      </div>
+
+    </section>
+
+
+    <!-- SALA -->
+
+    <section
+      id="room"
+      class="room"
+    >
+
+
+      <header class="chatHeader">
+
+
+        <button
+          id="backButton"
+          class="backButton"
+          title="Volver"
+        >
+          ‹
+        </button>
+
+
+        <div
+          id="chatAvatar"
+          class="avatar"
+        >
+          V
+        </div>
+
+
+        <div class="chatIdentity">
+
+          <div
+            id="chatName"
+            class="chatName"
+          >
+            Conversación
+          </div>
+
+          <div
+            id="chatStatus"
+            class="chatStatus"
+          >
+            Privado
+          </div>
+
+        </div>
+
+
+        <div class="chatActions">
+
+          <button
+            class="iconButton"
+            id="audioCallButton"
+            title="Llamada"
+          >
+            ☎
+          </button>
+
+          <button
+            class="iconButton"
+            id="videoCallButton"
+            title="Videollamada"
+          >
+            ◉
+          </button>
+
+        </div>
+
+
+      </header>
+
+
+      <div
+        id="messages"
+        class="messages"
+      ></div>
+
+
+      <div
+        id="typing"
+        class="typing"
+      ></div>
+
+
+      <div class="composer">
+
+
+        <button
+          class="attachButton"
+          id="attachButton"
+          title="Adjuntar"
+        >
+          ＋
+        </button>
+
+
+        <textarea
+          id="messageInput"
+          class="messageInput"
+          rows="1"
+          placeholder="Escribe un mensaje"
+        ></textarea>
+
+
+        <button
+          id="sendButton"
+          class="sendButton"
+          title="Enviar"
+        >
+          ➤
+        </button>
+
+
+      </div>
+
+
+    </section>
+
+
+  </main>
+
+
+</div>
+
+
+<div
+  id="toast"
+  class="toast"
+></div>
+
+
 <script>
-const socket=io();const user=localStorage.getItem('vobix_user')||'Anon';const phone=localStorage.getItem('vobix_phone');
-socket.emit('join',{user,phone});
-socket.on('users',u=>{list.innerHTML=u.map(x=>'• '+x.user).join('<br>')});
-socket.on('message',m=>{const d=document.createElement('div');d.className='msg';d.innerHTML=`<b style="color:#6eff7a">${m.user}</b> <small>${m.time}</small><br>${m.text}`;msgs.appendChild(d);msgs.scrollTop=msgs.scrollHeight});
-function send(){if(!text.value.trim())return;socket.emit('message',{user,text:text.value});text.value='';}
-text.addEventListener('keydown',e=>{if(e.key==='Enter')send()});
-</script></body></html>
+
+/*
+==========================================================
+ VOBIXCHAT CHAT CLIENT
+==========================================================
+*/
+
+
+'use strict';
+
+
+// ======================================================
+// ESTADO
+// ======================================================
+
+let token =
+  localStorage.getItem(
+    'vobix_token'
+  ) || '';
+
+let currentUser = null;
+
+let currentConversation = null;
+
+let socket = null;
+
+let typingTimer = null;
+
+let typingSent = false;
+
+
+// ======================================================
+// ELEMENTOS
+// ======================================================
+
+const el = {
+
+  myIdentity:
+    document.getElementById(
+      'myIdentity'
+    ),
+
+  profileButton:
+    document.getElementById(
+      'profileButton'
+    ),
+
+  searchUser:
+    document.getElementById(
+      'searchUser'
+    ),
+
+  searchButton:
+    document.getElementById(
+      'searchButton'
+    ),
+
+  results:
+    document.getElementById(
+      'results'
+    ),
+
+  conversations:
+    document.getElementById(
+      'conversations'
+    ),
+
+  conversationCount:
+    document.getElementById(
+      'conversationCount'
+    ),
+
+  chatPanel:
+    document.getElementById(
+      'chatPanel'
+    ),
+
+  welcome:
+    document.getElementById(
+      'welcome'
+    ),
+
+  room:
+    document.getElementById(
+      'room'
+    ),
+
+  backButton:
+    document.getElementById(
+      'backButton'
+    ),
+
+  chatAvatar:
+    document.getElementById(
+      'chatAvatar'
+    ),
+
+  chatName:
+    document.getElementById(
+      'chatName'
+    ),
+
+  chatStatus:
+    document.getElementById(
+      'chatStatus'
+    ),
+
+  messages:
+    document.getElementById(
+      'messages'
+    ),
+
+  typing:
+    document.getElementById(
+      'typing'
+    ),
+
+  messageInput:
+    document.getElementById(
+      'messageInput'
+    ),
+
+  sendButton:
+    document.getElementById(
+      'sendButton'
+    ),
+
+  audioCallButton:
+    document.getElementById(
+      'audioCallButton'
+    ),
+
+  videoCallButton:
+    document.getElementById(
+      'videoCallButton'
+    ),
+
+  attachButton:
+    document.getElementById(
+      'attachButton'
+    ),
+
+  toast:
+    document.getElementById(
+      'toast'
+    )
+
+};
+
+
+// ======================================================
+// UTILIDADES
+// ======================================================
+
+function showToast(message){
+
+  el.toast.textContent =
+    String(message || '');
+
+  el.toast.classList.add(
+    'show'
+  );
+
+  clearTimeout(
+    showToast.timer
+  );
+
+  showToast.timer =
+    setTimeout(
+      () => {
+
+        el.toast.classList.remove(
+          'show'
+        );
+
+      },
+      3000
+    );
+
+}
+
+
+function initial(name){
+
+  const value =
+    String(name || 'V')
+      .trim();
+
+  return (
+    value.charAt(0) || 'V'
+  ).toUpperCase();
+
+}
+
+
+function formatTime(value){
+
+  if(!value){
+    return '';
+  }
+
+  const date =
+    new Date(value);
+
+  if(
+    Number.isNaN(
+      date.getTime()
+    )
+  ){
+    return '';
+  }
+
+  return date
+    .toLocaleTimeString(
+      [],
+      {
+        hour:'2-digit',
+        minute:'2-digit'
+      }
+    );
+
+}
+
+
+// ======================================================
+// API
+// ======================================================
+
+async function api(
+  url,
+  options = {}
+){
+
+  const headers =
+    new Headers(
+      options.headers || {}
+    );
+
+  headers.set(
+    'Content-Type',
+    'application/json'
+  );
+
+  if(token){
+
+    headers.set(
+      'Authorization',
+      'Bearer ' + token
+    );
+
+  }
+
+
+  const response =
+    await fetch(
+      url,
+      {
+        ...options,
+        headers
+      }
+    );
+
+
+  let data = {};
+
+  try{
+
+    data =
+      await response.json();
+
+  }catch{}
+
+
+  if(
+    response.status === 401
+  ){
+
+    throw new Error(
+      'SESSION_EXPIRED'
+    );
+
+  }
+
+
+  if(
+    !response.ok ||
+    data.ok === false
+  ){
+
+    throw new Error(
+      data.msg ||
+      'Error de comunicación'
+    );
+
+  }
+
+
+  return data;
+
+}
+
+
+// ======================================================
+// SESIÓN
+// ======================================================
+
+async function loadSession(){
+
+  /*
+    El servidor nuevo exige vobix_token.
+
+    Si el usuario entró antes de que el token
+    comenzara a guardarse, volvemos al acceso
+    para obtener una sesión nueva correctamente.
+  */
+
+  if(!token){
+
+    showToast(
+      'Necesitamos renovar tu sesión.'
+    );
+
+    setTimeout(
+      () => {
+        location.href = '/';
+      },
+      900
+    );
+
+    return false;
+
+  }
+
+
+  try{
+
+    const data =
+      await api(
+        '/api/session'
+      );
+
+
+    currentUser =
+      data.user;
+
+
+    el.myIdentity.textContent =
+      '@' +
+      (
+        currentUser.username ||
+        'usuario'
+      );
+
+
+    el.profileButton.textContent =
+      initial(
+        currentUser.username
+      );
+
+
+    return true;
+
+
+  }catch(error){
+
+    console.error(
+      error
+    );
+
+
+    localStorage.removeItem(
+      'vobix_token'
+    );
+
+
+    showToast(
+      'Tu sesión necesita verificarse nuevamente.'
+    );
+
+
+    setTimeout(
+      () => {
+        location.href = '/';
+      },
+      1000
+    );
+
+
+    return false;
+
+  }
+
+}
+
+
+// ======================================================
+// SOCKET
+// ======================================================
+
+function connectSocket(){
+
+  if(socket){
+
+    socket.disconnect();
+
+  }
+
+
+  socket =
+    io({
+
+      auth:{
+        token
+      }
+
+    });
+
+
+  socket.on(
+    'connect',
+    () => {
+
+      console.log(
+        'VOBIXCHAT realtime conectado'
+      );
+
+    }
+  );
+
+
+  socket.on(
+    'connect_error',
+    error => {
+
+      console.error(
+        'Socket:',
+        error.message
+      );
+
+    }
+  );
+
+
+  socket.on(
+    'conversation-message',
+    data => {
+
+      if(
+        !currentConversation ||
+        String(
+          data.conversationId
+        ) !==
+        String(
+          currentConversation.id
+        )
+      ){
+        return;
+      }
+
+
+      if(data.message){
+
+        appendMessage(
+          data.message
+        );
+
+      }
+
+
+      loadConversations();
+
+    }
+  );
+
+
+  socket.on(
+    'conversation-typing',
+    data => {
+
+      if(
+        !currentConversation ||
+        String(
+          data.conversationId
+        ) !==
+        String(
+          currentConversation.id
+        )
+      ){
+        return;
+      }
+
+
+      if(
+        String(data.userId) ===
+        String(currentUser.id)
+      ){
+        return;
+      }
+
+
+      el.typing.textContent =
+        data.typing
+          ? (
+              (
+                data.username ||
+                'Usuario'
+              ) +
+              ' está escribiendo...'
+            )
+          : '';
+
+    }
+  );
+
+}
+
+
+// ======================================================
+// CREAR ELEMENTO DE USUARIO
+// ======================================================
+
+function createUserButton(user){
+
+  const button =
+    document.createElement(
+      'button'
+    );
+
+  button.type =
+    'button';
+
+  button.className =
+    'userResult';
+
+
+  const avatar =
+    document.createElement(
+      'div'
+    );
+
+  avatar.className =
+    'avatar';
+
+  avatar.textContent =
+    initial(
+      user.username
+    );
+
+
+  const info =
+    document.createElement(
+      'div'
+    );
+
+  info.className =
+    'userInfo';
+
+
+  const name =
+    document.createElement(
+      'div'
+    );
+
+  name.className =
+    'userName';
+
+  name.textContent =
+    user.username ||
+    'Usuario';
+
+
+  const id =
+    document.createElement(
+      'div'
+    );
+
+  id.className =
+    'userId';
+
+  id.textContent =
+    user.vobixId ||
+    user.phone ||
+    'VobixChat';
+
+
+  info.append(
+    name,
+    id
+  );
+
+
+  button.append(
+    avatar,
+    info
+  );
+
+
+  button.addEventListener(
+    'click',
+    () => {
+
+      startConversation(
+        user
+      );
+
+    }
+  );
+
+
+  return button;
+
+}
+
+
+// ======================================================
+// BUSCAR USUARIO
+// ======================================================
+
+async function searchUsers(){
+
+  const query =
+    el.searchUser
+      .value
+      .trim();
+
+
+  if(!query){
+
+    el.results.innerHTML = '';
+
+    el.results.classList.remove(
+      'active'
+    );
+
+    return;
+
+  }
+
+
+  try{
+
+    /*
+      routes/chat.js puede definir el nombre exacto
+      del endpoint.
+
+      Esta interfaz utiliza:
+      GET /api/chat/users/search?q=
+    */
+
+    const data =
+      await api(
+        '/api/chat/users/search?q=' +
+        encodeURIComponent(query)
+      );
+
+
+    const users =
+      data.users ||
+      data.results ||
+      [];
+
+
+    el.results.innerHTML = '';
+
+
+    if(!users.length){
+
+      const empty =
+        document.createElement(
+          'div'
+        );
+
+      empty.className =
+        'emptyList';
+
+      empty.textContent =
+        'No encontramos usuarios.';
+
+      el.results.appendChild(
+        empty
+      );
+
+    }else{
+
+      for(
+        const user
+        of users
+      ){
+
+        if(
+          currentUser &&
+          String(user.id) ===
+          String(currentUser.id)
+        ){
+          continue;
+        }
+
+
+        el.results.appendChild(
+          createUserButton(user)
+        );
+
+      }
+
+    }
+
+
+    el.results.classList.add(
+      'active'
+    );
+
+
+  }catch(error){
+
+    console.error(
+      error
+    );
+
+    showToast(
+      error.message
+    );
+
+  }
+
+}
+
+
+// ======================================================
+// INICIAR CONVERSACIÓN
+// ======================================================
+
+async function startConversation(
+  user
+){
+
+  try{
+
+    const data =
+      await api(
+        '/api/chat/conversations',
+        {
+
+          method:'POST',
+
+          body:
+            JSON.stringify({
+
+              userId:
+                user.id
+
+            })
+
+        }
+      );
+
+
+    const conversation =
+      data.conversation ||
+      data.chat ||
+      data;
+
+
+    el.results.classList.remove(
+      'active'
+    );
+
+
+    el.searchUser.value = '';
+
+
+    await loadConversations();
+
+
+    await openConversation(
+      conversation
+    );
+
+
+  }catch(error){
+
+    console.error(
+      error
+    );
+
+    showToast(
+      error.message
+    );
+
+  }
+
+}
+
+
+// ======================================================
+// CARGAR CONVERSACIONES
+// ======================================================
+
+async function loadConversations(){
+
+  try{
+
+    const data =
+      await api(
+        '/api/chat/conversations'
+      );
+
+
+    const conversations =
+      data.conversations ||
+      data.chats ||
+      [];
+
+
+    el.conversationCount.textContent =
+      String(
+        conversations.length
+      );
+
+
+    el.conversations.innerHTML = '';
+
+
+    if(
+      !conversations.length
+    ){
+
+      const empty =
+        document.createElement(
+          'div'
+        );
+
+      empty.className =
+        'emptyList';
+
+      empty.textContent =
+        'Todavía no tienes conversaciones.';
+
+      el.conversations.appendChild(
+        empty
+      );
+
+      return;
+
+    }
+
+
+    for(
+      const conversation
+      of conversations
+    ){
+
+      el.conversations.appendChild(
+        createConversationButton(
+          conversation
+        )
+      );
+
+    }
+
+
+  }catch(error){
+
+    console.error(
+      'Conversaciones:',
+      error
+    );
+
+  }
+
+}
+
+
+// ======================================================
+// BOTÓN CONVERSACIÓN
+// ======================================================
+
+function createConversationButton(
+  conversation
+){
+
+  const button =
+    document.createElement(
+      'button'
+    );
+
+  button.type =
+    'button';
+
+  button.className =
+    'conversation';
+
+
+  if(
+    currentConversation &&
+    String(
+      currentConversation.id
+    ) ===
+    String(
+      conversation.id
+    )
+  ){
+
+    button.classList.add(
+      'active'
+    );
+
+  }
+
+
+  const other =
+    conversation.otherUser ||
+    conversation.user ||
+    conversation.contact ||
+    {};
+
+
+  const avatar =
+    document.createElement(
+      'div'
+    );
+
+  avatar.className =
+    'avatar';
+
+  avatar.textContent =
+    initial(
+      other.username ||
+      conversation.name
+    );
+
+
+  const text =
+    document.createElement(
+      'div'
+    );
+
+  text.className =
+    'conversationText';
+
+
+  const top =
+    document.createElement(
+      'div'
+    );
+
+  top.className =
+    'conversationTop';
+
+
+  const name =
+    document.createElement(
+      'div'
+    );
+
+  name.className =
+    'conversationName';
+
+  name.textContent =
+    other.username ||
+    conversation.name ||
+    'Conversación';
+
+
+  const time =
+    document.createElement(
+      'div'
+    );
+
+  time.className =
+    'conversationTime';
+
+  time.textContent =
+    formatTime(
+      conversation.lastMessageAt ||
+      conversation.updatedAt
+    );
+
+
+  top.append(
+    name,
+    time
+  );
+
+
+  const preview =
+    document.createElement(
+      'div'
+    );
+
+  preview.className =
+    'conversationPreview';
+
+  preview.textContent =
+    conversation.lastMessage ||
+    'Conversación privada';
+
+
+  text.append(
+    top,
+    preview
+  );
+
+
+  button.append(
+    avatar,
+    text
+  );
+
+
+  button.addEventListener(
+    'click',
+    () => {
+
+      openConversation(
+        conversation
+      );
+
+    }
+  );
+
+
+  return button;
+
+}
+
+
+// ======================================================
+// ABRIR CONVERSACIÓN
+// ======================================================
+
+async function openConversation(
+  conversation
+){
+
+  if(!conversation){
+    return;
+  }
+
+
+  const conversationId =
+    conversation.id ||
+    conversation.conversationId;
+
+
+  if(!conversationId){
+
+    showToast(
+      'Conversación no válida.'
+    );
+
+    return;
+
+  }
+
+
+  if(
+    currentConversation &&
+    socket
+  ){
+
+    socket.emit(
+      'conversation-leave',
+      {
+
+        conversationId:
+          currentConversation.id
+
+      }
+    );
+
+  }
+
+
+  currentConversation = {
+
+    ...conversation,
+
+    id:
+      conversationId
+
+  };
+
+
+  const other =
+    conversation.otherUser ||
+    conversation.user ||
+    conversation.contact ||
+    {};
+
+
+  el.chatName.textContent =
+    other.username ||
+    conversation.name ||
+    'Conversación';
+
+
+  el.chatAvatar.textContent =
+    initial(
+      other.username ||
+      conversation.name
+    );
+
+
+  el.chatStatus.textContent =
+    other.online
+      ? 'En línea'
+      : 'Conversación privada';
+
+
+  el.welcome.style.display =
+    'none';
+
+
+  el.room.classList.add(
+    'active'
+  );
+
+
+  el.chatPanel.classList.add(
+    'mobileOpen'
+  );
+
+
+  el.messages.innerHTML = '';
+
+  el.typing.textContent = '';
+
+
+  if(socket){
+
+    socket.emit(
+      'conversation-join',
+      {
+
+        conversationId:
+          currentConversation.id
+
+      },
+      response => {
+
+        if(
+          response &&
+          response.ok === false
+        ){
+
+          showToast(
+            response.msg ||
+            'No se pudo abrir la sala.'
+          );
+
+        }
+
+      }
+    );
+
+  }
+
+
+  await loadMessages();
+
+  await loadConversations();
+
+
+  setTimeout(
+    () => {
+
+      el.messageInput.focus();
+
+    },
+    100
+  );
+
+}
+
+
+// ======================================================
+// CARGAR MENSAJES
+// ======================================================
+
+async function loadMessages(){
+
+  if(!currentConversation){
+    return;
+  }
+
+
+  try{
+
+    const data =
+      await api(
+        '/api/chat/conversations/' +
+        encodeURIComponent(
+          currentConversation.id
+        ) +
+        '/messages'
+      );
+
+
+    const messages =
+      data.messages ||
+      [];
+
+
+    el.messages.innerHTML = '';
+
+
+    for(
+      const message
+      of messages
+    ){
+
+      appendMessage(
+        message
+      );
+
+    }
+
+
+    scrollMessages();
+
+
+  }catch(error){
+
+    console.error(
+      error
+    );
+
+    showToast(
+      error.message
+    );
+
+  }
+
+}
+
+
+// ======================================================
+// MOSTRAR MENSAJE DE FORMA SEGURA
+// ======================================================
+
+function appendMessage(
+  message
+){
+
+  if(!message){
+    return;
+  }
+
+
+  const senderId =
+    message.senderId ||
+    message.sender_id ||
+    (
+      message.sender &&
+      message.sender.id
+    );
+
+
+  const mine =
+    currentUser &&
+    String(senderId) ===
+    String(currentUser.id);
+
+
+  const row =
+    document.createElement(
+      'div'
+    );
+
+  row.className =
+    'messageRow';
+
+  if(mine){
+
+    row.classList.add(
+      'mine'
+    );
+
+  }
+
+
+  const bubble =
+    document.createElement(
+      'div'
+    );
+
+  bubble.className =
+    'bubble';
+
+
+  const text =
+    document.createElement(
+      'div'
+    );
+
+  text.className =
+    'messageText';
+
+  /*
+    IMPORTANTE:
+    textContent evita ejecutar HTML enviado
+    por otro usuario.
+  */
+
+  text.textContent =
+    message.text ||
+    message.body ||
+    message.content ||
+    '';
+
+
+  const meta =
+    document.createElement(
+      'div'
+    );
+
+  meta.className =
+    'messageMeta';
+
+
+  const time =
+    document.createElement(
+      'span'
+    );
+
+  time.textContent =
+    formatTime(
+      message.createdAt ||
+      message.created_at ||
+      new Date()
+    );
+
+
+  meta.appendChild(
+    time
+  );
+
+
+  if(mine){
+
+    const checks =
+      document.createElement(
+        'span'
+      );
+
+    checks.className =
+      'checks';
+
+    checks.textContent =
+      '✓✓';
+
+    meta.appendChild(
+      checks
+    );
+
+  }
+
+
+  bubble.append(
+    text,
+    meta
+  );
+
+
+  row.appendChild(
+    bubble
+  );
+
+
+  el.messages.appendChild(
+    row
+  );
+
+
+  scrollMessages();
+
+}
+
+
+// ======================================================
+// SCROLL
+// ======================================================
+
+function scrollMessages(){
+
+  requestAnimationFrame(
+    () => {
+
+      el.messages.scrollTop =
+        el.messages.scrollHeight;
+
+    }
+  );
+
+}
+
+
+// ======================================================
+// ENVIAR MENSAJE
+// ======================================================
+
+async function sendMessage(){
+
+  if(!currentConversation){
+    return;
+  }
+
+
+  const text =
+    el.messageInput
+      .value
+      .trim();
+
+
+  if(!text){
+    return;
+  }
+
+
+  if(text.length > 5000){
+
+    showToast(
+      'El mensaje es demasiado largo.'
+    );
+
+    return;
+
+  }
+
+
+  el.sendButton.disabled =
+    true;
+
+
+  try{
+
+    const data =
+      await api(
+        '/api/chat/conversations/' +
+        encodeURIComponent(
+          currentConversation.id
+        ) +
+        '/messages',
+        {
+
+          method:'POST',
+
+          body:
+            JSON.stringify({
+              text
+            })
+
+        }
+      );
+
+
+    const message =
+      data.message ||
+      data;
+
+
+    appendMessage(
+      message
+    );
+
+
+    el.messageInput.value = '';
+
+    resizeComposer();
+
+
+    if(socket){
+
+      socket.emit(
+        'conversation-message',
+        {
+
+          conversationId:
+            currentConversation.id,
+
+          message
+
+        }
+      );
+
+
+      sendTyping(
+        false
+      );
+
+    }
+
+
+    loadConversations();
+
+
+  }catch(error){
+
+    console.error(
+      error
+    );
+
+    showToast(
+      error.message
+    );
+
+
+    if(
+      error.message ===
+      'SESSION_EXPIRED'
+    ){
+
+      localStorage.removeItem(
+        'vobix_token'
+      );
+
+      location.href = '/';
+
+    }
+
+
+  }finally{
+
+    el.sendButton.disabled =
+      false;
+
+  }
+
+}
+
+
+// ======================================================
+// TYPING
+// ======================================================
+
+function sendTyping(
+  typing
+){
+
+  if(
+    !socket ||
+    !currentConversation
+  ){
+    return;
+  }
+
+
+  if(
+    typingSent === typing
+  ){
+    return;
+  }
+
+
+  typingSent =
+    typing;
+
+
+  socket.emit(
+    'conversation-typing',
+    {
+
+      conversationId:
+        currentConversation.id,
+
+      typing
+
+    }
+  );
+
+}
+
+
+function typingActivity(){
+
+  if(
+    !currentConversation
+  ){
+    return;
+  }
+
+
+  sendTyping(
+    true
+  );
+
+
+  clearTimeout(
+    typingTimer
+  );
+
+
+  typingTimer =
+    setTimeout(
+      () => {
+
+        sendTyping(
+          false
+        );
+
+      },
+      1100
+    );
+
+}
+
+
+// ======================================================
+// TEXTAREA RESPONSIVE
+// ======================================================
+
+function resizeComposer(){
+
+  el.messageInput.style.height =
+    'auto';
+
+  el.messageInput.style.height =
+    Math.min(
+      el.messageInput.scrollHeight,
+      130
+    ) + 'px';
+
+}
+
+
+// ======================================================
+// VOLVER EN MÓVIL
+// ======================================================
+
+function closeMobileChat(){
+
+  if(
+    currentConversation &&
+    socket
+  ){
+
+    socket.emit(
+      'conversation-leave',
+      {
+
+        conversationId:
+          currentConversation.id
+
+      }
+    );
+
+  }
+
+
+  el.chatPanel.classList.remove(
+    'mobileOpen'
+  );
+
+}
+
+
+// ======================================================
+// LLAMADAS - BASE
+// ======================================================
+
+function audioCall(){
+
+  if(!currentConversation){
+    return;
+  }
+
+
+  showToast(
+    'Módulo de llamadas preparado para la siguiente fase.'
+  );
+
+}
+
+
+function videoCall(){
+
+  if(!currentConversation){
+    return;
+  }
+
+
+  showToast(
+    'Módulo de videollamadas preparado para la siguiente fase.'
+  );
+
+}
+
+
+// ======================================================
+// ADJUNTOS - BASE
+// ======================================================
+
+function attachments(){
+
+  showToast(
+    'Archivos, fotos y documentos serán el siguiente módulo.'
+  );
+
+}
+
+
+// ======================================================
+// EVENTOS
+// ======================================================
+
+el.searchButton
+  .addEventListener(
+    'click',
+    searchUsers
+  );
+
+
+el.searchUser
+  .addEventListener(
+    'keydown',
+    event => {
+
+      if(
+        event.key ===
+        'Enter'
+      ){
+
+        searchUsers();
+
+      }
+
+    }
+  );
+
+
+el.sendButton
+  .addEventListener(
+    'click',
+    sendMessage
+  );
+
+
+el.messageInput
+  .addEventListener(
+    'input',
+    () => {
+
+      resizeComposer();
+
+      typingActivity();
+
+    }
+  );
+
+
+el.messageInput
+  .addEventListener(
+    'keydown',
+    event => {
+
+      if(
+        event.key ===
+        'Enter' &&
+        !event.shiftKey
+      ){
+
+        event.preventDefault();
+
+        sendMessage();
+
+      }
+
+    }
+  );
+
+
+el.backButton
+  .addEventListener(
+    'click',
+    closeMobileChat
+  );
+
+
+el.audioCallButton
+  .addEventListener(
+    'click',
+    audioCall
+  );
+
+
+el.videoCallButton
+  .addEventListener(
+    'click',
+    videoCall
+  );
+
+
+el.attachButton
+  .addEventListener(
+    'click',
+    attachments
+  );
+
+
+// ======================================================
+// INICIO
+// ======================================================
+
+async function start(){
+
+  const sessionReady =
+    await loadSession();
+
+
+  if(!sessionReady){
+    return;
+  }
+
+
+  connectSocket();
+
+  await loadConversations();
+
+}
+
+
+start()
+  .catch(
+    error => {
+
+      console.error(
+        'VOBIXCHAT CLIENT ERROR:',
+        error
+      );
+
+      showToast(
+        'No se pudo iniciar VobixChat.'
+      );
+
+    }
+  );
+
+</script>
+
+
+</body>
+</html>
