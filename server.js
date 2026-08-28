@@ -5,16 +5,20 @@
  VOBIXCHAT SERVER
  server.js
 
- Núcleo actual:
+ Núcleo:
  - Express
  - PostgreSQL / Supabase
  - Inicialización automática del schema
  - Registro y PIN
  - Sesiones
- - Health check
+ - API privada autenticada
+ - Contactos
+ - Conversaciones privadas
+ - Mensajes persistentes
  - Socket.IO
- - Chat
+ - Salas privadas
  - Reuniones
+ - Health check
 ==========================================================
 */
 
@@ -28,6 +32,7 @@ const config = require('./config');
 const database = require('./database/db');
 const { initializeDatabase } = require('./database/schema');
 const { normalizePhone } = require('./core/users');
+const chatRoutes = require('./routes/chat');
 
 
 // ======================================================
@@ -55,7 +60,9 @@ const io = new Server(server, {
 // MIDDLEWARE
 // ======================================================
 
-app.use(express.json());
+app.use(express.json({
+  limit: '1mb'
+}));
 
 app.use(
   express.static(
@@ -65,7 +72,7 @@ app.use(
 
 
 // ======================================================
-// VOBIXCHAT - SEGURIDAD / PIN / SESIONES
+// SEGURIDAD / PIN / SESIONES
 // ======================================================
 
 const pins = {};
@@ -92,7 +99,7 @@ function createSessionToken() {
 
 
 // ======================================================
-// OBTENER TOKEN DEL REQUEST
+// OBTENER TOKEN HTTP
 // ======================================================
 
 function getToken(req) {
@@ -143,52 +150,241 @@ function cleanExpiredSessions() {
 
 
 // ======================================================
+// OBTENER SESIÓN VÁLIDA
+// ======================================================
+
+function getSessionByToken(token) {
+
+  if (!token) {
+    return null;
+  }
+
+  const session =
+    sessions[token];
+
+  if (!session) {
+    return null;
+  }
+
+  if (
+    Date.now() -
+    session.createdAt >
+    SESSION_TTL_MS
+  ) {
+
+    delete sessions[token];
+
+    return null;
+
+  }
+
+  return session;
+
+}
+
+
+// ======================================================
+// AUTENTICACIÓN API PRIVADA
+// ======================================================
+
+async function requireAuth(
+  req,
+  res,
+  next
+) {
+
+  cleanExpiredSessions();
+
+  const token =
+    getToken(req);
+
+  const session =
+    getSessionByToken(token);
+
+
+  if (!session) {
+
+    return res
+      .status(401)
+      .json({
+
+        ok: false,
+
+        authenticated: false,
+
+        msg:
+          'Sesión no válida o caducada'
+
+      });
+
+  }
+
+
+  try {
+
+    const result =
+      await database.query(
+        `
+        SELECT
+          id,
+          username,
+          phone,
+          vobix_id,
+          avatar_url,
+          verified,
+          online,
+          last_seen
+
+        FROM users
+
+        WHERE id = $1
+
+        LIMIT 1
+        `,
+        [
+          session.userId
+        ]
+      );
+
+
+    if (
+      result.rows.length === 0
+    ) {
+
+      delete sessions[token];
+
+
+      return res
+        .status(401)
+        .json({
+
+          ok: false,
+
+          authenticated: false
+
+        });
+
+    }
+
+
+    const user =
+      result.rows[0];
+
+
+    if (!user.verified) {
+
+      delete sessions[token];
+
+
+      return res
+        .status(401)
+        .json({
+
+          ok: false,
+
+          authenticated: false
+
+        });
+
+    }
+
+
+    req.vobixUser =
+      user;
+
+    req.vobixToken =
+      token;
+
+
+    return next();
+
+
+  } catch (error) {
+
+    console.error(
+      'VOBIXCHAT AUTH ERROR:',
+      error.message
+    );
+
+
+    return res
+      .status(500)
+      .json({
+
+        ok: false,
+
+        authenticated: false,
+
+        msg:
+          'Error comprobando la sesión'
+
+      });
+
+  }
+
+}
+
+
+// ======================================================
 // GENERAR PIN
 // ======================================================
 
 function sendPin(req, res) {
 
-  const phone = normalizePhone(
-    req.body.phone || ''
-  );
+  const phone =
+    normalizePhone(
+      req.body.phone || ''
+    );
 
-  const username = String(
-    req.body.username ||
-    req.body.user ||
-    ''
-  ).trim();
+  const username =
+    String(
+      req.body.username ||
+      req.body.user ||
+      ''
+    ).trim();
 
 
-  if (!phone || !username) {
+  if (
+    !phone ||
+    !username
+  ) {
 
-    return res.status(400).json({
+    return res
+      .status(400)
+      .json({
 
-      ok: false,
+        ok: false,
 
-      msg:
-        'Falta usuario o teléfono'
+        msg:
+          'Falta usuario o teléfono'
 
-    });
+      });
 
   }
 
 
-  if (!config.TEST_PIN_MODE) {
+  if (
+    !config.TEST_PIN_MODE
+  ) {
 
-    return res.status(503).json({
+    return res
+      .status(503)
+      .json({
 
-      ok: false,
+        ok: false,
 
-      msg:
-        'SMS real todavía no configurado'
+        msg:
+          'SMS real todavía no configurado'
 
-    });
+      });
 
   }
 
 
   const pin =
-    String(config.TEST_PIN);
+    String(
+      config.TEST_PIN
+    );
 
 
   pins[phone] = {
@@ -250,27 +446,37 @@ app.post(
 // VERIFICAR PIN
 // ======================================================
 
-async function verifyPin(req, res) {
+async function verifyPin(
+  req,
+  res
+) {
 
-  const phone = normalizePhone(
-    req.body.phone || ''
-  );
+  const phone =
+    normalizePhone(
+      req.body.phone || ''
+    );
 
-  const pin = String(
-    req.body.pin || ''
-  ).trim();
+  const pin =
+    String(
+      req.body.pin || ''
+    ).trim();
 
 
-  if (!phone || !pin) {
+  if (
+    !phone ||
+    !pin
+  ) {
 
-    return res.status(400).json({
+    return res
+      .status(400)
+      .json({
 
-      ok: false,
+        ok: false,
 
-      msg:
-        'Faltan datos'
+        msg:
+          'Faltan datos'
 
-    });
+      });
 
   }
 
@@ -281,20 +487,22 @@ async function verifyPin(req, res) {
 
   if (!pinData) {
 
-    return res.status(400).json({
+    return res
+      .status(400)
+      .json({
 
-      ok: false,
+        ok: false,
 
-      msg:
-        'Solicita un PIN primero'
+        msg:
+          'Solicita un PIN primero'
 
-    });
+      });
 
   }
 
 
   // ====================================================
-  // COMPROBAR CADUCIDAD
+  // CADUCIDAD DEL PIN
   // ====================================================
 
   if (
@@ -308,20 +516,22 @@ async function verifyPin(req, res) {
     delete pendingUsers[phone];
 
 
-    return res.status(400).json({
+    return res
+      .status(400)
+      .json({
 
-      ok: false,
+        ok: false,
 
-      msg:
-        'El PIN ha caducado. Solicita otro.'
+        msg:
+          'El PIN ha caducado. Solicita otro.'
 
-    });
+      });
 
   }
 
 
   // ====================================================
-  // COMPROBAR INTENTOS
+  // LÍMITE DE INTENTOS
   // ====================================================
 
   if (
@@ -334,14 +544,16 @@ async function verifyPin(req, res) {
     delete pendingUsers[phone];
 
 
-    return res.status(429).json({
+    return res
+      .status(429)
+      .json({
 
-      ok: false,
+        ok: false,
 
-      msg:
-        'Demasiados intentos. Solicita otro PIN.'
+        msg:
+          'Demasiados intentos. Solicita otro PIN.'
 
-    });
+      });
 
   }
 
@@ -357,21 +569,23 @@ async function verifyPin(req, res) {
     pinData.attempts += 1;
 
 
-    return res.status(400).json({
+    return res
+      .status(400)
+      .json({
 
-      ok: false,
+        ok: false,
 
-      msg:
-        'PIN incorrecto',
+        msg:
+          'PIN incorrecto',
 
-      attemptsLeft:
-        Math.max(
-          0,
-          config.PIN_MAX_ATTEMPTS -
-          pinData.attempts
-        )
+        attemptsLeft:
+          Math.max(
+            0,
+            config.PIN_MAX_ATTEMPTS -
+            pinData.attempts
+          )
 
-    });
+      });
 
   }
 
@@ -382,14 +596,16 @@ async function verifyPin(req, res) {
 
   if (!pending) {
 
-    return res.status(400).json({
+    return res
+      .status(400)
+      .json({
 
-      ok: false,
+        ok: false,
 
-      msg:
-        'Registro no encontrado'
+        msg:
+          'Registro no encontrado'
 
-    });
+      });
 
   }
 
@@ -417,8 +633,8 @@ async function verifyPin(req, res) {
         (
           $1,
           $2,
-          true,
-          false,
+          TRUE,
+          FALSE,
           NOW(),
           NOW()
         )
@@ -431,7 +647,7 @@ async function verifyPin(req, res) {
             EXCLUDED.username,
 
           verified =
-            true,
+            TRUE,
 
           updated_at =
             NOW()
@@ -441,6 +657,8 @@ async function verifyPin(req, res) {
           id,
           username,
           phone,
+          vobix_id,
+          avatar_url,
           verified,
           created_at,
           updated_at
@@ -482,7 +700,7 @@ async function verifyPin(req, res) {
 
 
     // ==================================================
-    // PIN NO SE PUEDE REUTILIZAR
+    // PIN NO REUTILIZABLE
     // ==================================================
 
     delete pins[phone];
@@ -512,6 +730,12 @@ async function verifyPin(req, res) {
         phone:
           user.phone,
 
+        vobixId:
+          user.vobix_id,
+
+        avatarUrl:
+          user.avatar_url,
+
         verified:
           user.verified
 
@@ -528,14 +752,16 @@ async function verifyPin(req, res) {
     );
 
 
-    return res.status(500).json({
+    return res
+      .status(500)
+      .json({
 
-      ok: false,
+        ok: false,
 
-      msg:
-        'No se pudo guardar el usuario'
+        msg:
+          'No se pudo guardar el usuario'
 
-    });
+      });
 
   }
 
@@ -571,33 +797,21 @@ app.get(
     const token =
       getToken(req);
 
-
-    if (!token) {
-
-      return res.status(401).json({
-
-        ok: false,
-
-        authenticated: false
-
-      });
-
-    }
-
-
     const session =
-      sessions[token];
+      getSessionByToken(token);
 
 
     if (!session) {
 
-      return res.status(401).json({
+      return res
+        .status(401)
+        .json({
 
-        ok: false,
+          ok: false,
 
-        authenticated: false
+          authenticated: false
 
-      });
+        });
 
     }
 
@@ -611,9 +825,16 @@ app.get(
             id,
             username,
             phone,
-            verified
+            vobix_id,
+            avatar_url,
+            verified,
+            online,
+            last_seen
+
           FROM users
+
           WHERE id = $1
+
           LIMIT 1
           `,
           [
@@ -629,13 +850,15 @@ app.get(
         delete sessions[token];
 
 
-        return res.status(401).json({
+        return res
+          .status(401)
+          .json({
 
-          ok: false,
+            ok: false,
 
-          authenticated: false
+            authenticated: false
 
-        });
+          });
 
       }
 
@@ -649,13 +872,15 @@ app.get(
         delete sessions[token];
 
 
-        return res.status(401).json({
+        return res
+          .status(401)
+          .json({
 
-          ok: false,
+            ok: false,
 
-          authenticated: false
+            authenticated: false
 
-        });
+          });
 
       }
 
@@ -677,8 +902,20 @@ app.get(
           phone:
             user.phone,
 
+          vobixId:
+            user.vobix_id,
+
+          avatarUrl:
+            user.avatar_url,
+
           verified:
-            user.verified
+            user.verified,
+
+          online:
+            user.online,
+
+          lastSeen:
+            user.last_seen
 
         }
 
@@ -693,13 +930,15 @@ app.get(
       );
 
 
-      return res.status(500).json({
+      return res
+        .status(500)
+        .json({
 
-        ok: false,
+          ok: false,
 
-        authenticated: false
+          authenticated: false
 
-      });
+        });
 
     }
 
@@ -737,7 +976,18 @@ app.post(
 
 
 // ======================================================
-// ESTADO DE VOBIXCHAT / BASE DE DATOS
+// API PRIVADA CHAT / CONTACTOS / CONVERSACIONES
+// ======================================================
+
+app.use(
+  '/api/chat',
+  requireAuth,
+  chatRoutes
+);
+
+
+// ======================================================
+// HEALTH
 // ======================================================
 
 app.get(
@@ -797,6 +1047,134 @@ app.get(
 
 
 // ======================================================
+// SOCKET.IO - AUTENTICACIÓN
+// ======================================================
+
+io.use(
+  (socket, next) => {
+
+    try {
+
+      const auth =
+        socket.handshake.auth || {};
+
+      const token =
+        String(
+          auth.token || ''
+        ).trim();
+
+
+      // --------------------------------------------------
+      // COMPATIBILIDAD TEMPORAL
+      //
+      // Si el frontend actual todavía no manda token,
+      // permitimos conexión para no romper reuniones.
+      // Las salas privadas sí exigirán autenticación.
+      // --------------------------------------------------
+
+      if (!token) {
+
+        socket.vobixAuthenticated =
+          false;
+
+        return next();
+
+      }
+
+
+      const session =
+        getSessionByToken(token);
+
+
+      if (!session) {
+
+        return next(
+          new Error(
+            'Sesión no válida'
+          )
+        );
+
+      }
+
+
+      socket.vobixAuthenticated =
+        true;
+
+      socket.vobixToken =
+        token;
+
+      socket.vobixUserId =
+        session.userId;
+
+      socket.vobixUsername =
+        session.username;
+
+
+      return next();
+
+
+    } catch (error) {
+
+      return next(
+        new Error(
+          'Error de autenticación'
+        )
+      );
+
+    }
+
+  }
+);
+
+
+// ======================================================
+// COMPROBAR ACCESO A CONVERSACIÓN
+// ======================================================
+
+async function socketCanAccessConversation(
+  conversationId,
+  userId
+) {
+
+  if (
+    !conversationId ||
+    !userId
+  ) {
+
+    return false;
+
+  }
+
+
+  const result =
+    await database.query(
+      `
+      SELECT 1
+
+      FROM conversation_participants
+
+      WHERE
+        conversation_id = $1
+
+        AND user_id = $2
+
+      LIMIT 1
+      `,
+      [
+        conversationId,
+        userId
+      ]
+    );
+
+
+  return (
+    result.rows.length > 0
+  );
+
+}
+
+
+// ======================================================
 // SOCKET.IO
 // ======================================================
 
@@ -806,7 +1184,7 @@ io.on(
 
 
     // --------------------------------------------------
-    // USUARIO
+    // USUARIO - COMPATIBILIDAD ACTUAL
     // --------------------------------------------------
 
     socket.on(
@@ -814,18 +1192,453 @@ io.on(
       user => {
 
         socket.username =
-          user;
+          String(
+            user || ''
+          ).slice(
+            0,
+            100
+          );
 
       }
     );
 
 
     // --------------------------------------------------
-    // CHAT ACTUAL
+    // ENTRAR A UNA CONVERSACIÓN PRIVADA
+    // --------------------------------------------------
+
+    socket.on(
+      'conversation-join',
+      async (
+        { conversationId } = {},
+        callback
+      ) => {
+
+        try {
+
+          if (
+            !socket.vobixAuthenticated ||
+            !socket.vobixUserId
+          ) {
+
+            if (
+              typeof callback ===
+              'function'
+            ) {
+
+              callback({
+
+                ok: false,
+
+                msg:
+                  'Autenticación requerida'
+
+              });
+
+            }
+
+            return;
+
+          }
+
+
+          const id =
+            String(
+              conversationId || ''
+            ).trim();
+
+
+          if (!id) {
+
+            if (
+              typeof callback ===
+              'function'
+            ) {
+
+              callback({
+
+                ok: false,
+
+                msg:
+                  'Conversación no válida'
+
+              });
+
+            }
+
+            return;
+
+          }
+
+
+          const allowed =
+            await socketCanAccessConversation(
+              id,
+              socket.vobixUserId
+            );
+
+
+          if (!allowed) {
+
+            if (
+              typeof callback ===
+              'function'
+            ) {
+
+              callback({
+
+                ok: false,
+
+                msg:
+                  'No tienes acceso'
+
+              });
+
+            }
+
+            return;
+
+          }
+
+
+          const room =
+            `conversation:${id}`;
+
+
+          socket.join(room);
+
+
+          if (
+            typeof callback ===
+            'function'
+          ) {
+
+            callback({
+
+              ok: true,
+
+              conversationId:
+                id
+
+            });
+
+          }
+
+
+        } catch (error) {
+
+          console.error(
+            'VOBIXCHAT SOCKET JOIN ERROR:',
+            error.message
+          );
+
+
+          if (
+            typeof callback ===
+            'function'
+          ) {
+
+            callback({
+
+              ok: false,
+
+              msg:
+                'No se pudo abrir la conversación'
+
+            });
+
+          }
+
+        }
+
+      }
+    );
+
+
+    // --------------------------------------------------
+    // SALIR DE CONVERSACIÓN
+    // --------------------------------------------------
+
+    socket.on(
+      'conversation-leave',
+      ({
+        conversationId
+      } = {}) => {
+
+        const id =
+          String(
+            conversationId || ''
+          ).trim();
+
+
+        if (!id) {
+          return;
+        }
+
+
+        socket.leave(
+          `conversation:${id}`
+        );
+
+      }
+    );
+
+
+    // --------------------------------------------------
+    // MENSAJE PRIVADO EN TIEMPO REAL
     //
-    // Se mantiene para no romper la versión actual.
-    // Más adelante será sustituido por conversaciones
-    // privadas persistentes.
+    // La persistencia principal sigue pasando por
+    // /api/chat/.../messages.
+    // Este evento distribuye mensajes ya guardados.
+    // --------------------------------------------------
+
+    socket.on(
+      'conversation-message',
+      async (
+        data = {},
+        callback
+      ) => {
+
+        try {
+
+          if (
+            !socket.vobixAuthenticated ||
+            !socket.vobixUserId
+          ) {
+
+            if (
+              typeof callback ===
+              'function'
+            ) {
+
+              callback({
+
+                ok: false,
+
+                msg:
+                  'Autenticación requerida'
+
+              });
+
+            }
+
+            return;
+
+          }
+
+
+          const conversationId =
+            String(
+              data.conversationId || ''
+            ).trim();
+
+
+          if (!conversationId) {
+
+            if (
+              typeof callback ===
+              'function'
+            ) {
+
+              callback({
+
+                ok: false,
+
+                msg:
+                  'Conversación no válida'
+
+              });
+
+            }
+
+            return;
+
+          }
+
+
+          const allowed =
+            await socketCanAccessConversation(
+              conversationId,
+              socket.vobixUserId
+            );
+
+
+          if (!allowed) {
+
+            if (
+              typeof callback ===
+              'function'
+            ) {
+
+              callback({
+
+                ok: false,
+
+                msg:
+                  'No tienes acceso'
+
+              });
+
+            }
+
+            return;
+
+          }
+
+
+          const room =
+            `conversation:${conversationId}`;
+
+
+          socket
+            .to(room)
+            .emit(
+              'conversation-message',
+              {
+
+                conversationId,
+
+                message:
+                  data.message || null,
+
+                senderUserId:
+                  socket.vobixUserId,
+
+                senderUsername:
+                  socket.vobixUsername
+
+              }
+            );
+
+
+          if (
+            typeof callback ===
+            'function'
+          ) {
+
+            callback({
+              ok: true
+            });
+
+          }
+
+
+        } catch (error) {
+
+          console.error(
+            'VOBIXCHAT SOCKET MESSAGE ERROR:',
+            error.message
+          );
+
+
+          if (
+            typeof callback ===
+            'function'
+          ) {
+
+            callback({
+
+              ok: false,
+
+              msg:
+                'No se pudo distribuir el mensaje'
+
+            });
+
+          }
+
+        }
+
+      }
+    );
+
+
+    // --------------------------------------------------
+    // ESCRIBIENDO...
+    // --------------------------------------------------
+
+    socket.on(
+      'conversation-typing',
+      async ({
+        conversationId,
+        typing
+      } = {}) => {
+
+        try {
+
+          if (
+            !socket.vobixAuthenticated ||
+            !socket.vobixUserId
+          ) {
+            return;
+          }
+
+
+          const id =
+            String(
+              conversationId || ''
+            ).trim();
+
+
+          if (!id) {
+            return;
+          }
+
+
+          const allowed =
+            await socketCanAccessConversation(
+              id,
+              socket.vobixUserId
+            );
+
+
+          if (!allowed) {
+            return;
+          }
+
+
+          socket
+            .to(
+              `conversation:${id}`
+            )
+            .emit(
+              'conversation-typing',
+              {
+
+                conversationId:
+                  id,
+
+                userId:
+                  socket.vobixUserId,
+
+                username:
+                  socket.vobixUsername,
+
+                typing:
+                  Boolean(typing)
+
+              }
+            );
+
+
+        } catch (error) {
+
+          console.error(
+            'VOBIXCHAT TYPING ERROR:',
+            error.message
+          );
+
+        }
+
+      }
+    );
+
+
+    // --------------------------------------------------
+    // CHAT ANTIGUO
+    //
+    // Se conserva temporalmente para no romper
+    // la interfaz existente.
     // --------------------------------------------------
 
     socket.on(
@@ -854,16 +1667,34 @@ io.on(
         }
 
 
-        socket.join(room);
+        const safeRoom =
+          String(room)
+            .trim()
+            .slice(
+              0,
+              150
+            );
+
+
+        if (!safeRoom) {
+          return;
+        }
+
+
+        socket.join(
+          safeRoom
+        );
 
 
         socket
-          .to(room)
+          .to(safeRoom)
           .emit(
             'meet-user-joined',
             {
+
               id:
                 socket.id
+
             }
           );
 
@@ -873,7 +1704,7 @@ io.on(
             io.sockets
               .adapter
               .rooms
-              .get(room) ||
+              .get(safeRoom) ||
             []
           )
 
@@ -899,6 +1730,10 @@ io.on(
       }
     );
 
+
+    // --------------------------------------------------
+    // SEÑAL WEBRTC
+    // --------------------------------------------------
 
     socket.on(
       'meet-signal',
@@ -933,6 +1768,10 @@ io.on(
     );
 
 
+    // --------------------------------------------------
+    // SALIR DE REUNIÓN
+    // --------------------------------------------------
+
     socket.on(
       'meet-leave',
       ({
@@ -944,11 +1783,27 @@ io.on(
         }
 
 
-        socket.leave(room);
+        const safeRoom =
+          String(room)
+            .trim()
+            .slice(
+              0,
+              150
+            );
+
+
+        if (!safeRoom) {
+          return;
+        }
+
+
+        socket.leave(
+          safeRoom
+        );
 
 
         socket
-          .to(room)
+          .to(safeRoom)
           .emit(
             'meet-user-left',
             socket.id
@@ -957,6 +1812,10 @@ io.on(
       }
     );
 
+
+    // --------------------------------------------------
+    // DESCONEXIÓN
+    // --------------------------------------------------
 
     socket.on(
       'disconnect',
@@ -986,7 +1845,7 @@ setInterval(
 
 
 // ======================================================
-// ARRANQUE DEL SERVIDOR
+// PUERTO
 // ======================================================
 
 const PORT =
@@ -1006,11 +1865,12 @@ async function startVobixChat() {
 
 
   // ====================================================
-  // 1. COMPROBAR POSTGRESQL
+  // 1. POSTGRESQL
   // ====================================================
 
   const connected =
-    await database.testConnection();
+    await database
+      .testConnection();
 
 
   if (!connected) {
@@ -1034,7 +1894,7 @@ async function startVobixChat() {
 
 
   // ====================================================
-  // 2. PREPARAR ESTRUCTURA DE BASE DE DATOS
+  // 2. SCHEMA
   // ====================================================
 
   const schemaReady =
@@ -1062,7 +1922,7 @@ async function startVobixChat() {
 
 
   // ====================================================
-  // 3. ARRANCAR SERVIDOR
+  // 3. SERVIDOR
   // ====================================================
 
   server.listen(
@@ -1080,6 +1940,16 @@ async function startVobixChat() {
             ? 'ACTIVADO'
             : 'DESACTIVADO'
         }`
+      );
+
+
+      console.log(
+        'VOBIXCHAT CORE: API privada de chat preparada'
+      );
+
+
+      console.log(
+        'VOBIXCHAT CORE: Socket.IO privado preparado'
       );
 
 
