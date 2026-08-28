@@ -845,7 +845,7 @@
 
         <div
           class="emojiPanel"
-                    id="emojiPanel"
+          id="emojiPanel"
         >
 
           <button class="emoji">😀</button>
@@ -873,7 +873,6 @@
           <button class="emoji">🚀</button>
 
         </div>
-
 
         <div
           class="attachMenu"
@@ -908,7 +907,6 @@
 
       </div>
 
-
       <input
         type="file"
         id="mediaInput"
@@ -916,13 +914,11 @@
         hidden
       >
 
-
       <input
         type="file"
         id="documentInput"
         hidden
       >
-
 
       <input
         type="file"
@@ -932,19 +928,16 @@
         hidden
       >
 
-
     </section>
 
   </main>
 
 </div>
 
-
 <div
   class="toast"
   id="toast"
 ></div>
-
 
 <script>
 
@@ -952,7 +945,15 @@
 
 
 // ========================================================
-// SOCKET — AUTENTICADO DESDE EL HANDSHAKE
+// AUTENTICACIÓN
+//
+// El mismo token se utilizará para:
+// 1. Socket.IO.
+// 2. Todas las peticiones HTTP del chat.
+// 3. Subida de archivos.
+//
+// Así evitamos que el socket esté autenticado mientras
+// fetch() llega al backend sin Authorization.
 // ========================================================
 
 const VOBIX_TOKEN =
@@ -960,13 +961,27 @@ const VOBIX_TOKEN =
   localStorage.getItem('token') ||
   '';
 
+
+// ========================================================
+// SOCKET — AUTENTICADO DESDE EL HANDSHAKE
+// ========================================================
+
 const socket = io({
+
   auth: {
     token: VOBIX_TOKEN
   },
-  transports: ['websocket', 'polling'],
+
+  transports: [
+    'websocket',
+    'polling'
+  ],
+
   reconnection: true,
-  reconnectionAttempts: Infinity
+
+  reconnectionAttempts:
+    Infinity
+
 });
 
 
@@ -975,161 +990,248 @@ const socket = io({
 // ========================================================
 
 const app =
-  document.getElementById('app');
+  document.getElementById(
+    'app'
+  );
 
 const myUsername =
-  document.getElementById('myUsername');
+  document.getElementById(
+    'myUsername'
+  );
 
 const myAvatar =
-  document.getElementById('myAvatar');
+  document.getElementById(
+    'myAvatar'
+  );
 
 const searchInput =
-  document.getElementById('searchInput');
+  document.getElementById(
+    'searchInput'
+  );
 
 const searchButton =
-  document.getElementById('searchButton');
+  document.getElementById(
+    'searchButton'
+  );
 
 const searchResults =
-  document.getElementById('searchResults');
+  document.getElementById(
+    'searchResults'
+  );
 
 const conversationList =
-  document.getElementById('conversationList');
+  document.getElementById(
+    'conversationList'
+  );
 
 const conversationCount =
-  document.getElementById('conversationCount');
-
-const emptyState =
-  document.getElementById('emptyState');
+  document.getElementById(
+    'conversationCount'
+  );
+ const emptyState =
+  document.getElementById(
+    'emptyState'
+  );
 
 const chatRoom =
-  document.getElementById('chatRoom');
+  document.getElementById(
+    'chatRoom'
+  );
 
 const roomAvatar =
-  document.getElementById('roomAvatar');
+  document.getElementById(
+    'roomAvatar'
+  );
 
 const roomName =
-  document.getElementById('roomName');
+  document.getElementById(
+    'roomName'
+  );
 
 const roomStatus =
-  document.getElementById('roomStatus');
+  document.getElementById(
+    'roomStatus'
+  );
 
 const messages =
-  document.getElementById('messages');
+  document.getElementById(
+    'messages'
+  );
 
 const typing =
-  document.getElementById('typing');
+  document.getElementById(
+    'typing'
+  );
 
 const messageInput =
-  document.getElementById('messageInput');
+  document.getElementById(
+    'messageInput'
+  );
 
 const sendButton =
-  document.getElementById('sendButton');
+  document.getElementById(
+    'sendButton'
+  );
 
 const backButton =
-  document.getElementById('backButton');
+  document.getElementById(
+    'backButton'
+  );
 
 const emojiButton =
-  document.getElementById('emojiButton');
+  document.getElementById(
+    'emojiButton'
+  );
 
 const emojiPanel =
-  document.getElementById('emojiPanel');
+  document.getElementById(
+    'emojiPanel'
+  );
 
 const attachButton =
-  document.getElementById('attachButton');
+  document.getElementById(
+    'attachButton'
+  );
 
 const attachMenu =
-  document.getElementById('attachMenu');
+  document.getElementById(
+    'attachMenu'
+  );
 
 const cameraButton =
-  document.getElementById('cameraButton');
+  document.getElementById(
+    'cameraButton'
+  );
 
 const audioButton =
-  document.getElementById('audioButton');
+  document.getElementById(
+    'audioButton'
+  );
 
 const voiceCallButton =
-  document.getElementById('voiceCallButton');
+  document.getElementById(
+    'voiceCallButton'
+  );
 
 const videoCallButton =
-  document.getElementById('videoCallButton');
+  document.getElementById(
+    'videoCallButton'
+  );
 
 const moreButton =
-  document.getElementById('moreButton');
+  document.getElementById(
+    'moreButton'
+  );
 
 const mediaInput =
-  document.getElementById('mediaInput');
+  document.getElementById(
+    'mediaInput'
+  );
 
 const documentInput =
-  document.getElementById('documentInput');
+  document.getElementById(
+    'documentInput'
+  );
 
 const cameraInput =
-  document.getElementById('cameraInput');
+  document.getElementById(
+    'cameraInput'
+  );
 
 const toast =
-  document.getElementById('toast');
+  document.getElementById(
+    'toast'
+  );
 
 
 // ========================================================
 // ESTADO
 // ========================================================
 
-let currentConversation = null;
+let currentConversation =
+  null;
 
-let conversations = [];
+let conversations =
+  [];
 
-let typingTimer = null;
+let typingTimer =
+  null;
 
 
 // ========================================================
 // CACHE LOCAL DE NOMBRES
 // ========================================================
 
-const contactNameCache = (() => {
+const contactNameCache =
+  (() => {
 
-  try {
+    try {
 
-    return JSON.parse(
-      localStorage.getItem('vobix_contact_names') || '{}'
-    ) || {};
+      return JSON.parse(
+        localStorage.getItem(
+          'vobix_contact_names'
+        ) || '{}'
+      ) || {};
 
-  } catch (_) {
+    } catch (error) {
 
-    return {};
+      return {};
 
-  }
+    }
 
-})();
+  })();
 
 
-function saveContactName(key, name) {
+function saveContactName(
+  key,
+  name
+) {
 
   if (
     key == null ||
     !name ||
-    String(name).trim().toLowerCase() === 'usuario'
+    String(name)
+      .trim()
+      .toLowerCase() ===
+      'usuario'
   ) {
+
     return;
+
   }
 
-  contactNameCache[String(key)] =
+
+  contactNameCache[
+    String(key)
+  ] =
     String(name).trim();
+
 
   try {
 
     localStorage.setItem(
       'vobix_contact_names',
-      JSON.stringify(contactNameCache)
+      JSON.stringify(
+        contactNameCache
+      )
     );
 
-  } catch (_) {}
+  } catch (error) {}
 
 }
 
 
-function cachedContactName(key) {
+function cachedContactName(
+  key
+) {
 
   return key == null
     ? ''
-    : (contactNameCache[String(key)] || '');
+    : (
+        contactNameCache[
+          String(key)
+        ] || ''
+      );
 
 }
 
@@ -1137,32 +1239,44 @@ function cachedContactName(key) {
 // ========================================================
 // USUARIO LOCAL
 //
-// CORRECCIÓN:
 // EL NOMBRE ESCRITO EN index.html TIENE PRIORIDAD.
-// NO DEBE MOSTRAR TELÉFONO, ID NI UN USUARIO ANTIGUO.
 // ========================================================
 
 function getLocalUser() {
 
   const freshUsername =
     (
-      localStorage.getItem('vobix_username') ||
-      localStorage.getItem('username') ||
+      localStorage.getItem(
+        'vobix_username'
+      ) ||
+      localStorage.getItem(
+        'username'
+      ) ||
       ''
     )
-    .trim()
-    .replace(/^@+/, '');
+      .trim()
+      .replace(
+        /^@+/,
+        ''
+      );
 
 
-  let storedUser = null;
+  let storedUser =
+    null;
 
 
   try {
 
     const raw =
-      localStorage.getItem('vobix_user') ||
-      localStorage.getItem('vobixUser') ||
-      localStorage.getItem('user') ||
+      localStorage.getItem(
+        'vobix_user'
+      ) ||
+      localStorage.getItem(
+        'vobixUser'
+      ) ||
+      localStorage.getItem(
+        'user'
+      ) ||
       '';
 
 
@@ -1176,17 +1290,21 @@ function getLocalUser() {
 
         if (
           parsed &&
-          typeof parsed === 'object'
+          typeof parsed ===
+            'object'
         ) {
 
-          storedUser = parsed;
+          storedUser =
+            parsed;
 
         } else if (
-          typeof parsed === 'string'
+          typeof parsed ===
+            'string'
         ) {
 
           storedUser = {
-            username: parsed
+            username:
+              parsed
           };
 
         }
@@ -1194,7 +1312,8 @@ function getLocalUser() {
       } catch (error) {
 
         storedUser = {
-          username: raw
+          username:
+            raw
         };
 
       }
@@ -1203,21 +1322,21 @@ function getLocalUser() {
 
   } catch (error) {
 
-    storedUser = null;
+    storedUser =
+      null;
 
   }
 
 
-  /*
-    El username escrito en index.html manda sobre
-    cualquier dato anterior almacenado.
-  */
-
   if (freshUsername) {
 
     return {
+
       ...(storedUser || {}),
-      username: freshUsername
+
+      username:
+        freshUsername
+
     };
 
   }
@@ -1233,16 +1352,23 @@ function getLocalUser() {
         storedUser.displayName ||
         ''
       )
-      .toString()
-      .trim()
-      .replace(/^@+/, '');
+        .toString()
+        .trim()
+        .replace(
+          /^@+/,
+          ''
+        );
 
 
     if (storedUsername) {
 
       return {
+
         ...storedUser,
-        username: storedUsername
+
+        username:
+          storedUsername
+
       };
 
     }
@@ -1260,33 +1386,43 @@ let me =
 
 
 // ========================================================
-// NOMBRE REAL
+// OBTENER USERNAME
 // ========================================================
 
-function getUsername(data) {
+function getUsername(
+  data
+) {
 
   if (!data) {
     return '';
   }
 
+
   if (
-    typeof data === 'string'
+    typeof data ===
+    'string'
   ) {
 
     const value =
       data
         .trim()
-        .replace(/^@+/, '');
+        .replace(
+          /^@+/,
+          ''
+        );
 
 
     if (
       value &&
-      value.toLowerCase() !== 'usuario'
+      value
+        .toLowerCase() !==
+        'usuario'
     ) {
 
       return value;
 
     }
+
 
     return '';
 
@@ -1318,18 +1454,24 @@ function getUsername(data) {
   ) {
 
     if (
-      typeof candidate === 'string'
+      typeof candidate ===
+      'string'
     ) {
 
       const value =
         candidate
           .trim()
-          .replace(/^@+/, '');
+          .replace(
+            /^@+/,
+            ''
+          );
 
 
       if (
         value &&
-        value.toLowerCase() !== 'usuario'
+        value
+          .toLowerCase() !==
+          'usuario'
       ) {
 
         return value;
@@ -1360,7 +1502,9 @@ function getUsername(data) {
   ) {
 
     const value =
-      getUsername(nested);
+      getUsername(
+        nested
+      );
 
 
     if (value) {
@@ -1376,10 +1520,12 @@ function getUsername(data) {
 
 
 // ========================================================
-// TELÉFONO
+// OBTENER TELÉFONO
 // ========================================================
 
-function getPhone(data) {
+function getPhone(
+  data
+) {
 
   if (!data) {
     return '';
@@ -1396,17 +1542,23 @@ function getPhone(data) {
 
     (
       data.other_user &&
-      getPhone(data.other_user)
+      getPhone(
+        data.other_user
+      )
     ) ||
 
     (
       data.otherUser &&
-      getPhone(data.otherUser)
+      getPhone(
+        data.otherUser
+      )
     ) ||
 
     (
       data.user &&
-      getPhone(data.user)
+      getPhone(
+        data.user
+      )
     ) ||
 
     ''
@@ -1417,10 +1569,12 @@ function getPhone(data) {
 
 
 // ========================================================
-// ID USUARIO
+// OBTENER ID DE USUARIO
 // ========================================================
 
-function getUserId(data) {
+function getUserId(
+  data
+) {
 
   if (!data) {
     return null;
@@ -1438,12 +1592,16 @@ function getUserId(data) {
 
     (
       data.other_user &&
-      getUserId(data.other_user)
+      getUserId(
+        data.other_user
+      )
     ) ||
 
     (
       data.otherUser &&
-      getUserId(data.otherUser)
+      getUserId(
+        data.otherUser
+      )
     ) ||
 
     data.id ||
@@ -1484,7 +1642,9 @@ function getConversationName(
   ) {
 
     const name =
-      getUsername(item);
+      getUsername(
+        item
+      );
 
 
     if (name) {
@@ -1515,14 +1675,21 @@ function getConversationName(
   ) {
 
     if (
-      typeof value === 'string' &&
+      typeof value ===
+        'string' &&
       value.trim() &&
-      value.trim().toLowerCase() !== 'usuario'
+      value
+        .trim()
+        .toLowerCase() !==
+        'usuario'
     ) {
 
       return value
         .trim()
-        .replace(/^@+/, '');
+        .replace(
+          /^@+/,
+          ''
+        );
 
     }
 
@@ -1530,7 +1697,8 @@ function getConversationName(
 
 
   if (
-    conversation.type === 'group' &&
+    conversation.type ===
+      'group' &&
     conversation.title
   ) {
 
@@ -1556,8 +1724,14 @@ function getConversationName(
 
 
   const cached =
-    cachedContactName('c:' + conversationId) ||
-    cachedContactName('u:' + otherUserId);
+    cachedContactName(
+      'c:' +
+      conversationId
+    ) ||
+    cachedContactName(
+      'u:' +
+      otherUserId
+    );
 
 
   if (cached) {
@@ -1566,7 +1740,9 @@ function getConversationName(
 
 
   const phone =
-    getPhone(conversation);
+    getPhone(
+      conversation
+    );
 
 
   if (phone) {
@@ -1580,16 +1756,10 @@ function getConversationName(
 
 
 // ========================================================
-// PERFIL ACTUAL
+// PERFIL DEL USUARIO ACTUAL
 // ========================================================
 
 function renderMyProfile() {
-
-  /*
-    Volvemos a leer localStorage para asegurarnos
-    de utilizar el nombre que index.html acaba
-    de guardar antes de entrar en chat.html.
-  */
 
   const latestUser =
     getLocalUser();
@@ -1598,22 +1768,31 @@ function renderMyProfile() {
   if (latestUser) {
 
     me = {
+
       ...(me || {}),
+
       ...latestUser
+
     };
 
   }
 
 
   const realName =
-    getUsername(me);
+    getUsername(
+      me
+    );
 
 
   if (!realName) {
 
-    myUsername.textContent = '@';
+    myUsername.textContent =
+      '@';
 
-    myAvatar.textContent = 'V';
+
+    myAvatar.textContent =
+      'V';
+
 
     return;
 
@@ -1622,14 +1801,21 @@ function renderMyProfile() {
 
   myUsername.textContent =
     '@' +
-    realName.replace(/^@+/, '');
+    realName.replace(
+      /^@+/,
+      ''
+    );
 
 
   myAvatar.textContent =
     realName
-      .replace(/^@+/, '')
+      .replace(
+        /^@+/,
+        ''
+      )
       .charAt(0)
-      .toUpperCase() || 'V';
+      .toUpperCase() ||
+    'V';
 
 }
 
@@ -1641,7 +1827,9 @@ renderMyProfile();
 // TOAST
 // ========================================================
 
-function showToast(text) {
+function showToast(
+  text
+) {
 
   toast.textContent =
     text;
@@ -1670,7 +1858,9 @@ function showToast(text) {
 // ESCAPAR HTML
 // ========================================================
 
-function escapeHTML(value) {
+function escapeHTML(
+  value
+) {
 
   const div =
     document.createElement(
@@ -1690,7 +1880,44 @@ function escapeHTML(value) {
 
 
 // ========================================================
-// REQUEST
+// HEADERS AUTENTICADOS
+// ========================================================
+
+function buildAuthHeaders(
+  headers = {}
+) {
+
+  const finalHeaders =
+    new Headers(
+      headers || {}
+    );
+
+
+  /*
+    CORRECCIÓN PRINCIPAL:
+
+    Todas las peticiones privadas del chat deben
+    llevar el mismo token que utiliza Socket.IO.
+  */
+
+  if (VOBIX_TOKEN) {
+
+    finalHeaders.set(
+      'Authorization',
+      'Bearer ' +
+      VOBIX_TOKEN
+    );
+
+  }
+
+
+  return finalHeaders;
+
+}
+
+
+// ========================================================
+// REQUEST JSON AUTENTICADO
 // ========================================================
 
 async function requestJSON(
@@ -1698,10 +1925,22 @@ async function requestJSON(
   options = {}
 ) {
 
+  const finalOptions = {
+
+    ...options,
+
+    headers:
+      buildAuthHeaders(
+        options.headers
+      )
+
+  };
+
+
   const response =
     await fetch(
       url,
-      options
+      finalOptions
     );
 
 
@@ -1714,6 +1953,33 @@ async function requestJSON(
       await response.json();
 
   } catch (error) {}
+
+
+  /*
+    Si el servidor responde 401, ya sabemos que
+    no es un fallo visual del chat: la sesión/token
+    no es válida.
+  */
+
+  if (
+    response.status ===
+    401
+  ) {
+
+    console.error(
+      'VOBIXCHAT AUTH 401:',
+      data
+    );
+
+
+    throw new Error(
+      data.message ||
+      data.msg ||
+      data.error ||
+      'La sesión no es válida'
+    );
+
+  }
 
 
   if (!response.ok) {
@@ -1742,12 +2008,16 @@ async function requestJSON(
 async function searchUsers() {
 
   const value =
-    searchInput.value.trim();
+    searchInput
+      .value
+      .trim();
 
 
   if (!value) {
 
-    searchResults.innerHTML = '';
+    searchResults.innerHTML =
+      '';
+
 
     return;
 
@@ -1797,6 +2067,7 @@ async function searchUsers() {
 
 
     showToast(
+      error.message ||
       'No se pudo realizar la búsqueda'
     );
 
@@ -1806,14 +2077,15 @@ async function searchUsers() {
 
 
 // ========================================================
-// RESULTADOS
+// RESULTADOS DE BÚSQUEDA
 // ========================================================
 
 function renderSearchResults(
   users
 ) {
 
-  searchResults.innerHTML = '';
+  searchResults.innerHTML =
+    '';
 
 
   if (!users.length) {
@@ -1832,6 +2104,7 @@ function renderSearchResults(
 
     `;
 
+
     return;
 
   }
@@ -1842,27 +2115,37 @@ function renderSearchResults(
 
 
       const name =
-        getUsername(user) ||
-        getPhone(user) ||
+        getUsername(
+          user
+        ) ||
+        getPhone(
+          user
+        ) ||
         'Contacto';
 
 
       const phone =
-        getPhone(user);
+        getPhone(
+          user
+        );
 
 
       const foundUserId =
-        getUserId(user);
+        getUserId(
+          user
+        );
 
 
       if (
         foundUserId &&
         name &&
-        name !== 'Contacto'
+        name !==
+          'Contacto'
       ) {
 
         saveContactName(
-          'u:' + foundUserId,
+          'u:' +
+          foundUserId,
           name
         );
 
@@ -1873,7 +2156,9 @@ function renderSearchResults(
         document.createElement(
           'div'
         );
-            item.className =
+
+
+      item.className =
         'conversation';
 
 
@@ -1889,19 +2174,21 @@ function renderSearchResults(
 
         </div>
 
-
         <div class="conversationBody">
 
           <div class="conversationName">
 
-            ${escapeHTML(name)}
+            ${escapeHTML(
+              name
+            )}
 
           </div>
 
-
           <div class="conversationPreview">
 
-            ${escapeHTML(phone)}
+            ${escapeHTML(
+              phone
+            )}
 
           </div>
 
@@ -1926,7 +2213,6 @@ function renderSearchResults(
         item
       );
 
-
     }
   );
 
@@ -1934,7 +2220,7 @@ function renderSearchResults(
 
 
 // ========================================================
-// CREAR CONVERSACIÓN
+// CREAR / ABRIR CONVERSACIÓN PRIVADA
 // ========================================================
 
 async function createConversation(
@@ -1944,7 +2230,9 @@ async function createConversation(
   try {
 
     const targetUserId =
-      getUserId(user);
+      getUserId(
+        user
+      );
 
 
     if (!targetUserId) {
@@ -1952,6 +2240,7 @@ async function createConversation(
       showToast(
         'No encontramos el ID de este contacto'
       );
+
 
       return;
 
@@ -1965,7 +2254,8 @@ async function createConversation(
 
         {
 
-          method: 'POST',
+          method:
+            'POST',
 
           headers: {
 
@@ -1996,9 +2286,8 @@ async function createConversation(
 
 
     /*
-      Conservamos el usuario real encontrado.
-      Así no perdemos su nombre aunque la respuesta
-      del servidor todavía no incluya username.
+      Conservamos los datos del usuario encontrado
+      si la respuesta de creación no los incluye.
     */
 
     if (
@@ -2019,8 +2308,12 @@ async function createConversation(
 
 
     const realTargetName =
-      getUsername(user) ||
-      getPhone(user);
+      getUsername(
+        user
+      ) ||
+      getPhone(
+        user
+      );
 
 
     if (
@@ -2029,7 +2322,8 @@ async function createConversation(
     ) {
 
       saveContactName(
-        'c:' + conversationId,
+        'c:' +
+        conversationId,
         realTargetName
       );
 
@@ -2042,7 +2336,8 @@ async function createConversation(
     ) {
 
       saveContactName(
-        'u:' + targetUserId,
+        'u:' +
+        targetUserId,
         realTargetName
       );
 
@@ -2064,7 +2359,9 @@ async function createConversation(
 
           return (
             String(id) ===
-            String(conversationId)
+            String(
+              conversationId
+            )
           );
 
         }
@@ -2081,7 +2378,8 @@ async function createConversation(
 
       if (
         !refreshedName ||
-        refreshedName === 'Contacto'
+        refreshedName ===
+          'Contacto'
       ) {
 
         refreshed.other_user =
@@ -2103,9 +2401,12 @@ async function createConversation(
     }
 
 
-    searchResults.innerHTML = '';
+    searchResults.innerHTML =
+      '';
 
-    searchInput.value = '';
+
+    searchInput.value =
+      '';
 
 
   } catch (error) {
@@ -2117,10 +2418,8 @@ async function createConversation(
 
 
     showToast(
-
       error.message ||
       'No se pudo abrir la conversación'
-
     );
 
   }
@@ -2157,12 +2456,6 @@ async function loadConversations() {
           );
 
 
-    /*
-      Guardamos los nombres válidos encontrados para
-      evitar que posteriormente aparezca un ID o
-      "Contacto" cuando el servidor mande menos datos.
-    */
-
     conversations.forEach(
       conversation => {
 
@@ -2181,11 +2474,13 @@ async function loadConversations() {
         if (
           conversationId &&
           name &&
-          name !== 'Contacto'
+          name !==
+            'Contacto'
         ) {
 
           saveContactName(
-            'c:' + conversationId,
+            'c:' +
+            conversationId,
             name
           );
 
@@ -2205,6 +2500,12 @@ async function loadConversations() {
       error
     );
 
+
+    showToast(
+      error.message ||
+      'No se pudieron cargar las conversaciones'
+    );
+
   }
 
 }
@@ -2216,7 +2517,8 @@ async function loadConversations() {
 
 function renderConversations() {
 
-  conversationList.innerHTML = '';
+  conversationList.innerHTML =
+    '';
 
 
   conversationCount.textContent =
@@ -2239,6 +2541,7 @@ function renderConversations() {
       </div>
 
     `;
+
 
     return;
 
@@ -2283,11 +2586,13 @@ function renderConversations() {
 
       if (
         name &&
-        name !== 'Contacto'
+        name !==
+          'Contacto'
       ) {
 
         saveContactName(
-          'c:' + conversationId,
+          'c:' +
+          conversationId,
           name
         );
 
@@ -2297,7 +2602,9 @@ function renderConversations() {
       if (
         currentId &&
         String(currentId) ===
-        String(conversationId)
+        String(
+          conversationId
+        )
       ) {
 
         item.classList.add(
@@ -2308,7 +2615,6 @@ function renderConversations() {
 
 
       const preview =
-
         conversation.last_message ||
         conversation.lastMessage ||
         conversation.preview ||
@@ -2327,19 +2633,21 @@ function renderConversations() {
 
         </div>
 
-
         <div class="conversationBody">
 
           <div class="conversationName">
 
-            ${escapeHTML(name)}
+            ${escapeHTML(
+              name
+            )}
 
           </div>
 
-
           <div class="conversationPreview">
 
-            ${escapeHTML(preview)}
+            ${escapeHTML(
+              preview
+            )}
 
           </div>
 
@@ -2364,7 +2672,6 @@ function renderConversations() {
         item
       );
 
-
     }
   );
 
@@ -2372,7 +2679,7 @@ function renderConversations() {
 
 
 // ========================================================
-// ENTRAR EN SALA PRIVADA REALTIME
+// ENTRAR EN SALA PRIVADA SOCKET.IO
 // ========================================================
 
 function joinConversationRoom(
@@ -2443,6 +2750,7 @@ function joinConversationRoom(
               conversationId
 
           },
+
           ack => {
 
             if (
@@ -2495,8 +2803,6 @@ function joinConversationRoom(
   );
 
 }
-
-
 // ========================================================
 // ABRIR CONVERSACIÓN
 // ========================================================
@@ -2537,8 +2843,8 @@ async function openConversation(
       name ||
       'V'
     )
-    .charAt(0)
-    .toUpperCase();
+      .charAt(0)
+      .toUpperCase();
 
 
   const other =
@@ -2551,16 +2857,12 @@ async function openConversation(
 
 
   roomStatus.textContent =
-
     other.online === true
-
       ? 'En línea'
-
       : 'Conversación privada';
 
 
   const conversationId =
-
     conversation.id ||
     conversation.conversation_id ||
     conversation.conversationId;
@@ -2601,10 +2903,20 @@ async function loadMessages() {
 
 
   const conversationId =
-
     currentConversation.id ||
     currentConversation.conversation_id ||
     currentConversation.conversationId;
+
+
+  if (!conversationId) {
+
+    showToast(
+      'Conversación no válida'
+    );
+
+    return;
+
+  }
 
 
   try {
@@ -2638,7 +2950,8 @@ async function loadMessages() {
           );
 
 
-    messages.innerHTML = '';
+    messages.innerHTML =
+      '';
 
 
     list.forEach(
@@ -2664,6 +2977,7 @@ async function loadMessages() {
 
 
     showToast(
+      error.message ||
       'No se pudieron cargar los mensajes'
     );
 
@@ -2806,7 +3120,9 @@ function isMyMessage(
 
 
   const myId =
-    getUserId(me);
+    getUserId(
+      me
+    );
 
 
   if (
@@ -2831,7 +3147,9 @@ function isMyMessage(
 
 
   const myName =
-    getUsername(me);
+    getUsername(
+      me
+    );
 
 
   if (
@@ -2861,7 +3179,6 @@ function getMessageTime(
 ) {
 
   const raw =
-
     message.created_at ||
     message.createdAt ||
     message.timestamp ||
@@ -2876,7 +3193,9 @@ function getMessageTime(
 
 
   const date =
-    new Date(raw);
+    new Date(
+      raw
+    );
 
 
   if (
@@ -2937,13 +3256,20 @@ function renderMessage(
     null;
 
 
+  /*
+    Evitamos duplicar el mismo mensaje cuando llega
+    primero por HTTP y después por Socket.IO.
+  */
+
   if (messageId != null) {
 
     const existing =
       messages.querySelector(
         '[data-message-id="' +
         CSS.escape(
-          String(messageId)
+          String(
+            messageId
+          )
         ) +
         '"]'
       );
@@ -2977,7 +3303,9 @@ function renderMessage(
   if (messageId != null) {
 
     row.dataset.messageId =
-      String(messageId);
+      String(
+        messageId
+      );
 
   }
 
@@ -2995,13 +3323,11 @@ function renderMessage(
   if (!mine) {
 
     const senderName =
-
       getUsername(
         message.sender ||
         message.user ||
         message
       ) ||
-
       getConversationName(
         currentConversation
       );
@@ -3016,7 +3342,7 @@ function renderMessage(
 
 
       sender.className =
-               'messageSender';
+        'messageSender';
 
 
       sender.textContent =
@@ -3125,7 +3451,7 @@ function renderMessage(
 
 
 // ========================================================
-// BAJAR AL ÚLTIMO MENSAJE
+// BAJAR AUTOMÁTICAMENTE AL ÚLTIMO MENSAJE
 // ========================================================
 
 function scrollMessagesToBottom() {
@@ -3143,10 +3469,7 @@ function scrollMessagesToBottom() {
 
 
 // ========================================================
-// MENSAJE REALTIME
-//
-// EL MENSAJE QUE PERTENECE A LA SALA PRIVADA ABIERTA
-// APARECE DIRECTAMENTE SIN VOLVER A PULSAR EL USUARIO.
+// MENSAJES EN TIEMPO REAL
 // ========================================================
 
 function socketMessage(
@@ -3159,27 +3482,28 @@ function socketMessage(
 
 
   const message =
-
     rawMessage.message ||
     rawMessage.data ||
     rawMessage;
 
 
   /*
-    Algunos eventos mandan conversation_id
+    Algunos eventos pueden traer conversation_id
     fuera del objeto message.
 
-    Lo normalizamos.
+    Lo copiamos al mensaje para normalizarlo.
   */
 
   if (
     message &&
-    typeof message === 'object' &&
-    !getMessageConversationId(message)
+    typeof message ===
+      'object' &&
+    !getMessageConversationId(
+      message
+    )
   ) {
 
     const envelopeConversationId =
-
       rawMessage.conversation_id ||
       rawMessage.conversationId ||
 
@@ -3213,7 +3537,8 @@ function socketMessage(
 
   if (
     !message ||
-    typeof message !== 'object'
+    typeof message !==
+      'object'
   ) {
 
     return;
@@ -3234,13 +3559,13 @@ function socketMessage(
       message
     );
 
+
     return;
 
   }
 
 
   const currentConversationId =
-
     currentConversation
 
       ? (
@@ -3289,8 +3614,8 @@ function socketMessage(
 
 
   /*
-    Si tenemos abierta exactamente esa conversación,
-    pintamos el mensaje inmediatamente.
+    Si tenemos abierta la conversación exacta,
+    mostramos el mensaje inmediatamente.
   */
 
   if (
@@ -3314,9 +3639,9 @@ function socketMessage(
 
 
   /*
-    Si pertenece a otra conversación,
-    actualizamos el lateral pero NO cambiamos
-    automáticamente la sala que está abierta.
+    Si el mensaje pertenece a otra conversación,
+    actualizamos la lista lateral sin sacar al usuario
+    de la conversación que está viendo.
   */
 
   updateConversationFromMessage(
@@ -3327,7 +3652,7 @@ function socketMessage(
 
 
 // ========================================================
-// ACTUALIZAR CONVERSACIÓN DESDE MENSAJE
+// ACTUALIZAR CONVERSACIÓN DESDE MENSAJE REALTIME
 // ========================================================
 
 function updateConversationFromMessage(
@@ -3350,7 +3675,6 @@ function updateConversationFromMessage(
       conversation => {
 
         const id =
-
           conversation.id ||
           conversation.conversation_id ||
           conversation.conversationId;
@@ -3358,21 +3682,27 @@ function updateConversationFromMessage(
 
         return (
           String(id) ===
-          String(conversationId)
+          String(
+            conversationId
+          )
         );
 
       }
     );
 
 
-  /*
-    Si todavía no está cargada,
-    refrescamos las conversaciones.
-  */
-
   if (index === -1) {
 
+    /*
+      Puede ser la primera conversación que nos
+      llega desde otro usuario.
+
+      La pedimos al backend para que aparezca
+      correctamente en la lista.
+    */
+
     loadConversations();
+
 
     return;
 
@@ -3380,7 +3710,9 @@ function updateConversationFromMessage(
 
 
   const conversation =
-    conversations[index];
+    conversations[
+      index
+    ];
 
 
   const text =
@@ -3399,7 +3731,7 @@ function updateConversationFromMessage(
 
   /*
     La conversación con actividad nueva
-    sube al principio.
+    sube al primer lugar.
   */
 
   if (index > 0) {
@@ -3423,7 +3755,11 @@ function updateConversationFromMessage(
 
 
 // ========================================================
-// EVENTOS REALTIME
+// EVENTOS DE MENSAJES REALTIME
+//
+// routes/chat.js emite chat:message y message:new.
+// Conservamos además compatibilidad con otros nombres
+// que pueda utilizar el servidor.
 // ========================================================
 
 socket.on(
@@ -3451,12 +3787,6 @@ socket.on(
 
 
 socket.on(
-  'message',
-  socketMessage
-);
-
-
-socket.on(
   'new-message',
   socketMessage
 );
@@ -3469,7 +3799,9 @@ socket.on(
 async function sendMessage() {
 
   const text =
-    messageInput.value.trim();
+    messageInput
+      .value
+      .trim();
 
 
   if (!text) {
@@ -3483,13 +3815,13 @@ async function sendMessage() {
       'Selecciona una conversación'
     );
 
+
     return;
 
   }
 
 
   const conversationId =
-
     currentConversation.id ||
     currentConversation.conversation_id ||
     currentConversation.conversationId;
@@ -3501,6 +3833,7 @@ async function sendMessage() {
       'Conversación no válida'
     );
 
+
     return;
 
   }
@@ -3510,7 +3843,8 @@ async function sendMessage() {
     text;
 
 
-  messageInput.value = '';
+  messageInput.value =
+    '';
 
 
   sendButton.disabled =
@@ -3518,6 +3852,11 @@ async function sendMessage() {
 
 
   try {
+
+    /*
+      requestJSON() añade automáticamente:
+      Authorization: Bearer VOBIX_TOKEN
+    */
 
     const data =
       await requestJSON(
@@ -3562,7 +3901,6 @@ async function sendMessage() {
 
 
     const createdMessage =
-
       data.message ||
       data.data ||
 
@@ -3575,7 +3913,8 @@ async function sendMessage() {
 
     if (
       createdMessage &&
-      typeof createdMessage === 'object'
+      typeof createdMessage ===
+        'object'
     ) {
 
       if (
@@ -3587,13 +3926,16 @@ async function sendMessage() {
         createdMessage.conversation_id =
           conversationId;
 
+
+        createdMessage.conversationId =
+          conversationId;
+
       }
 
 
       /*
-        Si el backend no devuelve explícitamente
-        el remitente, indicamos que este mensaje
-        pertenece al usuario actual.
+        Si el backend no incluye explícitamente
+        el remitente, marcamos el mensaje como mío.
       */
 
       if (
@@ -3626,7 +3968,6 @@ async function sendMessage() {
         conversation => {
 
           const id =
-
             conversation.id ||
             conversation.conversation_id ||
             conversation.conversationId;
@@ -3634,7 +3975,9 @@ async function sendMessage() {
 
           return (
             String(id) ===
-            String(conversationId)
+            String(
+              conversationId
+            )
           );
 
         }
@@ -3691,12 +4034,14 @@ async function sendMessage() {
 
 
     /*
-      Si falla el servidor devolvemos el texto
-      al campo para que el usuario no lo pierda.
+      Si falla el envío, devolvemos el texto
+      al campo para que no se pierda.
     */
 
     if (
-      !messageInput.value.trim()
+      !messageInput
+        .value
+        .trim()
     ) {
 
       messageInput.value =
@@ -3706,10 +4051,8 @@ async function sendMessage() {
 
 
     showToast(
-
       error.message ||
       'No se pudo enviar el mensaje'
-
     );
 
 
@@ -3745,11 +4088,13 @@ messageInput.addEventListener(
   event => {
 
     if (
-      event.key === 'Enter' &&
+      event.key ===
+        'Enter' &&
       !event.shiftKey
     ) {
 
       event.preventDefault();
+
 
       sendMessage();
 
@@ -3774,10 +4119,12 @@ searchInput.addEventListener(
   event => {
 
     if (
-      event.key === 'Enter'
+      event.key ===
+      'Enter'
     ) {
 
       event.preventDefault();
+
 
       searchUsers();
 
@@ -3792,10 +4139,13 @@ searchInput.addEventListener(
   () => {
 
     if (
-      !searchInput.value.trim()
+      !searchInput
+        .value
+        .trim()
     ) {
 
-      searchResults.innerHTML = '';
+      searchResults.innerHTML =
+        '';
 
     }
 
@@ -3820,7 +4170,11 @@ backButton.addEventListener(
 
 
 // ========================================================
-// TYPING — ENVIAR
+// INDICADOR "ESTÁ ESCRIBIENDO"
+//
+// IMPORTANTE:
+// Aquí corregimos el nombre del evento para coincidir
+// con server.js: conversation-typing.
 // ========================================================
 
 let lastTypingAt =
@@ -3846,7 +4200,8 @@ messageInput.addEventListener(
 
 
     if (
-      now - lastTypingAt <
+      now -
+      lastTypingAt <
       700
     ) {
 
@@ -3860,7 +4215,6 @@ messageInput.addEventListener(
 
 
     const conversationId =
-
       currentConversation.id ||
       currentConversation.conversation_id ||
       currentConversation.conversationId;
@@ -3868,7 +4222,7 @@ messageInput.addEventListener(
 
     socket.emit(
 
-      'typing',
+      'conversation-typing',
 
       {
 
@@ -3879,7 +4233,12 @@ messageInput.addEventListener(
           conversationId,
 
         username:
-          getUsername(me)
+          getUsername(
+            me
+          ),
+
+        typing:
+          true
 
       }
 
@@ -3890,11 +4249,11 @@ messageInput.addEventListener(
 
 
 // ========================================================
-// TYPING — RECIBIR
+// RECIBIR "ESTÁ ESCRIBIENDO"
 // ========================================================
 
 socket.on(
-  'typing',
+  'conversation-typing',
   data => {
 
     if (
@@ -3908,14 +4267,12 @@ socket.on(
 
 
     const incomingConversationId =
-
       data.conversation_id ||
       data.conversationId ||
       null;
 
 
     const currentConversationId =
-
       currentConversation.id ||
       currentConversation.conversation_id ||
       currentConversation.conversationId;
@@ -3937,15 +4294,16 @@ socket.on(
 
 
     const username =
-
       data.username ||
       data.user_name ||
+      getUsername(
+        data.user
+      ) ||
       '';
 
 
     /*
-      No mostramos nuestro propio evento
-      "está escribiendo".
+      No mostramos nuestro propio evento.
     */
 
     if (
@@ -3954,6 +4312,19 @@ socket.on(
       username.toLowerCase() ===
       getUsername(me).toLowerCase()
     ) {
+
+      return;
+
+    }
+
+
+    if (
+      data.typing === false
+    ) {
+
+      typing.textContent =
+        '';
+
 
       return;
 
@@ -3975,7 +4346,8 @@ socket.on(
       setTimeout(
         () => {
 
-          typing.textContent = '';
+          typing.textContent =
+            '';
 
         },
         1800
@@ -4083,7 +4455,7 @@ document
 
 
 // ========================================================
-// ADJUNTOS
+// MENÚ DE ADJUNTOS
 // ========================================================
 
 attachButton.addEventListener(
@@ -4114,7 +4486,8 @@ document.addEventListener(
       !emojiPanel.contains(
         event.target
       ) &&
-      event.target !== emojiButton
+      event.target !==
+        emojiButton
     ) {
 
       emojiPanel.classList.remove(
@@ -4128,7 +4501,8 @@ document.addEventListener(
       !attachMenu.contains(
         event.target
       ) &&
-      event.target !== attachButton
+      event.target !==
+        attachButton
     ) {
 
       attachMenu.classList.remove(
@@ -4188,7 +4562,7 @@ document
 
 
 // ========================================================
-// CÁMARA
+// CÁMARA DESDE MENÚ
 // ========================================================
 
 document
@@ -4210,6 +4584,10 @@ document
   );
 
 
+// ========================================================
+// CÁMARA DESDE BOTÓN PRINCIPAL
+// ========================================================
+
 cameraButton.addEventListener(
   'click',
   () => {
@@ -4222,6 +4600,13 @@ cameraButton.addEventListener(
 
 // ========================================================
 // SUBIR ARCHIVO
+//
+// CORRECCIÓN:
+// Esta petición también debe llevar:
+// Authorization: Bearer VOBIX_TOKEN
+//
+// FormData configura automáticamente su Content-Type,
+// por eso NO ponemos manualmente multipart/form-data.
 // ========================================================
 
 async function uploadFile(
@@ -4240,13 +4625,13 @@ async function uploadFile(
       'Selecciona una conversación'
     );
 
+
     return;
 
   }
 
 
   const conversationId =
-
     currentConversation.id ||
     currentConversation.conversation_id ||
     currentConversation.conversationId;
@@ -4257,6 +4642,7 @@ async function uploadFile(
     showToast(
       'Conversación no válida'
     );
+
 
     return;
 
@@ -4298,6 +4684,10 @@ async function uploadFile(
     );
 
 
+    const headers =
+      buildAuthHeaders();
+
+
     const response =
       await fetch(
 
@@ -4313,6 +4703,9 @@ async function uploadFile(
 
           method:
             'POST',
+
+          headers:
+            headers,
 
           body:
             form
@@ -4333,11 +4726,27 @@ async function uploadFile(
     } catch (error) {}
 
 
+    if (
+      response.status ===
+      401
+    ) {
+
+      throw new Error(
+        data.message ||
+        data.msg ||
+        data.error ||
+        'La sesión no es válida'
+      );
+
+    }
+
+
     if (!response.ok) {
 
       throw new Error(
 
         data.message ||
+        data.msg ||
         data.error ||
         'No se pudo enviar el archivo'
 
@@ -4347,15 +4756,19 @@ async function uploadFile(
 
 
     const createdMessage =
-
       data.message ||
       data.data ||
-      null;
+      (
+        data.id
+          ? data
+          : null
+      );
 
 
     if (
       createdMessage &&
-      typeof createdMessage === 'object'
+      typeof createdMessage ===
+        'object'
     ) {
 
       if (
@@ -4366,6 +4779,28 @@ async function uploadFile(
 
         createdMessage.conversation_id =
           conversationId;
+
+
+        createdMessage.conversationId =
+          conversationId;
+
+      }
+
+
+      if (
+        !getMessageSenderId(
+          createdMessage
+        ) &&
+        !createdMessage.sender &&
+        !createdMessage.user
+      ) {
+
+        createdMessage.mine =
+          true;
+
+
+        createdMessage.sender =
+          me || {};
 
       }
 
@@ -4391,10 +4826,8 @@ async function uploadFile(
 
 
     showToast(
-
       error.message ||
       'No se pudo enviar el archivo'
-
     );
 
   }
@@ -4425,7 +4858,8 @@ mediaInput.addEventListener(
     }
 
 
-    mediaInput.value = '';
+    mediaInput.value =
+      '';
 
   }
 );
@@ -4454,7 +4888,8 @@ documentInput.addEventListener(
     }
 
 
-    documentInput.value = '';
+    documentInput.value =
+      '';
 
   }
 );
@@ -4483,7 +4918,8 @@ cameraInput.addEventListener(
     }
 
 
-    cameraInput.value = '';
+    cameraInput.value =
+      '';
 
   }
 );
@@ -4493,14 +4929,22 @@ cameraInput.addEventListener(
 // NOTA DE VOZ
 // ========================================================
 
-let mediaRecorder = null;
+let mediaRecorder =
+  null;
 
-let audioChunks = [];
+let audioChunks =
+  [];
 
-let recordingStream = null;
+let recordingStream =
+  null;
 
-let recordingStartedAt = 0;
+let recordingStartedAt =
+  0;
 
+
+// ========================================================
+// INICIAR GRABACIÓN
+// ========================================================
 
 async function startVoiceRecording() {
 
@@ -4513,6 +4957,7 @@ async function startVoiceRecording() {
       'Tu navegador no permite grabar audio'
     );
 
+
     return;
 
   }
@@ -4523,6 +4968,7 @@ async function startVoiceRecording() {
     showToast(
       'Selecciona una conversación'
     );
+
 
     return;
 
@@ -4538,7 +4984,8 @@ async function startVoiceRecording() {
         });
 
 
-    audioChunks = [];
+    audioChunks =
+      [];
 
 
     mediaRecorder =
@@ -4571,7 +5018,6 @@ async function startVoiceRecording() {
       async () => {
 
         const mimeType =
-
           mediaRecorder &&
           mediaRecorder.mimeType
 
@@ -4590,7 +5036,8 @@ async function startVoiceRecording() {
           );
 
 
-        audioChunks = [];
+        audioChunks =
+          [];
 
 
         if (recordingStream) {
@@ -4628,13 +5075,13 @@ async function startVoiceRecording() {
             'La nota de voz está vacía'
           );
 
+
           return;
 
         }
 
 
         const extension =
-
           mimeType.includes(
             'ogg'
           )
@@ -4741,12 +5188,16 @@ async function startVoiceRecording() {
 }
 
 
+// ========================================================
+// DETENER GRABACIÓN
+// ========================================================
+
 function stopVoiceRecording() {
 
   if (
     !mediaRecorder ||
     mediaRecorder.state ===
-    'inactive'
+      'inactive'
   ) {
 
     return;
@@ -4759,12 +5210,15 @@ function stopVoiceRecording() {
     recordingStartedAt;
 
 
-  if (elapsed < 300) {
+  if (
+    elapsed < 300
+  ) {
 
     setTimeout(
       stopVoiceRecording,
       300 - elapsed
     );
+
 
     return;
 
@@ -4776,6 +5230,10 @@ function stopVoiceRecording() {
 }
 
 
+// ========================================================
+// BOTÓN NOTA DE VOZ
+// ========================================================
+
 audioButton.addEventListener(
   'click',
   () => {
@@ -4783,10 +5241,11 @@ audioButton.addEventListener(
     if (
       mediaRecorder &&
       mediaRecorder.state !==
-      'inactive'
+        'inactive'
     ) {
 
       stopVoiceRecording();
+
 
       return;
 
@@ -4802,9 +5261,9 @@ audioButton.addEventListener(
 // ========================================================
 // LLAMADAS
 //
-// ESTA PARTE ENVÍA LA SOLICITUD DE LLAMADA AL SERVIDOR.
-// LA LLAMADA WEBRTC COMPLETA DEPENDE TAMBIÉN DE LA
-// SEÑALIZACIÓN IMPLEMENTADA EN EL BACKEND.
+// Conservamos la preparación existente.
+// La comunicación audiovisual WebRTC completa requiere
+// también la señalización correspondiente del backend.
 // ========================================================
 
 function emitCall(
@@ -4817,13 +5276,13 @@ function emitCall(
       'Selecciona una conversación'
     );
 
+
     return;
 
   }
 
 
   const conversationId =
-
     currentConversation.id ||
     currentConversation.conversation_id ||
     currentConversation.conversationId;
@@ -4835,13 +5294,13 @@ function emitCall(
       'Conversación no válida'
     );
 
+
     return;
 
   }
 
 
   const otherUser =
-
     currentConversation.other_user ||
     currentConversation.otherUser ||
     currentConversation.contact ||
@@ -4875,6 +5334,7 @@ function emitCall(
         callType
 
     },
+
     ack => {
 
       if (
@@ -4886,10 +5346,8 @@ function emitCall(
       ) {
 
         showToast(
-
           ack.message ||
           'No se pudo iniciar la llamada'
-
         );
 
       }
@@ -4899,17 +5357,20 @@ function emitCall(
 
 
   showToast(
-
-    callType === 'video'
+    callType ===
+      'video'
 
       ? 'Iniciando videollamada...'
 
       : 'Iniciando llamada...'
-
   );
 
 }
 
+
+// ========================================================
+// LLAMADA DE VOZ
+// ========================================================
 
 voiceCallButton.addEventListener(
   'click',
@@ -4922,6 +5383,10 @@ voiceCallButton.addEventListener(
   }
 );
 
+
+// ========================================================
+// VIDEOLLAMADA
+// ========================================================
 
 videoCallButton.addEventListener(
   'click',
@@ -4944,7 +5409,6 @@ socket.on(
   data => {
 
     const callerName =
-
       getUsername(
         data &&
         (
@@ -4953,13 +5417,13 @@ socket.on(
           data
         )
       ) ||
-
       'Un contacto';
 
 
     const type =
       data &&
-      data.type === 'video'
+      data.type ===
+        'video'
 
         ? 'videollamada'
 
@@ -4985,7 +5449,6 @@ socket.on(
   data => {
 
     showToast(
-
       (
         data &&
         (
@@ -4993,9 +5456,7 @@ socket.on(
           data.error
         )
       ) ||
-
       'Error en la llamada'
-
     );
 
   }
@@ -5041,7 +5502,6 @@ socket.on(
     if (currentConversation) {
 
       const conversationId =
-
         currentConversation.id ||
         currentConversation.conversation_id ||
         currentConversation.conversationId;
@@ -5062,7 +5522,7 @@ socket.on(
 
 
 // ========================================================
-// ERROR SOCKET
+// ERROR DE CONEXIÓN SOCKET
 // ========================================================
 
 socket.on(
@@ -5080,18 +5540,9 @@ socket.on(
 
 // ========================================================
 // PERFIL DESDE SERVIDOR
-//
-// IMPORTANTE:
-// EL SERVIDOR PUEDE COMPLETAR ID, TELÉFONO, ETC.
-// PERO NO DEBE BORRAR EL NOMBRE QUE LA PERSONA
-// ACABA DE ESCRIBIR EN index.html.
 // ========================================================
 
 async function loadMyProfile() {
-
-  /*
-    Primero fijamos el nombre recién escrito.
-  */
 
   const localUser =
     getLocalUser();
@@ -5100,8 +5551,11 @@ async function loadMyProfile() {
   if (localUser) {
 
     me = {
+
       ...(me || {}),
+
       ...localUser
+
     };
 
   }
@@ -5136,6 +5590,11 @@ async function loadMyProfile() {
 
     try {
 
+      /*
+        requestJSON() añade automáticamente
+        Authorization: Bearer VOBIX_TOKEN.
+      */
+
       const data =
         await requestJSON(
           route
@@ -5143,7 +5602,6 @@ async function loadMyProfile() {
 
 
       const serverUser =
-
         data.user ||
         data.profile ||
         data.data ||
@@ -5152,7 +5610,8 @@ async function loadMyProfile() {
 
       if (
         !serverUser ||
-        typeof serverUser !== 'object'
+        typeof serverUser !==
+          'object'
       ) {
 
         continue;
@@ -5167,18 +5626,16 @@ async function loadMyProfile() {
 
 
       /*
-        El nombre escrito en index.html tiene prioridad.
-
-        El servidor puede añadir ID y otros datos,
-        pero no sustituimos el username reciente
-        por un teléfono, ID o dato vacío.
+        El nombre introducido en index.html
+        mantiene prioridad sobre nombres antiguos.
       */
 
       const finalUsername =
-
         localUsername ||
         serverUsername ||
-        getUsername(me);
+        getUsername(
+          me
+        );
 
 
       me = {
@@ -5197,7 +5654,9 @@ async function loadMyProfile() {
 
         localStorage.setItem(
           'vobix_user',
-          JSON.stringify(me)
+          JSON.stringify(
+            me
+          )
         );
 
 
@@ -5224,15 +5683,11 @@ async function loadMyProfile() {
 
       return;
 
-
     } catch (error) {
 
       /*
-        Algunas instalaciones pueden no tener
-        todas estas rutas.
-
-        Seguimos probando la siguiente sin
-        romper el chat.
+        Si una instalación no tiene esta ruta,
+        probamos la siguiente.
       */
 
     }
@@ -5243,67 +5698,99 @@ async function loadMyProfile() {
   renderMyProfile();
 
 }
-
-
 // ========================================================
-// ARRANQUE
+// ARRANQUE GENERAL DE VOBIXCHAT
 // ========================================================
 
 async function initVobixChat() {
 
   /*
-    1. Recuperamos nombre real.
-    2. Intentamos completar perfil desde backend.
-    3. Cargamos conversaciones.
+    ORDEN DE ARRANQUE:
+
+    1. Mostrar inmediatamente el nombre local.
+    2. Completar el perfil autenticado desde backend.
+    3. Cargar conversaciones privadas.
   */
 
   renderMyProfile();
 
 
-  await loadMyProfile();
+  /*
+    Si no existe token, dejamos constancia clara.
+    No inventamos una sesión.
+  */
+
+  if (!VOBIX_TOKEN) {
+
+    console.warn(
+      'VOBIXCHAT: no se encontró token de sesión'
+    );
 
 
-  await loadConversations();
+    showToast(
+      'No encontramos una sesión válida'
+    );
+
+
+    return;
+
+  }
+
+
+  /*
+    El perfil no debe impedir que intentemos
+    cargar las conversaciones si una ruta de perfil
+    concreta no existe.
+  */
+
+  try {
+
+    await loadMyProfile();
+
+  } catch (error) {
+
+    console.warn(
+      'VOBIXCHAT PROFILE:',
+      error
+    );
+
+  }
+
+
+  try {
+
+    await loadConversations();
+
+  } catch (error) {
+
+    console.error(
+      'VOBIXCHAT INIT CONVERSATIONS:',
+      error
+    );
+
+  }
 
 }
 
 
 // ========================================================
-// CUANDO LA PÁGINA VUELVE A ESTAR VISIBLE
+// SOCKET — DESCONEXIÓN
 // ========================================================
 
-document.addEventListener(
-  'visibilitychange',
-  () => {
+socket.on(
+  'disconnect',
+  reason => {
 
-    if (
-      document.visibilityState ===
-      'visible'
-    ) {
-
-      /*
-        Volvemos a leer el nombre local por si
-        acabamos de entrar desde index.html.
-      */
-
-      const latestUser =
-        getLocalUser();
+    console.warn(
+      'VOBIXCHAT SOCKET DESCONECTADO:',
+      reason
+    );
 
 
-      if (latestUser) {
+    if (currentConversation) {
 
-        me = {
-          ...(me || {}),
-          ...latestUser
-        };
-
-
-        renderMyProfile();
-
-      }
-
-
-      loadConversations();
+      roomStatus.textContent =
+        'Reconectando...';
 
     }
 
@@ -5312,7 +5799,357 @@ document.addEventListener(
 
 
 // ========================================================
-// ARRANCAR VOBIXCHAT
+// SOCKET — RECONEXIÓN
+// ========================================================
+
+socket.io.on(
+  'reconnect',
+  async attempt => {
+
+    console.log(
+      'VOBIXCHAT SOCKET RECONECTADO:',
+      attempt
+    );
+
+
+    /*
+      Volvemos a cargar conversaciones para recuperar
+      cualquier cambio ocurrido durante la desconexión.
+    */
+
+    try {
+
+      await loadConversations();
+
+    } catch (error) {
+
+      console.error(
+        'VOBIXCHAT RECONNECT CONVERSATIONS:',
+        error
+      );
+
+    }
+
+
+    /*
+      Si había una conversación abierta,
+      volvemos a entrar en su sala privada.
+    */
+
+    if (currentConversation) {
+
+      const conversationId =
+        currentConversation.id ||
+        currentConversation.conversation_id ||
+        currentConversation.conversationId;
+
+
+      if (conversationId) {
+
+        await joinConversationRoom(
+          conversationId
+        );
+
+
+        try {
+
+          await loadMessages();
+
+        } catch (error) {
+
+          console.error(
+            'VOBIXCHAT RECONNECT MESSAGES:',
+            error
+          );
+
+        }
+
+
+        roomStatus.textContent =
+          'Conversación privada';
+
+      }
+
+    }
+
+  }
+);
+
+
+// ========================================================
+// ERROR DE RECONEXIÓN
+// ========================================================
+
+socket.io.on(
+  'reconnect_error',
+  error => {
+
+    console.error(
+      'VOBIXCHAT RECONNECT ERROR:',
+      error
+    );
+
+  }
+);
+
+
+// ========================================================
+// CUANDO LA PÁGINA VUELVE A ESTAR VISIBLE
+// ========================================================
+
+document.addEventListener(
+  'visibilitychange',
+  async () => {
+
+    if (
+      document.visibilityState !==
+      'visible'
+    ) {
+
+      return;
+
+    }
+
+
+    /*
+      Volvemos a leer el nombre local.
+
+      Esto conserva el nombre que la persona escribió
+      al entrar desde index.html.
+    */
+
+    const latestUser =
+      getLocalUser();
+
+
+    if (latestUser) {
+
+      me = {
+
+        ...(me || {}),
+
+        ...latestUser
+
+      };
+
+
+      renderMyProfile();
+
+    }
+
+
+    /*
+      Actualizamos conversaciones al volver a la app.
+    */
+
+    if (VOBIX_TOKEN) {
+
+      try {
+
+        await loadConversations();
+
+      } catch (error) {
+
+        console.error(
+          'VOBIXCHAT VISIBILITY CONVERSATIONS:',
+          error
+        );
+
+      }
+
+    }
+
+  }
+);
+
+
+// ========================================================
+// CUANDO RECUPERAMOS INTERNET
+// ========================================================
+
+window.addEventListener(
+  'online',
+  async () => {
+
+    console.log(
+      'VOBIXCHAT: conexión a Internet recuperada'
+    );
+
+
+    if (
+      !socket.connected
+    ) {
+
+      socket.connect();
+
+    }
+
+
+    if (VOBIX_TOKEN) {
+
+      try {
+
+        await loadConversations();
+
+      } catch (error) {
+
+        console.error(
+          'VOBIXCHAT ONLINE CONVERSATIONS:',
+          error
+        );
+
+      }
+
+    }
+
+  }
+);
+
+
+// ========================================================
+// CUANDO PERDEMOS INTERNET
+// ========================================================
+
+window.addEventListener(
+  'offline',
+  () => {
+
+    console.warn(
+      'VOBIXCHAT: sin conexión a Internet'
+    );
+
+
+    showToast(
+      'Sin conexión a Internet'
+    );
+
+
+    if (currentConversation) {
+
+      roomStatus.textContent =
+        'Sin conexión';
+
+    }
+
+  }
+);
+
+
+// ========================================================
+// ACTUALIZAR CONVERSACIONES CUANDO LLEGA ACTIVIDAD
+// ========================================================
+
+socket.on(
+  'conversation:new',
+  async () => {
+
+    try {
+
+      await loadConversations();
+
+    } catch (error) {
+
+      console.error(
+        'VOBIXCHAT NEW CONVERSATION:',
+        error
+      );
+
+    }
+
+  }
+);
+
+
+socket.on(
+  'conversation:updated',
+  async () => {
+
+    try {
+
+      await loadConversations();
+
+    } catch (error) {
+
+      console.error(
+        'VOBIXCHAT UPDATED CONVERSATION:',
+        error
+      );
+
+    }
+
+  }
+);
+
+
+// ========================================================
+// SEGURIDAD DE INTERFAZ
+//
+// Si el usuario pulsa ESC cerramos paneles flotantes.
+// ========================================================
+
+document.addEventListener(
+  'keydown',
+  event => {
+
+    if (
+      event.key !==
+      'Escape'
+    ) {
+
+      return;
+
+    }
+
+
+    emojiPanel.classList.remove(
+      'open'
+    );
+
+
+    attachMenu.classList.remove(
+      'open'
+    );
+
+  }
+);
+
+
+// ========================================================
+// LIMPIEZA ANTES DE SALIR
+// ========================================================
+
+window.addEventListener(
+  'beforeunload',
+  () => {
+
+    /*
+      Cerramos el micrófono si estaba activo.
+    */
+
+    if (recordingStream) {
+
+      recordingStream
+        .getTracks()
+        .forEach(
+          track => {
+
+            try {
+
+              track.stop();
+
+            } catch (error) {}
+
+          }
+        );
+
+    }
+
+  }
+);
+
+
+// ========================================================
+// INICIAR VOBIXCHAT
 // ========================================================
 
 initVobixChat();
@@ -5321,4 +6158,4 @@ initVobixChat();
 </script>
 
 </body>
-</html>
+</html>  
