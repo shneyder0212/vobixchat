@@ -5,14 +5,14 @@
  VOBIXCHAT DATABASE SCHEMA
  database/schema.js
 
- Inicialización y actualización automática de PostgreSQL.
+ Inicialización + migración automática de PostgreSQL.
 
- IMPORTANTE:
- - NO borra usuarios existentes.
- - NO borra mensajes.
- - NO elimina tablas.
- - Añade columnas nuevas de forma segura.
- - Repara estructuras antiguas de VOBIXCHAT.
+ OBJETIVO:
+ - NO borrar usuarios.
+ - NO borrar mensajes.
+ - NO borrar conversaciones.
+ - NO eliminar tablas.
+ - Reparar estructuras antiguas automáticamente.
 ==========================================================
 */
 
@@ -20,7 +20,7 @@ const database = require('./db');
 
 
 // ========================================================
-// INICIALIZAR BASE DE DATOS
+// FUNCIÓN PRINCIPAL
 // ========================================================
 
 async function initializeDatabase() {
@@ -32,7 +32,7 @@ async function initializeDatabase() {
   try {
 
     // ====================================================
-    // EXTENSIÓN UUID
+    // UUID
     // ====================================================
 
     await database.query(`
@@ -41,7 +41,7 @@ async function initializeDatabase() {
 
 
     // ====================================================
-    // USUARIOS
+    // USERS
     // ====================================================
 
     await database.query(`
@@ -67,7 +67,7 @@ async function initializeDatabase() {
 
 
     // ====================================================
-    // ACTUALIZAR USERS SIN BORRAR DATOS
+    // MIGRACIONES USERS
     // ====================================================
 
     await database.query(`
@@ -128,7 +128,7 @@ async function initializeDatabase() {
 
 
     // ====================================================
-    // VOBIX ID ÚNICO
+    // ÍNDICES USERS
     // ====================================================
 
     await database.query(`
@@ -138,20 +138,15 @@ async function initializeDatabase() {
       WHERE vobix_id IS NOT NULL;
     `);
 
-
-    // ====================================================
-    // ÍNDICE TELÉFONO
-    // ====================================================
-
     await database.query(`
       CREATE INDEX IF NOT EXISTS
       users_phone_idx
-      ON users (phone);
+      ON users(phone);
     `);
 
 
     // ====================================================
-    // SESIONES PERSISTENTES
+    // SESSIONS
     // ====================================================
 
     await database.query(`
@@ -189,7 +184,7 @@ async function initializeDatabase() {
 
 
     // ====================================================
-    // CONTACTOS
+    // CONTACTS
     // ====================================================
 
     await database.query(`
@@ -230,7 +225,7 @@ async function initializeDatabase() {
 
 
     // ====================================================
-    // BLOQUEOS
+    // BLOCKS
     // ====================================================
 
     await database.query(`
@@ -269,7 +264,7 @@ async function initializeDatabase() {
 
 
     // ====================================================
-    // CONVERSACIONES
+    // CONVERSATIONS
     // ====================================================
 
     await database.query(`
@@ -297,10 +292,7 @@ async function initializeDatabase() {
 
 
     // ====================================================
-    // REPARAR / ACTUALIZAR CONVERSACIONES ANTIGUAS
-    //
-    // ESTA ES LA CORRECCIÓN DEL ERROR:
-    // column "created_by" does not exist
+    // MIGRACIONES CONVERSATIONS
     // ====================================================
 
     await database.query(`
@@ -333,9 +325,7 @@ async function initializeDatabase() {
 
 
     // ====================================================
-    // FOREIGN KEY DE CREATED_BY
-    //
-    // La añadimos únicamente si todavía no existe.
+    // FK CREATED_BY
     // ====================================================
 
     await database.query(`
@@ -343,15 +333,26 @@ async function initializeDatabase() {
       BEGIN
 
         IF NOT EXISTS (
+
           SELECT 1
           FROM pg_constraint
-          WHERE conname = 'conversations_created_by_fkey'
+
+          WHERE
+            conrelid = 'conversations'::regclass
+            AND conname =
+              'conversations_created_by_fkey'
+
         ) THEN
 
           ALTER TABLE conversations
-          ADD CONSTRAINT conversations_created_by_fkey
+
+          ADD CONSTRAINT
+            conversations_created_by_fkey
+
           FOREIGN KEY (created_by)
+
           REFERENCES users(id)
+
           ON DELETE SET NULL;
 
         END IF;
@@ -362,11 +363,12 @@ async function initializeDatabase() {
 
 
     // ====================================================
-    // PARTICIPANTES
+    // CONVERSATION PARTICIPANTS
     // ====================================================
 
     await database.query(`
-      CREATE TABLE IF NOT EXISTS conversation_participants (
+      CREATE TABLE IF NOT EXISTS
+      conversation_participants (
 
         id UUID PRIMARY KEY
           DEFAULT gen_random_uuid(),
@@ -382,11 +384,14 @@ async function initializeDatabase() {
         role VARCHAR(30)
           DEFAULT 'member',
 
-        joined_at TIMESTAMPTZ DEFAULT NOW(),
+        joined_at TIMESTAMPTZ
+          DEFAULT NOW(),
 
-        muted BOOLEAN DEFAULT FALSE,
+        muted BOOLEAN
+          DEFAULT FALSE,
 
-        archived BOOLEAN DEFAULT FALSE,
+        archived BOOLEAN
+          DEFAULT FALSE,
 
         UNIQUE (
           conversation_id,
@@ -398,7 +403,7 @@ async function initializeDatabase() {
 
 
     // ====================================================
-    // ACTUALIZAR PARTICIPANTES ANTIGUOS
+    // MIGRACIONES PARTICIPANTS
     // ====================================================
 
     await database.query(`
@@ -428,18 +433,22 @@ async function initializeDatabase() {
     await database.query(`
       CREATE INDEX IF NOT EXISTS
       conversation_participants_user_idx
+
       ON conversation_participants(user_id);
     `);
 
     await database.query(`
       CREATE INDEX IF NOT EXISTS
       conversation_participants_conversation_idx
-      ON conversation_participants(conversation_id);
+
+      ON conversation_participants(
+        conversation_id
+      );
     `);
 
 
     // ====================================================
-    // MENSAJES
+    // MESSAGES
     // ====================================================
 
     await database.query(`
@@ -448,7 +457,7 @@ async function initializeDatabase() {
         id UUID PRIMARY KEY
           DEFAULT gen_random_uuid(),
 
-        conversation_id UUID NOT NULL
+        conversation_id UUID
           REFERENCES conversations(id)
           ON DELETE CASCADE,
 
@@ -464,26 +473,54 @@ async function initializeDatabase() {
 
         reply_to_message_id UUID,
 
-        edited BOOLEAN DEFAULT FALSE,
+        edited BOOLEAN
+          DEFAULT FALSE,
 
-        deleted BOOLEAN DEFAULT FALSE,
+        deleted BOOLEAN
+          DEFAULT FALSE,
 
-        created_at TIMESTAMPTZ DEFAULT NOW(),
+        created_at TIMESTAMPTZ
+          DEFAULT NOW(),
 
-        updated_at TIMESTAMPTZ DEFAULT NOW()
+        updated_at TIMESTAMPTZ
+          DEFAULT NOW()
 
       );
     `);
 
 
     // ====================================================
-    // ACTUALIZAR MENSAJES ANTIGUOS
+    // REPARACIÓN DE MESSAGES ANTIGUA
+    //
+    // IMPORTANTE:
+    // Aquí solucionamos:
+    //
+    // column "sender_user_id"
+    // of relation "messages" does not exist
+    //
+    // También verificamos las demás columnas que necesita
+    // el nuevo sistema privado.
     // ====================================================
+
+    await database.query(`
+      ALTER TABLE messages
+      ADD COLUMN IF NOT EXISTS conversation_id UUID;
+    `);
+
+    await database.query(`
+      ALTER TABLE messages
+      ADD COLUMN IF NOT EXISTS sender_user_id UUID;
+    `);
 
     await database.query(`
       ALTER TABLE messages
       ADD COLUMN IF NOT EXISTS message_type VARCHAR(30)
       DEFAULT 'text';
+    `);
+
+    await database.query(`
+      ALTER TABLE messages
+      ADD COLUMN IF NOT EXISTS content TEXT;
     `);
 
     await database.query(`
@@ -505,13 +542,103 @@ async function initializeDatabase() {
 
     await database.query(`
       ALTER TABLE messages
-      ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ
+      ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ
       DEFAULT NOW();
     `);
 
     await database.query(`
+      ALTER TABLE messages
+      ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ
+      DEFAULT NOW();
+    `);
+
+
+    // ====================================================
+    // FOREIGN KEY:
+    // messages -> conversations
+    // ====================================================
+
+    await database.query(`
+      DO $$
+      BEGIN
+
+        IF NOT EXISTS (
+
+          SELECT 1
+          FROM pg_constraint
+
+          WHERE
+            conrelid = 'messages'::regclass
+            AND conname =
+              'messages_conversation_id_fkey'
+
+        ) THEN
+
+          ALTER TABLE messages
+
+          ADD CONSTRAINT
+            messages_conversation_id_fkey
+
+          FOREIGN KEY (conversation_id)
+
+          REFERENCES conversations(id)
+
+          ON DELETE CASCADE;
+
+        END IF;
+
+      END
+      $$;
+    `);
+
+
+    // ====================================================
+    // FOREIGN KEY:
+    // messages -> users
+    // ====================================================
+
+    await database.query(`
+      DO $$
+      BEGIN
+
+        IF NOT EXISTS (
+
+          SELECT 1
+          FROM pg_constraint
+
+          WHERE
+            conrelid = 'messages'::regclass
+            AND conname =
+              'messages_sender_user_id_fkey'
+
+        ) THEN
+
+          ALTER TABLE messages
+
+          ADD CONSTRAINT
+            messages_sender_user_id_fkey
+
+          FOREIGN KEY (sender_user_id)
+
+          REFERENCES users(id)
+
+          ON DELETE SET NULL;
+
+        END IF;
+
+      END
+      $$;
+    `);
+
+
+    // ====================================================
+    // ÍNDICE MENSAJES
+    // ====================================================
+
+    await database.query(`
       CREATE INDEX IF NOT EXISTS
       messages_conversation_created_idx
+
       ON messages(
         conversation_id,
         created_at DESC
@@ -520,7 +647,7 @@ async function initializeDatabase() {
 
 
     // ====================================================
-    // RECIBOS / ESTADO DE MENSAJES
+    // MESSAGE RECEIPTS
     // ====================================================
 
     await database.query(`
@@ -541,7 +668,8 @@ async function initializeDatabase() {
 
         read_at TIMESTAMPTZ,
 
-        created_at TIMESTAMPTZ DEFAULT NOW(),
+        created_at TIMESTAMPTZ
+          DEFAULT NOW(),
 
         UNIQUE (
           message_id,
@@ -553,10 +681,10 @@ async function initializeDatabase() {
 
 
     // ====================================================
-    // VOBIX TRUST
+    // TRUST SIGNALS
     //
-    // Guarda señales.
-    // NO bloquea automáticamente a nadie.
+    // Guarda señales de confianza.
+    // NO bloquea automáticamente usuarios.
     // ====================================================
 
     await database.query(`
@@ -578,7 +706,8 @@ async function initializeDatabase() {
 
         confidence NUMERIC(5,4),
 
-        created_at TIMESTAMPTZ DEFAULT NOW()
+        created_at TIMESTAMPTZ
+          DEFAULT NOW()
 
       );
     `);
@@ -586,14 +715,15 @@ async function initializeDatabase() {
     await database.query(`
       CREATE INDEX IF NOT EXISTS
       trust_signals_user_idx
+
       ON trust_signals(user_id);
     `);
 
 
     // ====================================================
-    // AUDITORÍA
+    // AUDIT EVENTS
     //
-    // Base futura:
+    // Base para:
     // VOBIX CORE
     // VOBIX ADMIN
     // ====================================================
@@ -617,7 +747,8 @@ async function initializeDatabase() {
 
         metadata JSONB,
 
-        created_at TIMESTAMPTZ DEFAULT NOW()
+        created_at TIMESTAMPTZ
+          DEFAULT NOW()
 
       );
     `);
@@ -625,6 +756,7 @@ async function initializeDatabase() {
     await database.query(`
       CREATE INDEX IF NOT EXISTS
       audit_events_created_idx
+
       ON audit_events(
         created_at DESC
       );
@@ -640,7 +772,19 @@ async function initializeDatabase() {
     );
 
     console.log(
-      'VOBIXCHAT DATABASE: migraciones verificadas correctamente'
+      'VOBIXCHAT DATABASE: conversations verificada'
+    );
+
+    console.log(
+      'VOBIXCHAT DATABASE: participants verificada'
+    );
+
+    console.log(
+      'VOBIXCHAT DATABASE: messages verificada'
+    );
+
+    console.log(
+      'VOBIXCHAT DATABASE: migraciones completadas'
     );
 
     return true;
