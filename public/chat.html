@@ -1012,47 +1012,6 @@ body {
 <body>
 
 
-
-<!-- VOBIXCHAT - INTERFAZ PRINCIPAL RECONSTRUIDA -->
-<style>
-.vobixApp{min-height:100dvh;display:flex;flex-direction:column;background:linear-gradient(180deg,#071009 0%,#0b160d 100%)}
-.vobixTopbar{min-height:68px;display:flex;align-items:center;gap:12px;padding:10px 14px;border-bottom:1px solid rgba(104,255,114,.15);background:rgba(11,22,13,.96);position:sticky;top:0;z-index:100}
-#myAvatar{width:44px;height:44px;min-width:44px;border-radius:50%;display:grid;place-items:center;background:#17341d;border:2px solid rgba(104,255,114,.55);font-weight:800;color:#68ff72}
-.vobixIdentity{flex:1;min-width:0}.vobixIdentity strong{display:block;font-size:16px}.vobixIdentity span{display:block;color:rgba(255,255,255,.6);font-size:12px}
-.vobixIconButton{width:42px;height:42px;border:0;border-radius:50%;background:#122016;color:#fff;font-size:20px;cursor:pointer}
-.vobixMain{flex:1;display:flex;flex-direction:column;min-height:0}
-.messages{flex:1;overflow:auto;padding:18px 14px 120px;display:flex;flex-direction:column;gap:10px}
-.vobixWelcome{margin:auto;width:min(460px,92%);text-align:center;padding:28px 20px;border:1px solid rgba(104,255,114,.14);border-radius:22px;background:rgba(18,32,22,.72)}
-.vobixWelcomeLogo{width:68px;height:68px;margin:0 auto 14px;border-radius:22px;display:grid;place-items:center;background:#17341d;color:#68ff72;font-size:31px;font-weight:900}
-.vobixWelcome h1{font-size:23px;margin:0 0 8px}.vobixWelcome p{margin:0;color:rgba(255,255,255,.62);line-height:1.5}
-.vobixComposer{position:fixed;left:0;right:0;bottom:0;z-index:90;display:flex;align-items:flex-end;gap:8px;padding:10px 12px;padding-bottom:max(10px,env(safe-area-inset-bottom));border-top:1px solid rgba(104,255,114,.14);background:rgba(7,16,9,.97)}
-.vobixComposer textarea{flex:1;min-height:44px;max-height:120px;resize:none;padding:11px 14px;border:1px solid rgba(104,255,114,.18);border-radius:20px;outline:none;background:#122016;color:#fff}
-.vobixSend{width:46px;height:46px;min-width:46px;border:0;border-radius:50%;background:#68ff72;color:#071009;font-size:20px;font-weight:900}
-.callVideoArea{display:none;position:fixed;inset:0;z-index:3000;background:#000}.callVideoArea.open{display:block}
-.remoteVideo{width:100%;height:100%;object-fit:cover}.localVideo{position:absolute;width:min(28vw,220px);aspect-ratio:3/4;border-radius:18px;object-fit:cover;background:#111}
-</style>
-
-<div id="vobixApp" class="vobixApp">
-<header class="vobixTopbar">
-<div id="myAvatar" class="avatar" role="button" aria-label="Abrir mi perfil">V</div>
-<div class="vobixIdentity"><strong>VOBIXCHAT</strong><span id="vobixConnectionStatus">Chat seguro</span></div>
-<button id="sendPhotoButton" class="vobixIconButton" type="button" aria-label="Enviar foto">📷</button>
-<button id="chatOptionsButton" class="vobixIconButton" type="button" data-chat-options aria-label="Más opciones">⋮</button>
-</header>
-<main class="vobixMain"><section id="messages" class="messages" aria-live="polite">
-<div class="vobixWelcome"><div class="vobixWelcomeLogo">V</div><h1>VOBIXCHAT</h1><p>Mensajes, notas de voz, llamadas, videollamadas y notificaciones.</p></div>
-</section></main>
-<div class="vobixComposer">
-<button id="voiceButton" class="vobixIconButton" type="button" aria-label="Nota de voz">🎙️</button>
-<textarea id="messageInput" rows="1" placeholder="Escribe un mensaje…" aria-label="Mensaje"></textarea>
-<button id="sendButton" class="vobixSend" type="button" aria-label="Enviar">➤</button>
-</div></div>
-
-<div id="callVideoArea" class="callVideoArea">
-<video id="remoteVideo" class="remoteVideo" autoplay playsinline></video>
-<video id="localVideo" class="localVideo" autoplay playsinline muted></video>
-</div>
-
 <!-- =========================================================
      VOBIXCHAT
      MENÚ DE TRES PUNTOS
@@ -3642,7 +3601,7 @@ window.stopAllCallSounds =
 /* =========================================================
    FIN BLOQUE 3 DE 6
 
-   NO CIERRES <\/script>.
+   NO CIERRES </script>.
    BLOQUE 4 CONTINÚA DIRECTAMENTE AQUÍ.
    ========================================================= */
 /* =========================================================
@@ -5226,7 +5185,7 @@ window.swapVobixCallVideos =
 /* =========================================================
    FIN BLOQUE 4 DE 6
 
-   NO CIERRES <\/script>.
+   NO CIERRES </script>.
    BLOQUE 5 CONTINÚA DIRECTAMENTE AQUÍ.
    ========================================================= */
 /* =========================================================
@@ -6869,7 +6828,7 @@ window.testVobixSystemNotification =
 /* =========================================================
    FIN BLOQUE 5 DE 6
 
-   NO CIERRES <\/script>.
+   NO CIERRES </script>.
 
    BLOQUE 6:
    - /sw.js
@@ -6878,7 +6837,7 @@ window.testVobixSystemNotification =
    - SUSCRIPCIÓN
    - IPHONE
    - INICIALIZACIÓN FINAL
-   - CIERRE <\/script>
+   - CIERRE </script>
    - CIERRE </body>
    - CIERRE </html>
    ========================================================= */
