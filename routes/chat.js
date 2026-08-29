@@ -714,6 +714,7 @@ router.post(
       return res.json({
         ok: true,
         blocked: true,
+
         block:
           result.rows[0] || {
             blocker_user_id:
@@ -762,7 +763,8 @@ router.delete(
         .status(400)
         .json({
           ok: false,
-          msg: 'Usuario no válido'
+          msg:
+            'Usuario no válido'
         });
     }
 
@@ -911,10 +913,6 @@ async function usersAreBlocked(
 
 /* ======================================================
    BUSCAR CONVERSACIÓN PRIVADA 1X1 EXISTENTE
-
-   IMPORTANTE:
-   La consulta exige que estén exactamente los dos
-   usuarios y que no exista un tercer participante.
 ====================================================== */
 
 async function findPrivateConversation(
@@ -976,7 +974,7 @@ async function findPrivateConversation(
 
 
 /* ======================================================
-   OBTENER DATOS DE OTRO USUARIO
+   OBTENER DATOS DEL OTRO USUARIO
 ====================================================== */
 
 async function getChatUser(
@@ -1091,7 +1089,7 @@ router.post(
 
       /*
       ====================================================
-       PRIMERO BUSCAMOS UNA SALA 1X1 EXISTENTE
+       PRIMERO BUSCAR UNA SALA 1X1 EXISTENTE
       ====================================================
       */
 
@@ -1157,10 +1155,10 @@ router.post(
       }
 
       /*
-       * Antes de crear comprobamos de nuevo.
-       * Esto reduce duplicados si dos peticiones llegan
-       * prácticamente al mismo tiempo.
+       * Comprobar una segunda vez antes de crear.
+       * Reduce la posibilidad de salas duplicadas.
        */
+
       const secondCheck =
         await findPrivateConversation(
           currentUserId,
@@ -1310,7 +1308,7 @@ router.post(
             'ROLLBACK'
           );
         } catch (_) {
-          // No romper la respuesta por fallo del rollback.
+          /* No romper respuesta si falla rollback */
         }
       }
 
@@ -1488,6 +1486,11 @@ router.get(
     }
   }
 );
+
+
+/* ======================================================
+   FIN BLOQUE 2/6
+====================================================== */
 /* ======================================================
    BLOQUE 3/6
    HISTORIAL + SALA PRIVADA + LEER MENSAJES
@@ -1574,8 +1577,7 @@ router.get(
             FROM conversation_participants cp
 
             INNER JOIN users u
-              ON
-                u.id = cp.user_id
+              ON u.id = cp.user_id
 
             WHERE
               cp.conversation_id = c.id
@@ -1618,110 +1620,111 @@ router.get(
               c.updated_at,
               c.created_at
             ) DESC
-          `
-        ,
+          `,
           [
             currentUserId
           ]
         );
 
       const conversations =
-        result.rows.map(row => ({
-          id:
-            row.id,
-
-          conversationId:
-            row.id,
-
-          conversation_id:
-            row.id,
-
-          createdAt:
-            row.created_at,
-
-          created_at:
-            row.created_at,
-
-          updatedAt:
-            row.updated_at,
-
-          updated_at:
-            row.updated_at,
-
-          other_user: {
+        result.rows.map(
+          row => ({
             id:
-              row.other_user_id,
+              row.id,
 
-            username:
-              row.other_username,
+            conversationId:
+              row.id,
 
-            vobix_id:
-              row.other_vobix_id,
+            conversation_id:
+              row.id,
 
-            phone:
-              row.other_phone,
+            createdAt:
+              row.created_at,
 
-            avatar_url:
-              row.other_avatar_url,
+            created_at:
+              row.created_at,
 
-            bio:
-              row.other_bio,
+            updatedAt:
+              row.updated_at,
 
-            online:
-              Boolean(
-                row.other_online
-              ),
+            updated_at:
+              row.updated_at,
 
-            last_seen:
-              row.other_last_seen
-          },
+            other_user: {
+              id:
+                row.other_user_id,
 
-          otherUser: {
-            id:
-              row.other_user_id,
+              username:
+                row.other_username,
 
-            username:
-              row.other_username,
+              vobix_id:
+                row.other_vobix_id,
 
-            vobixId:
-              row.other_vobix_id,
+              phone:
+                row.other_phone,
 
-            phone:
-              row.other_phone,
+              avatar_url:
+                row.other_avatar_url,
 
-            avatarUrl:
-              row.other_avatar_url,
+              bio:
+                row.other_bio,
 
-            bio:
-              row.other_bio,
+              online:
+                Boolean(
+                  row.other_online
+                ),
 
-            online:
-              Boolean(
-                row.other_online
-              ),
+              last_seen:
+                row.other_last_seen
+            },
 
-            lastSeen:
-              row.other_last_seen
-          },
+            otherUser: {
+              id:
+                row.other_user_id,
 
-          last_message:
-            row.last_message,
+              username:
+                row.other_username,
 
-          lastMessage:
-            row.last_message,
+              vobixId:
+                row.other_vobix_id,
 
-          lastMessageId:
-            row.last_message_id,
+              phone:
+                row.other_phone,
 
-          lastMessageType:
-            row.last_message_type,
+              avatarUrl:
+                row.other_avatar_url,
 
-          lastMessageSenderId:
-            row.last_message_sender_id,
+              bio:
+                row.other_bio,
 
-          lastMessageCreatedAt:
-            row.last_message_created_at
-        }));
+              online:
+                Boolean(
+                  row.other_online
+                ),
+
+              lastSeen:
+                row.other_last_seen
+            },
+
+            last_message:
+              row.last_message,
+
+            lastMessage:
+              row.last_message,
+
+            lastMessageId:
+              row.last_message_id,
+
+            lastMessageType:
+              row.last_message_type,
+
+            lastMessageSenderId:
+              row.last_message_sender_id,
+
+            lastMessageCreatedAt:
+              row.last_message_created_at
+          })
+        );
 
       return res.json({
         ok: true,
@@ -1839,8 +1842,7 @@ router.get(
           FROM conversation_participants cp
 
           INNER JOIN users u
-            ON
-              u.id = cp.user_id
+            ON u.id = cp.user_id
 
           WHERE
             cp.conversation_id = $1
@@ -2005,9 +2007,7 @@ router.get(
             FROM messages m
 
             INNER JOIN users u
-              ON
-                u.id =
-                  m.sender_user_id
+              ON u.id = m.sender_user_id
 
             WHERE
               m.conversation_id = $1
@@ -2064,9 +2064,7 @@ router.get(
             FROM messages m
 
             INNER JOIN users u
-              ON
-                u.id =
-                  m.sender_user_id
+              ON u.id = m.sender_user_id
 
             WHERE
               m.conversation_id = $1
@@ -2085,14 +2083,14 @@ router.get(
       }
 
       /*
-       * PostgreSQL devuelve primero los más recientes
-       * para que LIMIT sea eficiente.
-       * Los invertimos antes de mandarlos al frontend
-       * para que aparezcan cronológicamente.
+       * La consulta obtiene primero los mensajes
+       * más recientes. Antes de enviarlos al frontend
+       * los ponemos en orden cronológico.
        */
 
       const rows =
-        result.rows.reverse();
+        [...result.rows]
+          .reverse();
 
       const messages =
         rows.map(
@@ -2136,10 +2134,6 @@ router.get(
 
 /* ======================================================
    MARCAR CONVERSACIÓN COMO LEÍDA
-
-   Compatibilidad:
-   Si el schema todavía no contiene last_read_at,
-   devolvemos OK sin tumbar VOBIXCHAT.
 ====================================================== */
 
 router.post(
@@ -2180,6 +2174,12 @@ router.post(
           });
       }
 
+      /*
+       * Algunas instalaciones anteriores pueden no
+       * tener todavía la columna last_read_at.
+       * Si no existe, el chat no se cae.
+       */
+
       try {
         await database.query(
           `
@@ -2200,11 +2200,8 @@ router.post(
 
       } catch (readError) {
         /*
-         * PostgreSQL 42703 =
-         * columna no existe.
-         *
-         * No rompemos el chat si una instalación
-         * anterior todavía no tiene last_read_at.
+         * PostgreSQL 42703:
+         * undefined_column
          */
 
         if (
@@ -2245,9 +2242,6 @@ router.post(
 
 /* ======================================================
    OBTENER PARTICIPANTES DE UNA SALA
-
-   Esta ruta también servirá después para llamadas,
-   videollamadas y agregar personas.
 ====================================================== */
 
 router.get(
@@ -2305,8 +2299,7 @@ router.get(
           FROM conversation_participants cp
 
           INNER JOIN users u
-            ON
-              u.id = cp.user_id
+            ON u.id = cp.user_id
 
           WHERE
             cp.conversation_id = $1
@@ -2348,15 +2341,6 @@ router.get(
 
 /* ======================================================
    FIN BLOQUE 3/6
-
-   NO PONGAS module.exports TODAVÍA.
-
-   BLOQUE 4:
-   - enviar mensajes
-   - texto
-   - edición
-   - eliminar mensaje
-   - sincronización Socket.IO
 ====================================================== */
 /* ======================================================
    BLOQUE 4/6
@@ -2367,12 +2351,6 @@ router.get(
 
 /* ======================================================
    OBTENER SOCKET.IO DESDE EXPRESS
-
-   server.js puede registrar io con:
-   app.set('io', io)
-
-   Si todavía no está registrado, las rutas HTTP
-   continúan funcionando sin tumbar el chat.
 ====================================================== */
 
 function getSocketIO(req) {
@@ -2501,10 +2479,7 @@ async function getOtherParticipants(
 
 
 /* ======================================================
-   ENVIAR PUSH DE MENSAJE
-
-   server.js dejó disponible:
-   global.vobixSendPushToUser
+   ENVIAR NOTIFICACIÓN PUSH DE MENSAJE
 ====================================================== */
 
 async function notifyMessageByPush(
@@ -2728,8 +2703,9 @@ router.post(
         );
 
       /*
-       * Mover la conversación arriba del historial.
+       * Mover conversación arriba del historial.
        */
+
       await database.query(
         `
         UPDATE conversations
@@ -2802,11 +2778,10 @@ router.post(
         message
       };
 
-      /*
-      ====================================================
-       EVENTO PARA QUIEN ESTÁ DENTRO DE LA SALA
-      ====================================================
-      */
+
+      /* ==================================================
+         EVENTO DENTRO DE LA SALA
+      ================================================== */
 
       emitToConversation(
         req,
@@ -2818,6 +2793,7 @@ router.post(
       /*
        * Compatibilidad con listeners anteriores.
        */
+
       emitToConversation(
         req,
         conversationId,
@@ -2825,11 +2801,10 @@ router.post(
         socketPayload
       );
 
-      /*
-      ====================================================
-       AVISAR A LOS OTROS USUARIOS
-      ====================================================
-      */
+
+      /* ==================================================
+         AVISAR A LOS OTROS PARTICIPANTES
+      ================================================== */
 
       const recipients =
         await getOtherParticipants(
@@ -2858,16 +2833,13 @@ router.post(
           }
         );
 
-        /*
-         * Push sirve cuando la app está en segundo
-         * plano o el navegador no tiene el socket activo,
-         * sujeto a permisos/restricciones del dispositivo.
-         */
         notifyMessageByPush(
           targetUserId,
           sender,
           message
-        ).catch(() => {});
+        ).catch(
+          () => {}
+        );
       }
 
       return res
@@ -2899,7 +2871,7 @@ router.post(
 
 
 /* ======================================================
-   OBTENER UN MENSAJE CON SEGURIDAD
+   OBTENER MENSAJE PROPIO
 ====================================================== */
 
 async function getOwnedMessage(
@@ -2942,10 +2914,7 @@ async function getOwnedMessage(
 
 
 /* ======================================================
-   EDITAR MENSAJE
-
-   Solamente el autor puede editarlo.
-   Solamente texto puede editarse.
+   EDITAR MENSAJE DE TEXTO
 ====================================================== */
 
 router.patch(
@@ -3133,10 +3102,6 @@ router.patch(
 
 /* ======================================================
    ELIMINAR MENSAJE
-
-   Se hace "soft delete":
-   - no rompe respuestas/referencias
-   - mantiene la posición en la conversación
 ====================================================== */
 
 router.delete(
@@ -3284,42 +3249,7 @@ router.delete(
 
 
 /* ======================================================
-   COMPATIBILIDAD:
-   EDITAR USANDO LA RUTA DE LA CONVERSACIÓN
-====================================================== */
-
-router.patch(
-  '/conversations/:conversationId/messages/:messageId',
-  async (req, res, next) => {
-    /*
-     * Redirigimos internamente a la misma lógica
-     * mediante la URL canónica.
-     */
-
-    req.url =
-      `/messages/${encodeURIComponent(
-        req.params.messageId
-      )}`;
-
-    return router.handle(
-      req,
-      res,
-      next
-    );
-  }
-);
-
-
-/* ======================================================
    FIN BLOQUE 4/6
-
-   BLOQUE 5:
-   - almacenamiento multimedia
-   - fotos
-   - cámara
-   - videos
-   - documentos
-   - audios / notas de voz
 ====================================================== */
 /* ======================================================
    BLOQUE 5/6
@@ -3333,6 +3263,9 @@ router.patch(
 
 /* ======================================================
    CARPETA DE ARCHIVOS DE VOBIXCHAT
+
+   IMPORTANTE:
+   uploadsRoot SE DECLARA UNA SOLA VEZ EN TODO EL ARCHIVO.
 ====================================================== */
 
 const uploadsRoot =
@@ -3344,10 +3277,9 @@ const uploadsRoot =
   );
 
 
-/*
- * Crear carpeta automáticamente si todavía
- * no existe.
- */
+/* ======================================================
+   CREAR CARPETA DE UPLOADS
+====================================================== */
 
 try {
   fs.mkdirSync(
@@ -3366,7 +3298,7 @@ try {
 
 
 /* ======================================================
-   TIPOS DE ARCHIVOS PERMITIDOS
+   TIPOS MIME PERMITIDOS
 ====================================================== */
 
 const allowedMimeTypes =
@@ -3425,12 +3357,10 @@ const allowedMimeTypes =
 
 
 /* ======================================================
-   DETERMINAR TIPO DE MENSAJE
+   DETERMINAR TIPO DE MENSAJE SEGÚN ARCHIVO
 ====================================================== */
 
-function getMessageTypeFromFile(
-  file
-) {
+function getMessageTypeFromFile(file) {
   const mime =
     String(
       file?.mimetype ||
@@ -3466,7 +3396,7 @@ function getMessageTypeFromFile(
 
 
 /* ======================================================
-   CONFIGURACIÓN MULTER
+   CONFIGURACIÓN DE MULTER
 ====================================================== */
 
 const storage =
@@ -3529,7 +3459,7 @@ const storage =
 
 
 /* ======================================================
-   FILTRO DE SEGURIDAD
+   FILTRO DE SEGURIDAD DE ARCHIVOS
 ====================================================== */
 
 function uploadFileFilter(
@@ -3569,9 +3499,8 @@ function uploadFileFilter(
 
 
 /* ======================================================
-   LÍMITE DE ARCHIVO
-
-   50 MB máximo por archivo.
+   MULTER
+   MÁXIMO 50 MB POR ARCHIVO
 ====================================================== */
 
 const upload =
@@ -3594,12 +3523,10 @@ const upload =
 
 
 /* ======================================================
-   BORRAR ARCHIVO SI UNA OPERACIÓN POSTERIOR FALLA
+   ELIMINAR ARCHIVO SI FALLA LA OPERACIÓN
 ====================================================== */
 
-function removeUploadedFile(
-  file
-) {
+function removeUploadedFile(file) {
   if (
     !file ||
     !file.path
@@ -3701,14 +3628,13 @@ async function saveMediaMessage(
 
 
     /* ==================================================
-       URL PÚBLICA DEL ARCHIVO
+       CREAR URL PÚBLICA
     ================================================== */
 
     const mediaUrl =
       `/uploads/${encodeURIComponent(
         file.filename
       )}`;
-
 
     const messageType =
       getMessageTypeFromFile(
@@ -3717,7 +3643,7 @@ async function saveMediaMessage(
 
 
     /* ==================================================
-       INSERTAR MENSAJE
+       GUARDAR MENSAJE EN BASE DE DATOS
     ================================================== */
 
     const result =
@@ -3768,7 +3694,7 @@ async function saveMediaMessage(
 
 
     /* ==================================================
-       SUBIR CONVERSACIÓN AL PRINCIPIO DEL HISTORIAL
+       ACTUALIZAR FECHA DE LA CONVERSACIÓN
     ================================================== */
 
     await database.query(
@@ -3811,7 +3737,6 @@ async function saveMediaMessage(
         ]
       );
 
-
     const sender =
       senderResult.rows[0] || {
         id:
@@ -3846,11 +3771,9 @@ async function saveMediaMessage(
       );
 
 
-    /*
-     * normalizeMessage obtiene file_name si está
-     * presente. Lo aseguramos también aquí para
-     * compatibilidad con el frontend.
-     */
+    /* ==================================================
+       DATOS ADICIONALES DEL ARCHIVO
+    ================================================== */
 
     message.fileName =
       file.originalname;
@@ -3933,7 +3856,6 @@ async function saveMediaMessage(
         }
       );
 
-
       notifyMessageByPush(
         targetUserId,
         sender,
@@ -3993,10 +3915,7 @@ async function saveMediaMessage(
 
 
 /* ======================================================
-   WRAPPER MULTER
-
-   Así devolvemos JSON en vez de una página de error
-   cuando un archivo supera el límite o no está permitido.
+   WRAPPER DE MULTER
 ====================================================== */
 
 function uploadSingle(
@@ -4064,7 +3983,6 @@ function uploadSingle(
 /* ======================================================
    SUBIR ARCHIVO
 
-   FRONTEND:
    POST /api/chat/upload
 
    FormData:
@@ -4080,8 +3998,7 @@ router.post(
 
 
 /* ======================================================
-   COMPATIBILIDAD:
-   SUBIR DIRECTAMENTE A UNA CONVERSACIÓN
+   SUBIR ARCHIVO DIRECTAMENTE A UNA CONVERSACIÓN
 
    POST
    /api/chat/conversations/:conversationId/upload
@@ -4108,12 +4025,9 @@ router.post(
 
 
 /* ======================================================
-   RUTA ESPECÍFICA PARA NOTA DE VOZ
+   NOTA DE VOZ
 
-   Permite al frontend enviar el Blob generado
-   por MediaRecorder.
-
-   POST:
+   POST
    /api/chat/conversations/:conversationId/voice
 ====================================================== */
 
@@ -4122,17 +4036,12 @@ router.post(
 
   uploadSingle,
 
-  async (req, res) => {
+  (req, res) => {
     req.body =
       req.body || {};
 
     req.body.conversationId =
       req.params.conversationId;
-
-    /*
-     * saveMediaMessage detectará audio/* y guardará
-     * message_type = audio.
-     */
 
     return saveMediaMessage(
       req,
@@ -4143,7 +4052,7 @@ router.post(
 
 
 /* ======================================================
-   INFORMACIÓN SOBRE LÍMITES MULTIMEDIA
+   INFORMACIÓN DE CONFIGURACIÓN MULTIMEDIA
 ====================================================== */
 
 router.get(
@@ -4205,10 +4114,7 @@ router.get(
 
 
 /* ======================================================
-   ELIMINAR ARCHIVO FÍSICO DE UN MENSAJE MULTIMEDIA
-
-   Se usa únicamente cuando el propietario elimina
-   definitivamente un multimedia.
+   ELIMINAR ARCHIVO LOCAL POR URL
 ====================================================== */
 
 function deleteLocalMediaByUrl(
@@ -4248,14 +4154,22 @@ function deleteLocalMediaByUrl(
       );
 
     /*
-     * Seguridad adicional:
-     * el path final tiene que continuar dentro
-     * de uploadsRoot.
+     * Evitar que un nombre manipulado pueda apuntar
+     * fuera de la carpeta uploads.
      */
 
+    const relativePath =
+      path.relative(
+        uploadsRoot,
+        absolutePath
+      );
+
     if (
-      !absolutePath.startsWith(
-        uploadsRoot
+      relativePath.startsWith(
+        '..'
+      ) ||
+      path.isAbsolute(
+        relativePath
       )
     ) {
       return;
@@ -4287,9 +4201,9 @@ function deleteLocalMediaByUrl(
 
 
 /* ======================================================
-   ELIMINAR DEFINITIVAMENTE UN MULTIMEDIA PROPIO
+   ELIMINAR DEFINITIVAMENTE MULTIMEDIA PROPIO
 
-   DELETE:
+   DELETE
    /api/chat/media/:messageId
 ====================================================== */
 
@@ -4454,1158 +4368,6 @@ router.delete(
 
 /* ======================================================
    FIN BLOQUE 5/6
-
-   NO PONGAS module.exports TODAVÍA.
-
-   BLOQUE 6/6:
-   - estado del chat
-   - compatibilidad
-   - manejo final de errores
-   - module.exports
-   - CIERRE DEFINITIVO DE routes/chat.js
-====================================================== */
-/* ======================================================
-   BLOQUE 5/6
-   MULTIMEDIA
-   - FOTOS / CÁMARA
-   - VIDEOS
-   - DOCUMENTOS
-   - AUDIO / NOTAS DE VOZ
-====================================================== */
-
-
-/* ======================================================
-   CARPETA DE ARCHIVOS DE VOBIXCHAT
-====================================================== */
-
-const uploadsRoot =
-  path.join(
-    __dirname,
-    '..',
-    'public',
-    'uploads'
-  );
-
-
-/*
- * Crear carpeta automáticamente si todavía
- * no existe.
- */
-
-try {
-  fs.mkdirSync(
-    uploadsRoot,
-    {
-      recursive: true
-    }
-  );
-
-} catch (error) {
-  console.error(
-    'VOBIXCHAT CREATE UPLOAD DIRECTORY ERROR:',
-    error
-  );
-}
-
-
-/* ======================================================
-   TIPOS DE ARCHIVOS PERMITIDOS
-====================================================== */
-
-const allowedMimeTypes =
-  new Set([
-    /* IMÁGENES */
-
-    'image/jpeg',
-    'image/jpg',
-    'image/png',
-    'image/webp',
-    'image/gif',
-    'image/heic',
-    'image/heif',
-
-    /* VIDEO */
-
-    'video/mp4',
-    'video/webm',
-    'video/quicktime',
-    'video/x-m4v',
-
-    /* AUDIO */
-
-    'audio/mpeg',
-    'audio/mp3',
-    'audio/mp4',
-    'audio/m4a',
-    'audio/aac',
-    'audio/ogg',
-    'audio/webm',
-    'audio/wav',
-    'audio/x-wav',
-
-    /* DOCUMENTOS */
-
-    'application/pdf',
-
-    'application/msword',
-
-    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-
-    'application/vnd.ms-excel',
-
-    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-
-    'application/vnd.ms-powerpoint',
-
-    'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-
-    'text/plain',
-    'text/csv',
-
-    'application/zip',
-    'application/x-zip-compressed'
-  ]);
-
-
-/* ======================================================
-   DETERMINAR TIPO DE MENSAJE
-====================================================== */
-
-function getMessageTypeFromFile(
-  file
-) {
-  const mime =
-    String(
-      file?.mimetype ||
-      ''
-    ).toLowerCase();
-
-  if (
-    mime.startsWith(
-      'image/'
-    )
-  ) {
-    return 'image';
-  }
-
-  if (
-    mime.startsWith(
-      'video/'
-    )
-  ) {
-    return 'video';
-  }
-
-  if (
-    mime.startsWith(
-      'audio/'
-    )
-  ) {
-    return 'audio';
-  }
-
-  return 'document';
-}
-
-
-/* ======================================================
-   CONFIGURACIÓN MULTER
-====================================================== */
-
-const storage =
-  multer.diskStorage({
-
-    destination: (
-      req,
-      file,
-      callback
-    ) => {
-      callback(
-        null,
-        uploadsRoot
-      );
-    },
-
-    filename: (
-      req,
-      file,
-      callback
-    ) => {
-      const original =
-        safeFileName(
-          file.originalname
-        );
-
-      const extension =
-        path.extname(
-          original
-        ).slice(
-          0,
-          12
-        );
-
-      const base =
-        path.basename(
-          original,
-          extension
-        ).slice(
-          0,
-          80
-        );
-
-      const unique =
-        [
-          Date.now(),
-
-          Math.random()
-            .toString(36)
-            .slice(2, 10)
-        ].join('-');
-
-      callback(
-        null,
-        `${unique}-${base}${extension}`
-      );
-    }
-
-  });
-
-
-/* ======================================================
-   FILTRO DE SEGURIDAD
-====================================================== */
-
-function uploadFileFilter(
-  req,
-  file,
-  callback
-) {
-  const mime =
-    String(
-      file?.mimetype ||
-      ''
-    ).toLowerCase();
-
-  if (
-    !allowedMimeTypes.has(
-      mime
-    )
-  ) {
-    const error =
-      new Error(
-        'Tipo de archivo no permitido'
-      );
-
-    error.code =
-      'VOBIX_FILE_TYPE';
-
-    return callback(
-      error
-    );
-  }
-
-  return callback(
-    null,
-    true
-  );
-}
-
-
-/* ======================================================
-   LÍMITE DE ARCHIVO
-
-   50 MB máximo por archivo.
-====================================================== */
-
-const upload =
-  multer({
-    storage,
-
-    fileFilter:
-      uploadFileFilter,
-
-    limits: {
-      fileSize:
-        50 *
-        1024 *
-        1024,
-
-      files:
-        1
-    }
-  });
-
-
-/* ======================================================
-   BORRAR ARCHIVO SI UNA OPERACIÓN POSTERIOR FALLA
-====================================================== */
-
-function removeUploadedFile(
-  file
-) {
-  if (
-    !file ||
-    !file.path
-  ) {
-    return;
-  }
-
-  fs.unlink(
-    file.path,
-    () => {}
-  );
-}
-
-
-/* ======================================================
-   GUARDAR MENSAJE MULTIMEDIA
-====================================================== */
-
-async function saveMediaMessage(
-  req,
-  res
-) {
-  const currentUserId =
-    req.vobixUser.id;
-
-  const conversationId =
-    cleanId(
-      req.body.conversationId ||
-      req.body.conversation_id
-    );
-
-  const file =
-    req.file;
-
-  if (!conversationId) {
-    removeUploadedFile(
-      file
-    );
-
-    return res
-      .status(400)
-      .json({
-        ok: false,
-        msg:
-          'Conversación no válida'
-      });
-  }
-
-  if (!file) {
-    return res
-      .status(400)
-      .json({
-        ok: false,
-        msg:
-          'Selecciona un archivo'
-      });
-  }
-
-  try {
-    const allowed =
-      await canAccessConversation(
-        conversationId,
-        currentUserId
-      );
-
-    if (!allowed) {
-      removeUploadedFile(
-        file
-      );
-
-      return res
-        .status(403)
-        .json({
-          ok: false,
-          msg:
-            'No tienes acceso a esta conversación'
-        });
-    }
-
-    const blocked =
-      await conversationIsBlocked(
-        conversationId,
-        currentUserId
-      );
-
-    if (blocked) {
-      removeUploadedFile(
-        file
-      );
-
-      return res
-        .status(403)
-        .json({
-          ok: false,
-          msg:
-            'No puedes enviar archivos en esta conversación'
-        });
-    }
-
-
-    /* ==================================================
-       URL PÚBLICA DEL ARCHIVO
-    ================================================== */
-
-    const mediaUrl =
-      `/uploads/${encodeURIComponent(
-        file.filename
-      )}`;
-
-
-    const messageType =
-      getMessageTypeFromFile(
-        file
-      );
-
-
-    /* ==================================================
-       INSERTAR MENSAJE
-    ================================================== */
-
-    const result =
-      await database.query(
-        `
-        INSERT INTO messages
-        (
-          conversation_id,
-          sender_user_id,
-          message_type,
-          content,
-          edited,
-          deleted,
-          created_at,
-          updated_at
-        )
-
-        VALUES
-        (
-          $1,
-          $2,
-          $3,
-          $4,
-          FALSE,
-          FALSE,
-          NOW(),
-          NOW()
-        )
-
-        RETURNING
-          id,
-          conversation_id,
-          sender_user_id,
-          message_type,
-          content,
-          edited,
-          deleted,
-          created_at,
-          updated_at
-        `,
-        [
-          conversationId,
-          currentUserId,
-          messageType,
-          mediaUrl
-        ]
-      );
-
-
-    /* ==================================================
-       SUBIR CONVERSACIÓN AL PRINCIPIO DEL HISTORIAL
-    ================================================== */
-
-    await database.query(
-      `
-      UPDATE conversations
-
-      SET
-        updated_at = NOW()
-
-      WHERE
-        id = $1
-      `,
-      [
-        conversationId
-      ]
-    );
-
-
-    /* ==================================================
-       DATOS DEL REMITENTE
-    ================================================== */
-
-    const senderResult =
-      await database.query(
-        `
-        SELECT
-          id,
-          username,
-          avatar_url
-
-        FROM users
-
-        WHERE
-          id = $1
-
-        LIMIT 1
-        `,
-        [
-          currentUserId
-        ]
-      );
-
-
-    const sender =
-      senderResult.rows[0] || {
-        id:
-          currentUserId,
-
-        username:
-          req.vobixUser.username ||
-          'VOBIXCHAT',
-
-        avatar_url:
-          null
-      };
-
-
-    const row = {
-      ...result.rows[0],
-
-      sender_username:
-        sender.username,
-
-      sender_avatar_url:
-        sender.avatar_url,
-
-      file_name:
-        file.originalname
-    };
-
-
-    const message =
-      normalizeMessage(
-        row
-      );
-
-
-    /*
-     * normalizeMessage obtiene file_name si está
-     * presente. Lo aseguramos también aquí para
-     * compatibilidad con el frontend.
-     */
-
-    message.fileName =
-      file.originalname;
-
-    message.file_name =
-      file.originalname;
-
-    message.mimeType =
-      file.mimetype;
-
-    message.mime_type =
-      file.mimetype;
-
-    message.fileSize =
-      file.size;
-
-    message.file_size =
-      file.size;
-
-
-    /* ==================================================
-       SOCKET.IO
-    ================================================== */
-
-    const payload = {
-      ok:
-        true,
-
-      conversationId,
-
-      message
-    };
-
-
-    emitToConversation(
-      req,
-      conversationId,
-      'conversation:new-message',
-      payload
-    );
-
-
-    emitToConversation(
-      req,
-      conversationId,
-      'chat:message',
-      payload
-    );
-
-
-    /* ==================================================
-       AVISAR A LOS OTROS PARTICIPANTES
-    ================================================== */
-
-    const recipients =
-      await getOtherParticipants(
-        conversationId,
-        currentUserId
-      );
-
-
-    for (
-      const targetUserId
-      of recipients
-    ) {
-      emitToUser(
-        req,
-        targetUserId,
-        'conversation:new-message',
-        payload
-      );
-
-      emitToUser(
-        req,
-        targetUserId,
-        'conversation:updated',
-        {
-          conversationId,
-          message
-        }
-      );
-
-
-      notifyMessageByPush(
-        targetUserId,
-        sender,
-        message
-      ).catch(
-        () => {}
-      );
-    }
-
-
-    return res
-      .status(201)
-      .json({
-        ok: true,
-
-        conversationId,
-
-        message,
-
-        file: {
-          name:
-            file.originalname,
-
-          url:
-            mediaUrl,
-
-          mimeType:
-            file.mimetype,
-
-          size:
-            file.size,
-
-          type:
-            messageType
-        }
-      });
-
-  } catch (error) {
-    removeUploadedFile(
-      file
-    );
-
-    console.error(
-      'VOBIXCHAT MEDIA MESSAGE ERROR:',
-      error
-    );
-
-    return res
-      .status(500)
-      .json({
-        ok: false,
-        msg:
-          'No se pudo enviar el archivo'
-      });
-  }
-}
-
-
-/* ======================================================
-   WRAPPER MULTER
-
-   Así devolvemos JSON en vez de una página de error
-   cuando un archivo supera el límite o no está permitido.
-====================================================== */
-
-function uploadSingle(
-  req,
-  res,
-  next
-) {
-  upload.single(
-    'file'
-  )(
-    req,
-    res,
-    error => {
-      if (!error) {
-        return next();
-      }
-
-      console.error(
-        'VOBIXCHAT UPLOAD ERROR:',
-        error
-      );
-
-
-      if (
-        error.code ===
-        'LIMIT_FILE_SIZE'
-      ) {
-        return res
-          .status(413)
-          .json({
-            ok: false,
-            msg:
-              'El archivo supera el límite de 50 MB'
-          });
-      }
-
-
-      if (
-        error.code ===
-        'VOBIX_FILE_TYPE'
-      ) {
-        return res
-          .status(415)
-          .json({
-            ok: false,
-            msg:
-              'Este tipo de archivo no está permitido'
-          });
-      }
-
-
-      return res
-        .status(400)
-        .json({
-          ok: false,
-          msg:
-            error.message ||
-            'No se pudo procesar el archivo'
-        });
-    }
-  );
-}
-
-
-/* ======================================================
-   SUBIR ARCHIVO
-
-   FRONTEND:
-   POST /api/chat/upload
-
-   FormData:
-   conversationId = ID
-   file = archivo
-====================================================== */
-
-router.post(
-  '/upload',
-  uploadSingle,
-  saveMediaMessage
-);
-
-
-/* ======================================================
-   COMPATIBILIDAD:
-   SUBIR DIRECTAMENTE A UNA CONVERSACIÓN
-
-   POST
-   /api/chat/conversations/:conversationId/upload
-====================================================== */
-
-router.post(
-  '/conversations/:conversationId/upload',
-
-  uploadSingle,
-
-  (req, res) => {
-    req.body =
-      req.body || {};
-
-    req.body.conversationId =
-      req.params.conversationId;
-
-    return saveMediaMessage(
-      req,
-      res
-    );
-  }
-);
-
-
-/* ======================================================
-   RUTA ESPECÍFICA PARA NOTA DE VOZ
-
-   Permite al frontend enviar el Blob generado
-   por MediaRecorder.
-
-   POST:
-   /api/chat/conversations/:conversationId/voice
-====================================================== */
-
-router.post(
-  '/conversations/:conversationId/voice',
-
-  uploadSingle,
-
-  async (req, res) => {
-    req.body =
-      req.body || {};
-
-    req.body.conversationId =
-      req.params.conversationId;
-
-    /*
-     * saveMediaMessage detectará audio/* y guardará
-     * message_type = audio.
-     */
-
-    return saveMediaMessage(
-      req,
-      res
-    );
-  }
-);
-
-
-/* ======================================================
-   INFORMACIÓN SOBRE LÍMITES MULTIMEDIA
-====================================================== */
-
-router.get(
-  '/upload/config',
-  (req, res) => {
-    return res.json({
-      ok: true,
-
-      maxFileSize:
-        50 * 1024 * 1024,
-
-      maxFileSizeMB:
-        50,
-
-      types: {
-        image: [
-          'jpeg',
-          'jpg',
-          'png',
-          'webp',
-          'gif',
-          'heic',
-          'heif'
-        ],
-
-        video: [
-          'mp4',
-          'webm',
-          'mov',
-          'm4v'
-        ],
-
-        audio: [
-          'mp3',
-          'mp4',
-          'm4a',
-          'aac',
-          'ogg',
-          'webm',
-          'wav'
-        ],
-
-        document: [
-          'pdf',
-          'doc',
-          'docx',
-          'xls',
-          'xlsx',
-          'ppt',
-          'pptx',
-          'txt',
-          'csv',
-          'zip'
-        ]
-      }
-    });
-  }
-);
-
-
-/* ======================================================
-   ELIMINAR ARCHIVO FÍSICO DE UN MENSAJE MULTIMEDIA
-
-   Se usa únicamente cuando el propietario elimina
-   definitivamente un multimedia.
-====================================================== */
-
-function deleteLocalMediaByUrl(
-  mediaUrl
-) {
-  try {
-    if (
-      !mediaUrl ||
-      !String(
-        mediaUrl
-      ).startsWith(
-        '/uploads/'
-      )
-    ) {
-      return;
-    }
-
-    const encodedName =
-      String(
-        mediaUrl
-      ).replace(
-        '/uploads/',
-        ''
-      );
-
-    const fileName =
-      path.basename(
-        decodeURIComponent(
-          encodedName
-        )
-      );
-
-    const absolutePath =
-      path.join(
-        uploadsRoot,
-        fileName
-      );
-
-    /*
-     * Seguridad adicional:
-     * el path final tiene que continuar dentro
-     * de uploadsRoot.
-     */
-
-    if (
-      !absolutePath.startsWith(
-        uploadsRoot
-      )
-    ) {
-      return;
-    }
-
-    fs.unlink(
-      absolutePath,
-      error => {
-        if (
-          error &&
-          error.code !==
-            'ENOENT'
-        ) {
-          console.error(
-            'VOBIXCHAT DELETE MEDIA FILE ERROR:',
-            error
-          );
-        }
-      }
-    );
-
-  } catch (error) {
-    console.error(
-      'VOBIXCHAT DELETE MEDIA PATH ERROR:',
-      error
-    );
-  }
-}
-
-
-/* ======================================================
-   ELIMINAR DEFINITIVAMENTE UN MULTIMEDIA PROPIO
-
-   DELETE:
-   /api/chat/media/:messageId
-====================================================== */
-
-router.delete(
-  '/media/:messageId',
-  async (req, res) => {
-    const currentUserId =
-      req.vobixUser.id;
-
-    const messageId =
-      cleanId(
-        req.params.messageId
-      );
-
-    if (!messageId) {
-      return res
-        .status(400)
-        .json({
-          ok: false,
-          msg:
-            'Mensaje no válido'
-        });
-    }
-
-    try {
-      const original =
-        await getOwnedMessage(
-          messageId,
-          currentUserId
-        );
-
-      if (!original) {
-        return res
-          .status(404)
-          .json({
-            ok: false,
-            msg:
-              'Mensaje no encontrado'
-          });
-      }
-
-
-      const mediaTypes =
-        [
-          'image',
-          'photo',
-          'video',
-          'audio',
-          'voice',
-          'document',
-          'file'
-        ];
-
-
-      if (
-        !mediaTypes.includes(
-          String(
-            original.message_type
-          )
-        )
-      ) {
-        return res
-          .status(400)
-          .json({
-            ok: false,
-            msg:
-              'Este mensaje no contiene un archivo multimedia'
-          });
-      }
-
-
-      await database.query(
-        `
-        UPDATE messages
-
-        SET
-          content = '',
-          deleted = TRUE,
-          updated_at = NOW()
-
-        WHERE
-          id = $1
-          AND sender_user_id = $2
-        `,
-        [
-          messageId,
-          currentUserId
-        ]
-      );
-
-
-      deleteLocalMediaByUrl(
-        original.content
-      );
-
-
-      const payload = {
-        ok:
-          true,
-
-        conversationId:
-          original.conversation_id,
-
-        messageId
-      };
-
-
-      emitToConversation(
-        req,
-        original.conversation_id,
-        'conversation:message-deleted',
-        payload
-      );
-
-
-      const recipients =
-        await getOtherParticipants(
-          original.conversation_id,
-          currentUserId
-        );
-
-
-      for (
-        const targetUserId
-        of recipients
-      ) {
-        emitToUser(
-          req,
-          targetUserId,
-          'conversation:message-deleted',
-          payload
-        );
-      }
-
-
-      return res.json({
-        ok: true,
-
-        conversationId:
-          original.conversation_id,
-
-        messageId
-      });
-
-    } catch (error) {
-      console.error(
-        'VOBIXCHAT DELETE MEDIA ERROR:',
-        error
-      );
-
-      return res
-        .status(500)
-        .json({
-          ok: false,
-          msg:
-            'No se pudo eliminar el archivo'
-        });
-    }
-  }
-);
-
-
-/* ======================================================
-   FIN BLOQUE 5/6
-
-   NO PONGAS module.exports TODAVÍA.
-
-   BLOQUE 6/6:
-   - estado del chat
-   - compatibilidad
-   - manejo final de errores
-   - module.exports
-   - CIERRE DEFINITIVO DE routes/chat.js
 ====================================================== */
 /* ======================================================
    BLOQUE 6/6
@@ -5614,7 +4376,7 @@ router.delete(
 
 
 /* ======================================================
-   ESTADO DEL CHAT
+   ESTADO GENERAL DEL CHAT
 ====================================================== */
 
 router.get(
@@ -5740,12 +4502,7 @@ router.get(
 
 
 /* ======================================================
-   COMPATIBILIDAD CON FRONTEND ANTERIOR
-
-   Algunos builds anteriores podían llamar:
-   GET /history
-
-   Devolvemos el historial usando una consulta limpia.
+   HISTORIAL - COMPATIBILIDAD CON FRONTEND ANTERIOR
 ====================================================== */
 
 router.get(
@@ -5946,7 +4703,9 @@ router.get(
 
       return res.json({
         ok: true,
+
         conversations,
+
         history:
           conversations
       });
@@ -5970,7 +4729,7 @@ router.get(
 
 
 /* ======================================================
-   OBTENER PERFIL DEL USUARIO DE UNA SALA
+   PERFIL DE USUARIO DESDE EL CHAT
 ====================================================== */
 
 router.get(
@@ -6023,7 +4782,8 @@ router.get(
         );
 
       if (
-        result.rows.length === 0
+        result.rows.length ===
+        0
       ) {
         return res
           .status(404)
@@ -6119,7 +4879,7 @@ router.get(
 
 
 /* ======================================================
-   BÚSQUEDA DE MENSAJES DENTRO DE UNA CONVERSACIÓN
+   BUSCAR MENSAJES DENTRO DE UNA CONVERSACIÓN
 ====================================================== */
 
 router.get(
@@ -6254,10 +5014,7 @@ router.get(
 
 
 /* ======================================================
-   COMPROBAR ACCESO A UNA SALA
-
-   Útil para que el frontend pueda validar una sala
-   antes de entrar.
+   COMPROBAR ACCESO A SALA
 ====================================================== */
 
 router.get(
@@ -6310,10 +5067,7 @@ router.get(
 
 
 /* ======================================================
-   INFORMACIÓN DE CAPACIDADES
-
-   El frontend puede usar esto para saber qué controles
-   debe activar.
+   CAPACIDADES DEL CHAT
 ====================================================== */
 
 router.get(
@@ -6374,20 +5128,11 @@ router.get(
 
 
 /* ======================================================
-   404 INTERNO DEL ROUTER CHAT
-
-   IMPORTANTE:
-   Esto solamente se ejecuta para rutas que hayan
-   llegado a /api/chat y no existan.
+   RUTA NO ENCONTRADA DENTRO DE /api/chat
 ====================================================== */
 
 router.use(
   (req, res, next) => {
-    /*
-     * Dejamos pasar OPTIONS por compatibilidad con
-     * navegadores / CORS.
-     */
-
     if (
       req.method ===
       'OPTIONS'
@@ -6414,7 +5159,7 @@ router.use(
 
 
 /* ======================================================
-   MANEJADOR DE ERRORES DEL ROUTER
+   MANEJADOR FINAL DE ERRORES
 ====================================================== */
 
 router.use(
@@ -6465,12 +5210,10 @@ router.use(
 /* ======================================================
    EXPORTAR ROUTER
 
-   IMPORTANTE:
-   SOLO debe existir UN module.exports en este archivo.
+   ESTE ES EL ÚNICO module.exports DEL ARCHIVO.
 ====================================================== */
 
-module.exports =
-  router;
+module.exports = router;
 
 
 /* ======================================================
