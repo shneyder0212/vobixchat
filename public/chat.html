@@ -1,3 +1,13 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#0b160d">
+  <title>VOBIXCHAT</title>
+
+  <style>
+
 /* =========================================================
    VOBIXCHAT
    CHAT.HTML CORREGIDO
@@ -23,12 +33,10 @@
 .audioCallAvatar {
   position: relative;
   overflow: hidden;
-
   background-position: center;
   background-repeat: no-repeat;
   background-size: cover;
 }
-
 
 .avatar.hasPhoto,
 .incomingAvatar.hasPhoto,
@@ -36,15 +44,12 @@
   color: transparent;
 }
 
-
 .avatar img,
 .incomingAvatar img,
 .audioCallAvatar img {
   width: 100%;
   height: 100%;
-
   display: block;
-
   object-fit: cover;
 }
 
@@ -55,10 +60,8 @@
 
 #myAvatar {
   cursor: pointer;
-
   user-select: none;
   -webkit-user-select: none;
-
   touch-action: manipulation;
 }
 
@@ -69,18 +72,15 @@
 
 .chatOptionsMenu {
   position: fixed;
-
   top: 70px;
   right: 12px;
 
-  width:
-    min(
-      300px,
-      calc(100vw - 24px)
-    );
+  width: min(
+    300px,
+    calc(100vw - 24px)
+  );
 
   display: none;
-
   padding: 8px;
 
   border:
@@ -96,20 +96,15 @@
     0 20px 60px
     rgba(0,0,0,.55);
 
-  backdrop-filter:
-    blur(18px);
-
-  -webkit-backdrop-filter:
-    blur(18px);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
 
   z-index: 5000;
 }
 
-
 .chatOptionsMenu.open {
   display: block;
 }
-
 
 .chatOptionButton {
   width: 100%;
@@ -120,31 +115,21 @@
 
   gap: 12px;
 
-  padding:
-    11px 13px;
+  padding: 11px 13px;
 
   border: 0;
   border-radius: 12px;
 
-  background:
-    transparent;
+  background: transparent;
 
-  color:
-    white;
+  color: white;
 
-  text-align:
-    left;
+  text-align: left;
+  font-size: 14px;
 
-  font-size:
-    14px;
-
-  cursor:
-    pointer;
-
-  touch-action:
-    manipulation;
+  cursor: pointer;
+  touch-action: manipulation;
 }
-
 
 .chatOptionButton:hover,
 .chatOptionButton:active {
@@ -152,27 +137,20 @@
     rgba(104,255,114,.10);
 }
 
-
 .chatOptionIcon {
   width: 30px;
   min-width: 30px;
 
-  text-align:
-    center;
-
-  font-size:
-    20px;
+  text-align: center;
+  font-size: 20px;
 }
-
 
 .chatOptionText {
   flex: 1;
 }
 
-
 .chatOptionDanger {
-  color:
-    #ff7777;
+  color: #ff7777;
 }
 
 
@@ -181,20 +159,13 @@
    ========================================================= */
 
 .profilePanel {
-  position:
-    fixed;
+  position: fixed;
+  inset: 0;
 
-  inset:
-    0;
+  display: none;
 
-  display:
-    none;
-
-  align-items:
-    center;
-
-  justify-content:
-    center;
+  align-items: center;
+  justify-content: center;
 
   padding:
     max(
@@ -210,61 +181,45 @@
   background:
     rgba(0,0,0,.76);
 
-  backdrop-filter:
-    blur(14px);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
 
-  -webkit-backdrop-filter:
-    blur(14px);
-
-  z-index:
-    6000;
+  z-index: 6000;
 }
-
 
 .profilePanel.open {
-  display:
-    flex;
+  display: flex;
 }
 
-
 .profileCard {
-  width:
-    min(
-      100%,
-      390px
-    );
+  width: min(
+    100%,
+    390px
+  );
 
   max-height:
     calc(
-      100dvh -
-      40px
+      100dvh - 40px
     );
 
-  overflow-y:
-    auto;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 
-  -webkit-overflow-scrolling:
-    touch;
-
-  padding:
-    25px 20px;
+  padding: 25px 20px;
 
   border:
     1px solid
     rgba(104,255,114,.22);
 
-  border-radius:
-    26px;
+  border-radius: 26px;
 
-  background:
-    #0b160d;
+  background: #0b160d;
 
   box-shadow:
     0 25px 80px
     rgba(0,0,0,.60);
 
-  text-align:
-    center;
+  text-align: center;
 }
 
 
@@ -273,88 +228,57 @@
    ========================================================= */
 
 .profilePhotoPreview {
-  width:
-    130px;
+  width: 130px;
+  height: 130px;
 
-  height:
-    130px;
+  margin: 4px auto 18px;
 
-  margin:
-    4px auto 18px;
+  position: relative;
 
-  position:
-    relative;
+  display: grid;
+  place-items: center;
 
-  display:
-    grid;
+  overflow: hidden;
 
-  place-items:
-    center;
-
-  overflow:
-    hidden;
-
-  border-radius:
-    50%;
+  border-radius: 50%;
 
   border:
     3px solid
     rgba(104,255,114,.45);
 
-  background:
-    #17341d;
+  background: #17341d;
 
-  color:
-    var(--green);
+  color: var(--green);
 
-  font-size:
-    48px;
-
-  font-weight:
-    1000;
+  font-size: 48px;
+  font-weight: 1000;
 
   box-shadow:
     0 0 40px
     rgba(104,255,114,.14);
 }
 
-
 .profilePhotoPreview img {
-  width:
-    100%;
+  width: 100%;
+  height: 100%;
 
-  height:
-    100%;
-
-  display:
-    block;
-
-  object-fit:
-    cover;
+  display: block;
+  object-fit: cover;
 }
-
 
 .profilePanelTitle {
-  margin:
-    0 0 5px;
+  margin: 0 0 5px;
 
-  font-size:
-    21px;
-
-  font-weight:
-    1000;
+  font-size: 21px;
+  font-weight: 1000;
 }
 
-
 .profilePanelSubtitle {
-  margin-bottom:
-    22px;
+  margin-bottom: 22px;
 
-  color:
-    var(--muted);
+  color: var(--muted);
 
-  font-size:
-    13px;
+  font-size: 13px;
 }
 
 
@@ -363,81 +287,53 @@
    ========================================================= */
 
 .profileAction {
-  width:
-    100%;
+  width: 100%;
+  min-height: 50px;
 
-  min-height:
-    50px;
+  margin-top: 8px;
 
-  margin-top:
-    8px;
+  display: flex;
+  align-items: center;
 
-  display:
-    flex;
+  gap: 12px;
 
-  align-items:
-    center;
-
-  gap:
-    12px;
-
-  padding:
-    12px 15px;
+  padding: 12px 15px;
 
   border:
     1px solid
     rgba(104,255,114,.15);
 
-  border-radius:
-    14px;
+  border-radius: 14px;
 
-  background:
-    #122016;
+  background: #122016;
 
-  color:
-    white;
+  color: white;
 
-  text-align:
-    left;
+  text-align: left;
 
-  cursor:
-    pointer;
-
-  touch-action:
-    manipulation;
+  cursor: pointer;
+  touch-action: manipulation;
 }
-
 
 .profileAction:active {
-  transform:
-    scale(.99);
+  transform: scale(.99);
 }
-
 
 .profileAction.primary {
-  background:
-    var(--green);
+  background: var(--green);
+  color: #061008;
 
-  color:
-    #061008;
+  border-color: transparent;
 
-  border-color:
-    transparent;
-
-  font-weight:
-    900;
+  font-weight: 900;
 }
-
 
 .profileAction.danger {
-  color:
-    #ff7777;
+  color: #ff7777;
 }
 
-
 .profileClose {
-  margin-top:
-    15px;
+  margin-top: 15px;
 }
 
 
@@ -446,20 +342,13 @@
    ========================================================= */
 
 .notificationPanel {
-  position:
-    fixed;
+  position: fixed;
+  inset: 0;
 
-  inset:
-    0;
+  display: none;
 
-  display:
-    none;
-
-  align-items:
-    center;
-
-  justify-content:
-    center;
+  align-items: center;
+  justify-content: center;
 
   padding:
     max(
@@ -475,85 +364,59 @@
   background:
     rgba(0,0,0,.76);
 
-  backdrop-filter:
-    blur(14px);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
 
-  -webkit-backdrop-filter:
-    blur(14px);
-
-  z-index:
-    6100;
+  z-index: 6100;
 }
-
 
 .notificationPanel.open {
-  display:
-    flex;
+  display: flex;
 }
 
-
 .notificationCard {
-  width:
-    min(
-      100%,
-      400px
-    );
+  width: min(
+    100%,
+    400px
+  );
 
   max-height:
     calc(
-      100dvh -
-      36px
+      100dvh - 36px
     );
 
-  overflow-y:
-    auto;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 
-  -webkit-overflow-scrolling:
-    touch;
-
-  padding:
-    22px;
+  padding: 22px;
 
   border:
     1px solid
     rgba(104,255,114,.22);
 
-  border-radius:
-    24px;
+  border-radius: 24px;
 
-  background:
-    #0b160d;
+  background: #0b160d;
 
   box-shadow:
     0 25px 80px
     rgba(0,0,0,.60);
 }
 
-
 .notificationTitle {
-  margin-bottom:
-    5px;
+  margin-bottom: 5px;
 
-  font-size:
-    20px;
-
-  font-weight:
-    1000;
+  font-size: 20px;
+  font-weight: 1000;
 }
 
-
 .notificationDescription {
-  margin-bottom:
-    18px;
+  margin-bottom: 18px;
 
-  color:
-    var(--muted);
+  color: var(--muted);
 
-  font-size:
-    12px;
-
-  line-height:
-    1.5;
+  font-size: 12px;
+  line-height: 1.5;
 }
 
 
@@ -562,57 +425,37 @@
    ========================================================= */
 
 .settingRow {
-  min-height:
-    58px;
+  min-height: 58px;
 
-  display:
-    flex;
+  display: flex;
+  align-items: center;
 
-  align-items:
-    center;
+  gap: 12px;
 
-  gap:
-    12px;
-
-  padding:
-    10px 0;
+  padding: 10px 0;
 
   border-bottom:
     1px solid
     rgba(104,255,114,.08);
 }
 
-
 .settingInfo {
-  flex:
-    1;
-
-  min-width:
-    0;
+  flex: 1;
+  min-width: 0;
 }
-
 
 .settingName {
-  font-size:
-    14px;
-
-  font-weight:
-    800;
+  font-size: 14px;
+  font-weight: 800;
 }
 
-
 .settingDescription {
-  margin-top:
-    3px;
+  margin-top: 3px;
 
-  color:
-    var(--muted);
+  color: var(--muted);
 
-  font-size:
-    10px;
-
-  line-height:
-    1.4;
+  font-size: 10px;
+  line-height: 1.4;
 }
 
 
@@ -621,82 +464,52 @@
    ========================================================= */
 
 .vobixSwitch {
-  position:
-    relative;
+  position: relative;
 
-  width:
-    50px;
+  width: 50px;
+  height: 29px;
 
-  height:
-    29px;
+  min-width: 50px;
 
-  min-width:
-    50px;
+  padding: 0;
 
-  padding:
-    0;
+  border: 0;
+  border-radius: 30px;
 
-  border:
-    0;
+  background: #27342a;
 
-  border-radius:
-    30px;
+  cursor: pointer;
 
-  background:
-    #27342a;
+  transition: .2s;
 
-  cursor:
-    pointer;
-
-  transition:
-    .2s;
-
-  touch-action:
-    manipulation;
+  touch-action: manipulation;
 }
-
 
 .vobixSwitch::after {
-  content:
-    "";
+  content: "";
 
-  position:
-    absolute;
+  position: absolute;
 
-  width:
-    23px;
+  width: 23px;
+  height: 23px;
 
-  height:
-    23px;
+  left: 3px;
+  top: 3px;
 
-  left:
-    3px;
+  border-radius: 50%;
 
-  top:
-    3px;
+  background: white;
 
-  border-radius:
-    50%;
-
-  background:
-    white;
-
-  transition:
-    .2s;
+  transition: .2s;
 }
-
 
 .vobixSwitch.on {
-  background:
-    var(--green);
+  background: var(--green);
 }
-
 
 .vobixSwitch.on::after {
   transform:
-    translateX(
-      21px
-    );
+    translateX(21px);
 }
 
 
@@ -710,179 +523,108 @@
    ========================================================= */
 
 .voiceMessage {
-  width:
-    min(
-      310px,
-      72vw
-    );
+  width: min(
+    310px,
+    72vw
+  );
 
-  min-width:
-    210px;
+  min-width: 210px;
 
-  display:
-    flex;
+  display: flex;
+  align-items: center;
 
-  align-items:
-    center;
+  gap: 10px;
 
-  gap:
-    10px;
+  padding: 5px 2px;
 
-  padding:
-    5px 2px;
-
-  user-select:
-    none;
-
-  -webkit-user-select:
-    none;
+  user-select: none;
+  -webkit-user-select: none;
 }
-
 
 .voicePlayButton {
-  width:
-    42px;
+  width: 42px;
+  height: 42px;
 
-  height:
-    42px;
+  min-width: 42px;
 
-  min-width:
-    42px;
+  display: grid;
+  place-items: center;
 
-  display:
-    grid;
+  padding: 0;
 
-  place-items:
-    center;
+  border: 0;
+  border-radius: 50%;
 
-  padding:
-    0;
+  background: var(--green);
+  color: #061008;
 
-  border:
-    0;
+  font-size: 18px;
+  font-weight: 1000;
 
-  border-radius:
-    50%;
-
-  background:
-    var(--green);
-
-  color:
-    #061008;
-
-  font-size:
-    18px;
-
-  font-weight:
-    1000;
-
-  cursor:
-    pointer;
-
-  touch-action:
-    manipulation;
+  cursor: pointer;
+  touch-action: manipulation;
 }
-
 
 .voicePlayButton:active {
-  transform:
-    scale(.94);
+  transform: scale(.94);
 }
-
 
 .voiceProgressArea {
-  flex:
-    1;
+  flex: 1;
 
-  min-width:
-    0;
+  min-width: 0;
+  height: 38px;
 
-  height:
-    38px;
+  display: flex;
+  align-items: center;
 
-  display:
-    flex;
+  cursor: pointer;
 
-  align-items:
-    center;
-
-  cursor:
-    pointer;
-
-  touch-action:
-    none;
+  touch-action: none;
 }
 
-
 .voiceProgressTrack {
-  position:
-    relative;
+  position: relative;
 
-  width:
-    100%;
+  width: 100%;
+  height: 4px;
 
-  height:
-    4px;
-
-  border-radius:
-    10px;
+  border-radius: 10px;
 
   background:
     rgba(255,255,255,.28);
 
-  overflow:
-    visible;
+  overflow: visible;
 }
-
 
 .voiceProgressFill {
-  position:
-    absolute;
+  position: absolute;
 
-  left:
-    0;
+  left: 0;
+  top: 0;
 
-  top:
-    0;
+  width: 0%;
+  height: 100%;
 
-  width:
-    0%;
+  border-radius: inherit;
 
-  height:
-    100%;
+  background: var(--green);
 
-  border-radius:
-    inherit;
-
-  background:
-    var(--green);
-
-  pointer-events:
-    none;
+  pointer-events: none;
 }
 
-
 .voiceProgressDot {
-  position:
-    absolute;
+  position: absolute;
 
-  top:
-    50%;
+  top: 50%;
+  left: 0%;
 
-  left:
-    0%;
+  width: 12px;
+  height: 12px;
 
-  width:
-    12px;
+  border-radius: 50%;
 
-  height:
-    12px;
-
-  border-radius:
-    50%;
-
-  background:
-    var(--green);
+  background: var(--green);
 
   transform:
     translate(
@@ -890,32 +632,25 @@
       -50%
     );
 
-  pointer-events:
-    none;
+  pointer-events: none;
 }
 
-
 .voiceTime {
-  min-width:
-    39px;
+  min-width: 39px;
 
   color:
     rgba(255,255,255,.78);
 
-  font-size:
-    10px;
+  font-size: 10px;
 
   font-variant-numeric:
     tabular-nums;
 
-  text-align:
-    right;
+  text-align: right;
 }
 
-
 .voiceNativeAudio {
-  display:
-    none !important;
+  display: none !important;
 }
 
 
@@ -930,7 +665,6 @@
       env(safe-area-inset-bottom)
     );
 }
-
 
 .messageRow:last-child {
   scroll-margin-bottom:
@@ -947,26 +681,16 @@
    ========================================================= */
 
 .localVideo {
-  right:
-    18px;
+  right: 18px;
+  top: 18px;
 
-  top:
-    18px;
+  cursor: grab;
 
-  cursor:
-    grab;
+  touch-action: none;
 
-  touch-action:
-    none;
-
-  user-select:
-    none;
-
-  -webkit-user-select:
-    none;
-
-  -webkit-touch-callout:
-    none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
 
   transition:
     box-shadow .15s,
@@ -977,14 +701,11 @@
     top,
     transform;
 
-  z-index:
-    30;
+  z-index: 30;
 }
 
-
 .localVideo.dragging {
-  cursor:
-    grabbing;
+  cursor: grabbing;
 
   transform:
     scale(1.03);
@@ -993,8 +714,7 @@
     0 15px 45px
     rgba(0,0,0,.65);
 
-  transition:
-    none;
+  transition: none;
 }
 
 
@@ -1007,97 +727,65 @@
    ========================================================= */
 
 .callVideoArea.videoSwapped .localVideo {
-  position:
-    absolute;
+  position: absolute;
 
-  inset:
-    0 !important;
+  inset: 0 !important;
 
-  width:
-    100% !important;
+  width: 100% !important;
+  height: 100% !important;
 
-  height:
-    100% !important;
+  max-width: none;
 
-  max-width:
-    none;
+  aspect-ratio: auto;
 
-  aspect-ratio:
-    auto;
+  border: 0;
+  border-radius: 0;
 
-  border:
-    0;
+  object-fit: cover;
 
-  border-radius:
-    0;
+  transform: none;
 
-  object-fit:
-    cover;
+  cursor: default;
 
-  transform:
-    none;
-
-  cursor:
-    default;
-
-  z-index:
-    1;
+  z-index: 1;
 }
 
-
 .callVideoArea.videoSwapped .remoteVideo {
-  position:
-    absolute;
+  position: absolute;
 
-  width:
-    min(
-      28vw,
-      220px
-    );
+  width: min(
+    28vw,
+    220px
+  );
 
-  height:
-    auto;
+  height: auto;
 
-  aspect-ratio:
-    3 / 4;
+  aspect-ratio: 3 / 4;
 
-  right:
-    18px;
-
-  top:
-    18px;
+  right: 18px;
+  top: 18px;
 
   border:
     2px solid
     rgba(104,255,114,.45);
 
-  border-radius:
-    18px;
+  border-radius: 18px;
 
-  object-fit:
-    cover;
+  object-fit: cover;
 
   box-shadow:
     0 10px 35px
     rgba(0,0,0,.45);
 
-  cursor:
-    grab;
+  cursor: grab;
 
-  touch-action:
-    none;
+  touch-action: none;
 
-  user-select:
-    none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
 
-  -webkit-user-select:
-    none;
-
-  -webkit-touch-callout:
-    none;
-
-  z-index:
-    31;
+  z-index: 31;
 }
 
 
@@ -1106,32 +794,23 @@
    ========================================================= */
 
 .videoDragHint {
-  position:
-    absolute;
+  position: absolute;
 
-  left:
-    50%;
-
-  bottom:
-    7px;
+  left: 50%;
+  bottom: 7px;
 
   transform:
     translateX(-50%);
 
-  width:
-    30px;
+  width: 30px;
+  height: 4px;
 
-  height:
-    4px;
-
-  border-radius:
-    10px;
+  border-radius: 10px;
 
   background:
     rgba(255,255,255,.65);
 
-  pointer-events:
-    none;
+  pointer-events: none;
 }
 
 
@@ -1142,52 +821,31 @@
 @media(max-width:720px) {
 
   .localVideo {
-    width:
-      105px;
-
-    right:
-      12px;
-
-    top:
-      12px;
+    width: 105px;
+    right: 12px;
+    top: 12px;
   }
-
 
   .callVideoArea.videoSwapped .remoteVideo {
-    width:
-      105px;
-
-    right:
-      12px;
-
-    top:
-      12px;
+    width: 105px;
+    right: 12px;
+    top: 12px;
   }
-
 
   .voiceMessage {
-    width:
-      min(
-        270px,
-        73vw
-      );
+    width: min(
+      270px,
+      73vw
+    );
 
-    min-width:
-      190px;
+    min-width: 190px;
   }
-
 
   .voicePlayButton {
-    width:
-      40px;
-
-    height:
-      40px;
-
-    min-width:
-      40px;
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
   }
-
 
   .messages {
     padding-bottom:
@@ -1197,7 +855,6 @@
       );
   }
 
-
   .chatOptionsMenu {
     top:
       calc(
@@ -1205,8 +862,7 @@
         env(safe-area-inset-top)
       );
 
-    right:
-      7px;
+    right: 7px;
   }
 
 }
@@ -1219,55 +875,145 @@
 @media(max-width:380px) {
 
   .voiceMessage {
-    min-width:
-      175px;
-
-    width:
-      70vw;
+    min-width: 175px;
+    width: 70vw;
   }
-
 
   .voiceTime {
-    min-width:
-      34px;
-
-    font-size:
-      9px;
+    min-width: 34px;
+    font-size: 9px;
   }
-
 
   .localVideo,
   .callVideoArea.videoSwapped .remoteVideo {
-    width:
-      92px;
+    width: 92px;
   }
 
 }
 
 
 /* =========================================================
-   FIN CHAT.HTML
-   BLOQUE 1 DE 6
-
-   CONTINÚA INMEDIATAMENTE CON BLOQUE 2 DE 6
+   FIN BLOQUE 1 DE 6
+   CONTINÚA DIRECTAMENTE CON BLOQUE 2
    ========================================================= */
+/* =========================================================
+   VOBIXCHAT
+   CHAT.HTML CORREGIDO
+   BLOQUE 2 DE 6
+
+   CONTINUACIÓN DEL CSS
+   + CIERRE CORRECTO DE <style>
+   + ESTRUCTURA HTML
+   + MENÚ
+   + PERFIL
+   + NOTIFICACIONES
+   ========================================================= */
+
+
+/* =========================================================
+   AJUSTES GENERALES
+   ========================================================= */
+
+:root {
+  --green: #68ff72;
+  --green-dark: #17341d;
+  --bg: #071009;
+  --panel: #0b160d;
+  --panel-2: #122016;
+  --muted: rgba(255,255,255,.62);
+  --danger: #ff6666;
+}
+
+
+* {
+  box-sizing: border-box;
+}
+
+
+html,
+body {
+  width: 100%;
+  min-height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+
+body {
+  background: var(--bg);
+  color: white;
+
+  font-family:
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Roboto,
+    Helvetica,
+    Arial,
+    sans-serif;
+
+  overscroll-behavior: none;
+}
+
+
+/* =========================================================
+   MEJORAS IPHONE
+   ========================================================= */
+
+button,
+input,
+textarea {
+  font: inherit;
+}
+
+
+button {
+  -webkit-tap-highlight-color: transparent;
+}
+
+
+input,
+textarea {
+  font-size: 16px;
+}
+
+
+video,
+audio,
+img {
+  max-width: 100%;
+}
+
+
+/* =========================================================
+   SAFE AREA IPHONE
+   ========================================================= */
+
+body {
+  padding-top:
+    env(safe-area-inset-top);
+
+  padding-left:
+    env(safe-area-inset-left);
+
+  padding-right:
+    env(safe-area-inset-right);
+}
+
+
+/* =========================================================
+   FINAL DEL CSS
+   ========================================================= */
+
+  </style>
+</head>
+
+
+<body>
+
 
 <!-- =========================================================
      VOBIXCHAT
-     CHAT.HTML CORREGIDO
-     BLOQUE 2 DE 6
-
-     COMPONENTES UI
-     - MENÚ ⋮
-     - PERFIL
-     - FOTO DE PERFIL
-     - NOTIFICACIONES
-     - SONIDOS
-     - PUSH
-     ========================================================= -->
-
-
-<!-- =========================================================
      MENÚ DE TRES PUNTOS
      ========================================================= -->
 
@@ -1376,17 +1122,20 @@
       id="profilePhotoPreview"
       class="profilePhotoPreview"
     >
+
       <span
         id="profilePhotoInitial"
       >
         V
       </span>
 
+
       <img
         id="profilePhotoImage"
         alt="Foto de perfil"
         hidden
       >
+
     </div>
 
 
@@ -1419,9 +1168,7 @@
       class="profileAction primary"
       type="button"
     >
-      <span>
-        📷
-      </span>
+      <span>📷</span>
 
       <span>
         Cambiar foto de perfil
@@ -1434,9 +1181,7 @@
       class="profileAction"
       type="button"
     >
-      <span>
-        📸
-      </span>
+      <span>📸</span>
 
       <span>
         Tomar una foto
@@ -1458,9 +1203,7 @@
       class="profileAction danger"
       type="button"
     >
-      <span>
-        🗑️
-      </span>
+      <span>🗑️</span>
 
       <span>
         Quitar foto
@@ -1473,9 +1216,7 @@
       class="profileAction profileClose"
       type="button"
     >
-      <span>
-        ✕
-      </span>
+      <span>✕</span>
 
       <span>
         Cerrar
@@ -1522,7 +1263,7 @@
 
 
     <!-- =====================================================
-         PUSH / NOTIFICACIONES DEL SISTEMA
+         NOTIFICACIONES PUSH
          ===================================================== -->
 
     <div class="settingRow">
@@ -1568,8 +1309,8 @@
         </div>
 
         <div class="settingDescription">
-          Reproduce un sonido cuando llega
-          un mensaje nuevo.
+          Reproduce un sonido cuando
+          llega un mensaje nuevo.
         </div>
 
       </div>
@@ -1588,7 +1329,7 @@
 
 
     <!-- =====================================================
-         TIMBRE DE LLAMADAS ENTRANTES
+         LLAMADA ENTRANTE
          ===================================================== -->
 
     <div class="settingRow">
@@ -1620,7 +1361,7 @@
 
 
     <!-- =====================================================
-         TONO DE LLAMADA SALIENTE
+         LLAMADA SALIENTE
          ===================================================== -->
 
     <div class="settingRow">
@@ -1664,8 +1405,7 @@
         </div>
 
         <div class="settingDescription">
-          Vibra en dispositivos que permitan
-          esta función.
+          Vibra en dispositivos compatibles.
         </div>
 
       </div>
@@ -1704,6 +1444,7 @@
 
       </div>
 
+
       <span
         id="pushStatusIcon"
         aria-hidden="true"
@@ -1720,7 +1461,7 @@
 
 
     <!-- =====================================================
-         IPHONE
+         AYUDA IPHONE
          ===================================================== -->
 
     <div
@@ -1748,16 +1489,16 @@
         📱 iPhone
       </strong>
 
-      Para recibir Web Push con VobixChat
-      fuera de la pantalla, instala VobixChat
-      en la pantalla de inicio y concede
-      permiso para las notificaciones.
+      Para recibir notificaciones Push
+      cuando VobixChat no esté abierta,
+      instala VobixChat en la pantalla
+      de inicio y permite las notificaciones.
 
     </div>
 
 
     <!-- =====================================================
-         BOTONES DE PRUEBA
+         PRUEBAS
          ===================================================== -->
 
     <button
@@ -1766,9 +1507,7 @@
       type="button"
       style="margin-top:18px;"
     >
-      <span>
-        🔊
-      </span>
+      <span>🔊</span>
 
       <span>
         Probar sonido de mensaje
@@ -1781,9 +1520,7 @@
       class="profileAction"
       type="button"
     >
-      <span>
-        📞
-      </span>
+      <span>📞</span>
 
       <span>
         Probar llamada entrante
@@ -1796,9 +1533,7 @@
       class="profileAction"
       type="button"
     >
-      <span>
-        ☎️
-      </span>
+      <span>☎️</span>
 
       <span>
         Probar llamada saliente
@@ -1811,9 +1546,7 @@
       class="profileAction profileClose"
       type="button"
     >
-      <span>
-        ✕
-      </span>
+      <span>✕</span>
 
       <span>
         Cerrar
@@ -1826,16 +1559,7 @@
 
 
 <!-- =========================================================
-     SONIDOS INTERNOS
-
-     Se generan con Web Audio desde JavaScript.
-     No necesitamos archivos MP3 externos para
-     los tonos básicos.
-     ========================================================= -->
-
-
-<!-- =========================================================
-     CONTENEDOR AUXILIAR PARA ESTADO DE GRABACIÓN
+     INPUTS AUXILIARES
      ========================================================= -->
 
 <div
@@ -1845,10 +1569,6 @@
 ></div>
 
 
-<!-- =========================================================
-     INPUT AUXILIAR PARA FOTO DESDE CHAT
-     ========================================================= -->
-
 <input
   id="vobixChatPhotoInput"
   type="file"
@@ -1856,10 +1576,6 @@
   hidden
 >
 
-
-<!-- =========================================================
-     INPUT AUXILIAR PARA CÁMARA DESDE CHAT
-     ========================================================= -->
 
 <input
   id="vobixChatCameraInput"
@@ -1871,38 +1587,32 @@
 
 
 <!-- =========================================================
-     NOTA:
+     JAVASCRIPT VOBIXCHAT
 
-     Estos componentes se conectarán con el JavaScript
-     de los siguientes bloques.
-
-     NO agregues otro </body>, </html> o <script>
-     aquí.
-
+     BLOQUE 3 CONTINÚA AQUÍ.
      ========================================================= -->
-
-
-<!-- =========================================================
-     FIN CHAT.HTML
-     BLOQUE 2 DE 6
-
-     CONTINÚA INMEDIATAMENTE CON BLOQUE 3 DE 6
-     ========================================================= -->
-     <!-- =========================================================
-     VOBIXCHAT
-     CHAT.HTML CORREGIDO
-     BLOQUE 3 DE 6
-
-     JAVASCRIPT:
-     - MENÚ ⋮
-     - PERFIL
-     - FOTO DE PERFIL
-     - SONIDOS
-     - TIMBRES
-     - PREFERENCIAS
-     ========================================================= */
 
 <script>
+
+
+/* =========================================================
+   FIN BLOQUE 2 DE 6
+   CONTINÚA DIRECTAMENTE CON BLOQUE 3
+   ========================================================= */
+/* =========================================================
+   VOBIXCHAT
+   CHAT.HTML CORREGIDO
+   BLOQUE 3 DE 6
+
+   JAVASCRIPT:
+   - MENÚ ⋮
+   - PERFIL
+   - FOTO DE PERFIL
+   - SONIDOS
+   - TIMBRES
+   - PREFERENCIAS
+   ========================================================= */
+
 
 /* =========================================================
    HELPERS
@@ -2617,23 +2327,20 @@ async function unlockVobixAudio() {
   'touchstart',
   'click'
 ]
-  .forEach(
-    eventName => {
+.forEach(
+  eventName => {
 
-      document.addEventListener(
-        eventName,
-        unlockVobixAudio,
-        {
-          once:
-            true,
+    document.addEventListener(
+      eventName,
+      unlockVobixAudio,
+      {
+        once: true,
+        passive: true
+      }
+    );
 
-          passive:
-            true
-        }
-      );
-
-    }
-  );
+  }
+);
 
 
 /* =========================================================
@@ -3015,7 +2722,7 @@ function stopAllCallSounds() {
 
 
 /* =========================================================
-   PRUEBA DE SONIDOS
+   PRUEBAS
    ========================================================= */
 
 function testVobixMessageSound() {
@@ -3112,7 +2819,7 @@ function saveLocalVobixProfilePhoto(
 
 
 /* =========================================================
-   RENDERIZAR MI FOTO
+   RENDERIZAR FOTO
    ========================================================= */
 
 function renderMyProfilePhoto(
@@ -3144,15 +2851,12 @@ function renderMyProfilePhoto(
     );
 
 
-  if (
-    previewImage
-  ) {
+  if (previewImage) {
 
     if (photo) {
 
       previewImage.src =
         photo;
-
 
       previewImage.hidden =
         false;
@@ -3171,7 +2875,6 @@ function renderMyProfilePhoto(
         'src'
       );
 
-
       previewImage.hidden =
         true;
 
@@ -3188,9 +2891,7 @@ function renderMyProfilePhoto(
   }
 
 
-  if (
-    myAvatar
-  ) {
+  if (myAvatar) {
 
     if (photo) {
 
@@ -3291,11 +2992,6 @@ function readVobixProfilePhotoFile(
       );
 
 
-      /*
-        Si el chat original tiene función
-        de subida al servidor, la usamos.
-      */
-
       try {
 
         if (
@@ -3336,22 +3032,7 @@ function readVobixProfilePhotoFile(
 
 
 /* =========================================================
-   SUBIR FOTO DESDE FUNCIÓN GLOBAL
-   ========================================================= */
-
-async function uploadVobixProfilePhoto(
-  file
-) {
-
-  readVobixProfilePhotoFile(
-    file
-  );
-
-}
-
-
-/* =========================================================
-   ABRIR SELECTOR FOTO CHAT
+   ABRIR SELECTOR FOTO
    ========================================================= */
 
 function openVobixChatPhotoPicker() {
@@ -3364,9 +3045,7 @@ function openVobixChatPhotoPicker() {
 
   if (input) {
 
-    input.value =
-      '';
-
+    input.value = '';
 
     input.click();
 
@@ -3376,7 +3055,7 @@ function openVobixChatPhotoPicker() {
 
 
 /* =========================================================
-   ABRIR CÁMARA CHAT
+   ABRIR CÁMARA
    ========================================================= */
 
 function openVobixChatCamera() {
@@ -3389,9 +3068,7 @@ function openVobixChatCamera() {
 
   if (input) {
 
-    input.value =
-      '';
-
+    input.value = '';
 
     input.click();
 
@@ -3401,108 +3078,7 @@ function openVobixChatCamera() {
 
 
 /* =========================================================
-   ENVIAR ARCHIVO AL CHAT EXISTENTE
-   ========================================================= */
-
-async function sendVobixSelectedChatImage(
-  file
-) {
-
-  if (!file) {
-    return;
-  }
-
-
-  try {
-
-    /*
-      Compatibilidad con diferentes nombres
-      usados por el chat original.
-    */
-
-    if (
-      typeof window.sendImageFile ===
-      'function'
-    ) {
-
-      await window
-        .sendImageFile(
-          file
-        );
-
-      return;
-
-    }
-
-
-    if (
-      typeof window.sendPhoto ===
-      'function'
-    ) {
-
-      await window
-        .sendPhoto(
-          file
-        );
-
-      return;
-
-    }
-
-
-    if (
-      typeof window.uploadChatImage ===
-      'function'
-    ) {
-
-      await window
-        .uploadChatImage(
-          file
-        );
-
-      return;
-
-    }
-
-
-    if (
-      typeof window.sendFile ===
-      'function'
-    ) {
-
-      await window
-        .sendFile(
-          file
-        );
-
-      return;
-
-    }
-
-
-    vobixShowToast(
-      'No encontré la función para enviar la foto'
-    );
-
-  } catch (error) {
-
-    console.error(
-      '[VOBIXCHAT PHOTO]',
-      error
-    );
-
-
-    vobixShowToast(
-      'No se pudo enviar la foto'
-    );
-
-  }
-
-}
-
-
-/* =========================================================
-   CONECTAR COMPONENTES
+   CONECTAR UI
    ========================================================= */
 
 function connectVobixUi() {
@@ -3643,9 +3219,7 @@ function connectVobixUi() {
       'click',
       () => {
 
-        photoInput.value =
-          '';
-
+        photoInput.value = '';
 
         photoInput.click();
 
@@ -3710,9 +3284,7 @@ function connectVobixUi() {
       'click',
       () => {
 
-        cameraInput.value =
-          '';
-
+        cameraInput.value = '';
 
         cameraInput.click();
 
@@ -3863,9 +3435,7 @@ function connectVobixUi() {
             .vobixConnected ===
           '1'
         ) {
-
           return;
-
         }
 
 
@@ -3906,9 +3476,7 @@ function connectVobixUi() {
             .vobixConnected ===
           '1'
         ) {
-
           return;
-
         }
 
 
@@ -3952,70 +3520,6 @@ function connectVobixUi() {
   }
 
 
-  const chatPhotoInput =
-    vobixEl(
-      'vobixChatPhotoInput'
-    );
-
-
-  if (
-    chatPhotoInput &&
-    chatPhotoInput.dataset
-      .vobixConnected !==
-      '1'
-  ) {
-
-    chatPhotoInput.dataset
-      .vobixConnected =
-      '1';
-
-
-    chatPhotoInput.addEventListener(
-      'change',
-      () => {
-
-        sendVobixSelectedChatImage(
-          chatPhotoInput.files?.[0]
-        );
-
-      }
-    );
-
-  }
-
-
-  const chatCameraInput =
-    vobixEl(
-      'vobixChatCameraInput'
-    );
-
-
-  if (
-    chatCameraInput &&
-    chatCameraInput.dataset
-      .vobixConnected !==
-      '1'
-  ) {
-
-    chatCameraInput.dataset
-      .vobixConnected =
-      '1';
-
-
-    chatCameraInput.addEventListener(
-      'change',
-      () => {
-
-        sendVobixSelectedChatImage(
-          chatCameraInput.files?.[0]
-        );
-
-      }
-    );
-
-  }
-
-
   updateVobixPreferenceSwitches();
 
   renderMyProfilePhoto();
@@ -4024,7 +3528,7 @@ function connectVobixUi() {
 
 
 /* =========================================================
-   OBSERVAR BOTONES QUE EL CHAT CREE DESPUÉS
+   OBSERVAR BOTONES CREADOS DESPUÉS
    ========================================================= */
 
 const vobixUiObserver =
@@ -4037,20 +3541,13 @@ const vobixUiObserver =
   );
 
 
-if (
-  document.body
-) {
+if (document.body) {
 
   vobixUiObserver.observe(
     document.body,
     {
-
-      childList:
-        true,
-
-      subtree:
-        true
-
+      childList: true,
+      subtree: true
     }
   );
 
@@ -4058,7 +3555,7 @@ if (
 
 
 /* =========================================================
-   EXPONER FUNCIONES NECESARIAS PARA LOS SIGUIENTES BLOQUES
+   FUNCIONES GLOBALES
    ========================================================= */
 
 window.openChatOptionsMenu =
@@ -4102,18 +3599,15 @@ window.stopAllCallSounds =
 
 
 /* =========================================================
-   FIN CHAT.HTML
-   BLOQUE 3 DE 6
+   FIN BLOQUE 3 DE 6
 
-   NO CERRAMOS </script> TODAVÍA.
-   BLOQUE 4 CONTINÚA DENTRO DEL MISMO SCRIPT.
+   NO CIERRES </script>.
+   BLOQUE 4 CONTINÚA DIRECTAMENTE AQUÍ.
    ========================================================= */
-
-
 /* =========================================================
    VOBIXCHAT
    CHAT.HTML CORREGIDO
-  BLOQUE 4 DE 6
+   BLOQUE 4 DE 6
 
    - NOTAS DE VOZ
    - PLAY / PAUSA
@@ -4123,7 +3617,7 @@ window.stopAllCallSounds =
    - VIDEO LOCAL / REMOTO
    - INTERCAMBIO GRANDE ↔ PEQUEÑO
    - CUADRO PEQUEÑO ARRASTRABLE
-   - POINTER EVENTS IPHONE / ANDROID / PC
+   - IPHONE / ANDROID / PC
    ========================================================= */
 
 
@@ -4131,9 +3625,7 @@ window.stopAllCallSounds =
    FORMATEAR DURACIÓN DE AUDIO
    ========================================================= */
 
-function formatVobixVoiceTime(
-  seconds
-) {
+function formatVobixVoiceTime(seconds) {
 
   const value =
     Number(seconds);
@@ -4214,9 +3706,7 @@ function stopOtherVobixVoiceAudio(
    BUSCAR URL DE AUDIO
    ========================================================= */
 
-function getVobixAudioSource(
-  audio
-) {
+function getVobixAudioSource(audio) {
 
   if (!audio) {
 
@@ -4239,16 +3729,9 @@ function getVobixAudioSource(
 
 /* =========================================================
    CREAR CONTROL VISUAL DE NOTA DE VOZ
-
-   RESULTADO:
-
-   ▶  ━━━━━━━━━━━━━━━  0:18
-
    ========================================================= */
 
-function createVobixVoiceControl(
-  audio
-) {
+function createVobixVoiceControl(audio) {
 
   if (
     !audio ||
@@ -4288,7 +3771,7 @@ function createVobixVoiceControl(
 
 
   /* =======================================================
-     PLAY
+     BOTÓN PLAY
      ======================================================= */
 
   const playButton =
@@ -4316,7 +3799,7 @@ function createVobixVoiceControl(
 
 
   /* =======================================================
-     PROGRESO
+     ÁREA DE PROGRESO
      ======================================================= */
 
   const progressArea =
@@ -4375,7 +3858,7 @@ function createVobixVoiceControl(
 
 
   /* =======================================================
-     TIEMPO
+     DURACIÓN
      ======================================================= */
 
   const time =
@@ -4393,7 +3876,7 @@ function createVobixVoiceControl(
 
 
   /* =======================================================
-     MONTAR
+     MONTAR CONTROL
      ======================================================= */
 
   wrapper.appendChild(
@@ -4411,10 +3894,6 @@ function createVobixVoiceControl(
   );
 
 
-  /*
-    Colocar control después del audio original.
-  */
-
   audio.insertAdjacentElement(
     'afterend',
     wrapper
@@ -4422,7 +3901,7 @@ function createVobixVoiceControl(
 
 
   /* =======================================================
-     ACTUALIZAR UI
+     ACTUALIZAR INTERFAZ
      ======================================================= */
 
   function updateVoiceUi() {
@@ -4465,14 +3944,6 @@ function createVobixVoiceControl(
         `${percent}%`;
 
 
-      /*
-        Mientras está reproduciendo,
-        mostramos tiempo restante.
-
-        Si está parado al inicio,
-        mostramos duración total.
-      */
-
       if (
         current > 0 &&
         current < duration
@@ -4514,10 +3985,6 @@ function createVobixVoiceControl(
   );
 
 
-  /* =======================================================
-     TIME UPDATE
-     ======================================================= */
-
   audio.addEventListener(
     'timeupdate',
     updateVoiceUi
@@ -4555,7 +4022,7 @@ function createVobixVoiceControl(
 
 
   /* =======================================================
-     PAUSE
+     PAUSA
      ======================================================= */
 
   audio.addEventListener(
@@ -4606,7 +4073,7 @@ function createVobixVoiceControl(
 
 
   /* =======================================================
-     BOTÓN PLAY
+     CLICK PLAY / PAUSA
      ======================================================= */
 
   playButton.addEventListener(
@@ -4621,9 +4088,7 @@ function createVobixVoiceControl(
       await unlockVobixAudio();
 
 
-      if (
-        audio.paused
-      ) {
+      if (audio.paused) {
 
         stopOtherVobixVoiceAudio(
           audio
@@ -4654,12 +4119,10 @@ function createVobixVoiceControl(
 
 
   /* =======================================================
-     SEEK
+     MOVER POSICIÓN DEL AUDIO
      ======================================================= */
 
-  function seekVoice(
-    event
-  ) {
+  function seekVoice(event) {
 
     const duration =
       Number(
@@ -4682,9 +4145,7 @@ function createVobixVoiceControl(
         .getBoundingClientRect();
 
 
-    if (
-      !rect.width
-    ) {
+    if (!rect.width) {
 
       return;
 
@@ -4742,9 +4203,7 @@ function createVobixVoiceControl(
       } catch (error) {}
 
 
-      seekVoice(
-        event
-      );
+      seekVoice(event);
 
     }
   );
@@ -4766,17 +4225,11 @@ function createVobixVoiceControl(
       }
 
 
-      seekVoice(
-        event
-      );
+      seekVoice(event);
 
     }
   );
 
-
-  /* =======================================================
-     SI YA ESTABA CARGADO
-     ======================================================= */
 
   if (
     audio.readyState >=
@@ -4791,12 +4244,10 @@ function createVobixVoiceControl(
 
 
 /* =========================================================
-   DETECTAR SI AUDIO ES NOTA DE VOZ
+   DETECTAR NOTAS DE VOZ
    ========================================================= */
 
-function isVobixVoiceAudio(
-  audio
-) {
+function isVobixVoiceAudio(audio) {
 
   if (!audio) {
 
@@ -4804,11 +4255,6 @@ function isVobixVoiceAudio(
 
   }
 
-
-  /*
-    Excluir audios que pudieran usarse
-    internamente como timbres.
-  */
 
   if (
     audio.dataset
@@ -4823,11 +4269,6 @@ function isVobixVoiceAudio(
 
   }
 
-
-  /*
-    Si está dentro de un mensaje,
-    lo tratamos como nota de voz.
-  */
 
   if (
     audio.closest(
@@ -4862,12 +4303,11 @@ function isVobixVoiceAudio(
 
 
 /* =========================================================
-   CONECTAR NOTAS DE VOZ EXISTENTES
+   CONECTAR NOTAS EXISTENTES
    ========================================================= */
 
 function connectExistingVobixVoiceNotes(
-  root =
-    document
+  root = document
 ) {
 
   const audios =
@@ -4953,20 +4393,13 @@ const vobixVoiceObserver =
   );
 
 
-if (
-  document.body
-) {
+if (document.body) {
 
   vobixVoiceObserver.observe(
     document.body,
     {
-
-      childList:
-        true,
-
-      subtree:
-        true
-
+      childList: true,
+      subtree: true
     }
   );
 
@@ -4980,6 +4413,10 @@ if (
 let vobixVideoDragState =
   null;
 
+
+/* =========================================================
+   ÁREA DE VIDEO
+   ========================================================= */
 
 function getVobixCallVideoArea() {
 
@@ -4995,6 +4432,10 @@ function getVobixCallVideoArea() {
 }
 
 
+/* =========================================================
+   VIDEO LOCAL
+   ========================================================= */
+
 function getVobixLocalVideo() {
 
   return (
@@ -5008,6 +4449,10 @@ function getVobixLocalVideo() {
 
 }
 
+
+/* =========================================================
+   VIDEO REMOTO
+   ========================================================= */
 
 function getVobixRemoteVideo() {
 
@@ -5060,9 +4505,7 @@ function getVobixSmallVideo() {
    LIMPIAR POSICIÓN
    ========================================================= */
 
-function resetVobixVideoPosition(
-  video
-) {
+function resetVobixVideoPosition(video) {
 
   if (!video) {
 
@@ -5071,26 +4514,19 @@ function resetVobixVideoPosition(
   }
 
 
-  video.style.left =
-    '';
+  video.style.left = '';
 
+  video.style.top = '';
 
-  video.style.top =
-    '';
+  video.style.right = '';
 
-
-  video.style.right =
-    '';
-
-
-  video.style.bottom =
-    '';
+  video.style.bottom = '';
 
 }
 
 
 /* =========================================================
-   LIMITAR CUADRO A PANTALLA DE VIDEO
+   LIMITAR CUADRO A PANTALLA
    ========================================================= */
 
 function clampVobixSmallVideoPosition(
@@ -5174,8 +4610,16 @@ function beginVobixVideoDrag(
   video
 ) {
 
+  if (!video) {
+
+    return;
+
+  }
+
+
   if (
-    !video ||
+    typeof event.button ===
+      'number' &&
     event.button > 0
   ) {
 
@@ -5253,7 +4697,9 @@ function beginVobixVideoDrag(
     pointerId:
       event.pointerId,
 
-    video,
+    video:
+
+      video,
 
     startX:
       event.clientX,
@@ -5279,9 +4725,7 @@ function beginVobixVideoDrag(
    MOVER CUADRO
    ========================================================= */
 
-function moveVobixVideoDrag(
-  event
-) {
+function moveVobixVideoDrag(event) {
 
   const state =
     vobixVideoDragState;
@@ -5312,10 +4756,8 @@ function moveVobixVideoDrag(
 
 
   if (
-    Math.abs(deltaX) >
-      4 ||
-    Math.abs(deltaY) >
-      4
+    Math.abs(deltaX) > 4 ||
+    Math.abs(deltaY) > 4
   ) {
 
     state.moved =
@@ -5348,9 +4790,7 @@ function moveVobixVideoDrag(
    TERMINAR ARRASTRE
    ========================================================= */
 
-function endVobixVideoDrag(
-  event
-) {
+function endVobixVideoDrag(event) {
 
   const state =
     vobixVideoDragState;
@@ -5382,16 +4822,13 @@ function endVobixVideoDrag(
   } catch (error) {}
 
 
-  /*
-    Evitar que un drag termine
-    intercambiando los videos.
-  */
+  if (state.moved) {
 
-  if (
-    state.moved
-  ) {
+    const draggedVideo =
+      state.video;
 
-    state.video.dataset
+
+    draggedVideo.dataset
       .vobixJustDragged =
       '1';
 
@@ -5399,11 +4836,9 @@ function endVobixVideoDrag(
     setTimeout(
       () => {
 
-        if (
-          state.video
-        ) {
+        if (draggedVideo) {
 
-          delete state.video
+          delete draggedVideo
             .dataset
             .vobixJustDragged;
 
@@ -5477,11 +4912,6 @@ function swapVobixCallVideos() {
   );
 
 
-  /*
-    Reconectar porque ahora cambia
-    cuál es el cuadro pequeño.
-  */
-
   setTimeout(
     connectVobixVideoDragging,
     50
@@ -5491,7 +4921,7 @@ function swapVobixCallVideos() {
 
 
 /* =========================================================
-   CONECTAR ARRASTRE AL VIDEO PEQUEÑO
+   CONECTAR ARRASTRE
    ========================================================= */
 
 function connectVobixVideoDragging() {
@@ -5610,7 +5040,7 @@ function connectVobixVideoDragging() {
 
 
 /* =========================================================
-   MANTENER CUADRO DENTRO DE PANTALLA AL GIRAR/MOVER
+   MANTENER VIDEO DENTRO DE PANTALLA
    ========================================================= */
 
 function keepVobixSmallVideoInside() {
@@ -5710,20 +5140,13 @@ const vobixVideoObserver =
   );
 
 
-if (
-  document.body
-) {
+if (document.body) {
 
   vobixVideoObserver.observe(
     document.body,
     {
-
-      childList:
-        true,
-
-      subtree:
-        true
-
+      childList: true,
+      subtree: true
     }
   );
 
@@ -5760,27 +5183,23 @@ window.swapVobixCallVideos =
 
 
 /* =========================================================
-   FIN CHAT.HTML
-   BLOQUE 4 DE 6
+   FIN BLOQUE 4 DE 6
 
-   NO CERRAMOS </script>.
-   BLOQUE 5 CONTINÚA DIRECTAMENTE.
+   NO CIERRES </script>.
+   BLOQUE 5 CONTINÚA DIRECTAMENTE AQUÍ.
    ========================================================= */
-
-
 /* =========================================================
    VOBIXCHAT
    CHAT.HTML CORREGIDO
    BLOQUE 5 DE 6
 
-   - INTEGRACIÓN CON CHAT EXISTENTE
-   - SONIDO DE MENSAJES
-   - TIMBRE ENTRANTE
-   - TIMBRE SALIENTE
-   - DETENER TIMBRES
+   - MENSAJES
+   - SONIDOS
+   - LLAMADAS
+   - VIDEOLLAMADAS
    - SOCKET.IO
    - FOTOS
-   - LLAMADAS / VIDEOLLAMADAS
+   - NOTIFICACIÓN LOCAL
    ========================================================= */
 
 
@@ -5788,16 +5207,9 @@ window.swapVobixCallVideos =
    ESTADO
    ========================================================= */
 
-let vobixLastMessageSoundAt =
-  0;
-
-
-let vobixLastIncomingCallAt =
-  0;
-
-
-let vobixLastOutgoingCallAt =
-  0;
+let vobixLastMessageSoundAt = 0;
+let vobixLastIncomingCallAt = 0;
+let vobixLastOutgoingCallAt = 0;
 
 
 /* =========================================================
@@ -5806,13 +5218,10 @@ let vobixLastOutgoingCallAt =
 
 function canPlayVobixMessageSound() {
 
-  const now =
-    Date.now();
-
+  const now = Date.now();
 
   if (
-    now -
-    vobixLastMessageSoundAt <
+    now - vobixLastMessageSoundAt <
     500
   ) {
 
@@ -5820,13 +5229,9 @@ function canPlayVobixMessageSound() {
 
   }
 
-
-  vobixLastMessageSoundAt =
-    now;
-
+  vobixLastMessageSoundAt = now;
 
   return true;
-
 }
 
 
@@ -5837,11 +5242,6 @@ function canPlayVobixMessageSound() {
 function handleVobixIncomingMessage(
   message
 ) {
-
-  /*
-    No reproducir sonido si el mensaje
-    pertenece al propio usuario.
-  */
 
   try {
 
@@ -5862,6 +5262,11 @@ function handleVobixIncomingMessage(
       message?.from ||
       null;
 
+
+    /*
+      Si el mensaje lo mandé yo,
+      no reproducimos sonido.
+    */
 
     if (
       myUserId &&
@@ -5896,8 +5301,7 @@ function handleVobixIncomingCall(
   data = {}
 ) {
 
-  const now =
-    Date.now();
+  const now = Date.now();
 
 
   if (
@@ -5915,23 +5319,10 @@ function handleVobixIncomingCall(
     now;
 
 
-  /*
-    Detener tono saliente por si existiera.
-  */
-
   stopOutgoingRingtone();
-
-
-  /*
-    Iniciar timbre entrante.
-  */
 
   startIncomingRingtone();
 
-
-  /*
-    Vibración adicional.
-  */
 
   if (
     vobixPreferences.vibration &&
@@ -5967,8 +5358,7 @@ function handleVobixOutgoingCall(
   data = {}
 ) {
 
-  const now =
-    Date.now();
+  const now = Date.now();
 
 
   if (
@@ -6095,7 +5485,7 @@ function handleVobixCallFailed(
 
 
 /* =========================================================
-   SOCKET.IO
+   OBTENER SOCKET.IO EXISTENTE
    ========================================================= */
 
 function getVobixSocket() {
@@ -6111,7 +5501,7 @@ function getVobixSocket() {
 
 
 /* =========================================================
-   CONECTAR SOCKET
+   CONECTAR EVENTOS SOCKET.IO
    ========================================================= */
 
 function connectVobixSocketEnhancements() {
@@ -6145,7 +5535,7 @@ function connectVobixSocketEnhancements() {
 
 
   console.log(
-    '[VOBIXCHAT] Conectando mejoras Socket.IO'
+    '[VOBIXCHAT] Socket.IO detectado'
   );
 
 
@@ -6156,17 +5546,11 @@ function connectVobixSocketEnhancements() {
   const messageEvents = [
 
     'message',
-
     'new_message',
-
     'newMessage',
-
     'chat_message',
-
     'chatMessage',
-
     'message_received',
-
     'messageReceived'
 
   ];
@@ -6183,11 +5567,6 @@ function connectVobixSocketEnhancements() {
             data
           );
 
-
-          /*
-            Las notas de voz pueden llegar
-            dinámicamente.
-          */
 
           setTimeout(
             () => {
@@ -6212,21 +5591,13 @@ function connectVobixSocketEnhancements() {
   const incomingCallEvents = [
 
     'incoming_call',
-
     'incomingCall',
-
     'call_incoming',
-
     'callIncoming',
-
     'incoming-call',
-
     'incoming_video_call',
-
     'incomingVideoCall',
-
     'video_call_incoming',
-
     'videoCallIncoming'
 
   ];
@@ -6257,17 +5628,11 @@ function connectVobixSocketEnhancements() {
   const answeredEvents = [
 
     'call_answered',
-
     'callAnswered',
-
     'call_accepted',
-
     'callAccepted',
-
     'answer_call',
-
     'video_call_answered',
-
     'videoCallAnswered'
 
   ];
@@ -6298,17 +5663,11 @@ function connectVobixSocketEnhancements() {
   const rejectedEvents = [
 
     'call_rejected',
-
     'callRejected',
-
     'call_declined',
-
     'callDeclined',
-
     'reject_call',
-
     'video_call_rejected',
-
     'videoCallRejected'
 
   ];
@@ -6339,19 +5698,12 @@ function connectVobixSocketEnhancements() {
   const endedEvents = [
 
     'call_ended',
-
     'callEnded',
-
     'end_call',
-
     'call_finished',
-
     'callFinished',
-
     'hangup',
-
     'video_call_ended',
-
     'videoCallEnded'
 
   ];
@@ -6382,15 +5734,10 @@ function connectVobixSocketEnhancements() {
   const cancelledEvents = [
 
     'call_cancelled',
-
     'callCanceled',
-
     'callCancelled',
-
     'cancel_call',
-
     'outgoing_call_cancelled',
-
     'video_call_cancelled'
 
   ];
@@ -6421,19 +5768,12 @@ function connectVobixSocketEnhancements() {
   const failedEvents = [
 
     'call_failed',
-
     'callFailed',
-
     'call_error',
-
     'callError',
-
     'call_timeout',
-
     'callTimeout',
-
     'user_busy',
-
     'userBusy'
 
   ];
@@ -6458,7 +5798,6 @@ function connectVobixSocketEnhancements() {
 
 
   return true;
-
 }
 
 
@@ -6466,8 +5805,7 @@ function connectVobixSocketEnhancements() {
    ESPERAR SOCKET SI TODAVÍA NO EXISTE
    ========================================================= */
 
-let vobixSocketConnectAttempts =
-  0;
+let vobixSocketConnectAttempts = 0;
 
 
 const vobixSocketConnectTimer =
@@ -6479,8 +5817,7 @@ const vobixSocketConnectTimer =
 
       if (
         connectVobixSocketEnhancements() ||
-        vobixSocketConnectAttempts >
-          120
+        vobixSocketConnectAttempts > 120
       ) {
 
         clearInterval(
@@ -6495,7 +5832,7 @@ const vobixSocketConnectTimer =
 
 
 /* =========================================================
-   DETECTAR LLAMADA SALIENTE DESDE BOTONES
+   DETECTAR BOTONES DE LLAMADA
    ========================================================= */
 
 function isVobixCallButton(
@@ -6588,7 +5925,7 @@ function isVobixCallButton(
 
 
 /* =========================================================
-   NO CONFUNDIR BOTONES DE COLGAR / CONTESTAR
+   DETECTAR BOTONES DE COLGAR / RECHAZAR
    ========================================================= */
 
 function isVobixCallStopButton(
@@ -6651,7 +5988,7 @@ function isVobixCallStopButton(
 
 
 /* =========================================================
-   CLICK GLOBAL DE LLAMADAS
+   CLICK GLOBAL PARA LLAMADAS
    ========================================================= */
 
 document.addEventListener(
@@ -6691,7 +6028,8 @@ document.addEventListener(
     ) {
 
       /*
-        Excluir botones del panel de prueba.
+        No activar tono saliente
+        desde botones de prueba.
       */
 
       if (
@@ -6708,12 +6046,12 @@ document.addEventListener(
       }
 
 
-      handleVobixOutgoingCall({
-
-        source:
-          'button'
-
-      });
+      handleVobixOutgoingCall(
+        {
+          source:
+            'button'
+        }
+      );
 
     }
 
@@ -6723,7 +6061,7 @@ document.addEventListener(
 
 
 /* =========================================================
-   OBSERVAR PANTALLA DE LLAMADA
+   DETECTAR UI DE LLAMADA ENTRANTE
    ========================================================= */
 
 function detectVobixCallUi() {
@@ -6731,13 +6069,9 @@ function detectVobixCallUi() {
   const incomingSelectors = [
 
     '.incomingCall',
-
     '.incoming-call',
-
     '#incomingCall',
-
     '#incomingCallScreen',
-
     '[data-incoming-call="true"]'
 
   ];
@@ -6759,9 +6093,7 @@ function detectVobixCallUi() {
       );
 
 
-  if (
-    incoming
-  ) {
+  if (incoming) {
 
     if (
       incoming.dataset
@@ -6774,12 +6106,12 @@ function detectVobixCallUi() {
         '1';
 
 
-      handleVobixIncomingCall({
-
-        source:
-          'ui'
-
-      });
+      handleVobixIncomingCall(
+        {
+          source:
+            'ui'
+        }
+      );
 
     }
 
@@ -6804,9 +6136,7 @@ const vobixCallUiObserver =
   );
 
 
-if (
-  document.body
-) {
+if (document.body) {
 
   vobixCallUiObserver.observe(
     document.body,
@@ -6822,13 +6152,9 @@ if (
         true,
 
       attributeFilter: [
-
         'class',
-
         'style',
-
         'hidden'
-
       ]
 
     }
@@ -6838,7 +6164,7 @@ if (
 
 
 /* =========================================================
-   DETENER TIMBRES AL OCULTAR/CERRAR LLAMADA
+   DETENER TIMBRES AL SALIR
    ========================================================= */
 
 window.addEventListener(
@@ -6852,8 +6178,7 @@ window.addEventListener(
 
 
 /* =========================================================
-   FOTOS DEL CHAT
-   CONECTAR BOTONES EXISTENTES SI LOS HAY
+   BOTONES PARA ENVIAR FOTOS
    ========================================================= */
 
 function connectVobixPhotoButtons() {
@@ -6900,9 +6225,11 @@ function connectVobixPhotoButtons() {
 
 
       /*
-        No cancelamos el comportamiento original.
-        Si el botón original ya funciona,
-        lo dejamos trabajar.
+        Dejamos el click normal intacto
+        para no romper el sistema original.
+
+        Mantener pulsado / menú contextual
+        abre nuestro selector auxiliar.
       */
 
       button.addEventListener(
@@ -6923,7 +6250,7 @@ function connectVobixPhotoButtons() {
 
 
 /* =========================================================
-   RENDERIZAR FOTO DE PERFIL EN AVATARES
+   FOTO DE PERFIL EN AVATAR
    ========================================================= */
 
 function applyVobixProfilePhotoToAvatar(
@@ -6976,7 +6303,7 @@ function applyVobixProfilePhotoToAvatar(
 
 
 /* =========================================================
-   ACTUALIZAR AVATARES PROPIOS
+   ACTUALIZAR MIS AVATARES
    ========================================================= */
 
 function updateVobixOwnAvatars() {
@@ -6988,11 +6315,8 @@ function updateVobixOwnAvatars() {
   const selectors = [
 
     '#myAvatar',
-
     '.myAvatar',
-
     '[data-my-avatar]',
-
     '.localUserAvatar'
 
   ];
@@ -7023,34 +6347,218 @@ function updateVobixOwnAvatars() {
 
 
 /* =========================================================
-   INTERCEPTAR CAMBIO DE FOTO LOCAL
+   INPUT DE FOTO AUXILIAR
    ========================================================= */
 
-const originalRenderMyProfilePhoto =
-  window.renderMyProfilePhoto;
+const vobixChatPhotoInput =
+  vobixEl(
+    'vobixChatPhotoInput'
+  );
 
 
-window.renderMyProfilePhoto =
-  function(
-    photo =
-      getLocalVobixProfilePhoto()
-  ) {
+if (
+  vobixChatPhotoInput &&
+  vobixChatPhotoInput.dataset
+    .vobixConnected !==
+    '1'
+) {
 
-    if (
-      typeof originalRenderMyProfilePhoto ===
-      'function'
-    ) {
-
-      originalRenderMyProfilePhoto(
-        photo
-      );
-
-    }
+  vobixChatPhotoInput.dataset
+    .vobixConnected =
+    '1';
 
 
-    updateVobixOwnAvatars();
+  vobixChatPhotoInput
+    .addEventListener(
+      'change',
+      () => {
 
-  };
+        const file =
+          vobixChatPhotoInput
+            .files?.[0];
+
+
+        if (!file) {
+
+          return;
+
+        }
+
+
+        /*
+          Si tu chat ya tiene una función
+          para enviar imágenes, la usamos.
+        */
+
+        try {
+
+          if (
+            typeof window
+              .sendImageFile ===
+            'function'
+          ) {
+
+            window.sendImageFile(
+              file
+            );
+
+            return;
+
+          }
+
+
+          if (
+            typeof window
+              .sendPhoto ===
+            'function'
+          ) {
+
+            window.sendPhoto(
+              file
+            );
+
+            return;
+
+          }
+
+
+          if (
+            typeof window
+              .uploadChatImage ===
+            'function'
+          ) {
+
+            window.uploadChatImage(
+              file
+            );
+
+            return;
+
+          }
+
+        } catch (error) {
+
+          console.error(
+            '[VOBIXCHAT PHOTO]',
+            error
+          );
+
+        }
+
+
+        vobixShowToast(
+          'Foto seleccionada'
+        );
+
+      }
+    );
+
+}
+
+
+/* =========================================================
+   INPUT DE CÁMARA AUXILIAR
+   ========================================================= */
+
+const vobixChatCameraInput =
+  vobixEl(
+    'vobixChatCameraInput'
+  );
+
+
+if (
+  vobixChatCameraInput &&
+  vobixChatCameraInput.dataset
+    .vobixConnected !==
+    '1'
+) {
+
+  vobixChatCameraInput.dataset
+    .vobixConnected =
+    '1';
+
+
+  vobixChatCameraInput
+    .addEventListener(
+      'change',
+      () => {
+
+        const file =
+          vobixChatCameraInput
+            .files?.[0];
+
+
+        if (!file) {
+
+          return;
+
+        }
+
+
+        try {
+
+          if (
+            typeof window
+              .sendImageFile ===
+            'function'
+          ) {
+
+            window.sendImageFile(
+              file
+            );
+
+            return;
+
+          }
+
+
+          if (
+            typeof window
+              .sendPhoto ===
+            'function'
+          ) {
+
+            window.sendPhoto(
+              file
+            );
+
+            return;
+
+          }
+
+
+          if (
+            typeof window
+              .uploadChatImage ===
+            'function'
+          ) {
+
+            window.uploadChatImage(
+              file
+            );
+
+            return;
+
+          }
+
+        } catch (error) {
+
+          console.error(
+            '[VOBIXCHAT CAMERA]',
+            error
+          );
+
+        }
+
+
+        vobixShowToast(
+          'Foto tomada'
+        );
+
+      }
+    );
+
+}
 
 
 /* =========================================================
@@ -7124,10 +6632,7 @@ async function testVobixSystemNotification() {
               'Las notificaciones están funcionando.',
 
             icon:
-              '/icons/icon-192.png',
-
-            badge:
-              '/icons/badge-96.png',
+              '/icon.png',
 
             tag:
               'vobix-test',
@@ -7179,7 +6684,7 @@ async function testVobixSystemNotification() {
 
 
 /* =========================================================
-   CONECTAR BOTÓN PRUEBA NOTIFICACIÓN
+   BOTÓN DE PRUEBA DE NOTIFICACIÓN
    ========================================================= */
 
 const vobixNotificationTestButton =
@@ -7189,8 +6694,18 @@ const vobixNotificationTestButton =
 
 
 if (
+  vobixNotificationTestButton &&
   vobixNotificationTestButton
+    .dataset
+    .vobixConnected !==
+    '1'
 ) {
+
+  vobixNotificationTestButton
+    .dataset
+    .vobixConnected =
+    '1';
+
 
   vobixNotificationTestButton
     .addEventListener(
@@ -7202,7 +6717,7 @@ if (
 
 
 /* =========================================================
-   INICIALIZACIÓN UI
+   INICIALIZACIÓN DE MEJORAS
    ========================================================= */
 
 function initializeVobixEnhancements() {
@@ -7237,8 +6752,7 @@ if (
     'DOMContentLoaded',
     initializeVobixEnhancements,
     {
-      once:
-        true
+      once: true
     }
   );
 
@@ -7250,7 +6764,7 @@ if (
 
 
 /* =========================================================
-   REVISIÓN DE COMPONENTES DINÁMICOS
+   COMPONENTES DINÁMICOS
    ========================================================= */
 
 setTimeout(
@@ -7303,31 +6817,34 @@ window.handleVobixCallCancelled =
   handleVobixCallCancelled;
 
 
+window.handleVobixCallFailed =
+  handleVobixCallFailed;
+
+
 window.testVobixSystemNotification =
   testVobixSystemNotification;
 
 
 /* =========================================================
-   FIN CHAT.HTML
-   BLOQUE 5 DE 6
+   FIN BLOQUE 5 DE 6
 
-   NO CERRAMOS </script>.
+   NO CIERRES </script>.
 
    BLOQUE 6:
-   - SERVICE WORKER /sw.js
-   - PUSH MANAGER
+   - /sw.js
+   - PUSH
    - VAPID
    - SUSCRIPCIÓN
    - IPHONE
-   - CLICK DE NOTIFICACIÓN
    - INICIALIZACIÓN FINAL
+   - CIERRE </script>
+   - CIERRE </body>
+   - CIERRE </html>
    ========================================================= */
-
-
 /* =========================================================
    VOBIXCHAT
    CHAT.HTML CORREGIDO
-  BLOQUE 6 DE 6
+   BLOQUE 6 DE 6
 
    PUSH NOTIFICATIONS
    - SERVICE WORKER /sw.js
@@ -7375,7 +6892,7 @@ let vobixPushBusy =
 
 
 /* =========================================================
-   COMPROBAR SOPORTE
+   COMPROBAR SOPORTE PUSH
    ========================================================= */
 
 function vobixPushSupported() {
@@ -7411,7 +6928,7 @@ function isVobixIOS() {
 
 
 /* =========================================================
-   SABER SI ESTÁ INSTALADA COMO APP
+   SABER SI VOBIXCHAT ESTÁ INSTALADA COMO APP
    ========================================================= */
 
 function isVobixStandalone() {
@@ -7419,18 +6936,16 @@ function isVobixStandalone() {
   return (
     window.matchMedia?.(
       '(display-mode: standalone)'
-    )?.matches ===
-      true ||
+    )?.matches === true ||
     window.navigator
-      .standalone ===
-      true
+      .standalone === true
   );
 
 }
 
 
 /* =========================================================
-   MOSTRAR AYUDA IPHONE
+   AYUDA PARA IPHONE
    ========================================================= */
 
 function updateVobixIOSHelp() {
@@ -7442,7 +6957,9 @@ function updateVobixIOSHelp() {
 
 
   if (!help) {
+
     return;
+
   }
 
 
@@ -7465,7 +6982,7 @@ function updateVobixIOSHelp() {
 
 
 /* =========================================================
-   TEXTO DEL ESTADO PUSH
+   MOSTRAR ESTADO PUSH
    ========================================================= */
 
 function setVobixPushStatus(
@@ -7504,7 +7021,7 @@ function setVobixPushStatus(
 
 
 /* =========================================================
-   ESTADO DEL PERMISO
+   ACTUALIZAR ESTADO DEL PERMISO
    ========================================================= */
 
 function updateVobixNotificationPermissionUi() {
@@ -7613,7 +7130,7 @@ function updateVobixNotificationPermissionUi() {
 
 
 /* =========================================================
-   BASE64 URL → UINT8ARRAY
+   BASE64 URL -> UINT8ARRAY
 
    NECESARIO PARA VAPID
    ========================================================= */
@@ -7665,10 +7182,9 @@ function urlBase64ToUint8Array(
 
 
 /* =========================================================
-   OBTENER CLAVE PÚBLICA VAPID DEL SERVER
+   OBTENER CLAVE PÚBLICA VAPID DEL SERVIDOR
 
-   IMPORTANTE:
-   LA CLAVE PRIVADA NUNCA VA EN chat.html
+   LA CLAVE PRIVADA NO VA AQUÍ.
    ========================================================= */
 
 async function getVobixPublicVapidKey() {
@@ -7694,7 +7210,7 @@ async function getVobixPublicVapidKey() {
   if (!response.ok) {
 
     throw new Error(
-      'No se pudo obtener VAPID_PUBLIC_KEY'
+      'No se pudo obtener la clave pública VAPID'
     );
 
   }
@@ -7731,13 +7247,6 @@ async function getVobixPublicVapidKey() {
 
 /* =========================================================
    REGISTRAR SERVICE WORKER
-
-   IMPORTANTE:
-   EL ARCHIVO QUE CREAMOS SE LLAMA:
-
-   /sw.js
-
-   NO /service-worker.js
    ========================================================= */
 
 async function registerVobixServiceWorker() {
@@ -7778,10 +7287,6 @@ async function registerVobixServiceWorker() {
       registration.scope
     );
 
-
-    /*
-      Esperar hasta que el SW esté listo.
-    */
 
     const readyRegistration =
       await navigator
@@ -7920,7 +7425,7 @@ function getVobixDeviceId() {
 
 
 /* =========================================================
-   ENVIAR SUSCRIPCIÓN AL SERVER
+   ENVIAR SUSCRIPCIÓN PUSH AL SERVIDOR
    ========================================================= */
 
 async function sendVobixSubscriptionToServer(
@@ -8061,12 +7566,6 @@ async function enableVobixPush() {
     }
 
 
-    /*
-      En iPhone Web Push funciona correctamente
-      cuando la web está instalada como Web App
-      en versiones compatibles de iOS.
-    */
-
     if (
       isVobixIOS() &&
       !isVobixStandalone()
@@ -8082,10 +7581,6 @@ async function enableVobixPush() {
 
     }
 
-
-    /*
-      Pedir permiso desde acción del usuario.
-    */
 
     let permission =
       Notification.permission;
@@ -8149,11 +7644,6 @@ async function enableVobixPush() {
         .getSubscription();
 
 
-    /*
-      Crear suscripción si todavía
-      no existe.
-    */
-
     if (!subscription) {
 
       const publicKey =
@@ -8183,10 +7673,6 @@ async function enableVobixPush() {
     vobixPushSubscription =
       subscription;
 
-
-    /*
-      Guardarla en el servidor.
-    */
 
     await sendVobixSubscriptionToServer(
       subscription
@@ -8311,10 +7797,6 @@ async function disableVobixPush() {
           : subscription;
 
 
-      /*
-        Avisar primero al servidor.
-      */
-
       try {
 
         await fetch(
@@ -8359,10 +7841,6 @@ async function disableVobixPush() {
 
       }
 
-
-      /*
-        Quitar suscripción del navegador.
-      */
 
       await subscription
         .unsubscribe();
@@ -8507,6 +7985,7 @@ async function refreshVobixPushState() {
 
     updateVobixNotificationPermissionUi();
 
+
     return;
 
   }
@@ -8547,11 +8026,6 @@ async function refreshVobixPushState() {
         '✅'
       );
 
-
-      /*
-        Renovar registro en servidor.
-        Esto ayuda después de deploy/reinicio.
-      */
 
       try {
 
@@ -8707,10 +8181,8 @@ function handleVobixNotificationClickMessage(
 
   const conversationId =
     data.conversationId ||
-    data.payload
-      ?.conversationId ||
-    data.payload
-      ?.conversation_id ||
+    data.payload?.conversationId ||
+    data.payload?.conversation_id ||
     null;
 
 
@@ -8721,10 +8193,6 @@ function handleVobixNotificationClickMessage(
       ''
     ).toLowerCase();
 
-
-  /*
-    Abrir conversación.
-  */
 
   if (conversationId) {
 
@@ -8765,10 +8233,6 @@ function handleVobixNotificationClickMessage(
 
   }
 
-
-  /*
-    Recuperar llamada.
-  */
 
   if (
     callId &&
@@ -8834,20 +8298,15 @@ function recoverVobixPushCall(
 
         callType:
           data.callType ||
-          data.payload
-            ?.callType ||
-          data.payload
-            ?.call_type ||
+          data.payload?.callType ||
+          data.payload?.call_type ||
           null,
 
         callerId:
           data.callerId ||
-          data.payload
-            ?.callerId ||
-          data.payload
-            ?.caller_id ||
-          data.payload
-            ?.from ||
+          data.payload?.callerId ||
+          data.payload?.caller_id ||
+          data.payload?.from ||
           null
 
       }
@@ -8858,11 +8317,6 @@ function recoverVobixPushCall(
 
   }
 
-
-  /*
-    Si Socket.IO todavía no conectó,
-    volver a intentarlo.
-  */
 
   let attempts =
     0;
@@ -8928,7 +8382,7 @@ function recoverVobixPushCall(
 
 
 /* =========================================================
-   LEER PARÁMETROS QUE DEJÓ sw.js EN LA URL
+   LEER PARÁMETROS DE PUSH EN LA URL
    ========================================================= */
 
 function processVobixPushUrl() {
@@ -8981,11 +8435,6 @@ function processVobixPushUrl() {
 
 
   if (conversationId) {
-
-    /*
-      Esperar a que el chat termine
-      de inicializarse.
-    */
 
     setTimeout(
       () => {
@@ -9057,7 +8506,7 @@ function processVobixPushUrl() {
 
 
 /* =========================================================
-   SERVICE WORKER NUEVO DESPUÉS DE DEPLOY
+   ACTUALIZACIÓN DEL SERVICE WORKER
    ========================================================= */
 
 function connectVobixServiceWorkerUpdates(
@@ -9101,12 +8550,14 @@ function connectVobixServiceWorkerUpdates(
 
             try {
 
-              worker.postMessage({
+              worker.postMessage(
+                {
 
-                type:
-                  'SKIP_WAITING'
+                  type:
+                    'SKIP_WAITING'
 
-              });
+                }
+              );
 
             } catch (error) {}
 
@@ -9122,7 +8573,7 @@ function connectVobixServiceWorkerUpdates(
 
 
 /* =========================================================
-   CONTROLLER CHANGE
+   NUEVO SERVICE WORKER ACTIVO
    ========================================================= */
 
 if (
@@ -9210,7 +8661,7 @@ async function initializeVobixPush() {
 
 
 /* =========================================================
-   REACTIVAR AUDIO AL VOLVER A VOBIXCHAT
+   REACTIVAR AL VOLVER A VOBIXCHAT
    ========================================================= */
 
 document.addEventListener(
@@ -9225,11 +8676,6 @@ document.addEventListener(
       unlockVobixAudio();
 
 
-      /*
-        Volver a comprobar Push
-        por si el usuario cambió permisos.
-      */
-
       setTimeout(
         refreshVobixPushState,
         500
@@ -9242,7 +8688,7 @@ document.addEventListener(
 
 
 /* =========================================================
-   CUANDO RECUPERA INTERNET
+   RECUPERAR INTERNET
    ========================================================= */
 
 window.addEventListener(
@@ -9268,6 +8714,8 @@ async function startVobixFinalEnhancements() {
 
     connectVobixUi();
 
+    connectVobixPhotoButtons();
+
     connectExistingVobixVoiceNotes();
 
     connectVobixVideoDragging();
@@ -9275,6 +8723,9 @@ async function startVobixFinalEnhancements() {
     connectVobixSocketEnhancements();
 
     updateVobixOwnAvatars();
+
+    detectVobixCallUi();
+
 
     await initializeVobixPush();
 
@@ -9332,7 +8783,7 @@ async function startVobixFinalEnhancements() {
 
 
 /* =========================================================
-   EJECUTAR
+   EJECUTAR ARRANQUE FINAL
    ========================================================= */
 
 if (
@@ -9357,7 +8808,7 @@ if (
 
 
 /* =========================================================
-   FUNCIONES GLOBALES
+   FUNCIONES GLOBALES PUSH
    ========================================================= */
 
 window.enableVobixPush =
@@ -9381,27 +8832,11 @@ window.recoverVobixPushCall =
 
 
 /* =========================================================
-   FIN JAVASCRIPT
+   FIN DEL JAVASCRIPT
    ========================================================= */
 
 </script>
 
 
-<!-- =========================================================
-     VOBIXCHAT
-     CHAT.HTML CORREGIDO
-
-     FIN BLOQUE 6 DE 6
-
-     SERVICE WORKER CORRECTO:
-     /sw.js
-
-     PUSH:
-     /api/push/public-key
-     /api/push/subscribe
-     /api/push/unsubscribe
-
-     IMPORTANTE:
-     VAPID_PRIVATE_KEY NUNCA VA AQUÍ.
-     SOLO DEBE EXISTIR EN RENDER / SERVIDOR.
-     ========================================================= --> 
+</body>
+</html>
