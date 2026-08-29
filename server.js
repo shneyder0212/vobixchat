@@ -12,67 +12,113 @@
  - Registro y PIN
  - Sesiones
  - API privada autenticada
- - Contactos
- - Conversaciones privadas
- - Mensajes persistentes
+ - Chat privado 1x1
+ - Historial
  - Socket.IO
- - Salas privadas
- - Presencia en tiempo real
- - Señalización WebRTC privada
- - Llamadas de voz
+ - Presencia
+ - Mensajería tiempo real
+ - WebRTC
+ - Llamadas
  - Videollamadas
- - Reuniones
+ - Videollamadas multipersona
+ - Push notifications
  - Health check
 ==========================================================
 */
 
-const express = require('express');
-const http = require('http');
-const crypto = require('crypto');
-const { Server } = require('socket.io');
-const path = require('path');
+const express =
+  require('express');
 
-const config = require('./config');
-const database = require('./database/db');
+const http =
+  require('http');
+
+const crypto =
+  require('crypto');
+
+const path =
+  require('path');
+
+const {
+  Server
+} = require('socket.io');
+
+
+const config =
+  require('./config');
+
+const database =
+  require('./database/db');
 
 const {
   initializeDatabase
-} = require('./database/schema');
+} =
+  require('./database/schema');
 
 const {
   normalizePhone
-} = require('./core/users');
+} =
+  require('./core/users');
 
-const chatRoutes = require('./routes/chat');
+const chatRoutes =
+  require('./routes/chat');
+
+
+// ======================================================
+// WEB PUSH
+// ======================================================
+
+let webpush = null;
+
+try {
+
+  webpush =
+    require('web-push');
+
+} catch (error) {
+
+  console.warn(
+    'VOBIXCHAT | web-push no disponible'
+  );
+
+}
 
 
 // ======================================================
 // APP / SERVIDOR
 // ======================================================
 
-const app = express();
+const app =
+  express();
 
 const server =
-  http.createServer(app);
+  http.createServer(
+    app
+  );
 
 
 // ======================================================
 // SOCKET.IO
 // ======================================================
 
-const io = new Server(
-  server,
-  {
-    cors: {
-      origin: '*'
-    },
+const io =
+  new Server(
+    server,
+    {
 
-    transports: [
-      'websocket',
-      'polling'
-    ]
-  }
-);
+      cors: {
+        origin: '*'
+      },
+
+      transports: [
+        'websocket',
+        'polling'
+      ],
+
+      maxHttpBufferSize:
+        10 * 1024 * 1024
+
+    }
+  );
 
 
 // ======================================================
@@ -95,12 +141,17 @@ app.use(
   })
 );
 
+
 app.use(
   express.urlencoded({
+
     extended: true,
+
     limit: '10mb'
+
   })
 );
+
 
 app.use(
   express.static(
@@ -122,8 +173,13 @@ const pendingUsers = {};
 
 const sessions = {};
 
+
 const SESSION_TTL_MS =
-  7 * 24 * 60 * 60 * 1000;
+  7 *
+  24 *
+  60 *
+  60 *
+  1000;
 
 
 // ======================================================
@@ -146,7 +202,9 @@ function createSessionToken() {
 function getToken(req) {
 
   const authorization =
-    req.headers.authorization || '';
+    req.headers.authorization ||
+    '';
+
 
   if (
     authorization.startsWith(
@@ -159,6 +217,7 @@ function getToken(req) {
       .trim();
 
   }
+
 
   return '';
 
@@ -173,6 +232,7 @@ function cleanExpiredSessions() {
 
   const now =
     Date.now();
+
 
   for (
     const [
@@ -200,7 +260,7 @@ function cleanExpiredSessions() {
 
 
 // ======================================================
-// OBTENER SESIÓN VÁLIDA
+// OBTENER SESIÓN
 // ======================================================
 
 function getSessionByToken(
@@ -213,14 +273,20 @@ function getSessionByToken(
 
   }
 
+
+  cleanExpiredSessions();
+
+
   const session =
     sessions[token];
+
 
   if (!session) {
 
     return null;
 
   }
+
 
   if (
     Date.now() -
@@ -234,13 +300,14 @@ function getSessionByToken(
 
   }
 
+
   return session;
 
 }
 
 
 // ======================================================
-// AUTENTICACIÓN API PRIVADA
+// MIDDLEWARE AUTENTICACIÓN
 // ======================================================
 
 async function requireAuth(
@@ -249,34 +316,36 @@ async function requireAuth(
   next
 ) {
 
-  cleanExpiredSessions();
-
-  const token =
-    getToken(req);
-
-  const session =
-    getSessionByToken(
-      token
-    );
-
-  if (!session) {
-
-    return res
-      .status(401)
-      .json({
-
-        ok: false,
-
-        authenticated: false,
-
-        msg:
-          'Sesión no válida o caducada'
-
-      });
-
-  }
-
   try {
+
+    const token =
+      getToken(req);
+
+
+    const session =
+      getSessionByToken(
+        token
+      );
+
+
+    if (!session) {
+
+      return res
+        .status(401)
+        .json({
+
+          ok: false,
+
+          authenticated:
+            false,
+
+          msg:
+            'Sesión no válida'
+
+        });
+
+    }
+
 
     const result =
       await database.query(
@@ -293,7 +362,8 @@ async function requireAuth(
 
         FROM users
 
-        WHERE id = $1
+        WHERE
+          id = $1
 
         LIMIT 1
         `,
@@ -302,30 +372,41 @@ async function requireAuth(
         ]
       );
 
+
     if (
       result.rows.length === 0
     ) {
 
       delete sessions[token];
 
+
       return res
         .status(401)
         .json({
 
           ok: false,
 
-          authenticated: false
+          authenticated:
+            false,
+
+          msg:
+            'Usuario no encontrado'
 
         });
 
     }
+
 
     const user =
       result.rows[0];
 
-    if (!user.verified) {
+
+    if (
+      !user.verified
+    ) {
 
       delete sessions[token];
+
 
       return res
         .status(401)
@@ -333,26 +414,39 @@ async function requireAuth(
 
           ok: false,
 
-          authenticated: false
+          authenticated:
+            false,
+
+          msg:
+            'Usuario no verificado'
 
         });
 
     }
 
-    req.vobixUser =
-      user;
 
     req.vobixToken =
       token;
 
+
+    req.vobixSession =
+      session;
+
+
+    req.vobixUser =
+      user;
+
+
     return next();
+
 
   } catch (error) {
 
     console.error(
       'VOBIXCHAT AUTH ERROR:',
-      error.message
+      error
     );
+
 
     return res
       .status(500)
@@ -360,10 +454,8 @@ async function requireAuth(
 
         ok: false,
 
-        authenticated: false,
-
         msg:
-          'Error comprobando la sesión'
+          'Error de autenticación'
 
       });
 
@@ -373,7 +465,7 @@ async function requireAuth(
 
 
 // ======================================================
-// GENERAR / ENVIAR PIN
+// GENERAR PIN
 // ======================================================
 
 function sendPin(
@@ -383,8 +475,10 @@ function sendPin(
 
   const phone =
     normalizePhone(
-      req.body.phone || ''
+      req.body.phone ||
+      ''
     );
+
 
   const username =
     String(
@@ -392,6 +486,7 @@ function sendPin(
       req.body.user ||
       ''
     ).trim();
+
 
   if (
     !phone ||
@@ -411,6 +506,7 @@ function sendPin(
 
   }
 
+
   if (
     !config.TEST_PIN_MODE
   ) {
@@ -428,10 +524,12 @@ function sendPin(
 
   }
 
+
   const pin =
     String(
       config.TEST_PIN
     );
+
 
   pins[phone] = {
 
@@ -440,9 +538,11 @@ function sendPin(
     createdAt:
       Date.now(),
 
-    attempts: 0
+    attempts:
+      0
 
   };
+
 
   pendingUsers[phone] = {
 
@@ -453,9 +553,11 @@ function sendPin(
 
   };
 
+
   console.log(
     `VOBIXCHAT | PIN PRUEBAS GENERADO | ${username}`
   );
+
 
   return res.json({
 
@@ -463,7 +565,8 @@ function sendPin(
 
     pin,
 
-    testMode: true
+    testMode:
+      true
 
   });
 
@@ -471,13 +574,8 @@ function sendPin(
 
 
 // ======================================================
-// RUTAS PIN
+// RUTAS PARA SOLICITAR PIN
 // ======================================================
-
-app.post(
-  '/send-pin',
-  sendPin
-);
 
 app.post(
   '/api/send-pin',
@@ -485,8 +583,14 @@ app.post(
 );
 
 
+app.post(
+  '/api/auth/send-pin',
+  sendPin
+);
+
+
 // ======================================================
-// VERIFICAR PIN
+// VERIFICAR PIN / REGISTRO / LOGIN
 // ======================================================
 
 async function verifyPin(
@@ -496,13 +600,17 @@ async function verifyPin(
 
   const phone =
     normalizePhone(
-      req.body.phone || ''
+      req.body.phone ||
+      ''
     );
+
 
   const pin =
     String(
-      req.body.pin || ''
+      req.body.pin ||
+      ''
     ).trim();
+
 
   if (
     !phone ||
@@ -516,14 +624,16 @@ async function verifyPin(
         ok: false,
 
         msg:
-          'Faltan datos'
+          'Falta teléfono o PIN'
 
       });
 
   }
 
+
   const pinData =
     pins[phone];
+
 
   if (!pinData) {
 
@@ -540,15 +650,19 @@ async function verifyPin(
 
   }
 
+
+  // ====================================================
+  // PIN VENCIDO: 10 MINUTOS
+  // ====================================================
+
   if (
     Date.now() -
     pinData.createdAt >
-    config.PIN_TTL_MS
+    10 * 60 * 1000
   ) {
 
     delete pins[phone];
 
-    delete pendingUsers[phone];
 
     return res
       .status(400)
@@ -557,20 +671,22 @@ async function verifyPin(
         ok: false,
 
         msg:
-          'El PIN ha caducado. Solicita otro.'
+          'El PIN ha vencido'
 
       });
 
   }
 
+
+  pinData.attempts++;
+
+
   if (
-    pinData.attempts >=
-    config.PIN_MAX_ATTEMPTS
+    pinData.attempts > 10
   ) {
 
     delete pins[phone];
 
-    delete pendingUsers[phone];
 
     return res
       .status(429)
@@ -579,18 +695,17 @@ async function verifyPin(
         ok: false,
 
         msg:
-          'Demasiados intentos. Solicita otro PIN.'
+          'Demasiados intentos'
 
       });
 
   }
+
 
   if (
     pinData.pin !== pin
   ) {
 
-    pinData.attempts += 1;
-
     return res
       .status(400)
       .json({
@@ -598,124 +713,187 @@ async function verifyPin(
         ok: false,
 
         msg:
-          'PIN incorrecto',
-
-        attemptsLeft:
-          Math.max(
-            0,
-            config.PIN_MAX_ATTEMPTS -
-            pinData.attempts
-          )
+          'PIN incorrecto'
 
       });
 
   }
 
-  const pending =
-    pendingUsers[phone];
-
-  if (!pending) {
-
-    return res
-      .status(400)
-      .json({
-
-        ok: false,
-
-        msg:
-          'Registro no encontrado'
-
-      });
-
-  }
 
   try {
 
-    const result =
+    let result =
       await database.query(
         `
-        INSERT INTO users
-        (
-          username,
-          phone,
-          verified,
-          online,
-          created_at,
-          updated_at
-        )
-
-        VALUES
-        (
-          $1,
-          $2,
-          TRUE,
-          FALSE,
-          NOW(),
-          NOW()
-        )
-
-        ON CONFLICT (phone)
-
-        DO UPDATE SET
-
-          username =
-            EXCLUDED.username,
-
-          verified =
-            TRUE,
-
-          updated_at =
-            NOW()
-
-        RETURNING
+        SELECT
           id,
           username,
           phone,
           vobix_id,
           avatar_url,
           verified,
-          created_at,
-          updated_at
+          online,
+          last_seen
+
+        FROM users
+
+        WHERE
+          phone = $1
+
+        LIMIT 1
         `,
-        [
-          pending.username,
-          phone
-        ]
+        [phone]
       );
 
-    const user =
+
+    let user =
       result.rows[0];
+
+
+    // ==================================================
+    // CREAR USUARIO SI TODAVÍA NO EXISTE
+    // ==================================================
+
+    if (!user) {
+
+      const pending =
+        pendingUsers[phone];
+
+
+      if (
+        !pending ||
+        !pending.username
+      ) {
+
+        return res
+          .status(400)
+          .json({
+
+            ok: false,
+
+            msg:
+              'Faltan los datos de registro'
+
+          });
+
+      }
+
+
+      const created =
+        await database.query(
+          `
+          INSERT INTO users
+          (
+            username,
+            phone,
+            verified,
+            online,
+            last_seen
+          )
+
+          VALUES
+          (
+            $1,
+            $2,
+            TRUE,
+            FALSE,
+            NOW()
+          )
+
+          RETURNING
+            id,
+            username,
+            phone,
+            vobix_id,
+            avatar_url,
+            verified,
+            online,
+            last_seen
+          `,
+          [
+            pending.username,
+            phone
+          ]
+        );
+
+
+      user =
+        created.rows[0];
+
+    }
+
+
+    // ==================================================
+    // ASEGURAR USUARIO VERIFICADO
+    // ==================================================
+
+    if (
+      !user.verified
+    ) {
+
+      const verified =
+        await database.query(
+          `
+          UPDATE users
+
+          SET
+            verified = TRUE
+
+          WHERE
+            id = $1
+
+          RETURNING
+            id,
+            username,
+            phone,
+            vobix_id,
+            avatar_url,
+            verified,
+            online,
+            last_seen
+          `,
+          [
+            user.id
+          ]
+        );
+
+
+      user =
+        verified.rows[0];
+
+    }
+
+
+    // ==================================================
+    // CREAR SESIÓN
+    // ==================================================
 
     const token =
       createSessionToken();
+
 
     sessions[token] = {
 
       userId:
         user.id,
 
-      phone:
-        user.phone,
-
-      username:
-        user.username,
-
       createdAt:
         Date.now()
 
     };
 
+
     delete pins[phone];
 
     delete pendingUsers[phone];
 
-    console.log(
-      `VOBIXCHAT | SESIÓN CREADA | ${user.username}`
-    );
 
     return res.json({
 
       ok: true,
+
+      authenticated:
+        true,
 
       token,
 
@@ -737,18 +915,26 @@ async function verifyPin(
           user.avatar_url,
 
         verified:
-          user.verified
+          user.verified,
+
+        online:
+          user.online,
+
+        lastSeen:
+          user.last_seen
 
       }
 
     });
 
+
   } catch (error) {
 
     console.error(
-      'VOBIXCHAT DATABASE REGISTER ERROR:',
-      error.message
+      'VOBIXCHAT VERIFY PIN ERROR:',
+      error
     );
+
 
     return res
       .status(500)
@@ -757,7 +943,7 @@ async function verifyPin(
         ok: false,
 
         msg:
-          'No se pudo guardar el usuario'
+          'No se pudo verificar el PIN'
 
       });
 
@@ -767,13 +953,8 @@ async function verifyPin(
 
 
 // ======================================================
-// RUTAS VERIFICAR PIN
+// RUTAS VERIFICACIÓN
 // ======================================================
-
-app.post(
-  '/verify-pin',
-  verifyPin
-);
 
 app.post(
   '/api/verify-pin',
@@ -781,565 +962,57 @@ app.post(
 );
 
 
+app.post(
+  '/api/auth/verify-pin',
+  verifyPin
+);
+
+
 // ======================================================
-// COMPROBAR SESIÓN
+// FIN BLOQUE 1/6
+// CONTINÚA DIRECTAMENTE CON BLOQUE 2/6
+// ======================================================
+// ======================================================
+// BLOQUE 2/6
+// SESIÓN / LOGOUT / CHAT API / HEALTH / SOCKET AUTH
+// ======================================================
+
+
+// ======================================================
+// COMPROBAR SESIÓN ACTUAL
 // ======================================================
 
 app.get(
   '/api/session',
-  requireAuth,
-  (
-    req,
-    res
-  ) => {
+  async (req, res) => {
 
-    return res.json({
-
-      ok: true,
-
-      authenticated: true,
-
-      user: {
-
-        id:
-          req.vobixUser.id,
-
-        username:
-          req.vobixUser.username,
-
-        phone:
-          req.vobixUser.phone,
-
-        vobixId:
-          req.vobixUser.vobix_id,
-
-        vobix_id:
-          req.vobixUser.vobix_id,
-
-        avatarUrl:
-          req.vobixUser.avatar_url,
-
-        avatar_url:
-          req.vobixUser.avatar_url,
-
-        verified:
-          req.vobixUser.verified,
-
-        online:
-          req.vobixUser.online,
-
-        lastSeen:
-          req.vobixUser.last_seen
-
-      }
-
-    });
-
-  }
-);
+    const token =
+      getToken(req);
 
 
-// ======================================================
-// CERRAR SESIÓN
-// ======================================================
-
-app.post(
-  '/api/logout',
-  requireAuth,
-  async (
-    req,
-    res
-  ) => {
-
-    try {
-
-      if (
-        req.vobixToken
-      ) {
-
-        delete sessions[
-          req.vobixToken
-        ];
-
-      }
-
-      await database.query(
-        `
-        UPDATE users
-
-        SET
-          online = FALSE,
-          last_seen = NOW(),
-          updated_at = NOW()
-
-        WHERE
-          id = $1
-        `,
-        [
-          req.vobixUser.id
-        ]
+    const session =
+      getSessionByToken(
+        token
       );
 
-      return res.json({
 
-        ok: true
-
-      });
-
-    } catch (error) {
-
-      console.error(
-        'VOBIXCHAT LOGOUT ERROR:',
-        error.message
-      );
+    if (!session) {
 
       return res
-        .status(500)
+        .status(401)
         .json({
 
           ok: false,
 
-          msg:
-            'No se pudo cerrar la sesión'
+          authenticated:
+            false
 
         });
 
     }
 
-  }
-);
-
-
-// ======================================================
-// PERFIL DEL USUARIO ACTUAL
-// ======================================================
-
-app.get(
-  '/api/me',
-  requireAuth,
-  (
-    req,
-    res
-  ) => {
-
-    return res.json({
-
-      ok: true,
-
-      user:
-        req.vobixUser
-
-    });
-
-  }
-);
-
-
-// ======================================================
-// ACTUALIZAR PERFIL
-// ======================================================
-
-app.patch(
-  '/api/me',
-  requireAuth,
-  async (
-    req,
-    res
-  ) => {
-
-    const username =
-      String(
-        req.body.username ||
-        ''
-      )
-        .trim()
-        .slice(
-          0,
-          80
-        );
-
-    const avatarUrl =
-      String(
-        req.body.avatarUrl ||
-        req.body.avatar_url ||
-        ''
-      )
-        .trim()
-        .slice(
-          0,
-          1000
-        );
-
-    if (!username) {
-
-      return res
-        .status(400)
-        .json({
-
-          ok: false,
-
-          msg:
-            'El nombre de usuario es obligatorio'
-
-        });
-
-    }
 
     try {
-
-      const result =
-        await database.query(
-          `
-          UPDATE users
-
-          SET
-            username = $1,
-            avatar_url = NULLIF($2, ''),
-            updated_at = NOW()
-
-          WHERE
-            id = $3
-
-          RETURNING
-            id,
-            username,
-            phone,
-            vobix_id,
-            avatar_url,
-            verified,
-            online,
-            last_seen,
-            created_at,
-            updated_at
-          `,
-          [
-            username,
-            avatarUrl,
-            req.vobixUser.id
-          ]
-        );
-
-      const user =
-        result.rows[0];
-
-      if (
-        req.vobixToken &&
-        sessions[
-          req.vobixToken
-        ]
-      ) {
-
-        sessions[
-          req.vobixToken
-        ].username =
-          user.username;
-
-      }
-
-      return res.json({
-
-        ok: true,
-
-        user
-
-      });
-
-    } catch (error) {
-
-      console.error(
-        'VOBIXCHAT UPDATE PROFILE ERROR:',
-        error.message
-      );
-
-      return res
-        .status(500)
-        .json({
-
-          ok: false,
-
-          msg:
-            'No se pudo actualizar el perfil'
-
-        });
-
-    }
-
-  }
-);
-
-
-// ======================================================
-// HEALTH CHECK
-// ======================================================
-
-app.get(
-  '/health',
-  async (
-    req,
-    res
-  ) => {
-
-    try {
-
-      await database.query(
-        'SELECT 1'
-      );
-
-      return res.json({
-
-        ok: true,
-
-        app:
-          'VOBIXCHAT',
-
-        database:
-          'connected',
-
-        time:
-          new Date()
-            .toISOString()
-
-      });
-
-    } catch (error) {
-
-      return res
-        .status(500)
-        .json({
-
-          ok: false,
-
-          app:
-            'VOBIXCHAT',
-
-          database:
-            'disconnected',
-
-          error:
-            error.message
-
-        });
-
-    }
-
-  }
-);
-
-
-// ======================================================
-// API CHAT
-// ======================================================
-
-app.use(
-  '/api/chat',
-  requireAuth,
-  chatRoutes
-);
-
-
-// ======================================================
-// SOCKETS ACTIVOS
-// ======================================================
-
-const socketUsers =
-  new Map();
-
-const userSockets =
-  new Map();
-
-
-// ======================================================
-// AÑADIR SOCKET A USUARIO
-// ======================================================
-
-function addUserSocket(
-  userId,
-  socketId
-) {
-
-  const key =
-    String(userId);
-
-  if (
-    !userSockets.has(
-      key
-    )
-  ) {
-
-    userSockets.set(
-      key,
-      new Set()
-    );
-
-  }
-
-  userSockets
-    .get(key)
-    .add(
-      socketId
-    );
-
-}
-
-
-// ======================================================
-// QUITAR SOCKET DE USUARIO
-// ======================================================
-
-function removeUserSocket(
-  userId,
-  socketId
-) {
-
-  const key =
-    String(userId);
-
-  const set =
-    userSockets.get(
-      key
-    );
-
-  if (!set) {
-
-    return 0;
-
-  }
-
-  set.delete(
-    socketId
-  );
-
-  if (
-    set.size === 0
-  ) {
-
-    userSockets.delete(
-      key
-    );
-
-    return 0;
-
-  }
-
-  return set.size;
-
-}
-
-
-// ======================================================
-// EMITIR A TODOS LOS DISPOSITIVOS DE UN USUARIO
-// ======================================================
-
-function emitToUser(
-  userId,
-  eventName,
-  payload
-) {
-
-  const set =
-    userSockets.get(
-      String(userId)
-    );
-
-  if (!set) {
-
-    return;
-
-  }
-
-  for (
-    const socketId
-    of set
-  ) {
-
-    io
-      .to(socketId)
-      .emit(
-        eventName,
-        payload
-      );
-
-  }
-
-}
-
-
-// ======================================================
-// OBTENER TOKEN SOCKET
-// ======================================================
-
-function getSocketToken(
-  socket
-) {
-
-  const authToken =
-    socket.handshake.auth &&
-    socket.handshake.auth.token
-      ? String(
-          socket.handshake.auth.token
-        ).trim()
-      : '';
-
-  if (authToken) {
-
-    return authToken;
-
-  }
-
-  const header =
-    String(
-      socket.handshake.headers.authorization ||
-      ''
-    );
-
-  if (
-    header.startsWith(
-      'Bearer '
-    )
-  ) {
-
-    return header
-      .slice(7)
-      .trim();
-
-  }
-
-  return '';
-
-}
-// ======================================================
-// AUTENTICACIÓN SOCKET.IO
-// ======================================================
-
-io.use(
-  async (
-    socket,
-    next
-  ) => {
-
-    try {
-
-      cleanExpiredSessions();
-
-      const token =
-        getSocketToken(
-          socket
-        );
-
-      const session =
-        getSessionByToken(
-          token
-        );
-
-      if (!session) {
-
-        return next(
-          new Error(
-            'Sesión no válida'
-          )
-        );
-
-      }
 
       const result =
         await database.query(
@@ -1358,7 +1031,6 @@ io.use(
 
           WHERE
             id = $1
-            AND verified = TRUE
 
           LIMIT 1
           `,
@@ -1367,32 +1039,594 @@ io.use(
           ]
         );
 
+
+      if (
+        result.rows.length === 0
+      ) {
+
+        delete sessions[token];
+
+
+        return res
+          .status(401)
+          .json({
+
+            ok: false,
+
+            authenticated:
+              false
+
+          });
+
+      }
+
+
+      const user =
+        result.rows[0];
+
+
+      if (!user.verified) {
+
+        delete sessions[token];
+
+
+        return res
+          .status(401)
+          .json({
+
+            ok: false,
+
+            authenticated:
+              false
+
+          });
+
+      }
+
+
+      return res.json({
+
+        ok: true,
+
+        authenticated:
+          true,
+
+        user: {
+
+          id:
+            user.id,
+
+          username:
+            user.username,
+
+          phone:
+            user.phone,
+
+          vobixId:
+            user.vobix_id,
+
+          avatarUrl:
+            user.avatar_url,
+
+          verified:
+            user.verified,
+
+          online:
+            user.online,
+
+          lastSeen:
+            user.last_seen
+
+        }
+
+      });
+
+
+    } catch (error) {
+
+      console.error(
+        'VOBIXCHAT SESSION ERROR:',
+        error
+      );
+
+
+      return res
+        .status(500)
+        .json({
+
+          ok: false,
+
+          authenticated:
+            false
+
+        });
+
+    }
+
+  }
+);
+
+
+// ======================================================
+// ALIAS DE SESIÓN PARA COMPATIBILIDAD
+// ======================================================
+
+app.get(
+  '/api/auth/session',
+  async (req, res) => {
+
+    const token =
+      getToken(req);
+
+
+    const session =
+      getSessionByToken(
+        token
+      );
+
+
+    if (!session) {
+
+      return res
+        .status(401)
+        .json({
+
+          ok: false,
+
+          authenticated:
+            false
+
+        });
+
+    }
+
+
+    try {
+
+      const result =
+        await database.query(
+          `
+          SELECT
+            id,
+            username,
+            phone,
+            vobix_id,
+            avatar_url,
+            verified,
+            online,
+            last_seen
+
+          FROM users
+
+          WHERE
+            id = $1
+
+          LIMIT 1
+          `,
+          [
+            session.userId
+          ]
+        );
+
+
+      if (
+        result.rows.length === 0
+      ) {
+
+        delete sessions[token];
+
+
+        return res
+          .status(401)
+          .json({
+
+            ok: false,
+
+            authenticated:
+              false
+
+          });
+
+      }
+
+
+      const user =
+        result.rows[0];
+
+
+      if (!user.verified) {
+
+        delete sessions[token];
+
+
+        return res
+          .status(401)
+          .json({
+
+            ok: false,
+
+            authenticated:
+              false
+
+          });
+
+      }
+
+
+      return res.json({
+
+        ok: true,
+
+        authenticated:
+          true,
+
+        user: {
+
+          id:
+            user.id,
+
+          username:
+            user.username,
+
+          phone:
+            user.phone,
+
+          vobixId:
+            user.vobix_id,
+
+          avatarUrl:
+            user.avatar_url,
+
+          verified:
+            user.verified,
+
+          online:
+            user.online,
+
+          lastSeen:
+            user.last_seen
+
+        }
+
+      });
+
+
+    } catch (error) {
+
+      console.error(
+        'VOBIXCHAT AUTH SESSION ERROR:',
+        error
+      );
+
+
+      return res
+        .status(500)
+        .json({
+
+          ok: false,
+
+          authenticated:
+            false
+
+        });
+
+    }
+
+  }
+);
+
+
+// ======================================================
+// CERRAR SESIÓN
+// ======================================================
+
+app.post(
+  '/api/logout',
+  (req, res) => {
+
+    const token =
+      getToken(req);
+
+
+    if (token) {
+
+      delete sessions[token];
+
+    }
+
+
+    return res.json({
+
+      ok: true
+
+    });
+
+  }
+);
+
+
+// ======================================================
+// ALIAS LOGOUT
+// ======================================================
+
+app.post(
+  '/api/auth/logout',
+  (req, res) => {
+
+    const token =
+      getToken(req);
+
+
+    if (token) {
+
+      delete sessions[token];
+
+    }
+
+
+    return res.json({
+
+      ok: true
+
+    });
+
+  }
+);
+
+
+// ======================================================
+// API PRIVADA DEL CHAT
+// ======================================================
+//
+// IMPORTANTE:
+//
+// Aquí conectamos el routes/chat.js que acabas
+// de colocar en los 6 bloques anteriores.
+//
+// Todas estas rutas quedan detrás de requireAuth.
+//
+// Ejemplos:
+//
+// GET  /api/chat/users/search
+// GET  /api/chat/conversations
+// POST /api/chat/conversations
+// GET  /api/chat/conversations/:id/messages
+// POST /api/chat/conversations/:id/messages
+// POST /api/chat/upload
+//
+// ======================================================
+
+app.use(
+  '/api/chat',
+  requireAuth,
+  chatRoutes
+);
+
+
+// ======================================================
+// HEALTH CHECK
+// ======================================================
+
+app.get(
+  '/api/health',
+  async (req, res) => {
+
+    try {
+
+      const result =
+        await database.query(
+          `
+          SELECT
+            NOW()
+              AS server_time
+          `
+        );
+
+
+      return res.json({
+
+        ok: true,
+
+        app:
+          'VobixChat',
+
+        database:
+          'connected',
+
+        socket:
+          true,
+
+        serverTime:
+          result.rows[0]
+            .server_time
+
+      });
+
+
+    } catch (error) {
+
+      console.error(
+        'VOBIXCHAT DATABASE ERROR:',
+        error
+      );
+
+
+      return res
+        .status(500)
+        .json({
+
+          ok: false,
+
+          app:
+            'VobixChat',
+
+          database:
+            'disconnected'
+
+        });
+
+    }
+
+  }
+);
+
+
+// ======================================================
+// AUTENTICACIÓN DE SOCKET.IO
+// ======================================================
+//
+// El frontend debe conectar con:
+//
+// io({
+//   auth: {
+//     token: TOKEN
+//   }
+// })
+//
+// También aceptamos ?token= para compatibilidad.
+//
+// ======================================================
+
+io.use(
+  async (
+    socket,
+    next
+  ) => {
+
+    try {
+
+      const token =
+        String(
+
+          socket.handshake
+            .auth?.token ||
+
+          socket.handshake
+            .query?.token ||
+
+          ''
+
+        ).trim();
+
+
+      const session =
+        getSessionByToken(
+          token
+        );
+
+
+      if (!session) {
+
+        return next(
+          new Error(
+            'Sesión no válida'
+          )
+        );
+
+      }
+
+
+      const result =
+        await database.query(
+          `
+          SELECT
+            id,
+            username,
+            phone,
+            vobix_id,
+            avatar_url,
+            verified,
+            online,
+            last_seen
+
+          FROM users
+
+          WHERE
+            id = $1
+
+          LIMIT 1
+          `,
+          [
+            session.userId
+          ]
+        );
+
+
       if (
         result.rows.length === 0
       ) {
 
         return next(
           new Error(
-            'Usuario no válido'
+            'Usuario no encontrado'
           )
         );
 
       }
 
-      socket.vobixUser =
+
+      const user =
         result.rows[0];
+
+
+      if (!user.verified) {
+
+        return next(
+          new Error(
+            'Usuario no verificado'
+          )
+        );
+
+      }
+
+
+      // ================================================
+      // DATOS AUTENTICADOS DEL SOCKET
+      // ================================================
 
       socket.vobixToken =
         token;
 
+
+      socket.vobixUser = {
+
+        id:
+          user.id,
+
+        username:
+          user.username,
+
+        phone:
+          user.phone,
+
+        vobixId:
+          user.vobix_id,
+
+        avatarUrl:
+          user.avatar_url,
+
+        verified:
+          user.verified,
+
+        online:
+          user.online,
+
+        lastSeen:
+          user.last_seen
+
+      };
+
+
       return next();
+
 
     } catch (error) {
 
       console.error(
         'VOBIXCHAT SOCKET AUTH ERROR:',
-        error.message
+        error
       );
+
 
       return next(
         new Error(
@@ -1407,7 +1641,195 @@ io.use(
 
 
 // ======================================================
-// COMPROBAR ACCESO A CONVERSACIÓN
+// USUARIOS CONECTADOS
+// ======================================================
+//
+// Map:
+//
+// userId -> Set(socketId)
+//
+// Un usuario puede tener VOBIXCHAT abierto simultáneamente
+// en móvil y portátil.
+//
+// ======================================================
+
+const onlineUsers =
+  new Map();
+
+
+// ======================================================
+// LLAMADAS ACTIVAS
+// ======================================================
+//
+// callId -> {
+//   id,
+//   conversationId,
+//   callerId,
+//   type,
+//   participants: Set(),
+//   createdAt
+// }
+//
+// ======================================================
+
+const activeCalls =
+  new Map();
+
+
+// ======================================================
+// OBTENER NOMBRE DE SALA PERSONAL
+// ======================================================
+
+function userRoom(
+  userId
+) {
+
+  return (
+    `user:${String(userId)}`
+  );
+
+}
+
+
+// ======================================================
+// OBTENER NOMBRE DE SALA DE CONVERSACIÓN
+// ======================================================
+
+function conversationRoom(
+  conversationId
+) {
+
+  return (
+    `conversation:${String(
+      conversationId
+    )}`
+  );
+
+}
+
+
+// ======================================================
+// OBTENER NOMBRE DE SALA DE LLAMADA
+// ======================================================
+
+function callRoom(
+  callId
+) {
+
+  return (
+    `call:${String(callId)}`
+  );
+
+}
+
+
+// ======================================================
+// REGISTRAR SOCKET ONLINE
+// ======================================================
+
+function addOnlineSocket(
+  userId,
+  socketId
+) {
+
+  const key =
+    String(userId);
+
+
+  if (
+    !onlineUsers.has(
+      key
+    )
+  ) {
+
+    onlineUsers.set(
+      key,
+      new Set()
+    );
+
+  }
+
+
+  onlineUsers
+    .get(key)
+    .add(socketId);
+
+}
+
+
+// ======================================================
+// QUITAR SOCKET ONLINE
+// ======================================================
+
+function removeOnlineSocket(
+  userId,
+  socketId
+) {
+
+  const key =
+    String(userId);
+
+
+  const sockets =
+    onlineUsers.get(
+      key
+    );
+
+
+  if (!sockets) {
+
+    return false;
+
+  }
+
+
+  sockets.delete(
+    socketId
+  );
+
+
+  if (
+    sockets.size === 0
+  ) {
+
+    onlineUsers.delete(
+      key
+    );
+
+    return true;
+
+  }
+
+
+  return false;
+
+}
+
+
+// ======================================================
+// SABER SI UN USUARIO ESTÁ ONLINE
+// ======================================================
+
+function isUserOnline(
+  userId
+) {
+
+  const sockets =
+    onlineUsers.get(
+      String(userId)
+    );
+
+
+  return Boolean(
+    sockets &&
+    sockets.size > 0
+  );
+
+}
+
+
+// ======================================================
+// COMPROBAR ACCESO SOCKET A CONVERSACIÓN
 // ======================================================
 
 async function socketCanAccessConversation(
@@ -1424,109 +1846,30 @@ async function socketCanAccessConversation(
 
   }
 
-  try {
 
-    const result =
-      await database.query(
-        `
-        SELECT 1
+  const result =
+    await database.query(
+      `
+      SELECT 1
 
-        FROM conversation_participants
+      FROM conversation_participants
 
-        WHERE
-          conversation_id = $1
-          AND user_id = $2
+      WHERE
+        conversation_id = $1
+        AND user_id = $2
 
-        LIMIT 1
-        `,
-        [
-          conversationId,
-          userId
-        ]
-      );
-
-    return (
-      result.rows.length > 0
+      LIMIT 1
+      `,
+      [
+        conversationId,
+        userId
+      ]
     );
 
-  } catch (error) {
 
-    console.error(
-      'VOBIXCHAT ACCESS CHECK ERROR:',
-      error.message
-    );
-
-    return false;
-
-  }
-
-}
-
-
-// ======================================================
-// COMPROBAR BLOQUEO EN CONVERSACIÓN
-// ======================================================
-
-async function socketConversationBlocked(
-  conversationId,
-  userId
-) {
-
-  try {
-
-    const result =
-      await database.query(
-        `
-        SELECT 1
-
-        FROM conversation_participants cp
-
-        INNER JOIN user_blocks ub
-          ON
-          (
-            (
-              ub.blocker_user_id = $2
-              AND
-              ub.blocked_user_id =
-                cp.user_id
-            )
-
-            OR
-
-            (
-              ub.blocker_user_id =
-                cp.user_id
-              AND
-              ub.blocked_user_id = $2
-            )
-          )
-
-        WHERE
-          cp.conversation_id = $1
-          AND cp.user_id <> $2
-
-        LIMIT 1
-        `,
-        [
-          conversationId,
-          userId
-        ]
-      );
-
-    return (
-      result.rows.length > 0
-    );
-
-  } catch (error) {
-
-    console.error(
-      'VOBIXCHAT BLOCK CHECK ERROR:',
-      error.message
-    );
-
-    return false;
-
-  }
+  return (
+    result.rows.length > 0
+  );
 
 }
 
@@ -1544,11 +1887,7 @@ async function getConversationParticipants(
       `
       SELECT
         cp.user_id,
-        cp.joined_at,
-
         u.username,
-        u.phone,
-        u.vobix_id,
         u.avatar_url,
         u.online,
         u.last_seen
@@ -1556,7 +1895,8 @@ async function getConversationParticipants(
       FROM conversation_participants cp
 
       INNER JOIN users u
-        ON u.id = cp.user_id
+        ON
+          u.id = cp.user_id
 
       WHERE
         cp.conversation_id = $1
@@ -1569,162 +1909,43 @@ async function getConversationParticipants(
       ]
     );
 
+
   return result.rows;
 
 }
 
 
 // ======================================================
-// NORMALIZAR MENSAJE SOCKET
+// EMITIR A TODOS LOS PARTICIPANTES
 // ======================================================
 
-function normalizeSocketMessage(
-  row
+async function emitConversationUpdate(
+  conversationId,
+  eventName,
+  payload
 ) {
 
-  if (!row) {
+  const participants =
+    await getConversationParticipants(
+      conversationId
+    );
 
-    return null;
-
-  }
-
-  return {
-
-    id:
-      row.id,
-
-    conversationId:
-      row.conversation_id,
-
-    conversation_id:
-      row.conversation_id,
-
-    senderId:
-      row.sender_user_id,
-
-    sender_user_id:
-      row.sender_user_id,
-
-    senderUsername:
-      row.sender_username ||
-      null,
-
-    sender_username:
-      row.sender_username ||
-      null,
-
-    senderAvatarUrl:
-      row.sender_avatar_url ||
-      null,
-
-    sender_avatar_url:
-      row.sender_avatar_url ||
-      null,
-
-    messageType:
-      row.message_type ||
-      'text',
-
-    message_type:
-      row.message_type ||
-      'text',
-
-    content:
-      row.content == null
-        ? ''
-        : String(
-            row.content
-          ),
-
-    replyToMessageId:
-      row.reply_to_message_id ||
-      null,
-
-    reply_to_message_id:
-      row.reply_to_message_id ||
-      null,
-
-    edited:
-      Boolean(
-        row.edited
-      ),
-
-    deleted:
-      Boolean(
-        row.deleted
-      ),
-
-    createdAt:
-      row.created_at,
-
-    created_at:
-      row.created_at,
-
-    updatedAt:
-      row.updated_at,
-
-    updated_at:
-      row.updated_at
-
-  };
-
-}
-
-
-// ======================================================
-// LLAMADAS ACTIVAS
-// ======================================================
-
-const activeCalls =
-  new Map();
-
-
-// ======================================================
-// LIMPIAR LLAMADAS ANTIGUAS
-// ======================================================
-
-function cleanOldCalls() {
-
-  const now =
-    Date.now();
 
   for (
-    const [
-      callId,
-      call
-    ]
-    of activeCalls.entries()
+    const participant
+    of participants
   ) {
 
-    const createdAt =
-      new Date(
-        call.createdAt
-      ).getTime();
-
-    if (
-      !Number.isFinite(
-        createdAt
+    io
+      .to(
+        userRoom(
+          participant.user_id
+        )
       )
-    ) {
-
-      activeCalls.delete(
-        callId
+      .emit(
+        eventName,
+        payload
       );
-
-      continue;
-
-    }
-
-    if (
-      now - createdAt >
-      12 * 60 * 60 * 1000
-    ) {
-
-      activeCalls.delete(
-        callId
-      );
-
-    }
 
   }
 
@@ -1732,23 +1953,13 @@ function cleanOldCalls() {
 
 
 // ======================================================
-// LIMPIEZA PERIÓDICA
+// FIN BLOQUE 2/6
+// CONTINÚA DIRECTAMENTE CON BLOQUE 3/6
 // ======================================================
-
-setInterval(
-  () => {
-
-    cleanExpiredSessions();
-
-    cleanOldCalls();
-
-  },
-  10 * 60 * 1000
-).unref();
-
-
 // ======================================================
-// CONEXIÓN SOCKET.IO
+// BLOQUE 3/6
+// SOCKET.IO
+// PRESENCIA / SALAS PRIVADAS / MENSAJES TIEMPO REAL
 // ======================================================
 
 io.on(
@@ -1759,41 +1970,37 @@ io.on(
       socket.vobixUser;
 
     const userId =
-      String(
-        user.id
-      );
+      user.id;
+
 
     console.log(
-      `VOBIXCHAT | SOCKET CONECTADO | ${user.username} | ${socket.id}`
+      `VOBIXCHAT | SOCKET CONECTADO | ${user.username}`
     );
 
 
     // ==================================================
-    // REGISTRAR SOCKET
+    // REGISTRAR DISPOSITIVO / SOCKET
     // ==================================================
 
-    socketUsers.set(
-      socket.id,
-      userId
-    );
-
-    addUserSocket(
+    addOnlineSocket(
       userId,
       socket.id
     );
 
 
     // ==================================================
-    // SALA PERSONAL
+    // SALA PERSONAL DEL USUARIO
     // ==================================================
 
     socket.join(
-      `user:${userId}`
+      userRoom(
+        userId
+      )
     );
 
 
     // ==================================================
-    // MARCAR USUARIO ONLINE
+    // MARCAR ONLINE EN POSTGRESQL
     // ==================================================
 
     try {
@@ -1804,8 +2011,7 @@ io.on(
 
         SET
           online = TRUE,
-          last_seen = NOW(),
-          updated_at = NOW()
+          last_seen = NOW()
 
         WHERE
           id = $1
@@ -1818,8 +2024,8 @@ io.on(
     } catch (error) {
 
       console.error(
-        'VOBIXCHAT ONLINE ERROR:',
-        error.message
+        'VOBIXCHAT ONLINE UPDATE ERROR:',
+        error
       );
 
     }
@@ -1835,9 +2041,6 @@ io.on(
 
         userId,
 
-        username:
-          user.username,
-
         online:
           true,
 
@@ -1850,96 +2053,13 @@ io.on(
 
 
     // ==================================================
-    // IDENTIDAD DEL SOCKET
-    // ==================================================
-
-    socket.emit(
-      'session:ready',
-      {
-
-        ok: true,
-
-        socketId:
-          socket.id,
-
-        user: {
-
-          id:
-            user.id,
-
-          username:
-            user.username,
-
-          phone:
-            user.phone,
-
-          vobixId:
-            user.vobix_id,
-
-          vobix_id:
-            user.vobix_id,
-
-          avatarUrl:
-            user.avatar_url,
-
-          avatar_url:
-            user.avatar_url
-
-        }
-
-      }
-    );
-
-
-    // ==================================================
-    // COMPATIBILIDAD SET-USER
-    // ==================================================
-
-    socket.on(
-      'set-user',
-      (
-        payload,
-        callback
-      ) => {
-
-        const response = {
-
-          ok: true,
-
-          userId:
-            user.id,
-
-          username:
-            user.username,
-
-          socketId:
-            socket.id
-
-        };
-
-        if (
-          typeof callback ===
-          'function'
-        ) {
-
-          callback(
-            response
-          );
-
-        }
-
-      }
-    );
-
-
-    // ==================================================
-    // ENTRAR EN CONVERSACIÓN PRIVADA
+    // UNIRSE A SALA PRIVADA
     // ==================================================
 
     socket.on(
       'conversation-join',
       async (
-        payload,
+        payload = {},
         callback
       ) => {
 
@@ -1947,10 +2067,11 @@ io.on(
 
           const conversationId =
             String(
-              payload?.conversationId ||
-              payload?.conversation_id ||
+              payload.conversationId ||
+              payload.conversation_id ||
               ''
             ).trim();
+
 
           if (!conversationId) {
 
@@ -1970,15 +2091,18 @@ io.on(
 
             }
 
+
             return;
 
           }
+
 
           const allowed =
             await socketCanAccessConversation(
               conversationId,
               userId
             );
+
 
           if (!allowed) {
 
@@ -1998,13 +2122,28 @@ io.on(
 
             }
 
+
             return;
 
           }
 
-          socket.join(
-            `conversation:${conversationId}`
+
+          await socket.join(
+            conversationRoom(
+              conversationId
+            )
           );
+
+
+          socket.emit(
+            'conversation:joined',
+            {
+
+              conversationId
+
+            }
+          );
+
 
           if (
             typeof callback ===
@@ -2021,12 +2160,14 @@ io.on(
 
           }
 
+
         } catch (error) {
 
           console.error(
             'VOBIXCHAT CONVERSATION JOIN ERROR:',
             error
           );
+
 
           if (
             typeof callback ===
@@ -2051,29 +2192,84 @@ io.on(
 
 
     // ==================================================
-    // SALIR DE CONVERSACIÓN PRIVADA
+    // SALIR DE SALA PRIVADA
     // ==================================================
 
     socket.on(
       'conversation-leave',
-      payload => {
+      async (
+        payload = {},
+        callback
+      ) => {
 
         const conversationId =
           String(
-            payload?.conversationId ||
-            payload?.conversation_id ||
+            payload.conversationId ||
+            payload.conversation_id ||
             ''
           ).trim();
 
+
         if (!conversationId) {
+
+          if (
+            typeof callback ===
+            'function'
+          ) {
+
+            callback({
+              ok: false
+            });
+
+          }
+
 
           return;
 
         }
 
-        socket.leave(
-          `conversation:${conversationId}`
-        );
+
+        try {
+
+          await socket.leave(
+            conversationRoom(
+              conversationId
+            )
+          );
+
+
+          if (
+            typeof callback ===
+            'function'
+          ) {
+
+            callback({
+              ok: true
+            });
+
+          }
+
+
+        } catch (error) {
+
+          console.error(
+            'VOBIXCHAT CONVERSATION LEAVE ERROR:',
+            error
+          );
+
+
+          if (
+            typeof callback ===
+            'function'
+          ) {
+
+            callback({
+              ok: false
+            });
+
+          }
+
+        }
 
       }
     );
@@ -2086,7 +2282,7 @@ io.on(
     socket.on(
       'conversation-message',
       async (
-        payload,
+        payload = {},
         callback
       ) => {
 
@@ -2094,16 +2290,17 @@ io.on(
 
           const conversationId =
             String(
-              payload?.conversationId ||
-              payload?.conversation_id ||
+              payload.conversationId ||
+              payload.conversation_id ||
               ''
             ).trim();
 
+
           const text =
             String(
-              payload?.text ||
-              payload?.content ||
-              payload?.message ||
+              payload.text ||
+              payload.content ||
+              payload.message ||
               ''
             )
               .trim()
@@ -2112,10 +2309,12 @@ io.on(
                 10000
               );
 
-          if (
-            !conversationId ||
-            !text
-          ) {
+
+          // ==============================================
+          // VALIDACIONES
+          // ==============================================
+
+          if (!conversationId) {
 
             if (
               typeof callback ===
@@ -2127,21 +2326,52 @@ io.on(
                 ok: false,
 
                 msg:
-                  'Mensaje no válido'
+                  'Conversación no válida'
 
               });
 
             }
 
+
             return;
 
           }
+
+
+          if (!text) {
+
+            if (
+              typeof callback ===
+              'function'
+            ) {
+
+              callback({
+
+                ok: false,
+
+                msg:
+                  'El mensaje está vacío'
+
+              });
+
+            }
+
+
+            return;
+
+          }
+
+
+          // ==============================================
+          // COMPROBAR PARTICIPACIÓN
+          // ==============================================
 
           const allowed =
             await socketCanAccessConversation(
               conversationId,
               userId
             );
+
 
           if (!allowed) {
 
@@ -2161,17 +2391,59 @@ io.on(
 
             }
 
+
             return;
 
           }
 
+
+          // ==============================================
+          // COMPROBAR BLOQUEO
+          // ==============================================
+
           const blocked =
-            await socketConversationBlocked(
-              conversationId,
-              userId
+            await database.query(
+              `
+              SELECT 1
+
+              FROM conversation_participants cp
+
+              INNER JOIN user_blocks ub
+                ON
+                (
+                  (
+                    ub.blocker_user_id = $2
+                    AND
+                    ub.blocked_user_id =
+                      cp.user_id
+                  )
+
+                  OR
+
+                  (
+                    ub.blocker_user_id =
+                      cp.user_id
+                    AND
+                    ub.blocked_user_id = $2
+                  )
+                )
+
+              WHERE
+                cp.conversation_id = $1
+                AND cp.user_id <> $2
+
+              LIMIT 1
+              `,
+              [
+                conversationId,
+                userId
+              ]
             );
 
-          if (blocked) {
+
+          if (
+            blocked.rows.length > 0
+          ) {
 
             if (
               typeof callback ===
@@ -2189,9 +2461,15 @@ io.on(
 
             }
 
+
             return;
 
           }
+
+
+          // ==============================================
+          // GUARDAR MENSAJE
+          // ==============================================
 
           const result =
             await database.query(
@@ -2235,6 +2513,15 @@ io.on(
               ]
             );
 
+
+          const row =
+            result.rows[0];
+
+
+          // ==============================================
+          // ACTUALIZAR HISTORIAL
+          // ==============================================
+
           await database.query(
             `
             UPDATE conversations
@@ -2250,23 +2537,77 @@ io.on(
             ]
           );
 
-          const row =
-            result.rows[0];
 
-          row.sender_username =
-            user.username;
+          // ==============================================
+          // MENSAJE NORMALIZADO
+          // ==============================================
 
-          row.sender_avatar_url =
-            user.avatar_url;
+          const message = {
 
-          const message =
-            normalizeSocketMessage(
-              row
-            );
+            id:
+              row.id,
+
+            conversationId:
+              row.conversation_id,
+
+            conversation_id:
+              row.conversation_id,
+
+            senderId:
+              row.sender_user_id,
+
+            sender_user_id:
+              row.sender_user_id,
+
+            senderUsername:
+              user.username,
+
+            senderAvatarUrl:
+              user.avatarUrl,
+
+            messageType:
+              row.message_type,
+
+            message_type:
+              row.message_type,
+
+            content:
+              row.content,
+
+            edited:
+              Boolean(
+                row.edited
+              ),
+
+            deleted:
+              Boolean(
+                row.deleted
+              ),
+
+            createdAt:
+              row.created_at,
+
+            created_at:
+              row.created_at,
+
+            updatedAt:
+              row.updated_at,
+
+            updated_at:
+              row.updated_at
+
+          };
+
+
+          // ==============================================
+          // EMITIR A LA SALA ABIERTA
+          // ==============================================
 
           io
             .to(
-              `conversation:${conversationId}`
+              conversationRoom(
+                conversationId
+              )
             )
             .emit(
               'conversation-message',
@@ -2279,42 +2620,30 @@ io.on(
               }
             );
 
-          const participants =
-            await getConversationParticipants(
-              conversationId
-            );
 
-          for (
-            const participant
-            of participants
-          ) {
+          // ==============================================
+          // AVISAR A TODOS LOS PARTICIPANTES
+          //
+          // Esto permite actualizar el historial incluso
+          // si el destinatario no tiene esa sala abierta.
+          // ==============================================
 
-            if (
-              String(
-                participant.user_id
-              ) ===
-              String(
-                userId
-              )
-            ) {
+          await emitConversationUpdate(
+            conversationId,
+            'conversation:new-message',
+            {
 
-              continue;
+              conversationId,
+
+              message
 
             }
+          );
 
-            emitToUser(
-              participant.user_id,
-              'conversation:new-message',
-              {
 
-                conversationId,
-
-                message
-
-              }
-            );
-
-          }
+          // ==============================================
+          // CONFIRMAR AL EMISOR
+          // ==============================================
 
           if (
             typeof callback ===
@@ -2331,12 +2660,14 @@ io.on(
 
           }
 
+
         } catch (error) {
 
           console.error(
-            'VOBIXCHAT MESSAGE ERROR:',
+            'VOBIXCHAT REALTIME MESSAGE ERROR:',
             error
           );
+
 
           if (
             typeof callback ===
@@ -2361,21 +2692,23 @@ io.on(
 
 
     // ==================================================
-    // INDICADOR ESCRIBIENDO
+    // INDICADOR "ESCRIBIENDO..."
     // ==================================================
 
     socket.on(
-      'typing:start',
-      async payload => {
+      'conversation:typing',
+      async (
+        payload = {}
+      ) => {
 
         try {
 
           const conversationId =
             String(
-              payload?.conversationId ||
-              payload?.conversation_id ||
+              payload.conversationId ||
               ''
             ).trim();
+
 
           if (!conversationId) {
 
@@ -2383,67 +2716,6 @@ io.on(
 
           }
 
-          const allowed =
-            await socketCanAccessConversation(
-              conversationId,
-              userId
-            );
-
-          if (!allowed) {
-
-            return;
-
-          }
-
-          socket
-            .to(
-              `conversation:${conversationId}`
-            )
-            .emit(
-              'typing:start',
-              {
-
-                conversationId,
-
-                userId,
-
-                username:
-                  user.username
-
-              }
-            );
-
-        } catch (error) {
-
-          console.error(
-            'VOBIXCHAT TYPING START ERROR:',
-            error.message
-          );
-
-        }
-
-      }
-    );
-
-
-    socket.on(
-      'typing:stop',
-      async payload => {
-
-        try {
-
-          const conversationId =
-            String(
-              payload?.conversationId ||
-              payload?.conversation_id ||
-              ''
-            ).trim();
-
-          if (!conversationId) {
-
-            return;
-
-          }
 
           const allowed =
             await socketCanAccessConversation(
@@ -2451,18 +2723,22 @@ io.on(
               userId
             );
 
+
           if (!allowed) {
 
             return;
 
           }
 
+
           socket
             .to(
-              `conversation:${conversationId}`
+              conversationRoom(
+                conversationId
+              )
             )
             .emit(
-              'typing:stop',
+              'conversation:typing',
               {
 
                 conversationId,
@@ -2470,15 +2746,21 @@ io.on(
                 userId,
 
                 username:
-                  user.username
+                  user.username,
+
+                typing:
+                  Boolean(
+                    payload.typing
+                  )
 
               }
             );
 
+
         } catch (error) {
 
           console.error(
-            'VOBIXCHAT TYPING STOP ERROR:',
+            'VOBIXCHAT TYPING ERROR:',
             error.message
           );
 
@@ -2493,33 +2775,26 @@ io.on(
     // ==================================================
 
     socket.on(
-      'message:read',
-      async payload => {
+      'conversation:read',
+      async (
+        payload = {}
+      ) => {
 
         try {
 
           const conversationId =
             String(
-              payload?.conversationId ||
-              payload?.conversation_id ||
+              payload.conversationId ||
               ''
             ).trim();
 
-          const messageId =
-            String(
-              payload?.messageId ||
-              payload?.message_id ||
-              ''
-            ).trim();
 
-          if (
-            !conversationId ||
-            !messageId
-          ) {
+          if (!conversationId) {
 
             return;
 
           }
+
 
           const allowed =
             await socketCanAccessConversation(
@@ -2527,23 +2802,65 @@ io.on(
               userId
             );
 
+
           if (!allowed) {
 
             return;
 
           }
 
+
+          /*
+            Intentamos guardar last_read_at.
+
+            Si la instalación todavía no tiene esa
+            columna, no rompemos Socket.IO.
+          */
+
+          try {
+
+            await database.query(
+              `
+              UPDATE conversation_participants
+
+              SET
+                last_read_at = NOW()
+
+              WHERE
+                conversation_id = $1
+                AND user_id = $2
+              `,
+              [
+                conversationId,
+                userId
+              ]
+            );
+
+          } catch (readError) {
+
+            if (
+              readError.code !==
+              '42703'
+            ) {
+
+              throw readError;
+
+            }
+
+          }
+
+
           socket
             .to(
-              `conversation:${conversationId}`
+              conversationRoom(
+                conversationId
+              )
             )
             .emit(
-              'message:read',
+              'conversation:read',
               {
 
                 conversationId,
-
-                messageId,
 
                 userId,
 
@@ -2554,10 +2871,11 @@ io.on(
               }
             );
 
+
         } catch (error) {
 
           console.error(
-            'VOBIXCHAT MESSAGE READ ERROR:',
+            'VOBIXCHAT READ SOCKET ERROR:',
             error.message
           );
 
@@ -2568,7 +2886,7 @@ io.on(
 
 
     // ==================================================
-    // PRESENCIA / PING
+    // PING DE PRESENCIA
     // ==================================================
 
     socket.on(
@@ -2583,8 +2901,7 @@ io.on(
 
             SET
               online = TRUE,
-              last_seen = NOW(),
-              updated_at = NOW()
+              last_seen = NOW()
 
             WHERE
               id = $1
@@ -2594,6 +2911,7 @@ io.on(
             ]
           );
 
+
           if (
             typeof callback ===
             'function'
@@ -2603,9 +2921,7 @@ io.on(
 
               ok: true,
 
-              online: true,
-
-              lastSeen:
+              serverTime:
                 new Date()
                   .toISOString()
 
@@ -2613,12 +2929,19 @@ io.on(
 
           }
 
+
         } catch (error) {
 
-          console.error(
-            'VOBIXCHAT PRESENCE PING ERROR:',
-            error.message
-          );
+          if (
+            typeof callback ===
+            'function'
+          ) {
+
+            callback({
+              ok: false
+            });
+
+          }
 
         }
 
@@ -2626,205 +2949,20 @@ io.on(
     );
 
 
-    // ==================================================
-    // PARTICIPANTES DESTINO DE UNA LLAMADA
-    // ==================================================
-
-    async function getOtherCallParticipants(
-      conversationId,
-      callerUserId
-    ) {
-
-      const participants =
-        await getConversationParticipants(
-          conversationId
-        );
-
-      return participants.filter(
-        participant =>
-          String(
-            participant.user_id
-          ) !==
-          String(
-            callerUserId
-          )
-      );
-
-    }
-
-
-    // ==================================================
-    // BUSCAR LLAMADA
-    // ==================================================
-
-    function getCallById(
-      callId
-    ) {
-
-      if (!callId) {
-
-        return null;
-
-      }
-
-      return (
-        activeCalls.get(
-          String(callId)
-        ) ||
-        null
-      );
-
-    }
-
-
-    // ==================================================
-    // COMPROBAR PARTICIPANTE DE LLAMADA
-    // ==================================================
-
-    function userBelongsToCall(
-      call,
-      checkUserId
-    ) {
-
-      if (
-        !call ||
-        !checkUserId
-      ) {
-
-        return false;
-
-      }
-
-      return call.participants.some(
-        participant =>
-          String(
-            participant.userId
-          ) ===
-          String(
-            checkUserId
-          )
-      );
-
-    }
-
-
-    // ==================================================
-    // OBTENER PARTICIPANTE DE LLAMADA
-    // ==================================================
-
-    function getCallParticipant(
-      call,
-      participantUserId
-    ) {
-
-      if (!call) {
-
-        return null;
-
-      }
-
-      return (
-        call.participants.find(
-          participant =>
-            String(
-              participant.userId
-            ) ===
-            String(
-              participantUserId
-            )
-        ) ||
-        null
-      );
-
-    }
-       // ==================================================
-    // EMITIR ESTADO COMPLETO DE LLAMADA
-    // ==================================================
-
-    function emitCallState(
-      call
-    ) {
-
-      if (!call) {
-
-        return;
-
-      }
-
-      const payload = {
-
-        callId:
-          call.id,
-
-        conversationId:
-          call.conversationId,
-
-        type:
-          call.type,
-
-        status:
-          call.status,
-
-        callerUserId:
-          call.callerUserId,
-
-        createdAt:
-          call.createdAt,
-
-        startedAt:
-          call.startedAt ||
-          null,
-
-        endedAt:
-          call.endedAt ||
-          null,
-
-        participants:
-          call.participants.map(
-            participant => ({
-
-              userId:
-                participant.userId,
-
-              username:
-                participant.username,
-
-              avatarUrl:
-                participant.avatarUrl ||
-                null,
-
-              status:
-                participant.status
-
-            })
-          )
-
-      };
-
-      for (
-        const participant
-        of call.participants
-      ) {
-
-        emitToUser(
-          participant.userId,
-          'call:state',
-          payload
-        );
-
-      }
-
-    }
-
-
-    // ==================================================
+// ======================================================
+// NO CERRAMOS io.on TODAVÍA.
+// BLOQUE 4 CONTINÚA DENTRO DE ESTA MISMA CONEXIÓN.
+//
+// BLOQUE 4 = LLAMADAS + VIDEOLLAMADAS + AGREGAR PERSONAS
+// ======================================================
+     // ==================================================
     // INICIAR LLAMADA / VIDEOLLAMADA
     // ==================================================
 
     socket.on(
       'call:start',
       async (
-        payload,
+        payload = {},
         callback
       ) => {
 
@@ -2832,26 +2970,20 @@ io.on(
 
           const conversationId =
             String(
-              payload?.conversationId ||
-              payload?.conversation_id ||
+              payload.conversationId ||
+              payload.conversation_id ||
               ''
             ).trim();
 
-          const requestedType =
-            String(
-              payload?.type ||
-              payload?.callType ||
-              payload?.call_type ||
-              'audio'
-            )
-              .trim()
-              .toLowerCase();
 
-          const callType =
-            requestedType ===
-            'video'
+          const type =
+            String(
+              payload.type ||
+              'audio'
+            ).toLowerCase() === 'video'
               ? 'video'
               : 'audio';
+
 
           if (!conversationId) {
 
@@ -2861,12 +2993,9 @@ io.on(
             ) {
 
               callback({
-
                 ok: false,
-
                 msg:
                   'Conversación no válida'
-
               });
 
             }
@@ -2875,11 +3004,17 @@ io.on(
 
           }
 
+
+          // ==============================================
+          // COMPROBAR QUE QUIEN LLAMA PERTENECE A LA SALA
+          // ==============================================
+
           const allowed =
             await socketCanAccessConversation(
               conversationId,
               userId
             );
+
 
           if (!allowed) {
 
@@ -2889,12 +3024,9 @@ io.on(
             ) {
 
               callback({
-
                 ok: false,
-
                 msg:
                   'No tienes acceso a esta conversación'
-
               });
 
             }
@@ -2903,42 +3035,31 @@ io.on(
 
           }
 
-          const blocked =
-            await socketConversationBlocked(
-              conversationId,
-              userId
+
+          // ==============================================
+          // OBTENER PARTICIPANTES DE LA CONVERSACIÓN
+          // ==============================================
+
+          const participants =
+            await getConversationParticipants(
+              conversationId
             );
 
-          if (blocked) {
 
-            if (
-              typeof callback ===
-              'function'
-            ) {
-
-              callback({
-
-                ok: false,
-
-                msg:
-                  'No se puede iniciar la llamada'
-
-              });
-
-            }
-
-            return;
-
-          }
-
-          const others =
-            await getOtherCallParticipants(
-              conversationId,
-              userId
+          const otherParticipants =
+            participants.filter(
+              participant =>
+                String(
+                  participant.user_id
+                ) !==
+                String(
+                  userId
+                )
             );
+
 
           if (
-            others.length === 0
+            otherParticipants.length === 0
           ) {
 
             if (
@@ -2947,12 +3068,9 @@ io.on(
             ) {
 
               callback({
-
                 ok: false,
-
                 msg:
-                  'No hay otro participante en esta conversación'
-
+                  'No hay otro usuario en esta conversación'
               });
 
             }
@@ -2963,169 +3081,62 @@ io.on(
 
 
           // ==============================================
-          // EVITAR LLAMADAS DUPLICADAS EN LA MISMA
-          // CONVERSACIÓN
-          // ==============================================
-
-          let existingCall =
-            null;
-
-          for (
-            const call
-            of activeCalls.values()
-          ) {
-
-            if (
-              String(
-                call.conversationId
-              ) ===
-                String(
-                  conversationId
-                ) &&
-              call.status !==
-                'ended'
-            ) {
-
-              existingCall =
-                call;
-
-              break;
-
-            }
-
-          }
-
-          if (existingCall) {
-
-            if (
-              typeof callback ===
-              'function'
-            ) {
-
-              callback({
-
-                ok: false,
-
-                msg:
-                  'Ya existe una llamada activa en esta conversación',
-
-                callId:
-                  existingCall.id,
-
-                status:
-                  existingCall.status
-
-              });
-
-            }
-
-            return;
-
-          }
-
-
-          // ==============================================
-          // CREAR ID DE LLAMADA
+          // CREAR IDENTIFICADOR ÚNICO DE LLAMADA
           // ==============================================
 
           const callId =
             crypto
-              .randomBytes(16)
+              .randomBytes(18)
               .toString('hex');
 
-
-          // ==============================================
-          // CREAR PARTICIPANTES
-          // ==============================================
-
-          const participants = [
-
-            {
-
-              userId:
-                String(
-                  user.id
-                ),
-
-              username:
-                user.username,
-
-              avatarUrl:
-                user.avatar_url ||
-                null,
-
-              status:
-                'connected'
-
-            }
-
-          ];
-
-          for (
-            const other
-            of others
-          ) {
-
-            participants.push({
-
-              userId:
-                String(
-                  other.user_id
-                ),
-
-              username:
-                other.username,
-
-              avatarUrl:
-                other.avatar_url ||
-                null,
-
-              status:
-                'ringing'
-
-            });
-
-          }
-
-
-          // ==============================================
-          // CREAR LLAMADA ACTIVA
-          // ==============================================
 
           const call = {
 
             id:
               callId,
 
-            conversationId:
-              String(
-                conversationId
+            callId,
+
+            conversationId,
+
+            callerId:
+              userId,
+
+            caller: {
+
+              id:
+                userId,
+
+              username:
+                user.username,
+
+              avatarUrl:
+                user.avatarUrl
+
+            },
+
+            type,
+
+            participants:
+              new Set([
+                String(userId)
+              ]),
+
+            invited:
+              new Set(
+                otherParticipants.map(
+                  participant =>
+                    String(
+                      participant.user_id
+                    )
+                )
               ),
-
-            type:
-              callType,
-
-            status:
-              'ringing',
-
-            callerUserId:
-              String(
-                user.id
-              ),
-
-            participants,
 
             createdAt:
-              new Date()
-                .toISOString(),
-
-            startedAt:
-              null,
-
-            endedAt:
-              null
+              Date.now()
 
           };
+
 
           activeCalls.set(
             callId,
@@ -3134,79 +3145,62 @@ io.on(
 
 
           // ==============================================
-          // EL QUE LLAMA ENTRA EN LA SALA
+          // EL EMISOR ENTRA EN LA SALA DE LLAMADA
           // ==============================================
 
-          socket.join(
-            `call:${callId}`
+          await socket.join(
+            callRoom(
+              callId
+            )
           );
 
 
           // ==============================================
-          // AVISAR A QUIEN RECIBE
+          // AVISAR A LOS DESTINATARIOS
           // ==============================================
 
           for (
-            const other
-            of others
+            const participant
+            of otherParticipants
           ) {
 
-            emitToUser(
-              other.user_id,
-              'call:incoming',
-              {
+            io
+              .to(
+                userRoom(
+                  participant.user_id
+                )
+              )
+              .emit(
+                'call:incoming',
+                {
 
-                callId,
+                  callId,
 
-                conversationId,
+                  conversationId,
 
-                type:
-                  callType,
+                  type,
 
-                caller: {
+                  caller: {
 
-                  userId:
-                    user.id,
+                    id:
+                      userId,
 
-                  username:
-                    user.username,
+                    username:
+                      user.username,
 
-                  avatarUrl:
-                    user.avatar_url ||
-                    null
+                    avatarUrl:
+                      user.avatarUrl
 
-                },
+                  }
 
-                participants:
-                  participants.map(
-                    participant => ({
-
-                      userId:
-                        participant.userId,
-
-                      username:
-                        participant.username,
-
-                      avatarUrl:
-                        participant.avatarUrl,
-
-                      status:
-                        participant.status
-
-                    })
-                  ),
-
-                createdAt:
-                  call.createdAt
-
-              }
-            );
+                }
+              );
 
           }
 
 
           // ==============================================
-          // CONFIRMAR AL QUE LLAMA
+          // RESPUESTA AL QUE LLAMA
           // ==============================================
 
           if (
@@ -3222,22 +3216,32 @@ io.on(
 
               conversationId,
 
-              type:
-                callType,
-
-              status:
-                'ringing',
+              type,
 
               participants:
-                call.participants
+                otherParticipants.map(
+                  participant => ({
+
+                    userId:
+                      participant.user_id,
+
+                    username:
+                      participant.username,
+
+                    avatarUrl:
+                      participant.avatar_url,
+
+                    online:
+                      isUserOnline(
+                        participant.user_id
+                      )
+
+                  })
+                )
 
             });
 
           }
-
-          emitCallState(
-            call
-          );
 
 
         } catch (error) {
@@ -3247,18 +3251,16 @@ io.on(
             error
           );
 
+
           if (
             typeof callback ===
             'function'
           ) {
 
             callback({
-
               ok: false,
-
               msg:
                 'No se pudo iniciar la llamada'
-
             });
 
           }
@@ -3276,7 +3278,7 @@ io.on(
     socket.on(
       'call:accept',
       async (
-        payload,
+        payload = {},
         callback
       ) => {
 
@@ -3284,15 +3286,17 @@ io.on(
 
           const callId =
             String(
-              payload?.callId ||
-              payload?.call_id ||
+              payload.callId ||
+              payload.call_id ||
               ''
             ).trim();
 
+
           const call =
-            getCallById(
+            activeCalls.get(
               callId
             );
+
 
           if (!call) {
 
@@ -3302,12 +3306,9 @@ io.on(
             ) {
 
               callback({
-
                 ok: false,
-
                 msg:
                   'La llamada ya no está disponible'
-
               });
 
             }
@@ -3316,38 +3317,17 @@ io.on(
 
           }
 
-          if (
-            call.status ===
-            'ended'
-          ) {
 
-            if (
-              typeof callback ===
-              'function'
-            ) {
-
-              callback({
-
-                ok: false,
-
-                msg:
-                  'La llamada ya terminó'
-
-              });
-
-            }
-
-            return;
-
-          }
-
-          const participant =
-            getCallParticipant(
-              call,
-              userId
+          const allowed =
+            call.invited.has(
+              String(userId)
+            ) ||
+            call.participants.has(
+              String(userId)
             );
 
-          if (!participant) {
+
+          if (!allowed) {
 
             if (
               typeof callback ===
@@ -3355,12 +3335,9 @@ io.on(
             ) {
 
               callback({
-
                 ok: false,
-
                 msg:
-                  'No perteneces a esta llamada'
-
+                  'No estás invitado a esta llamada'
               });
 
             }
@@ -3369,71 +3346,61 @@ io.on(
 
           }
 
-          participant.status =
-            'connected';
 
-          if (
-            !call.startedAt
-          ) {
+          call.participants.add(
+            String(userId)
+          );
 
-            call.startedAt =
-              new Date()
-                .toISOString();
 
-          }
+          call.invited.delete(
+            String(userId)
+          );
 
-          call.status =
-            'active';
 
-          socket.join(
-            `call:${callId}`
+          await socket.join(
+            callRoom(
+              callId
+            )
           );
 
 
           // ==============================================
-          // AVISAR A TODA LA LLAMADA
+          // AVISAR A TODOS LOS PARTICIPANTES
           // ==============================================
 
-          for (
-            const item
-            of call.participants
-          ) {
-
-            emitToUser(
-              item.userId,
+          io
+            .to(
+              callRoom(
+                callId
+              )
+            )
+            .emit(
               'call:accepted',
               {
 
                 callId,
 
-                conversationId:
-                  call.conversationId,
-
-                type:
-                  call.type,
-
                 user: {
 
-                  userId:
-                    user.id,
+                  id:
+                    userId,
 
                   username:
                     user.username,
 
                   avatarUrl:
-                    user.avatar_url ||
-                    null
+                    user.avatarUrl
 
-                }
+                },
+
+                participants:
+                  Array.from(
+                    call.participants
+                  )
 
               }
             );
 
-          }
-
-          emitCallState(
-            call
-          );
 
           if (
             typeof callback ===
@@ -3446,21 +3413,21 @@ io.on(
 
               callId,
 
-              conversationId:
-                call.conversationId,
-
-              status:
-                call.status,
-
               type:
                 call.type,
 
+              conversationId:
+                call.conversationId,
+
               participants:
-                call.participants
+                Array.from(
+                  call.participants
+                )
 
             });
 
           }
+
 
         } catch (error) {
 
@@ -3469,18 +3436,16 @@ io.on(
             error
           );
 
+
           if (
             typeof callback ===
             'function'
           ) {
 
             callback({
-
               ok: false,
-
               msg:
                 'No se pudo aceptar la llamada'
-
             });
 
           }
@@ -3497,8 +3462,8 @@ io.on(
 
     socket.on(
       'call:reject',
-      (
-        payload,
+      async (
+        payload = {},
         callback
       ) => {
 
@@ -3506,15 +3471,16 @@ io.on(
 
           const callId =
             String(
-              payload?.callId ||
-              payload?.call_id ||
+              payload.callId ||
               ''
             ).trim();
 
+
           const call =
-            getCallById(
+            activeCalls.get(
               callId
             );
+
 
           if (!call) {
 
@@ -3524,9 +3490,7 @@ io.on(
             ) {
 
               callback({
-
                 ok: true
-
               });
 
             }
@@ -3535,151 +3499,41 @@ io.on(
 
           }
 
-          const participant =
-            getCallParticipant(
-              call,
-              userId
-            );
 
-          if (!participant) {
-
-            if (
-              typeof callback ===
-              'function'
-            ) {
-
-              callback({
-
-                ok: false,
-
-                msg:
-                  'No perteneces a esta llamada'
-
-              });
-
-            }
-
-            return;
-
-          }
-
-          participant.status =
-            'rejected';
+          call.invited.delete(
+            String(userId)
+          );
 
 
-          // ==============================================
-          // AVISAR A LOS DEMÁS
-          // ==============================================
-
-          for (
-            const item
-            of call.participants
-          ) {
-
-            if (
-              String(
-                item.userId
-              ) ===
-              String(
-                userId
+          io
+            .to(
+              userRoom(
+                call.callerId
               )
-            ) {
-
-              continue;
-
-            }
-
-            emitToUser(
-              item.userId,
+            )
+            .emit(
               'call:rejected',
               {
 
                 callId,
 
-                conversationId:
-                  call.conversationId,
-
-                userId,
-
-                username:
-                  user.username
+                userId
 
               }
             );
 
-          }
 
+          if (
+            call.participants.size <= 1 &&
+            call.invited.size === 0
+          ) {
 
-          // ==============================================
-          // COMPROBAR SI QUEDA ALGUIEN EN LA LLAMADA
-          // ==============================================
-
-          const remaining =
-            call.participants.filter(
-              item =>
-                item.status ===
-                  'connected' ||
-                item.status ===
-                  'ringing'
+            activeCalls.delete(
+              callId
             );
 
-          if (
-            remaining.length <= 1
-          ) {
-
-            call.status =
-              'ended';
-
-            call.endedAt =
-              new Date()
-                .toISOString();
-
-            for (
-              const item
-              of call.participants
-            ) {
-
-              emitToUser(
-                item.userId,
-                'call:ended',
-                {
-
-                  callId,
-
-                  conversationId:
-                    call.conversationId,
-
-                  endedAt:
-                    call.endedAt
-
-                }
-              );
-
-            }
-
           }
 
-          emitCallState(
-            call
-          );
-
-          if (
-            call.status ===
-            'ended'
-          ) {
-
-            setTimeout(
-              () => {
-
-                activeCalls.delete(
-                  callId
-                );
-
-              },
-              30000
-            ).unref();
-
-          }
 
           if (
             typeof callback ===
@@ -3687,17 +3541,11 @@ io.on(
           ) {
 
             callback({
-
-              ok: true,
-
-              callId,
-
-              status:
-                call.status
-
+              ok: true
             });
 
           }
+
 
         } catch (error) {
 
@@ -3706,158 +3554,6 @@ io.on(
             error
           );
 
-          if (
-            typeof callback ===
-            'function'
-          ) {
-
-            callback({
-
-              ok: false,
-
-              msg:
-                'No se pudo rechazar la llamada'
-
-            });
-
-          }
-
-        }
-
-      }
-    );
-
-
-    // ==================================================
-    // CANCELAR LLAMADA ANTES DE RESPONDER
-    // ==================================================
-
-    socket.on(
-      'call:cancel',
-      (
-        payload,
-        callback
-      ) => {
-
-        try {
-
-          const callId =
-            String(
-              payload?.callId ||
-              payload?.call_id ||
-              ''
-            ).trim();
-
-          const call =
-            getCallById(
-              callId
-            );
-
-          if (!call) {
-
-            if (
-              typeof callback ===
-              'function'
-            ) {
-
-              callback({
-
-                ok: true
-
-              });
-
-            }
-
-            return;
-
-          }
-
-          if (
-            String(
-              call.callerUserId
-            ) !==
-            String(
-              userId
-            )
-          ) {
-
-            if (
-              typeof callback ===
-              'function'
-            ) {
-
-              callback({
-
-                ok: false,
-
-                msg:
-                  'Solo quien inició la llamada puede cancelarla'
-
-              });
-
-            }
-
-            return;
-
-          }
-
-          call.status =
-            'ended';
-
-          call.endedAt =
-            new Date()
-              .toISOString();
-
-          for (
-            const participant
-            of call.participants
-          ) {
-
-            if (
-              String(
-                participant.userId
-              ) ===
-              String(
-                userId
-              )
-            ) {
-
-              continue;
-
-            }
-
-            emitToUser(
-              participant.userId,
-              'call:cancelled',
-              {
-
-                callId,
-
-                conversationId:
-                  call.conversationId,
-
-                endedAt:
-                  call.endedAt
-
-              }
-            );
-
-          }
-
-          emitCallState(
-            call
-          );
-
-          setTimeout(
-            () => {
-
-              activeCalls.delete(
-                callId
-              );
-
-            },
-            30000
-          ).unref();
 
           if (
             typeof callback ===
@@ -3865,391 +3561,7 @@ io.on(
           ) {
 
             callback({
-
-              ok: true,
-
-              callId
-
-            });
-
-          }
-
-        } catch (error) {
-
-          console.error(
-            'VOBIXCHAT CALL CANCEL ERROR:',
-            error
-          );
-
-          if (
-            typeof callback ===
-            'function'
-          ) {
-
-            callback({
-
-              ok: false,
-
-              msg:
-                'No se pudo cancelar la llamada'
-
-            });
-
-          }
-
-        }
-
-      }
-    );
-
-
-    // ==================================================
-    // COLGAR / SALIR DE LLAMADA
-    // ==================================================
-
-    socket.on(
-      'call:end',
-      (
-        payload,
-        callback
-      ) => {
-
-        try {
-
-          const callId =
-            String(
-              payload?.callId ||
-              payload?.call_id ||
-              ''
-            ).trim();
-
-          const call =
-            getCallById(
-              callId
-            );
-
-          if (!call) {
-
-            if (
-              typeof callback ===
-              'function'
-            ) {
-
-              callback({
-
-                ok: true
-
-              });
-
-            }
-
-            return;
-
-          }
-
-          const participant =
-            getCallParticipant(
-              call,
-              userId
-            );
-
-          if (!participant) {
-
-            if (
-              typeof callback ===
-              'function'
-            ) {
-
-              callback({
-
-                ok: false,
-
-                msg:
-                  'No perteneces a esta llamada'
-
-              });
-
-            }
-
-            return;
-
-          }
-
-          participant.status =
-            'left';
-
-          socket.leave(
-            `call:${callId}`
-          );
-
-          for (
-            const item
-            of call.participants
-          ) {
-
-            if (
-              String(
-                item.userId
-              ) ===
-              String(
-                userId
-              )
-            ) {
-
-              continue;
-
-            }
-
-            emitToUser(
-              item.userId,
-              'call:user-left',
-              {
-
-                callId,
-
-                conversationId:
-                  call.conversationId,
-
-                userId,
-
-                username:
-                  user.username
-
-              }
-            );
-
-          }
-
-          const remaining =
-            call.participants.filter(
-              item =>
-                item.status ===
-                'connected'
-            );
-
-          if (
-            remaining.length <= 1
-          ) {
-
-            call.status =
-              'ended';
-
-            call.endedAt =
-              new Date()
-                .toISOString();
-
-            for (
-              const item
-              of call.participants
-            ) {
-
-              emitToUser(
-                item.userId,
-                'call:ended',
-                {
-
-                  callId,
-
-                  conversationId:
-                    call.conversationId,
-
-                  endedAt:
-                    call.endedAt
-
-                }
-              );
-
-            }
-
-          }
-
-          emitCallState(
-            call
-          );
-
-          if (
-            call.status ===
-            'ended'
-          ) {
-
-            setTimeout(
-              () => {
-
-                activeCalls.delete(
-                  callId
-                );
-
-              },
-              30000
-            ).unref();
-
-          }
-
-          if (
-            typeof callback ===
-            'function'
-          ) {
-
-            callback({
-
-              ok: true,
-
-              callId,
-
-              status:
-                call.status
-
-            });
-
-          }
-
-        } catch (error) {
-
-          console.error(
-            'VOBIXCHAT CALL END ERROR:',
-            error
-          );
-
-          if (
-            typeof callback ===
-            'function'
-          ) {
-
-            callback({
-
-              ok: false,
-
-              msg:
-                'No se pudo finalizar la llamada'
-
-            });
-
-          }
-
-        }
-
-      }
-    );
-
-
-    // ==================================================
-    // WEBRTC — OFFER
-    // ==================================================
-
-    socket.on(
-      'webrtc:offer',
-      (
-        payload,
-        callback
-      ) => {
-
-        try {
-
-          const callId =
-            String(
-              payload?.callId ||
-              payload?.call_id ||
-              ''
-            ).trim();
-
-          const targetUserId =
-            String(
-              payload?.targetUserId ||
-              payload?.target_user_id ||
-              payload?.to ||
-              ''
-            ).trim();
-
-          const offer =
-            payload?.offer ||
-            payload?.description;
-
-          const call =
-            getCallById(
-              callId
-            );
-
-          if (
-            !call ||
-            !offer ||
-            !targetUserId ||
-            !userBelongsToCall(
-              call,
-              userId
-            ) ||
-            !userBelongsToCall(
-              call,
-              targetUserId
-            )
-          ) {
-
-            if (
-              typeof callback ===
-              'function'
-            ) {
-
-              callback({
-
-                ok: false,
-
-                msg:
-                  'Señal WebRTC no válida'
-
-              });
-
-            }
-
-            return;
-
-          }
-
-          emitToUser(
-            targetUserId,
-            'webrtc:offer',
-            {
-
-              callId,
-
-              fromUserId:
-                userId,
-
-              fromUsername:
-                user.username,
-
-              offer
-
-            }
-          );
-
-          if (
-            typeof callback ===
-            'function'
-          ) {
-
-            callback({
-
-              ok: true
-
-            });
-
-          }
-
-        } catch (error) {
-
-          console.error(
-            'VOBIXCHAT WEBRTC OFFER ERROR:',
-            error.message
-          );
-
-          if (
-            typeof callback ===
-            'function'
-          ) {
-
-            callback({
-
               ok: false
-
             });
 
           }
@@ -4261,266 +3573,13 @@ io.on(
 
 
     // ==================================================
-    // WEBRTC — ANSWER
-    // ==================================================
-
-    socket.on(
-      'webrtc:answer',
-      (
-        payload,
-        callback
-      ) => {
-
-        try {
-
-          const callId =
-            String(
-              payload?.callId ||
-              payload?.call_id ||
-              ''
-            ).trim();
-
-          const targetUserId =
-            String(
-              payload?.targetUserId ||
-              payload?.target_user_id ||
-              payload?.to ||
-              ''
-            ).trim();
-
-          const answer =
-            payload?.answer ||
-            payload?.description;
-
-          const call =
-            getCallById(
-              callId
-            );
-
-          if (
-            !call ||
-            !answer ||
-            !targetUserId ||
-            !userBelongsToCall(
-              call,
-              userId
-            ) ||
-            !userBelongsToCall(
-              call,
-              targetUserId
-            )
-          ) {
-
-            if (
-              typeof callback ===
-              'function'
-            ) {
-
-              callback({
-
-                ok: false,
-
-                msg:
-                  'Respuesta WebRTC no válida'
-
-              });
-
-            }
-
-            return;
-
-          }
-
-          emitToUser(
-            targetUserId,
-            'webrtc:answer',
-            {
-
-              callId,
-
-              fromUserId:
-                userId,
-
-              fromUsername:
-                user.username,
-
-              answer
-
-            }
-          );
-
-          if (
-            typeof callback ===
-            'function'
-          ) {
-
-            callback({
-
-              ok: true
-
-            });
-
-          }
-
-        } catch (error) {
-
-          console.error(
-            'VOBIXCHAT WEBRTC ANSWER ERROR:',
-            error.message
-          );
-
-          if (
-            typeof callback ===
-            'function'
-          ) {
-
-            callback({
-
-              ok: false
-
-            });
-
-          }
-
-        }
-
-      }
-    );
-
-
-    // ==================================================
-    // WEBRTC — ICE CANDIDATE
-    // ==================================================
-
-    socket.on(
-      'webrtc:ice-candidate',
-      (
-        payload,
-        callback
-      ) => {
-
-        try {
-
-          const callId =
-            String(
-              payload?.callId ||
-              payload?.call_id ||
-              ''
-            ).trim();
-
-          const targetUserId =
-            String(
-              payload?.targetUserId ||
-              payload?.target_user_id ||
-              payload?.to ||
-              ''
-            ).trim();
-
-          const candidate =
-            payload?.candidate;
-
-          const call =
-            getCallById(
-              callId
-            );
-
-          if (
-            !call ||
-            !candidate ||
-            !targetUserId ||
-            !userBelongsToCall(
-              call,
-              userId
-            ) ||
-            !userBelongsToCall(
-              call,
-              targetUserId
-            )
-          ) {
-
-            if (
-              typeof callback ===
-              'function'
-            ) {
-
-              callback({
-
-                ok: false,
-
-                msg:
-                  'ICE candidate no válido'
-
-              });
-
-            }
-
-            return;
-
-          }
-
-          emitToUser(
-            targetUserId,
-            'webrtc:ice-candidate',
-            {
-
-              callId,
-
-              fromUserId:
-                userId,
-
-              fromUsername:
-                user.username,
-
-              candidate
-
-            }
-          );
-
-          if (
-            typeof callback ===
-            'function'
-          ) {
-
-            callback({
-
-              ok: true
-
-            });
-
-          }
-
-        } catch (error) {
-
-          console.error(
-            'VOBIXCHAT WEBRTC ICE ERROR:',
-            error.message
-          );
-
-          if (
-            typeof callback ===
-            'function'
-          ) {
-
-            callback({
-
-              ok: false
-
-            });
-
-          }
-
-        }
-
-      }
-    );
-      // ==================================================
-    // AGREGAR USUARIO A LLAMADA / VIDEOLLAMADA
+    // AGREGAR PERSONA A LLAMADA / VIDEOLLAMADA
     // ==================================================
 
     socket.on(
       'call:add-user',
       async (
-        payload,
+        payload = {},
         callback
       ) => {
 
@@ -4528,24 +3587,47 @@ io.on(
 
           const callId =
             String(
-              payload?.callId ||
-              payload?.call_id ||
+              payload.callId ||
               ''
             ).trim();
 
-          const newUserId =
+
+          const targetUserId =
             String(
-              payload?.userId ||
-              payload?.user_id ||
-              payload?.targetUserId ||
-              payload?.target_user_id ||
+              payload.userId ||
+              payload.targetUserId ||
               ''
             ).trim();
+
+
+          if (
+            !callId ||
+            !targetUserId
+          ) {
+
+            if (
+              typeof callback ===
+              'function'
+            ) {
+
+              callback({
+                ok: false,
+                msg:
+                  'Datos de invitación incompletos'
+              });
+
+            }
+
+            return;
+
+          }
+
 
           const call =
-            getCallById(
+            activeCalls.get(
               callId
             );
+
 
           if (!call) {
 
@@ -4555,12 +3637,9 @@ io.on(
             ) {
 
               callback({
-
                 ok: false,
-
                 msg:
-                  'La llamada ya no está disponible'
-
+                  'La llamada ya terminó'
               });
 
             }
@@ -4571,13 +3650,12 @@ io.on(
 
 
           // ==============================================
-          // QUIEN INVITA DEBE PERTENECER A LA LLAMADA
+          // SOLO UN PARTICIPANTE ACTIVO PUEDE INVITAR
           // ==============================================
 
           if (
-            !userBelongsToCall(
-              call,
-              userId
+            !call.participants.has(
+              String(userId)
             )
           ) {
 
@@ -4587,35 +3665,9 @@ io.on(
             ) {
 
               callback({
-
                 ok: false,
-
                 msg:
                   'No perteneces a esta llamada'
-
-              });
-
-            }
-
-            return;
-
-          }
-
-
-          if (!newUserId) {
-
-            if (
-              typeof callback ===
-              'function'
-            ) {
-
-              callback({
-
-                ok: false,
-
-                msg:
-                  'Usuario no válido'
-
               });
 
             }
@@ -4626,12 +3678,8 @@ io.on(
 
 
           if (
-            String(
-              newUserId
-            ) ===
-            String(
-              userId
-            )
+            String(targetUserId) ===
+            String(userId)
           ) {
 
             if (
@@ -4640,44 +3688,36 @@ io.on(
             ) {
 
               callback({
-
                 ok: false,
-
-                msg:
-                  'No puedes invitarte a ti mismo'
-
-              });
-
-            }
-
-            return;
-
-          }
-
-
-          // ==============================================
-          // COMPROBAR SI YA ESTÁ EN LA LLAMADA
-          // ==============================================
-
-          if (
-            userBelongsToCall(
-              call,
-              newUserId
-            )
-          ) {
-
-            if (
-              typeof callback ===
-              'function'
-            ) {
-
-              callback({
-
-                ok: false,
-
                 msg:
                   'Ese usuario ya está en la llamada'
+              });
 
+            }
+
+            return;
+
+          }
+
+
+          if (
+            call.participants.has(
+              targetUserId
+            ) ||
+            call.invited.has(
+              targetUserId
+            )
+          ) {
+
+            if (
+              typeof callback ===
+              'function'
+            ) {
+
+              callback({
+                ok: false,
+                msg:
+                  'El usuario ya está agregado o invitado'
               });
 
             }
@@ -4688,7 +3728,7 @@ io.on(
 
 
           // ==============================================
-          // BUSCAR USUARIO REGISTRADO
+          // COMPROBAR QUE EL USUARIO EXISTE
           // ==============================================
 
           const targetResult =
@@ -4697,12 +3737,9 @@ io.on(
               SELECT
                 id,
                 username,
-                phone,
-                vobix_id,
                 avatar_url,
                 verified,
-                online,
-                last_seen
+                online
 
               FROM users
 
@@ -4713,9 +3750,10 @@ io.on(
               LIMIT 1
               `,
               [
-                newUserId
+                targetUserId
               ]
             );
+
 
           if (
             targetResult.rows.length === 0
@@ -4727,12 +3765,9 @@ io.on(
             ) {
 
               callback({
-
                 ok: false,
-
                 msg:
                   'Usuario no encontrado'
-
               });
 
             }
@@ -4741,151 +3776,159 @@ io.on(
 
           }
 
-          const targetUser =
+
+          const target =
             targetResult.rows[0];
 
 
           // ==============================================
-          // AGREGAR PARTICIPANTE
+          // COMPROBAR BLOQUEO ENTRE QUIEN INVITA
+          // Y LA PERSONA INVITADA
           // ==============================================
 
-          call.participants.push({
+          const blockResult =
+            await database.query(
+              `
+              SELECT 1
 
-            userId:
-              String(
-                targetUser.id
-              ),
+              FROM user_blocks
 
-            username:
-              targetUser.username,
+              WHERE
+                (
+                  blocker_user_id = $1
+                  AND blocked_user_id = $2
+                )
 
-            avatarUrl:
-              targetUser.avatar_url ||
-              null,
+                OR
 
-            status:
-              'ringing'
+                (
+                  blocker_user_id = $2
+                  AND blocked_user_id = $1
+                )
 
-          });
+              LIMIT 1
+              `,
+              [
+                userId,
+                targetUserId
+              ]
+            );
+
+
+          if (
+            blockResult.rows.length > 0
+          ) {
+
+            if (
+              typeof callback ===
+              'function'
+            ) {
+
+              callback({
+                ok: false,
+                msg:
+                  'No se puede agregar este usuario'
+              });
+
+            }
+
+            return;
+
+          }
+
+
+          // ==============================================
+          // REGISTRAR INVITACIÓN
+          // ==============================================
+
+          call.invited.add(
+            targetUserId
+          );
 
 
           // ==============================================
           // ENVIAR LLAMADA ENTRANTE AL NUEVO USUARIO
           // ==============================================
 
-          emitToUser(
-            targetUser.id,
-            'call:incoming',
-            {
-
-              callId:
-                call.id,
-
-              conversationId:
-                call.conversationId,
-
-              type:
-                call.type,
-
-              group:
-                true,
-
-              caller: {
-
-                userId:
-                  user.id,
-
-                username:
-                  user.username,
-
-                avatarUrl:
-                  user.avatar_url ||
-                  null
-
-              },
-
-              participants:
-                call.participants.map(
-                  participant => ({
-
-                    userId:
-                      participant.userId,
-
-                    username:
-                      participant.username,
-
-                    avatarUrl:
-                      participant.avatarUrl ||
-                      null,
-
-                    status:
-                      participant.status
-
-                  })
-                ),
-
-              createdAt:
-                call.createdAt
-
-            }
-          );
-
-
-          // ==============================================
-          // AVISAR AL RESTO
-          // ==============================================
-
-          for (
-            const participant
-            of call.participants
-          ) {
-
-            if (
-              String(
-                participant.userId
-              ) ===
-              String(
-                targetUser.id
+          io
+            .to(
+              userRoom(
+                targetUserId
               )
-            ) {
-
-              continue;
-
-            }
-
-            emitToUser(
-              participant.userId,
-              'call:user-invited',
+            )
+            .emit(
+              'call:incoming',
               {
 
-                callId:
-                  call.id,
+                callId,
 
                 conversationId:
                   call.conversationId,
 
-                user: {
+                type:
+                  call.type,
 
-                  userId:
-                    targetUser.id,
+                group:
+                  true,
+
+                invitedBy: {
+
+                  id:
+                    userId,
 
                   username:
-                    targetUser.username,
+                    user.username,
 
                   avatarUrl:
-                    targetUser.avatar_url ||
-                    null
+                    user.avatarUrl
 
-                }
+                },
+
+                caller:
+                  call.caller
 
               }
             );
 
-          }
 
-          emitCallState(
-            call
-          );
+          // ==============================================
+          // INFORMAR A LA SALA DE LLAMADA
+          // ==============================================
+
+          io
+            .to(
+              callRoom(
+                callId
+              )
+            )
+            .emit(
+              'call:user-invited',
+              {
+
+                callId,
+
+                user: {
+
+                  id:
+                    target.id,
+
+                  username:
+                    target.username,
+
+                  avatarUrl:
+                    target.avatar_url,
+
+                  online:
+                    target.online
+
+                },
+
+                invitedBy:
+                  userId
+
+              }
+            );
+
 
           if (
             typeof callback ===
@@ -4896,466 +3939,46 @@ io.on(
 
               ok: true,
 
-              callId:
-                call.id,
+              callId,
 
               user: {
 
-                userId:
-                  targetUser.id,
-
-                username:
-                  targetUser.username,
-
-                avatarUrl:
-                  targetUser.avatar_url ||
-                  null
-
-              }
-
-            });
-
-          }
-
-        } catch (error) {
-
-          console.error(
-            'VOBIXCHAT ADD CALL USER ERROR:',
-            error
-          );
-
-          if (
-            typeof callback ===
-            'function'
-          ) {
-
-            callback({
-
-              ok: false,
-
-              msg:
-                'No se pudo agregar el usuario a la llamada'
-
-            });
-
-          }
-
-        }
-
-      }
-    );
-
-
-    // ==================================================
-    // SILENCIAR / ACTIVAR MICRÓFONO
-    // ==================================================
-
-    socket.on(
-      'call:microphone',
-      (
-        payload,
-        callback
-      ) => {
-
-        try {
-
-          const callId =
-            String(
-              payload?.callId ||
-              payload?.call_id ||
-              ''
-            ).trim();
-
-          const enabled =
-            payload?.enabled !==
-            false;
-
-          const call =
-            getCallById(
-              callId
-            );
-
-          if (
-            !call ||
-            !userBelongsToCall(
-              call,
-              userId
-            )
-          ) {
-
-            if (
-              typeof callback ===
-              'function'
-            ) {
-
-              callback({
-
-                ok: false
-
-              });
-
-            }
-
-            return;
-
-          }
-
-          for (
-            const participant
-            of call.participants
-          ) {
-
-            if (
-              String(
-                participant.userId
-              ) ===
-              String(
-                userId
-              )
-            ) {
-
-              continue;
-
-            }
-
-            emitToUser(
-              participant.userId,
-              'call:microphone',
-              {
-
-                callId,
-
-                userId,
-
-                enabled
-
-              }
-            );
-
-          }
-
-          if (
-            typeof callback ===
-            'function'
-          ) {
-
-            callback({
-
-              ok: true,
-
-              enabled
-
-            });
-
-          }
-
-        } catch (error) {
-
-          console.error(
-            'VOBIXCHAT MICROPHONE ERROR:',
-            error.message
-          );
-
-        }
-
-      }
-    );
-
-
-    // ==================================================
-    // ACTIVAR / DESACTIVAR CÁMARA
-    // ==================================================
-
-    socket.on(
-      'call:camera',
-      (
-        payload,
-        callback
-      ) => {
-
-        try {
-
-          const callId =
-            String(
-              payload?.callId ||
-              payload?.call_id ||
-              ''
-            ).trim();
-
-          const enabled =
-            payload?.enabled !==
-            false;
-
-          const call =
-            getCallById(
-              callId
-            );
-
-          if (
-            !call ||
-            !userBelongsToCall(
-              call,
-              userId
-            )
-          ) {
-
-            if (
-              typeof callback ===
-              'function'
-            ) {
-
-              callback({
-
-                ok: false
-
-              });
-
-            }
-
-            return;
-
-          }
-
-          for (
-            const participant
-            of call.participants
-          ) {
-
-            if (
-              String(
-                participant.userId
-              ) ===
-              String(
-                userId
-              )
-            ) {
-
-              continue;
-
-            }
-
-            emitToUser(
-              participant.userId,
-              'call:camera',
-              {
-
-                callId,
-
-                userId,
-
-                enabled
-
-              }
-            );
-
-          }
-
-          if (
-            typeof callback ===
-            'function'
-          ) {
-
-            callback({
-
-              ok: true,
-
-              enabled
-
-            });
-
-          }
-
-        } catch (error) {
-
-          console.error(
-            'VOBIXCHAT CAMERA ERROR:',
-            error.message
-          );
-
-        }
-
-      }
-    );
-
-
-    // ==================================================
-    // REUNIONES / MEET
-    // ==================================================
-
-    socket.on(
-      'meet-join',
-      async (
-        payload,
-        callback
-      ) => {
-
-        try {
-
-          const room =
-            String(
-              payload?.room ||
-              payload?.roomId ||
-              payload?.room_id ||
-              ''
-            )
-              .trim()
-              .slice(
-                0,
-                200
-              );
-
-          if (!room) {
-
-            if (
-              typeof callback ===
-              'function'
-            ) {
-
-              callback({
-
-                ok: false,
-
-                msg:
-                  'Sala no válida'
-
-              });
-
-            }
-
-            return;
-
-          }
-
-          const roomName =
-            `meet:${room}`;
-
-          const socketIds =
-            await io
-              .in(
-                roomName
-              )
-              .allSockets();
-
-          const users = [];
-
-          for (
-            const socketId
-            of socketIds
-          ) {
-
-            const existingSocket =
-              io.sockets.sockets.get(
-                socketId
-              );
-
-            if (
-              !existingSocket ||
-              !existingSocket.vobixUser
-            ) {
-
-              continue;
-
-            }
-
-            users.push({
-
-              id:
-                socketId,
-
-              socketId,
-
-              userId:
-                existingSocket
-                  .vobixUser.id,
-
-              username:
-                existingSocket
-                  .vobixUser.username,
-
-              avatarUrl:
-                existingSocket
-                  .vobixUser.avatar_url ||
-                null
-
-            });
-
-          }
-
-          socket.join(
-            roomName
-          );
-
-          socket.data.meetRoom =
-            room;
-
-          socket.emit(
-            'meet-users',
-            users
-          );
-
-          socket
-            .to(
-              roomName
-            )
-            .emit(
-              'meet-user-joined',
-              {
-
                 id:
-                  socket.id,
-
-                socketId:
-                  socket.id,
-
-                userId:
-                  user.id,
+                  target.id,
 
                 username:
-                  user.username,
+                  target.username,
 
                 avatarUrl:
-                  user.avatar_url ||
-                  null
+                  target.avatar_url,
+
+                online:
+                  target.online
 
               }
-            );
-
-          if (
-            typeof callback ===
-            'function'
-          ) {
-
-            callback({
-
-              ok: true,
-
-              room,
-
-              users
 
             });
 
           }
 
+
         } catch (error) {
 
           console.error(
-            'VOBIXCHAT MEET JOIN ERROR:',
+            'VOBIXCHAT CALL ADD USER ERROR:',
             error
           );
 
+
           if (
             typeof callback ===
             'function'
           ) {
 
             callback({
-
               ok: false,
-
               msg:
-                'No se pudo entrar a la reunión'
-
+                'No se pudo agregar el usuario'
             });
 
           }
@@ -5367,160 +3990,167 @@ io.on(
 
 
     // ==================================================
-    // SEÑALIZACIÓN WEBRTC PARA MEET
+    // TERMINAR / SALIR DE LLAMADA
     // ==================================================
 
     socket.on(
-      'meet-signal',
-      payload => {
-
-        try {
-
-          const targetSocketId =
-            String(
-              payload?.to ||
-              payload?.targetSocketId ||
-              payload?.target_socket_id ||
-              ''
-            ).trim();
-
-          const signal =
-            payload?.signal;
-
-          if (
-            !targetSocketId ||
-            !signal
-          ) {
-
-            return;
-
-          }
-
-          const targetSocket =
-            io.sockets.sockets.get(
-              targetSocketId
-            );
-
-          if (!targetSocket) {
-
-            return;
-
-          }
-
-          const myRoom =
-            socket.data.meetRoom;
-
-          const targetRoom =
-            targetSocket.data.meetRoom;
-
-          if (
-            !myRoom ||
-            !targetRoom ||
-            String(
-              myRoom
-            ) !==
-            String(
-              targetRoom
-            )
-          ) {
-
-            return;
-
-          }
-
-          io
-            .to(
-              targetSocketId
-            )
-            .emit(
-              'meet-signal',
-              {
-
-                from:
-                  socket.id,
-
-                fromUserId:
-                  user.id,
-
-                fromUsername:
-                  user.username,
-
-                signal
-
-              }
-            );
-
-        } catch (error) {
-
-          console.error(
-            'VOBIXCHAT MEET SIGNAL ERROR:',
-            error.message
-          );
-
-        }
-
-      }
-    );
-
-
-    // ==================================================
-    // SALIR DE REUNIÓN
-    // ==================================================
-
-    socket.on(
-      'meet-leave',
-      (
-        payload,
+      'call:end',
+      async (
+        payload = {},
         callback
       ) => {
 
         try {
 
-          const room =
+          const callId =
             String(
-              payload?.room ||
-              payload?.roomId ||
-              payload?.room_id ||
-              socket.data.meetRoom ||
+              payload.callId ||
               ''
             ).trim();
 
-          if (room) {
 
-            const roomName =
-              `meet:${room}`;
+          const call =
+            activeCalls.get(
+              callId
+            );
 
-            socket
+
+          if (!call) {
+
+            if (
+              typeof callback ===
+              'function'
+            ) {
+
+              callback({
+                ok: true
+              });
+
+            }
+
+            return;
+
+          }
+
+
+          const currentUserKey =
+            String(userId);
+
+
+          // ==============================================
+          // EL CREADOR TERMINA LA LLAMADA COMPLETA
+          // ==============================================
+
+          if (
+            String(
+              call.callerId
+            ) ===
+            currentUserKey
+          ) {
+
+            io
               .to(
-                roomName
+                callRoom(
+                  callId
+                )
               )
               .emit(
-                'meet-user-left',
+                'call:ended',
                 {
 
-                  id:
-                    socket.id,
+                  callId,
 
-                  socketId:
-                    socket.id,
-
-                  userId:
-                    user.id,
-
-                  username:
-                    user.username
+                  endedBy:
+                    userId
 
                 }
               );
 
-            socket.leave(
-              roomName
+
+            for (
+              const invitedUserId
+              of call.invited
+            ) {
+
+              io
+                .to(
+                  userRoom(
+                    invitedUserId
+                  )
+                )
+                .emit(
+                  'call:ended',
+                  {
+
+                    callId,
+
+                    endedBy:
+                      userId
+
+                  }
+                );
+
+            }
+
+
+            activeCalls.delete(
+              callId
             );
+
+
+          } else {
+
+            // ============================================
+            // OTRO PARTICIPANTE SOLO SALE DE LA LLAMADA
+            // ============================================
+
+            call.participants.delete(
+              currentUserKey
+            );
+
+
+            call.invited.delete(
+              currentUserKey
+            );
+
+
+            await socket.leave(
+              callRoom(
+                callId
+              )
+            );
+
+
+            io
+              .to(
+                callRoom(
+                  callId
+                )
+              )
+              .emit(
+                'call:user-left',
+                {
+
+                  callId,
+
+                  userId
+
+                }
+              );
+
+
+            if (
+              call.participants.size === 0
+            ) {
+
+              activeCalls.delete(
+                callId
+              );
+
+            }
 
           }
 
-          socket.data.meetRoom =
-            null;
 
           if (
             typeof callback ===
@@ -5528,19 +4158,19 @@ io.on(
           ) {
 
             callback({
-
               ok: true
-
             });
 
           }
 
+
         } catch (error) {
 
           console.error(
-            'VOBIXCHAT MEET LEAVE ERROR:',
-            error.message
+            'VOBIXCHAT CALL END ERROR:',
+            error
           );
+
 
           if (
             typeof callback ===
@@ -5548,9 +4178,7 @@ io.on(
           ) {
 
             callback({
-
               ok: false
-
             });
 
           }
@@ -5561,68 +4189,216 @@ io.on(
     );
 
 
-    // ==================================================
-    // COMPATIBILIDAD WEBRTC GENÉRICA
+// ======================================================
+// NO CERRAMOS io.on TODAVÍA.
+//
+// BLOQUE 5/6:
+// - WebRTC offer
+// - WebRTC answer
+// - ICE candidates
+// - desconexión
+// - presencia
+// - limpieza de llamadas
+// ======================================================
+     // ==================================================
+    // WEBRTC - OFFER
     // ==================================================
 
     socket.on(
-      'webrtc-signal',
-      payload => {
+      'webrtc:offer',
+      async (
+        payload = {},
+        callback
+      ) => {
 
         try {
 
-          const targetSocketId =
+          const callId =
             String(
-              payload?.to ||
-              payload?.targetSocketId ||
+              payload.callId ||
               ''
             ).trim();
 
-          if (!targetSocketId) {
+          const targetUserId =
+            String(
+              payload.targetUserId ||
+              payload.userId ||
+              ''
+            ).trim();
+
+          const offer =
+            payload.offer ||
+            payload.sdp ||
+            null;
+
+
+          if (
+            !callId ||
+            !targetUserId ||
+            !offer
+          ) {
+
+            if (
+              typeof callback ===
+              'function'
+            ) {
+
+              callback({
+                ok: false,
+                msg:
+                  'Oferta WebRTC incompleta'
+              });
+
+            }
 
             return;
 
           }
 
-          const targetSocket =
-            io.sockets.sockets.get(
-              targetSocketId
+
+          const call =
+            activeCalls.get(
+              callId
             );
 
-          if (!targetSocket) {
+
+          if (!call) {
+
+            if (
+              typeof callback ===
+              'function'
+            ) {
+
+              callback({
+                ok: false,
+                msg:
+                  'La llamada ya terminó'
+              });
+
+            }
 
             return;
 
           }
+
+
+          if (
+            !call.participants.has(
+              String(userId)
+            )
+          ) {
+
+            if (
+              typeof callback ===
+              'function'
+            ) {
+
+              callback({
+                ok: false,
+                msg:
+                  'No perteneces a esta llamada'
+              });
+
+            }
+
+            return;
+
+          }
+
+
+          if (
+            !call.participants.has(
+              targetUserId
+            ) &&
+            !call.invited.has(
+              targetUserId
+            )
+          ) {
+
+            if (
+              typeof callback ===
+              'function'
+            ) {
+
+              callback({
+                ok: false,
+                msg:
+                  'El destinatario no pertenece a esta llamada'
+              });
+
+            }
+
+            return;
+
+          }
+
 
           io
             .to(
-              targetSocketId
+              userRoom(
+                targetUserId
+              )
             )
             .emit(
-              'webrtc-signal',
+              'webrtc:offer',
               {
 
-                ...payload,
-
-                from:
-                  socket.id,
+                callId,
 
                 fromUserId:
-                  user.id,
+                  userId,
 
-                fromUsername:
-                  user.username
+                fromUser: {
+
+                  id:
+                    userId,
+
+                  username:
+                    user.username,
+
+                  avatarUrl:
+                    user.avatarUrl
+
+                },
+
+                offer
 
               }
             );
 
+
+          if (
+            typeof callback ===
+            'function'
+          ) {
+
+            callback({
+              ok: true
+            });
+
+          }
+
+
         } catch (error) {
 
           console.error(
-            'VOBIXCHAT GENERIC WEBRTC ERROR:',
-            error.message
+            'VOBIXCHAT WEBRTC OFFER ERROR:',
+            error
           );
+
+
+          if (
+            typeof callback ===
+            'function'
+          ) {
+
+            callback({
+              ok: false,
+              msg:
+                'No se pudo enviar la oferta WebRTC'
+            });
+
+          }
 
         }
 
@@ -5631,26 +4407,201 @@ io.on(
 
 
     // ==================================================
-    // REFRESCAR CONVERSACIÓN
+    // WEBRTC - ANSWER
     // ==================================================
 
     socket.on(
-      'conversation:refresh',
-      (
-        payload,
+      'webrtc:answer',
+      async (
+        payload = {},
         callback
       ) => {
 
-        if (
-          typeof callback ===
-          'function'
-        ) {
+        try {
 
-          callback({
+          const callId =
+            String(
+              payload.callId ||
+              ''
+            ).trim();
 
-            ok: true
+          const targetUserId =
+            String(
+              payload.targetUserId ||
+              payload.userId ||
+              ''
+            ).trim();
 
-          });
+          const answer =
+            payload.answer ||
+            payload.sdp ||
+            null;
+
+
+          if (
+            !callId ||
+            !targetUserId ||
+            !answer
+          ) {
+
+            if (
+              typeof callback ===
+              'function'
+            ) {
+
+              callback({
+                ok: false,
+                msg:
+                  'Respuesta WebRTC incompleta'
+              });
+
+            }
+
+            return;
+
+          }
+
+
+          const call =
+            activeCalls.get(
+              callId
+            );
+
+
+          if (!call) {
+
+            if (
+              typeof callback ===
+              'function'
+            ) {
+
+              callback({
+                ok: false,
+                msg:
+                  'La llamada ya terminó'
+              });
+
+            }
+
+            return;
+
+          }
+
+
+          if (
+            !call.participants.has(
+              String(userId)
+            )
+          ) {
+
+            if (
+              typeof callback ===
+              'function'
+            ) {
+
+              callback({
+                ok: false,
+                msg:
+                  'No perteneces a esta llamada'
+              });
+
+            }
+
+            return;
+
+          }
+
+
+          if (
+            !call.participants.has(
+              targetUserId
+            )
+          ) {
+
+            if (
+              typeof callback ===
+              'function'
+            ) {
+
+              callback({
+                ok: false,
+                msg:
+                  'El destinatario no está en la llamada'
+              });
+
+            }
+
+            return;
+
+          }
+
+
+          io
+            .to(
+              userRoom(
+                targetUserId
+              )
+            )
+            .emit(
+              'webrtc:answer',
+              {
+
+                callId,
+
+                fromUserId:
+                  userId,
+
+                fromUser: {
+
+                  id:
+                    userId,
+
+                  username:
+                    user.username,
+
+                  avatarUrl:
+                    user.avatarUrl
+
+                },
+
+                answer
+
+              }
+            );
+
+
+          if (
+            typeof callback ===
+            'function'
+          ) {
+
+            callback({
+              ok: true
+            });
+
+          }
+
+
+        } catch (error) {
+
+          console.error(
+            'VOBIXCHAT WEBRTC ANSWER ERROR:',
+            error
+          );
+
+
+          if (
+            typeof callback ===
+            'function'
+          ) {
+
+            callback({
+              ok: false,
+              msg:
+                'No se pudo enviar la respuesta WebRTC'
+            });
+
+          }
 
         }
 
@@ -5659,7 +4610,221 @@ io.on(
 
 
     // ==================================================
-    // DESCONEXIÓN
+    // WEBRTC - ICE CANDIDATE
+    // ==================================================
+
+    socket.on(
+      'webrtc:ice-candidate',
+      async (
+        payload = {},
+        callback
+      ) => {
+
+        try {
+
+          const callId =
+            String(
+              payload.callId ||
+              ''
+            ).trim();
+
+          const targetUserId =
+            String(
+              payload.targetUserId ||
+              payload.userId ||
+              ''
+            ).trim();
+
+          const candidate =
+            payload.candidate ||
+            null;
+
+
+          if (
+            !callId ||
+            !targetUserId ||
+            !candidate
+          ) {
+
+            if (
+              typeof callback ===
+              'function'
+            ) {
+
+              callback({
+                ok: false,
+                msg:
+                  'ICE candidate incompleto'
+              });
+
+            }
+
+            return;
+
+          }
+
+
+          const call =
+            activeCalls.get(
+              callId
+            );
+
+
+          if (!call) {
+
+            if (
+              typeof callback ===
+              'function'
+            ) {
+
+              callback({
+                ok: false,
+                msg:
+                  'La llamada ya terminó'
+              });
+
+            }
+
+            return;
+
+          }
+
+
+          if (
+            !call.participants.has(
+              String(userId)
+            )
+          ) {
+
+            if (
+              typeof callback ===
+              'function'
+            ) {
+
+              callback({
+                ok: false,
+                msg:
+                  'No perteneces a esta llamada'
+              });
+
+            }
+
+            return;
+
+          }
+
+
+          if (
+            !call.participants.has(
+              targetUserId
+            ) &&
+            !call.invited.has(
+              targetUserId
+            )
+          ) {
+
+            if (
+              typeof callback ===
+              'function'
+            ) {
+
+              callback({
+                ok: false,
+                msg:
+                  'Destinatario WebRTC no válido'
+              });
+
+            }
+
+            return;
+
+          }
+
+
+          io
+            .to(
+              userRoom(
+                targetUserId
+              )
+            )
+            .emit(
+              'webrtc:ice-candidate',
+              {
+
+                callId,
+
+                fromUserId:
+                  userId,
+
+                candidate
+
+              }
+            );
+
+
+          if (
+            typeof callback ===
+            'function'
+          ) {
+
+            callback({
+              ok: true
+            });
+
+          }
+
+
+        } catch (error) {
+
+          console.error(
+            'VOBIXCHAT WEBRTC ICE ERROR:',
+            error
+          );
+
+
+          if (
+            typeof callback ===
+            'function'
+          ) {
+
+            callback({
+              ok: false,
+              msg:
+                'No se pudo enviar ICE candidate'
+            });
+
+          }
+
+        }
+
+      }
+    );
+
+
+    // ==================================================
+    // COMPATIBILIDAD CON EVENTOS WEBRTC ANTIGUOS
+    // ==================================================
+
+    socket.on(
+      'webrtc-offer',
+      payload => {
+
+        socket.emit(
+          'webrtc:compatibility-warning',
+          {
+            event:
+              'webrtc-offer',
+            use:
+              'webrtc:offer'
+          }
+        );
+
+      }
+    );
+
+
+    // ==================================================
+    // DESCONEXIÓN DEL SOCKET
     // ==================================================
 
     socket.on(
@@ -5672,238 +4837,59 @@ io.on(
 
 
         // ================================================
-        // AVISAR SI ESTABA EN REUNIÓN
+        // QUITAR ESTE DISPOSITIVO
         // ================================================
 
-        const meetRoom =
-          socket.data.meetRoom;
-
-        if (meetRoom) {
-
-          socket
-            .to(
-              `meet:${meetRoom}`
-            )
-            .emit(
-              'meet-user-left',
-              {
-
-                id:
-                  socket.id,
-
-                socketId:
-                  socket.id,
-
-                userId:
-                  user.id,
-
-                username:
-                  user.username
-
-              }
-            );
-
-        }
-
-
-        // ================================================
-        // MARCAR SALIDA EN LLAMADAS ACTIVAS
-        // ================================================
-
-        for (
-          const call
-          of activeCalls.values()
-        ) {
-
-          const participant =
-            getCallParticipant(
-              call,
-              userId
-            );
-
-          if (
-            !participant ||
-            participant.status !==
-              'connected'
-          ) {
-
-            continue;
-
-          }
-
-          /*
-            Si el usuario tiene otro socket abierto,
-            todavía no lo sacamos de la llamada.
-          */
-
-          const currentSockets =
-            userSockets.get(
-              String(
-                userId
-              )
-            );
-
-          if (
-            currentSockets &&
-            currentSockets.size > 1
-          ) {
-
-            continue;
-
-          }
-
-          participant.status =
-            'left';
-
-          for (
-            const item
-            of call.participants
-          ) {
-
-            if (
-              String(
-                item.userId
-              ) ===
-              String(
-                userId
-              )
-            ) {
-
-              continue;
-
-            }
-
-            emitToUser(
-              item.userId,
-              'call:user-left',
-              {
-
-                callId:
-                  call.id,
-
-                conversationId:
-                  call.conversationId,
-
-                userId,
-
-                username:
-                  user.username
-
-              }
-            );
-
-          }
-
-          const connected =
-            call.participants.filter(
-              item =>
-                item.status ===
-                'connected'
-            );
-
-          if (
-            connected.length <= 1
-          ) {
-
-            call.status =
-              'ended';
-
-            call.endedAt =
-              new Date()
-                .toISOString();
-
-            for (
-              const item
-              of call.participants
-            ) {
-
-              emitToUser(
-                item.userId,
-                'call:ended',
-                {
-
-                  callId:
-                    call.id,
-
-                  conversationId:
-                    call.conversationId,
-
-                  endedAt:
-                    call.endedAt
-
-                }
-              );
-
-            }
-
-          }
-
-          emitCallState(
-            call
-          );
-
-        }
-
-
-        // ================================================
-        // ELIMINAR SOCKET
-        // ================================================
-
-        socketUsers.delete(
-          socket.id
-        );
-
-        const remainingSockets =
-          removeUserSocket(
+        const completelyOffline =
+          removeOnlineSocket(
             userId,
             socket.id
           );
 
 
         // ================================================
-        // SI TIENE OTRO DISPOSITIVO, SIGUE ONLINE
+        // SOLO MARCAR OFFLINE SI NO TIENE OTRO
+        // DISPOSITIVO CONECTADO
         // ================================================
 
         if (
-          remainingSockets > 0
+          completelyOffline
         ) {
 
-          return;
+          try {
 
-        }
+            await database.query(
+              `
+              UPDATE users
+
+              SET
+                online = FALSE,
+                last_seen = NOW()
+
+              WHERE
+                id = $1
+              `,
+              [
+                userId
+              ]
+            );
 
 
-        // ================================================
-        // MARCAR OFFLINE
-        // ================================================
+          } catch (error) {
 
-        try {
+            console.error(
+              'VOBIXCHAT OFFLINE UPDATE ERROR:',
+              error
+            );
 
-          await database.query(
-            `
-            UPDATE users
+          }
 
-            SET
-              online = FALSE,
-              last_seen = NOW(),
-              updated_at = NOW()
-
-            WHERE
-              id = $1
-            `,
-            [
-              userId
-            ]
-          );
 
           io.emit(
             'presence:update',
             {
 
               userId,
-
-              username:
-                user.username,
 
               online:
                 false,
@@ -5915,966 +4901,801 @@ io.on(
             }
           );
 
-        } catch (error) {
-
-          console.error(
-            'VOBIXCHAT OFFLINE ERROR:',
-            error.message
-          );
-
         }
 
-      }
-    );
-       // ==================================================
-    // CONSULTAR ESTADO DE UNA LLAMADA
-    // ==================================================
 
-    socket.on(
-      'call:get-state',
-      (
-        payload,
-        callback
-      ) => {
+        // ================================================
+        // LIMPIAR PARTICIPACIÓN EN LLAMADAS
+        // ================================================
 
-        try {
+        for (
+          const [
+            callId,
+            call
+          ]
+          of activeCalls.entries()
+        ) {
 
-          const callId =
-            String(
-              payload?.callId ||
-              payload?.call_id ||
-              ''
-            ).trim();
+          const userKey =
+            String(userId);
 
-          const call =
-            getCallById(
-              callId
+
+          const wasParticipant =
+            call.participants.has(
+              userKey
             );
 
-          if (!call) {
 
-            if (
-              typeof callback ===
-              'function'
-            ) {
-
-              callback({
-
-                ok: false,
-
-                msg:
-                  'Llamada no encontrada'
-
-              });
-
-            }
-
-            return;
-
-          }
-
-          if (
-            !userBelongsToCall(
-              call,
-              userId
-            )
-          ) {
-
-            if (
-              typeof callback ===
-              'function'
-            ) {
-
-              callback({
-
-                ok: false,
-
-                msg:
-                  'No perteneces a esta llamada'
-
-              });
-
-            }
-
-            return;
-
-          }
-
-          if (
-            typeof callback ===
-            'function'
-          ) {
-
-            callback({
-
-              ok: true,
-
-              call: {
-
-                callId:
-                  call.id,
-
-                conversationId:
-                  call.conversationId,
-
-                type:
-                  call.type,
-
-                status:
-                  call.status,
-
-                callerUserId:
-                  call.callerUserId,
-
-                createdAt:
-                  call.createdAt,
-
-                startedAt:
-                  call.startedAt ||
-                  null,
-
-                endedAt:
-                  call.endedAt ||
-                  null,
-
-                participants:
-                  call.participants.map(
-                    participant => ({
-
-                      userId:
-                        participant.userId,
-
-                      username:
-                        participant.username,
-
-                      avatarUrl:
-                        participant.avatarUrl ||
-                        null,
-
-                      status:
-                        participant.status
-
-                    })
-                  )
-
-              }
-
-            });
-
-          }
-
-        } catch (error) {
-
-          console.error(
-            'VOBIXCHAT CALL STATE ERROR:',
-            error.message
-          );
-
-          if (
-            typeof callback ===
-            'function'
-          ) {
-
-            callback({
-
-              ok: false
-
-            });
-
-          }
-
-        }
-
-      }
-    );
-
-
-    // ==================================================
-    // INVITACIÓN RÁPIDA A USUARIO
-    // ==================================================
-
-    socket.on(
-      'user:invite',
-      async (
-        payload,
-        callback
-      ) => {
-
-        try {
-
-          const targetUserId =
-            String(
-              payload?.userId ||
-              payload?.user_id ||
-              payload?.targetUserId ||
-              ''
-            ).trim();
-
-          if (!targetUserId) {
-
-            if (
-              typeof callback ===
-              'function'
-            ) {
-
-              callback({
-
-                ok: false,
-
-                msg:
-                  'Usuario no válido'
-
-              });
-
-            }
-
-            return;
-
-          }
-
-          if (
-            String(
-              targetUserId
-            ) ===
-            String(
-              userId
-            )
-          ) {
-
-            if (
-              typeof callback ===
-              'function'
-            ) {
-
-              callback({
-
-                ok: false,
-
-                msg:
-                  'No puedes invitarte a ti mismo'
-
-              });
-
-            }
-
-            return;
-
-          }
-
-          const targetResult =
-            await database.query(
-              `
-              SELECT
-                id,
-                username,
-                phone,
-                vobix_id,
-                avatar_url,
-                verified,
-                online,
-                last_seen
-
-              FROM users
-
-              WHERE
-                id = $1
-                AND verified = TRUE
-
-              LIMIT 1
-              `,
-              [
-                targetUserId
-              ]
+          const wasInvited =
+            call.invited.has(
+              userKey
             );
 
-          if (
-            targetResult.rows.length === 0
-          ) {
-
-            if (
-              typeof callback ===
-              'function'
-            ) {
-
-              callback({
-
-                ok: false,
-
-                msg:
-                  'Usuario no encontrado'
-
-              });
-
-            }
-
-            return;
-
-          }
-
-          const targetUser =
-            targetResult.rows[0];
-
-          emitToUser(
-            targetUser.id,
-            'user:invitation',
-            {
-
-              from: {
-
-                userId:
-                  user.id,
-
-                username:
-                  user.username,
-
-                vobixId:
-                  user.vobix_id,
-
-                avatarUrl:
-                  user.avatar_url ||
-                  null
-
-              },
-
-              createdAt:
-                new Date()
-                  .toISOString()
-
-            }
-          );
 
           if (
-            typeof callback ===
-            'function'
+            !wasParticipant &&
+            !wasInvited
           ) {
 
-            callback({
-
-              ok: true,
-
-              user: {
-
-                id:
-                  targetUser.id,
-
-                username:
-                  targetUser.username,
-
-                vobixId:
-                  targetUser.vobix_id,
-
-                avatarUrl:
-                  targetUser.avatar_url,
-
-                online:
-                  targetUser.online
-
-              }
-
-            });
+            continue;
 
           }
 
-        } catch (error) {
-
-          console.error(
-            'VOBIXCHAT USER INVITE ERROR:',
-            error
-          );
-
-          if (
-            typeof callback ===
-            'function'
-          ) {
-
-            callback({
-
-              ok: false,
-
-              msg:
-                'No se pudo enviar la invitación'
-
-            });
-
-          }
-
-        }
-
-      }
-    );
-
-
-    // ==================================================
-    // SINCRONIZAR PRESENCIA
-    // ==================================================
-
-    socket.on(
-      'presence:get',
-      async (
-        payload,
-        callback
-      ) => {
-
-        try {
-
-          const targetUserId =
-            String(
-              payload?.userId ||
-              payload?.user_id ||
-              ''
-            ).trim();
-
-          if (!targetUserId) {
-
-            if (
-              typeof callback ===
-              'function'
-            ) {
-
-              callback({
-
-                ok: false
-
-              });
-
-            }
-
-            return;
-
-          }
-
-          const result =
-            await database.query(
-              `
-              SELECT
-                id,
-                username,
-                online,
-                last_seen
-
-              FROM users
-
-              WHERE
-                id = $1
-                AND verified = TRUE
-
-              LIMIT 1
-              `,
-              [
-                targetUserId
-              ]
-            );
-
-          if (
-            result.rows.length === 0
-          ) {
-
-            if (
-              typeof callback ===
-              'function'
-            ) {
-
-              callback({
-
-                ok: false
-
-              });
-
-            }
-
-            return;
-
-          }
-
-          const target =
-            result.rows[0];
-
-          if (
-            typeof callback ===
-            'function'
-          ) {
-
-            callback({
-
-              ok: true,
-
-              userId:
-                target.id,
-
-              username:
-                target.username,
-
-              online:
-                Boolean(
-                  target.online
-                ),
-
-              lastSeen:
-                target.last_seen
-
-            });
-
-          }
-
-        } catch (error) {
-
-          console.error(
-            'VOBIXCHAT PRESENCE GET ERROR:',
-            error.message
-          );
-
-          if (
-            typeof callback ===
-            'function'
-          ) {
-
-            callback({
-
-              ok: false
-
-            });
-
-          }
-
-        }
-
-      }
-    );
-
-
-    // ==================================================
-    // COMPATIBILIDAD: LLAMADA DE AUDIO
-    // ==================================================
-
-    socket.on(
-      'audio-call',
-      async (
-        payload,
-        callback
-      ) => {
-
-        try {
-
-          const conversationId =
-            String(
-              payload?.conversationId ||
-              payload?.conversation_id ||
-              ''
-            ).trim();
-
-          if (!conversationId) {
-
-            if (
-              typeof callback ===
-              'function'
-            ) {
-
-              callback({
-
-                ok: false,
-
-                msg:
-                  'Conversación no válida'
-
-              });
-
-            }
-
-            return;
-
-          }
 
           /*
-            El cliente moderno debe usar call:start.
-            Este evento se mantiene para compatibilidad
-            con versiones anteriores de la interfaz.
+            Si el usuario todavía tiene VOBIXCHAT abierto
+            en otro dispositivo, NO lo sacamos de la llamada
+            automáticamente por desconectar este socket.
           */
 
-          socket.emit(
-            'call:use-modern-api',
-            {
-
-              conversationId,
-
-              type:
-                'audio'
-
-            }
-          );
-
           if (
-            typeof callback ===
-            'function'
-          ) {
-
-            callback({
-
-              ok: true,
-
-              conversationId,
-
-              type:
-                'audio',
-
-              modernEvent:
-                'call:start'
-
-            });
-
-          }
-
-        } catch (error) {
-
-          console.error(
-            'VOBIXCHAT AUDIO CALL COMPAT ERROR:',
-            error.message
-          );
-
-        }
-
-      }
-    );
-
-
-    // ==================================================
-    // COMPATIBILIDAD: VIDEOLLAMADA
-    // ==================================================
-
-    socket.on(
-      'video-call',
-      async (
-        payload,
-        callback
-      ) => {
-
-        try {
-
-          const conversationId =
-            String(
-              payload?.conversationId ||
-              payload?.conversation_id ||
-              ''
-            ).trim();
-
-          if (!conversationId) {
-
-            if (
-              typeof callback ===
-              'function'
-            ) {
-
-              callback({
-
-                ok: false,
-
-                msg:
-                  'Conversación no válida'
-
-              });
-
-            }
-
-            return;
-
-          }
-
-          socket.emit(
-            'call:use-modern-api',
-            {
-
-              conversationId,
-
-              type:
-                'video'
-
-            }
-          );
-
-          if (
-            typeof callback ===
-            'function'
-          ) {
-
-            callback({
-
-              ok: true,
-
-              conversationId,
-
-              type:
-                'video',
-
-              modernEvent:
-                'call:start'
-
-            });
-
-          }
-
-        } catch (error) {
-
-          console.error(
-            'VOBIXCHAT VIDEO CALL COMPAT ERROR:',
-            error.message
-          );
-
-        }
-
-      }
-    );
-
-
-    // ==================================================
-    // CAMBIAR DE AUDIO A VIDEO
-    // ==================================================
-
-    socket.on(
-      'call:set-type',
-      (
-        payload,
-        callback
-      ) => {
-
-        try {
-
-          const callId =
-            String(
-              payload?.callId ||
-              payload?.call_id ||
-              ''
-            ).trim();
-
-          const requestedType =
-            String(
-              payload?.type ||
-              ''
-            )
-              .trim()
-              .toLowerCase();
-
-          const call =
-            getCallById(
-              callId
-            );
-
-          if (
-            !call ||
-            !userBelongsToCall(
-              call,
+            isUserOnline(
               userId
             )
           ) {
 
-            if (
-              typeof callback ===
-              'function'
-            ) {
-
-              callback({
-
-                ok: false,
-
-                msg:
-                  'Llamada no válida'
-
-              });
-
-            }
-
-            return;
+            continue;
 
           }
 
-          if (
-            requestedType !==
-              'audio' &&
-            requestedType !==
-              'video'
-          ) {
 
-            if (
-              typeof callback ===
-              'function'
-            ) {
+          call.participants.delete(
+            userKey
+          );
 
-              callback({
 
-                ok: false,
+          call.invited.delete(
+            userKey
+          );
 
-                msg:
-                  'Tipo de llamada no válido'
 
-              });
-
-            }
-
-            return;
-
-          }
-
-          call.type =
-            requestedType;
-
-          for (
-            const participant
-            of call.participants
-          ) {
-
-            emitToUser(
-              participant.userId,
-              'call:type-changed',
+          io
+            .to(
+              callRoom(
+                callId
+              )
+            )
+            .emit(
+              'call:user-left',
               {
 
                 callId,
 
-                type:
-                  call.type,
+                userId,
 
-                changedBy:
-                  userId
+                disconnected:
+                  true
 
               }
             );
 
-          }
 
-          emitCallState(
-            call
-          );
+          // ==============================================
+          // SI ERA EL CREADOR Y YA NO ESTÁ CONECTADO
+          // TERMINAR LA LLAMADA
+          // ==============================================
 
           if (
-            typeof callback ===
-            'function'
+            String(
+              call.callerId
+            ) ===
+            userKey
           ) {
 
-            callback({
+            io
+              .to(
+                callRoom(
+                  callId
+                )
+              )
+              .emit(
+                'call:ended',
+                {
 
-              ok: true,
+                  callId,
+
+                  endedBy:
+                    userId,
+
+                  reason:
+                    'caller-disconnected'
+
+                }
+              );
+
+
+            for (
+              const invitedUserId
+              of call.invited
+            ) {
+
+              io
+                .to(
+                  userRoom(
+                    invitedUserId
+                  )
+                )
+                .emit(
+                  'call:ended',
+                  {
+
+                    callId,
+
+                    endedBy:
+                      userId,
+
+                    reason:
+                      'caller-disconnected'
+
+                  }
+                );
+
+            }
+
+
+            activeCalls.delete(
+              callId
+            );
+
+
+            continue;
+
+          }
+
+
+          // ==============================================
+          // SI NO QUEDA NADIE, BORRAR LLAMADA
+          // ==============================================
+
+          if (
+            call.participants.size === 0
+          ) {
+
+            activeCalls.delete(
+              callId
+            );
+
+          }
+
+        }
+
+      }
+    );
+
+
+// ======================================================
+// AHORA SÍ CERRAMOS io.on('connection')
+// ======================================================
+
+  }
+);
+
+
+// ======================================================
+// LIMPIEZA PERIÓDICA DE LLAMADAS ABANDONADAS
+// ======================================================
+
+const CALL_MAX_AGE_MS =
+  6 *
+  60 *
+  60 *
+  1000;
+
+
+setInterval(
+  () => {
+
+    const now =
+      Date.now();
+
+
+    for (
+      const [
+        callId,
+        call
+      ]
+      of activeCalls.entries()
+    ) {
+
+      if (
+        now -
+        call.createdAt >
+        CALL_MAX_AGE_MS
+      ) {
+
+        io
+          .to(
+            callRoom(
+              callId
+            )
+          )
+          .emit(
+            'call:ended',
+            {
 
               callId,
 
-              type:
-                call.type
+              reason:
+                'expired'
 
-            });
-
-          }
-
-        } catch (error) {
-
-          console.error(
-            'VOBIXCHAT CALL TYPE ERROR:',
-            error.message
+            }
           );
 
-          if (
-            typeof callback ===
-            'function'
-          ) {
 
-            callback({
+        for (
+          const invitedUserId
+          of call.invited
+        ) {
 
-              ok: false
+          io
+            .to(
+              userRoom(
+                invitedUserId
+              )
+            )
+            .emit(
+              'call:ended',
+              {
 
-            });
+                callId,
 
-          }
+                reason:
+                  'expired'
+
+              }
+            );
 
         }
 
+
+        activeCalls.delete(
+          callId
+        );
+
       }
+
+    }
+
+  },
+
+  10 * 60 * 1000
+
+);
+
+
+// ======================================================
+// LIMPIAR SESIONES VENCIDAS PERIÓDICAMENTE
+// ======================================================
+
+setInterval(
+  cleanExpiredSessions,
+  60 * 60 * 1000
+);
+
+
+// ======================================================
+// FIN BLOQUE 5/6
+//
+// BLOQUE 6 CIERRA server.js:
+// - push notifications
+// - fallback frontend
+// - inicialización BD
+// - arranque del servidor
+// ======================================================
+// ======================================================
+// BLOQUE 6/6
+// PUSH / FRONTEND / INICIALIZACIÓN / ARRANQUE
+// ======================================================
+
+
+// ======================================================
+// CONFIGURAR WEB PUSH
+// ======================================================
+
+let pushEnabled =
+  false;
+
+
+if (
+  webpush &&
+  config.VAPID_PUBLIC_KEY &&
+  config.VAPID_PRIVATE_KEY
+) {
+
+  try {
+
+    webpush.setVapidDetails(
+
+      config.VAPID_SUBJECT ||
+      'mailto:admin@vobixchat.com',
+
+      config.VAPID_PUBLIC_KEY,
+
+      config.VAPID_PRIVATE_KEY
+
     );
 
 
-    // ==================================================
-    // HEARTBEAT DEL SOCKET
-    // ==================================================
+    pushEnabled =
+      true;
 
-    socket.on(
-      'vobix:ping',
-      callback => {
 
-        if (
-          typeof callback ===
-          'function'
-        ) {
-
-          callback({
-
-            ok: true,
-
-            pong: true,
-
-            serverTime:
-              new Date()
-                .toISOString()
-
-          });
-
-        }
-
-      }
+    console.log(
+      'VOBIXCHAT | PUSH NOTIFICATIONS ACTIVADAS'
     );
 
 
-    // ==================================================
-    // INFORMACIÓN BÁSICA DEL USUARIO CONECTADO
-    // ==================================================
+  } catch (error) {
 
-    socket.on(
-      'session:get',
-      callback => {
+    console.error(
+      'VOBIXCHAT WEB PUSH CONFIG ERROR:',
+      error
+    );
 
-        if (
-          typeof callback !==
-          'function'
-        ) {
+  }
 
-          return;
+}
 
-        }
 
-        callback({
+// ======================================================
+// CLAVE PÚBLICA PUSH
+// ======================================================
 
-          ok: true,
+app.get(
+  '/api/push/public-key',
+  requireAuth,
+  (req, res) => {
 
-          user: {
+    if (
+      !pushEnabled
+    ) {
 
-            id:
-              user.id,
+      return res
+        .status(503)
+        .json({
 
-            username:
-              user.username,
+          ok: false,
 
-            phone:
-              user.phone,
+          enabled:
+            false,
 
-            vobixId:
-              user.vobix_id,
-
-            vobix_id:
-              user.vobix_id,
-
-            avatarUrl:
-              user.avatar_url,
-
-            avatar_url:
-              user.avatar_url,
-
-            online:
-              true
-
-          }
+          msg:
+            'Push notifications todavía no configuradas'
 
         });
 
+    }
+
+
+    return res.json({
+
+      ok: true,
+
+      enabled:
+        true,
+
+      publicKey:
+        config.VAPID_PUBLIC_KEY
+
+    });
+
+  }
+);
+
+
+// ======================================================
+// GUARDAR SUSCRIPCIÓN PUSH
+// ======================================================
+
+app.post(
+  '/api/push/subscribe',
+  requireAuth,
+  async (req, res) => {
+
+    const userId =
+      req.vobixUser.id;
+
+
+    const subscription =
+      req.body.subscription ||
+      req.body;
+
+
+    if (
+      !subscription ||
+      !subscription.endpoint ||
+      !subscription.keys
+    ) {
+
+      return res
+        .status(400)
+        .json({
+
+          ok: false,
+
+          msg:
+            'Suscripción push no válida'
+
+        });
+
+    }
+
+
+    try {
+
+      /*
+        Guardamos la suscripción si la tabla existe.
+
+        Esto permite que el Service Worker reciba
+        notificaciones incluso con VOBIXCHAT cerrado
+        o el teléfono en reposo, dependiendo de las
+        restricciones del sistema operativo.
+      */
+
+      await database.query(
+        `
+        INSERT INTO push_subscriptions
+        (
+          user_id,
+          endpoint,
+          p256dh,
+          auth,
+          created_at,
+          updated_at
+        )
+
+        VALUES
+        (
+          $1,
+          $2,
+          $3,
+          $4,
+          NOW(),
+          NOW()
+        )
+
+        ON CONFLICT
+        (
+          endpoint
+        )
+
+        DO UPDATE SET
+          user_id =
+            EXCLUDED.user_id,
+
+          p256dh =
+            EXCLUDED.p256dh,
+
+          auth =
+            EXCLUDED.auth,
+
+          updated_at =
+            NOW()
+        `,
+        [
+          userId,
+          subscription.endpoint,
+          subscription.keys.p256dh,
+          subscription.keys.auth
+        ]
+      );
+
+
+      return res.json({
+
+        ok: true
+
+      });
+
+
+    } catch (error) {
+
+      console.error(
+        'VOBIXCHAT PUSH SUBSCRIBE ERROR:',
+        error
+      );
+
+
+      return res
+        .status(500)
+        .json({
+
+          ok: false,
+
+          msg:
+            'No se pudo guardar la suscripción push'
+
+        });
+
+    }
+
+  }
+);
+
+
+// ======================================================
+// ELIMINAR SUSCRIPCIÓN PUSH
+// ======================================================
+
+app.post(
+  '/api/push/unsubscribe',
+  requireAuth,
+  async (req, res) => {
+
+    const userId =
+      req.vobixUser.id;
+
+
+    const endpoint =
+      String(
+        req.body.endpoint ||
+        ''
+      ).trim();
+
+
+    if (!endpoint) {
+
+      return res
+        .status(400)
+        .json({
+
+          ok: false,
+
+          msg:
+            'Endpoint no válido'
+
+        });
+
+    }
+
+
+    try {
+
+      await database.query(
+        `
+        DELETE FROM push_subscriptions
+
+        WHERE
+          user_id = $1
+          AND endpoint = $2
+        `,
+        [
+          userId,
+          endpoint
+        ]
+      );
+
+
+      return res.json({
+
+        ok: true
+
+      });
+
+
+    } catch (error) {
+
+      console.error(
+        'VOBIXCHAT PUSH UNSUBSCRIBE ERROR:',
+        error
+      );
+
+
+      return res
+        .status(500)
+        .json({
+
+          ok: false,
+
+          msg:
+            'No se pudo eliminar la suscripción'
+
+        });
+
+    }
+
+  }
+);
+
+
+// ======================================================
+// ENVIAR PUSH A UN USUARIO
+// ======================================================
+
+async function sendPushToUser(
+  targetUserId,
+  payload
+) {
+
+  if (
+    !pushEnabled ||
+    !targetUserId
+  ) {
+
+    return;
+
+  }
+
+
+  try {
+
+    const result =
+      await database.query(
+        `
+        SELECT
+          id,
+          endpoint,
+          p256dh,
+          auth
+
+        FROM push_subscriptions
+
+        WHERE
+          user_id = $1
+        `,
+        [
+          targetUserId
+        ]
+      );
+
+
+    for (
+      const row
+      of result.rows
+    ) {
+
+      const subscription = {
+
+        endpoint:
+          row.endpoint,
+
+        keys: {
+
+          p256dh:
+            row.p256dh,
+
+          auth:
+            row.auth
+
+        }
+
+      };
+
+
+      try {
+
+        await webpush.sendNotification(
+
+          subscription,
+
+          JSON.stringify(
+            payload
+          )
+
+        );
+
+
+      } catch (error) {
+
+        /*
+          404 / 410 significa normalmente que
+          la suscripción del navegador venció.
+        */
+
+        if (
+          error.statusCode === 404 ||
+          error.statusCode === 410
+        ) {
+
+          try {
+
+            await database.query(
+              `
+              DELETE FROM push_subscriptions
+
+              WHERE
+                id = $1
+              `,
+              [
+                row.id
+              ]
+            );
+
+          } catch (
+            deleteError
+          ) {
+
+            console.error(
+              'VOBIXCHAT DELETE DEAD PUSH ERROR:',
+              deleteError.message
+            );
+
+          }
+
+
+          continue;
+
+        }
+
+
+        console.error(
+          'VOBIXCHAT SEND PUSH ERROR:',
+          error.message
+        );
+
       }
+
+    }
+
+
+  } catch (error) {
+
+    console.error(
+      'VOBIXCHAT PUSH QUERY ERROR:',
+      error
     );
 
+  }
 
-    // ==================================================
-    // CIERRE DEL HANDLER PRINCIPAL SOCKET.IO
-    // ==================================================
+}
+
+
+// ======================================================
+// HACER FUNCIÓN PUSH DISPONIBLE EN EXPRESS
+// ======================================================
+
+app.set(
+  'sendPushToUser',
+  sendPushToUser
+);
+
+
+// ======================================================
+// HACER FUNCIÓN PUSH DISPONIBLE GLOBALMENTE
+// PARA SOCKET / OTROS MÓDULOS DEL PROYECTO
+// ======================================================
+
+global.vobixSendPushToUser =
+  sendPushToUser;
+
+
+// ======================================================
+// INFORMACIÓN DE PUSH
+// ======================================================
+
+app.get(
+  '/api/push/status',
+  requireAuth,
+  (req, res) => {
+
+    return res.json({
+
+      ok: true,
+
+      enabled:
+        pushEnabled
+
+    });
 
   }
 );
@@ -6886,10 +5707,7 @@ io.on(
 
 app.get(
   '/',
-  (
-    req,
-    res
-  ) => {
+  (req, res) => {
 
     return res.sendFile(
       path.join(
@@ -6904,79 +5722,91 @@ app.get(
 
 
 // ======================================================
-// RUTA DIRECTA AL CHAT
+// FALLBACK DEL FRONTEND
 // ======================================================
-
-app.get(
-  '/chat',
-  (
-    req,
-    res
-  ) => {
-
-    return res.sendFile(
-      path.join(
-        __dirname,
-        'public',
-        'chat.html'
-      )
-    );
-
-  }
-);
-
-
-// ======================================================
-// RUTA DIRECTA AL CHAT CON BARRA FINAL
-// ======================================================
-
-app.get(
-  '/chat/',
-  (
-    req,
-    res
-  ) => {
-
-    return res.sendFile(
-      path.join(
-        __dirname,
-        'public',
-        'chat.html'
-      )
-    );
-
-  }
-);
-
-
-// ======================================================
-// 404 PARA API
+//
+// IMPORTANTE:
+//
+// No interceptamos /api/*.
+//
+// Si la ruta no pertenece a la API,
+// servimos la aplicación principal.
+//
+// Esto permite navegar dentro de VOBIXCHAT
+// sin modificar la pantalla exterior.
+//
 // ======================================================
 
 app.use(
-  '/api',
-  (
-    req,
-    res
-  ) => {
+  (req, res, next) => {
 
-    return res
-      .status(404)
-      .json({
+    if (
+      req.path.startsWith(
+        '/api/'
+      )
+    ) {
 
-        ok: false,
+      return next();
 
-        msg:
-          'Ruta API no encontrada'
+    }
 
-      });
+
+    if (
+      req.method !== 'GET'
+    ) {
+
+      return next();
+
+    }
+
+
+    return res.sendFile(
+      path.join(
+        __dirname,
+        'public',
+        'index.html'
+      )
+    );
 
   }
 );
 
 
 // ======================================================
-// MANEJADOR GENERAL DE ERRORES
+// API 404
+// ======================================================
+
+app.use(
+  (req, res, next) => {
+
+    if (
+      req.path.startsWith(
+        '/api/'
+      )
+    ) {
+
+      return res
+        .status(404)
+        .json({
+
+          ok: false,
+
+          msg:
+            'Ruta API no encontrada'
+
+        });
+
+    }
+
+
+    return next();
+
+  }
+);
+
+
+// ======================================================
+// MANEJADOR GENERAL DE ERRORES EXPRESS
 // ======================================================
 
 app.use(
@@ -6992,6 +5822,7 @@ app.use(
       error
     );
 
+
     if (
       res.headersSent
     ) {
@@ -7001,6 +5832,7 @@ app.use(
       );
 
     }
+
 
     return res
       .status(500)
@@ -7018,121 +5850,41 @@ app.use(
 
 
 // ======================================================
-// PUERTO
+// EVITAR CAÍDA SILENCIOSA POR PROMESAS
 // ======================================================
 
-const PORT =
-  Number(
-    process.env.PORT ||
-    config.PORT ||
-    3000
-  );
-
-
-// ======================================================
-// ARRANQUE DEL SERVIDOR
-// ======================================================
-
-async function startVobixChat() {
-
-  try {
-
-    console.log(
-      '=========================================='
-    );
-
-    console.log(
-      ' VOBIXCHAT | INICIANDO'
-    );
-
-    console.log(
-      '=========================================='
-    );
-
-
-    // ==================================================
-    // COMPROBAR POSTGRESQL
-    // ==================================================
-
-    await database.query(
-      'SELECT 1'
-    );
-
-    console.log(
-      'VOBIXCHAT | POSTGRESQL CONECTADO'
-    );
-
-
-    // ==================================================
-    // INICIALIZAR / ACTUALIZAR SCHEMA
-    // ==================================================
-
-    await initializeDatabase();
-
-    console.log(
-      'VOBIXCHAT | DATABASE LISTA'
-    );
-
-
-    // ==================================================
-    // SERVIDOR HTTP + SOCKET.IO
-    // ==================================================
-
-    server.listen(
-      PORT,
-      '0.0.0.0',
-      () => {
-
-        console.log(
-          '=========================================='
-        );
-
-        console.log(
-          ` VOBIXCHAT ONLINE | PORT ${PORT}`
-        );
-
-        console.log(
-          ' API CHAT: /api/chat'
-        );
-
-        console.log(
-          ' HEALTH: /health'
-        );
-
-        console.log(
-          '=========================================='
-        );
-
-      }
-    );
-
-  } catch (error) {
+process.on(
+  'unhandledRejection',
+  error => {
 
     console.error(
-      '=========================================='
-    );
-
-    console.error(
-      ' VOBIXCHAT NO PUDO INICIAR'
-    );
-
-    console.error(
+      'VOBIXCHAT UNHANDLED REJECTION:',
       error
     );
 
-    console.error(
-      '=========================================='
-    );
+  }
+);
 
-    process.exit(
-      1
+
+// ======================================================
+// MOSTRAR ERRORES NO CONTROLADOS
+// ======================================================
+
+process.on(
+  'uncaughtException',
+  error => {
+
+    console.error(
+      'VOBIXCHAT UNCAUGHT EXCEPTION:',
+      error
     );
 
   }
+);
 
-}
+
 // ======================================================
-// CIERRE SEGURO DEL SERVIDOR
+// APAGADO CONTROLADO
 // ======================================================
 
 let shuttingDown =
@@ -7143,163 +5895,83 @@ async function shutdown(
   signal
 ) {
 
-  if (shuttingDown) {
+  if (
+    shuttingDown
+  ) {
 
     return;
 
   }
+
 
   shuttingDown =
     true;
 
 
   console.log(
-    '=========================================='
-  );
-
-  console.log(
-    ` VOBIXCHAT | CERRANDO | ${signal}`
-  );
-
-  console.log(
-    '=========================================='
+    `VOBIXCHAT | APAGANDO | ${signal}`
   );
 
 
   try {
 
-    // ==================================================
-    // AVISAR A CLIENTES CONECTADOS
-    // ==================================================
-
     io.emit(
       'server:shutdown',
       {
 
-        ok: false,
-
-        message:
-          'VOBIXCHAT se está reiniciando',
-
-        time:
-          new Date()
-            .toISOString()
+        reason:
+          'server-restart'
 
       }
     );
-
-
-    // ==================================================
-    // CERRAR SOCKET.IO
-    // ==================================================
-
-    try {
-
-      io.close();
-
-    } catch (error) {
-
-      console.error(
-        'VOBIXCHAT SOCKET CLOSE ERROR:',
-        error.message
-      );
-
-    }
-
-
-    // ==================================================
-    // CERRAR SERVIDOR HTTP
-    // ==================================================
-
-    server.close(
-      async () => {
-
-        console.log(
-          'VOBIXCHAT | HTTP CERRADO'
-        );
-
-
-        // ================================================
-        // CERRAR POSTGRESQL SI EL MÓDULO EXPONE EL POOL
-        // ================================================
-
-        try {
-
-          if (
-            database.pool &&
-            typeof database.pool.end ===
-              'function'
-          ) {
-
-            await database.pool.end();
-
-            console.log(
-              'VOBIXCHAT | POSTGRESQL CERRADO'
-            );
-
-          }
-
-        } catch (error) {
-
-          console.error(
-            'VOBIXCHAT DATABASE CLOSE ERROR:',
-            error.message
-          );
-
-        }
-
-
-        console.log(
-          'VOBIXCHAT | CIERRE COMPLETADO'
-        );
-
-        process.exit(
-          0
-        );
-
-      }
-    );
-
-
-    // ==================================================
-    // EVITAR QUE UN CIERRE BLOQUEADO QUEDE COLGADO
-    // ==================================================
-
-    setTimeout(
-      () => {
-
-        console.error(
-          'VOBIXCHAT | CIERRE FORZADO POR TIMEOUT'
-        );
-
-        process.exit(
-          1
-        );
-
-      },
-      10000
-    ).unref();
-
 
   } catch (error) {
 
     console.error(
-      'VOBIXCHAT SHUTDOWN ERROR:',
-      error
-    );
-
-    process.exit(
-      1
+      'VOBIXCHAT SOCKET SHUTDOWN ERROR:',
+      error.message
     );
 
   }
 
+
+  server.close(
+    () => {
+
+      console.log(
+        'VOBIXCHAT | SERVIDOR HTTP CERRADO'
+      );
+
+
+      process.exit(0);
+
+    }
+  );
+
+
+  /*
+    Seguridad:
+    si alguna conexión queda colgada,
+    terminar después de 10 segundos.
+  */
+
+  setTimeout(
+    () => {
+
+      console.error(
+        'VOBIXCHAT | APAGADO FORZADO'
+      );
+
+
+      process.exit(1);
+
+    },
+
+    10000
+  ).unref();
+
 }
 
-
-// ======================================================
-// SEÑALES DEL SISTEMA
-// ======================================================
 
 process.on(
   'SIGTERM',
@@ -7326,56 +5998,134 @@ process.on(
 
 
 // ======================================================
-// PROMESAS RECHAZADAS NO CONTROLADAS
+// INICIALIZAR VOBIXCHAT
 // ======================================================
 
-process.on(
-  'unhandledRejection',
-  (
-    reason,
-    promise
-  ) => {
+async function startVobixChat() {
+
+  try {
+
+    console.log(
+      '=========================================='
+    );
+
+    console.log(
+      ' VOBIXCHAT'
+    );
+
+    console.log(
+      ' INICIANDO SERVIDOR'
+    );
+
+    console.log(
+      '=========================================='
+    );
+
+
+    // ==================================================
+    // INICIALIZAR / ACTUALIZAR BASE DE DATOS
+    // ==================================================
+
+    console.log(
+      'VOBIXCHAT | INICIALIZANDO BASE DE DATOS...'
+    );
+
+
+    await initializeDatabase();
+
+
+    console.log(
+      'VOBIXCHAT | BASE DE DATOS LISTA'
+    );
+
+
+    // ==================================================
+    // COMPROBAR CONEXIÓN POSTGRESQL
+    // ==================================================
+
+    await database.query(
+      'SELECT 1'
+    );
+
+
+    console.log(
+      'VOBIXCHAT | POSTGRESQL CONECTADO'
+    );
+
+
+    // ==================================================
+    // PUERTO
+    // ==================================================
+
+    const port =
+      Number(
+        process.env.PORT ||
+        config.PORT ||
+        3000
+      );
+
+
+    // ==================================================
+    // ESCUCHAR
+    // ==================================================
+
+    server.listen(
+      port,
+      '0.0.0.0',
+      () => {
+
+        console.log(
+          '=========================================='
+        );
+
+        console.log(
+          ` VOBIXCHAT ACTIVO EN PUERTO ${port}`
+        );
+
+        console.log(
+          ` SOCKET.IO: ACTIVO`
+        );
+
+        console.log(
+          ` CHAT PRIVADO 1X1: ACTIVO`
+        );
+
+        console.log(
+          ` LLAMADAS: ACTIVAS`
+        );
+
+        console.log(
+          ` VIDEOLLAMADAS: ACTIVAS`
+        );
+
+        console.log(
+          ` MULTILLAMADA: ACTIVA`
+        );
+
+        console.log(
+          ` PUSH: ${
+            pushEnabled
+              ? 'ACTIVO'
+              : 'PENDIENTE DE VAPID'
+          }`
+        );
+
+        console.log(
+          '=========================================='
+        );
+
+      }
+    );
+
+
+  } catch (error) {
 
     console.error(
       '=========================================='
     );
 
     console.error(
-      'VOBIXCHAT | UNHANDLED REJECTION'
-    );
-
-    console.error(
-      'REASON:',
-      reason
-    );
-
-    console.error(
-      'PROMISE:',
-      promise
-    );
-
-    console.error(
-      '=========================================='
-    );
-
-  }
-);
-
-
-// ======================================================
-// EXCEPCIONES NO CONTROLADAS
-// ======================================================
-
-process.on(
-  'uncaughtException',
-  error => {
-
-    console.error(
-      '=========================================='
-    );
-
-    console.error(
-      'VOBIXCHAT | UNCAUGHT EXCEPTION'
+      ' VOBIXCHAT NO PUDO INICIAR'
     );
 
     console.error(
@@ -7386,25 +6136,23 @@ process.on(
       '=========================================='
     );
 
-    /*
-      No hacemos process.exit() inmediatamente aquí
-      para permitir que Render registre el error
-      completo y evitar cortar mensajes de diagnóstico.
-    */
+
+    process.exit(1);
 
   }
-);
+
+}
 
 
 // ======================================================
-// INICIAR VOBIXCHAT
+// ARRANCAR
 // ======================================================
 
 startVobixChat();
 
 
 // ======================================================
-// EXPORTACIONES
+// EXPORTS PARA PRUEBAS / OTROS MÓDULOS
 // ======================================================
 
 module.exports = {
@@ -7417,13 +6165,12 @@ module.exports = {
 
   requireAuth,
 
-  getSessionByToken,
-
-  emitToUser
+  sendPushToUser
 
 };
 
 
 // ======================================================
-// FIN DE server.js
+// FIN server.js
+// VOBIXCHAT
 // ======================================================
