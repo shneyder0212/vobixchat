@@ -1,0 +1,10323 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+  >
+
+  <meta
+    name="theme-color"
+    content="#0b160d"
+  >
+
+  <title>VOBIXCHAT</title>
+
+  <style>
+
+    /* =====================================================
+       VOBIXCHAT
+       PUBLIC/chat.html
+       V2 CORREGIDO
+       BLOQUE 1 DE 6
+
+       IMPORTANTE:
+       - ESTE BLOQUE EMPIEZA EL ARCHIVO
+       - NO PEGAR NADA ANTES
+       - NO CERRAR </style> TODAVÍA
+       ===================================================== */
+
+
+    /* =====================================================
+       VARIABLES
+       ===================================================== */
+
+    :root {
+      --green: #68ff72;
+      --green-dark: #17341d;
+      --bg: #071009;
+      --panel: #0b160d;
+      --panel-2: #122016;
+      --panel-3: #15251a;
+
+      --text: #ffffff;
+      --muted: rgba(255,255,255,.62);
+
+      --line: rgba(104,255,114,.18);
+      --line-strong: rgba(104,255,114,.35);
+
+      --danger: #ff6666;
+
+      --topbar-height: 72px;
+      --composer-height: 78px;
+    }
+
+
+    /* =====================================================
+       RESET
+       ===================================================== */
+
+    * {
+      box-sizing: border-box;
+    }
+
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      min-height: 100%;
+      margin: 0;
+      padding: 0;
+    }
+
+
+    html {
+      background: var(--bg);
+    }
+
+
+    body {
+      overflow: hidden;
+
+      background:
+        radial-gradient(
+          circle at 50% 30%,
+          rgba(48,115,57,.18),
+          transparent 42%
+        ),
+        var(--bg);
+
+      color: var(--text);
+
+      font-family:
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        Roboto,
+        Helvetica,
+        Arial,
+        sans-serif;
+
+      overscroll-behavior: none;
+
+      -webkit-text-size-adjust: 100%;
+    }
+
+
+    button,
+    input,
+    textarea {
+      font: inherit;
+    }
+
+
+    button {
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
+
+
+    input,
+    textarea {
+      font-size: 16px;
+    }
+
+
+    img,
+    video,
+    audio {
+      max-width: 100%;
+    }
+
+
+    button:focus-visible,
+    input:focus-visible,
+    textarea:focus-visible {
+      outline:
+        2px solid
+        rgba(104,255,114,.75);
+
+      outline-offset: 2px;
+    }
+
+
+    /* =====================================================
+       APP PRINCIPAL
+       ===================================================== */
+
+    .vobixApp {
+      position: fixed;
+
+      top: env(safe-area-inset-top);
+      right: env(safe-area-inset-right);
+      bottom: env(safe-area-inset-bottom);
+      left: env(safe-area-inset-left);
+
+      display: flex;
+      flex-direction: column;
+
+      overflow: hidden;
+
+      background:
+        linear-gradient(
+          180deg,
+          rgba(14,30,18,.96),
+          rgba(5,12,7,.99)
+        );
+    }
+
+
+    /* =====================================================
+       CABECERA
+       ===================================================== */
+
+    .vobixTopbar {
+      position: relative;
+      z-index: 100;
+
+      min-height: var(--topbar-height);
+
+      display: flex;
+      align-items: center;
+
+      gap: 12px;
+
+      padding: 10px 14px;
+
+      border-bottom:
+        1px solid
+        rgba(104,255,114,.14);
+
+      background:
+        rgba(10,20,12,.96);
+
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+    }
+
+
+    /* =====================================================
+       AVATAR
+       ===================================================== */
+
+    .avatar {
+      position: relative;
+
+      width: 52px;
+      height: 52px;
+      min-width: 52px;
+
+      display: grid;
+      place-items: center;
+
+      overflow: hidden;
+
+      border:
+        2px solid
+        rgba(104,255,114,.55);
+
+      border-radius: 50%;
+
+      background:
+        #17341d;
+
+      background-position: center;
+      background-repeat: no-repeat;
+      background-size: cover;
+
+      color: var(--green);
+
+      font-size: 25px;
+      font-weight: 1000;
+
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+
+    #myAvatar {
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+
+
+    .avatar.hasPhoto {
+      color: transparent;
+    }
+
+
+    /* =====================================================
+       IDENTIDAD
+       ===================================================== */
+
+    .vobixIdentity {
+      flex: 1;
+      min-width: 0;
+
+      display: flex;
+      flex-direction: column;
+
+      gap: 2px;
+    }
+
+
+    .vobixIdentity strong {
+      overflow: hidden;
+
+      color: white;
+
+      font-size: 20px;
+      font-weight: 1000;
+
+      letter-spacing: .3px;
+
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+
+
+    .vobixIdentity span {
+      overflow: hidden;
+
+      color:
+        rgba(255,255,255,.70);
+
+      font-size: 12px;
+
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+
+
+    /* =====================================================
+       BOTONES DE CABECERA
+       ===================================================== */
+
+    .vobixIconButton {
+      width: 44px;
+      height: 44px;
+      min-width: 44px;
+
+      display: grid;
+      place-items: center;
+
+      padding: 0;
+
+      border:
+        1px solid
+        rgba(104,255,114,.18);
+
+      border-radius: 50%;
+
+      background:
+        rgba(18,32,22,.95);
+
+      color: white;
+
+      font-size: 20px;
+
+      cursor: pointer;
+
+      transition:
+        transform .12s,
+        background .12s;
+    }
+
+
+    .vobixIconButton:active {
+      transform: scale(.93);
+
+      background:
+        rgba(104,255,114,.14);
+    }
+
+
+    /* =====================================================
+       ÁREA CENTRAL
+       ===================================================== */
+
+    .vobixMain {
+      flex: 1;
+      min-height: 0;
+
+      position: relative;
+
+      overflow: hidden;
+    }
+
+
+    .messages {
+      width: 100%;
+      height: 100%;
+
+      display: flex;
+      flex-direction: column;
+
+      gap: 8px;
+
+      overflow-y: auto;
+      overflow-x: hidden;
+
+      padding:
+        18px
+        14px
+        22px;
+
+      scroll-behavior: smooth;
+
+      -webkit-overflow-scrolling: touch;
+
+      scroll-padding-bottom:
+        calc(
+          var(--composer-height) +
+          25px
+        );
+    }
+
+
+    /* =====================================================
+       PANTALLA DE BIENVENIDA INTERIOR
+       ===================================================== */
+
+    .vobixWelcome {
+      width:
+        min(
+          760px,
+          calc(100% - 20px)
+        );
+
+      margin: auto;
+
+      padding:
+        48px
+        25px;
+
+      border:
+        1px solid
+        rgba(104,255,114,.22);
+
+      border-radius: 28px;
+
+      background:
+        radial-gradient(
+          circle at 50% 35%,
+          rgba(44,117,54,.35),
+          rgba(10,25,14,.82)
+        );
+
+      text-align: center;
+
+      box-shadow:
+        0 22px 70px
+        rgba(0,0,0,.35);
+    }
+
+
+    .vobixWelcomeLogo {
+      width: 108px;
+      height: 108px;
+
+      margin:
+        0 auto
+        22px;
+
+      display: grid;
+      place-items: center;
+
+      border-radius: 28px;
+
+      background:
+        linear-gradient(
+          145deg,
+          #4ea85a,
+          #285e31
+        );
+
+      color: var(--green);
+
+      font-size: 55px;
+      font-weight: 1000;
+
+      box-shadow:
+        0 0 50px
+        rgba(104,255,114,.13);
+    }
+
+
+    .vobixWelcome h1 {
+      margin:
+        0
+        0
+        16px;
+
+      font-size:
+        clamp(
+          30px,
+          5vw,
+          48px
+        );
+
+      line-height: 1;
+
+      font-weight: 1000;
+    }
+
+
+    .vobixWelcome p {
+      max-width: 650px;
+
+      margin: 0 auto;
+
+      color:
+        rgba(255,255,255,.82);
+
+      font-size:
+        clamp(
+          16px,
+          2.2vw,
+          23px
+        );
+
+      line-height: 1.45;
+    }
+
+
+    /* =====================================================
+       MENSAJES
+       ===================================================== */
+
+    .messageRow {
+      width: 100%;
+
+      display: flex;
+    }
+
+
+    .messageRow.mine {
+      justify-content: flex-end;
+    }
+
+
+    .messageRow.theirs {
+      justify-content: flex-start;
+    }
+
+
+    .messageBubble {
+      max-width:
+        min(
+          78%,
+          620px
+        );
+
+      padding:
+        10px
+        13px;
+
+      border:
+        1px solid
+        rgba(104,255,114,.10);
+
+      border-radius:
+        17px;
+
+      background:
+        var(--panel-3);
+
+      color: white;
+
+      line-height: 1.4;
+
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+
+    .messageRow.mine
+    .messageBubble {
+      background:
+        #173b20;
+
+      border-color:
+        rgba(104,255,114,.22);
+    }
+
+
+    .messageTime {
+      display: block;
+
+      margin-top: 5px;
+
+      color:
+        rgba(255,255,255,.50);
+
+      font-size: 9px;
+
+      text-align: right;
+    }
+
+
+    /* =====================================================
+       COMPOSITOR
+       ===================================================== */
+
+    .vobixComposer {
+      position: relative;
+      z-index: 110;
+
+      min-height:
+        var(--composer-height);
+
+      display: flex;
+      align-items: center;
+
+      gap: 10px;
+
+      padding:
+        10px
+        14px;
+
+      border-top:
+        1px solid
+        rgba(104,255,114,.14);
+
+      background:
+        rgba(10,20,12,.98);
+
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+    }
+
+
+    #messageInput {
+      flex: 1;
+      min-width: 0;
+
+      max-height: 120px;
+
+      resize: none;
+
+      overflow-y: auto;
+
+      padding:
+        13px
+        16px;
+
+      border:
+        1px solid
+        rgba(104,255,114,.18);
+
+      border-radius: 24px;
+
+      background:
+        rgba(255,255,255,.055);
+
+      color: white;
+
+      line-height: 1.35;
+
+      outline: none;
+    }
+
+
+    #messageInput::placeholder {
+      color:
+        rgba(255,255,255,.52);
+    }
+
+
+    #messageInput:focus {
+      border-color:
+        rgba(104,255,114,.42);
+
+      box-shadow:
+        0 0 0 3px
+        rgba(104,255,114,.05);
+    }
+
+
+    /* =====================================================
+       SLOT MICRO / ENVIAR
+
+       SOLO UNO SE VE A LA VEZ.
+       ===================================================== */
+
+    .vobixActionSlot {
+      position: relative;
+
+      width: 52px;
+      height: 52px;
+      min-width: 52px;
+    }
+
+
+    .vobixComposerAction {
+      position: absolute;
+
+      inset: 0;
+
+      width: 52px;
+      height: 52px;
+
+      display: grid;
+      place-items: center;
+
+      opacity: 0;
+
+      visibility: hidden;
+
+      pointer-events: none;
+
+      transform: scale(.82);
+
+      transition:
+        opacity .12s,
+        transform .12s,
+        visibility .12s;
+    }
+
+
+    .vobixComposerAction.isVisible {
+      opacity: 1;
+
+      visibility: visible;
+
+      pointer-events: auto;
+
+      transform: scale(1);
+    }
+
+
+    #voiceButton {
+      font-size: 22px;
+    }
+
+
+    #voiceButton.isRecording {
+      background:
+        var(--green);
+
+      color:
+        #071009;
+
+      box-shadow:
+        0 0 0 6px
+        rgba(104,255,114,.13);
+
+      animation:
+        vobixMicPulse
+        1s infinite;
+    }
+
+
+    @keyframes vobixMicPulse {
+
+      50% {
+        transform:
+          scale(.92);
+      }
+
+    }
+
+
+    .vobixSend {
+      padding: 0;
+
+      border: 0;
+      border-radius: 50%;
+
+      background:
+        var(--green);
+
+      color:
+        #061008;
+
+      font-size: 25px;
+      font-weight: 1000;
+
+      cursor: pointer;
+
+      box-shadow:
+        0 0 28px
+        rgba(104,255,114,.18);
+    }
+
+
+    .vobixSend:active {
+      transform:
+        scale(.93);
+    }
+
+
+    /* =====================================================
+       MENÚ ⋮
+       ===================================================== */
+
+    .chatOptionsMenu {
+      position: fixed;
+
+      top:
+        calc(
+          env(safe-area-inset-top) +
+          70px
+        );
+
+      right:
+        calc(
+          env(safe-area-inset-right) +
+          10px
+        );
+
+      z-index: 5000;
+
+      width:
+        min(
+          300px,
+          calc(100vw - 24px)
+        );
+
+      display: none;
+
+      padding: 8px;
+
+      border:
+        1px solid
+        rgba(104,255,114,.20);
+
+      border-radius: 18px;
+
+      background:
+        rgba(12,27,16,.98);
+
+      box-shadow:
+        0 20px 60px
+        rgba(0,0,0,.55);
+
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+    }
+
+
+    .chatOptionsMenu.open {
+      display: block;
+    }
+
+
+    .chatOptionButton {
+      width: 100%;
+      min-height: 48px;
+
+      display: flex;
+      align-items: center;
+
+      gap: 12px;
+
+      padding:
+        11px
+        13px;
+
+      border: 0;
+      border-radius: 12px;
+
+      background: transparent;
+
+      color: white;
+
+      text-align: left;
+
+      cursor: pointer;
+    }
+
+
+    .chatOptionButton:active {
+      background:
+        rgba(104,255,114,.10);
+    }
+
+
+    .chatOptionIcon {
+      width: 30px;
+      min-width: 30px;
+
+      text-align: center;
+
+      font-size: 20px;
+    }
+
+
+    .chatOptionText {
+      flex: 1;
+    }
+
+
+    .chatOptionDanger {
+      color:
+        #ff7777;
+    }
+
+
+    /* =====================================================
+       PERSONAS / BÚSQUEDA
+       ===================================================== */
+
+    .vxDrawer {
+      position: fixed;
+
+      inset: 0;
+
+      z-index: 4000;
+
+      display: none;
+
+      align-items: center;
+      justify-content: center;
+
+      padding:
+        max(
+          18px,
+          env(safe-area-inset-top)
+        )
+        18px
+        max(
+          18px,
+          env(safe-area-inset-bottom)
+        );
+
+      background:
+        rgba(0,0,0,.74);
+
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+
+
+    .vxDrawer.open {
+      display: flex;
+    }
+
+
+    .vxCard {
+      width:
+        min(
+          520px,
+          100%
+        );
+
+      max-height:
+        86dvh;
+
+      overflow-y: auto;
+
+      padding: 20px;
+
+      border:
+        1px solid
+        rgba(104,255,114,.28);
+
+      border-radius: 24px;
+
+      background:
+        rgba(11,22,13,.98);
+
+      color: white;
+
+      box-shadow:
+        0 24px 80px
+        rgba(0,0,0,.55);
+    }
+
+
+    .vxCardHeader {
+      display: flex;
+      align-items: center;
+
+      gap: 12px;
+
+      margin-bottom: 8px;
+    }
+
+
+    .vxCardHeader h2 {
+      flex: 1;
+
+      margin: 0;
+
+      font-size: 25px;
+    }
+
+
+    .vxClose {
+      min-height: 44px;
+
+      padding:
+        0
+        16px;
+
+      border:
+        1px solid
+        rgba(104,255,114,.20);
+
+      border-radius: 15px;
+
+      background:
+        #122016;
+
+      color: white;
+
+      font-weight: 800;
+
+      cursor: pointer;
+    }
+
+
+    .vxDescription {
+      margin:
+        0
+        0
+        16px;
+
+      color:
+        rgba(255,255,255,.76);
+
+      line-height: 1.4;
+    }
+
+
+    .vxSearch {
+      display: flex;
+
+      gap: 8px;
+
+      margin-bottom: 12px;
+    }
+
+
+    .vxSearch input {
+      flex: 1;
+      min-width: 0;
+
+      padding:
+        12px
+        14px;
+
+      border:
+        1px solid
+        rgba(104,255,114,.30);
+
+      border-radius: 16px;
+
+      background:
+        rgba(255,255,255,.045);
+
+      color: white;
+
+      outline: none;
+    }
+
+
+    .vxSearch input:focus {
+      border-color:
+        var(--green);
+    }
+
+
+    .vxPrimary {
+      min-height: 48px;
+
+      padding:
+        0
+        18px;
+
+      border: 0;
+      border-radius: 16px;
+
+      background:
+        var(--green);
+
+      color:
+        #071009;
+
+      font-weight: 900;
+
+      cursor: pointer;
+    }
+
+
+    .vxPrimary:active {
+      transform:
+        scale(.97);
+    }
+
+
+    .vxResults {
+      min-height: 28px;
+
+      margin:
+        8px
+        0
+        18px;
+
+      color:
+        rgba(255,255,255,.88);
+    }
+
+
+    .vxSectionTitle {
+      margin:
+        18px
+        0
+        10px;
+
+      font-size: 20px;
+      font-weight: 1000;
+    }
+
+
+    .vxPerson {
+      display: flex;
+      align-items: center;
+
+      gap: 10px;
+
+      padding:
+        10px
+        0;
+
+      border-bottom:
+        1px solid
+        rgba(104,255,114,.09);
+    }
+
+
+    .vxPersonInfo {
+      flex: 1;
+      min-width: 0;
+
+      display: flex;
+      flex-direction: column;
+
+      gap: 3px;
+    }
+
+
+    .vxPersonInfo strong {
+      overflow: hidden;
+
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+
+
+    .vxPersonInfo small {
+      overflow: hidden;
+
+      color:
+        rgba(255,255,255,.57);
+
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+
+
+    /* =====================================================
+       FIN BLOQUE 1 DE 6
+
+       IMPORTANTE:
+       NO CIERRES </style>
+       EL BLOQUE 2 CONTINÚA EL MISMO CSS.
+       ===================================================== */
+      /* =====================================================
+       VOBIXCHAT
+       PUBLIC/chat.html
+       V2 CORREGIDO
+       BLOQUE 2 DE 6
+
+       CONTINÚA DIRECTAMENTE DESDE BLOQUE 1
+       ===================================================== */
+
+
+    /* =====================================================
+       CONVERSACIONES
+       ===================================================== */
+
+    .vxConversation {
+      width: 100%;
+
+      display: flex;
+      align-items: center;
+
+      gap: 11px;
+
+      padding:
+        11px
+        8px;
+
+      margin-bottom: 5px;
+
+      border:
+        1px solid
+        transparent;
+
+      border-radius: 15px;
+
+      background:
+        rgba(255,255,255,.025);
+
+      color: white;
+
+      text-align: left;
+
+      cursor: pointer;
+    }
+
+
+    .vxConversation:active {
+      background:
+        rgba(104,255,114,.09);
+    }
+
+
+    .vxConversation.active {
+      border-color:
+        rgba(104,255,114,.28);
+
+      background:
+        rgba(104,255,114,.08);
+    }
+
+
+    .vxConversationAvatar {
+      width: 44px;
+      height: 44px;
+      min-width: 44px;
+
+      display: grid;
+      place-items: center;
+
+      overflow: hidden;
+
+      border-radius: 50%;
+
+      background:
+        #17341d;
+
+      background-position: center;
+      background-repeat: no-repeat;
+      background-size: cover;
+
+      color:
+        var(--green);
+
+      font-weight: 1000;
+    }
+
+
+    .vxConversationInfo {
+      flex: 1;
+      min-width: 0;
+    }
+
+
+    .vxConversationName {
+      overflow: hidden;
+
+      font-weight: 900;
+
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+
+
+    .vxConversationLast {
+      margin-top: 3px;
+
+      overflow: hidden;
+
+      color:
+        rgba(255,255,255,.55);
+
+      font-size: 11px;
+
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+
+
+    /* =====================================================
+       PERFIL
+       ===================================================== */
+
+    .profilePanel {
+      position: fixed;
+
+      inset: 0;
+
+      z-index: 6000;
+
+      display: none;
+
+      align-items: center;
+      justify-content: center;
+
+      padding:
+        max(
+          20px,
+          env(safe-area-inset-top)
+        )
+        18px
+        max(
+          20px,
+          env(safe-area-inset-bottom)
+        );
+
+      background:
+        rgba(0,0,0,.76);
+
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+    }
+
+
+    .profilePanel.open {
+      display: flex;
+    }
+
+
+    .profileCard {
+      width:
+        min(
+          100%,
+          390px
+        );
+
+      max-height:
+        calc(
+          100dvh - 40px
+        );
+
+      overflow-y: auto;
+
+      padding:
+        25px
+        20px;
+
+      border:
+        1px solid
+        rgba(104,255,114,.22);
+
+      border-radius: 26px;
+
+      background:
+        #0b160d;
+
+      box-shadow:
+        0 25px 80px
+        rgba(0,0,0,.60);
+
+      text-align: center;
+
+      -webkit-overflow-scrolling: touch;
+    }
+
+
+    .profilePhotoPreview {
+      position: relative;
+
+      width: 130px;
+      height: 130px;
+
+      margin:
+        4px auto
+        18px;
+
+      display: grid;
+      place-items: center;
+
+      overflow: hidden;
+
+      border:
+        3px solid
+        rgba(104,255,114,.45);
+
+      border-radius: 50%;
+
+      background:
+        #17341d;
+
+      color:
+        var(--green);
+
+      font-size: 48px;
+      font-weight: 1000;
+
+      box-shadow:
+        0 0 40px
+        rgba(104,255,114,.14);
+    }
+
+
+    .profilePhotoPreview img {
+      width: 100%;
+      height: 100%;
+
+      display: block;
+
+      object-fit: cover;
+    }
+
+
+    .profilePanelTitle {
+      margin:
+        0
+        0
+        5px;
+
+      font-size: 21px;
+      font-weight: 1000;
+    }
+
+
+    .profilePanelSubtitle {
+      margin-bottom: 22px;
+
+      color:
+        var(--muted);
+
+      font-size: 13px;
+    }
+
+
+    .profileAction {
+      width: 100%;
+      min-height: 50px;
+
+      margin-top: 8px;
+
+      display: flex;
+      align-items: center;
+
+      gap: 12px;
+
+      padding:
+        12px
+        15px;
+
+      border:
+        1px solid
+        rgba(104,255,114,.15);
+
+      border-radius: 14px;
+
+      background:
+        #122016;
+
+      color: white;
+
+      text-align: left;
+
+      cursor: pointer;
+    }
+
+
+    .profileAction:active {
+      transform:
+        scale(.99);
+    }
+
+
+    .profileAction.primary {
+      border-color:
+        transparent;
+
+      background:
+        var(--green);
+
+      color:
+        #061008;
+
+      font-weight: 900;
+    }
+
+
+    .profileAction.danger {
+      color:
+        #ff7777;
+    }
+
+
+    .profileClose {
+      margin-top: 15px;
+    }
+
+
+    #profilePhotoInput {
+      display: none;
+    }
+
+
+    /* =====================================================
+       NOTIFICACIONES
+       ===================================================== */
+
+    .notificationPanel {
+      position: fixed;
+
+      inset: 0;
+
+      z-index: 6100;
+
+      display: none;
+
+      align-items: center;
+      justify-content: center;
+
+      padding:
+        max(
+          18px,
+          env(safe-area-inset-top)
+        )
+        18px
+        max(
+          18px,
+          env(safe-area-inset-bottom)
+        );
+
+      background:
+        rgba(0,0,0,.76);
+
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+    }
+
+
+    .notificationPanel.open {
+      display: flex;
+    }
+
+
+    .notificationCard {
+      width:
+        min(
+          100%,
+          400px
+        );
+
+      max-height:
+        calc(
+          100dvh - 36px
+        );
+
+      overflow-y: auto;
+
+      padding: 22px;
+
+      border:
+        1px solid
+        rgba(104,255,114,.22);
+
+      border-radius: 24px;
+
+      background:
+        #0b160d;
+
+      box-shadow:
+        0 25px 80px
+        rgba(0,0,0,.60);
+
+      -webkit-overflow-scrolling: touch;
+    }
+
+
+    .notificationTitle {
+      margin-bottom: 5px;
+
+      font-size: 20px;
+      font-weight: 1000;
+    }
+
+
+    .notificationDescription {
+      margin-bottom: 18px;
+
+      color:
+        var(--muted);
+
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+
+    .settingRow {
+      min-height: 58px;
+
+      display: flex;
+      align-items: center;
+
+      gap: 12px;
+
+      padding:
+        10px
+        0;
+
+      border-bottom:
+        1px solid
+        rgba(104,255,114,.08);
+    }
+
+
+    .settingInfo {
+      flex: 1;
+      min-width: 0;
+    }
+
+
+    .settingName {
+      font-size: 14px;
+      font-weight: 800;
+    }
+
+
+    .settingDescription {
+      margin-top: 3px;
+
+      color:
+        var(--muted);
+
+      font-size: 10px;
+      line-height: 1.4;
+    }
+
+
+    /* =====================================================
+       SWITCH
+       ===================================================== */
+
+    .vobixSwitch {
+      position: relative;
+
+      width: 50px;
+      height: 29px;
+      min-width: 50px;
+
+      padding: 0;
+
+      border: 0;
+      border-radius: 30px;
+
+      background:
+        #27342a;
+
+      cursor: pointer;
+
+      transition: .2s;
+    }
+
+
+    .vobixSwitch::after {
+      content: "";
+
+      position: absolute;
+
+      width: 23px;
+      height: 23px;
+
+      left: 3px;
+      top: 3px;
+
+      border-radius: 50%;
+
+      background:
+        white;
+
+      transition: .2s;
+    }
+
+
+    .vobixSwitch.on {
+      background:
+        var(--green);
+    }
+
+
+    .vobixSwitch.on::after {
+      transform:
+        translateX(21px);
+    }
+
+
+    /* =====================================================
+       NOTAS DE VOZ
+       ===================================================== */
+
+    .voiceMessage {
+      width:
+        min(
+          310px,
+          72vw
+        );
+
+      min-width: 210px;
+
+      display: flex;
+      align-items: center;
+
+      gap: 10px;
+
+      padding:
+        5px
+        2px;
+
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+
+    .voicePlayButton {
+      width: 42px;
+      height: 42px;
+      min-width: 42px;
+
+      display: grid;
+      place-items: center;
+
+      padding: 0;
+
+      border: 0;
+      border-radius: 50%;
+
+      background:
+        var(--green);
+
+      color:
+        #061008;
+
+      font-size: 18px;
+      font-weight: 1000;
+
+      cursor: pointer;
+    }
+
+
+    .voiceProgressArea {
+      flex: 1;
+      min-width: 0;
+
+      height: 38px;
+
+      display: flex;
+      align-items: center;
+
+      cursor: pointer;
+
+      touch-action: none;
+    }
+
+
+    .voiceProgressTrack {
+      position: relative;
+
+      width: 100%;
+      height: 4px;
+
+      border-radius: 10px;
+
+      background:
+        rgba(255,255,255,.28);
+    }
+
+
+    .voiceProgressFill {
+      position: absolute;
+
+      left: 0;
+      top: 0;
+
+      width: 0%;
+      height: 100%;
+
+      border-radius: inherit;
+
+      background:
+        var(--green);
+
+      pointer-events: none;
+    }
+
+
+    .voiceProgressDot {
+      position: absolute;
+
+      left: 0%;
+      top: 50%;
+
+      width: 12px;
+      height: 12px;
+
+      border-radius: 50%;
+
+      background:
+        var(--green);
+
+      transform:
+        translate(
+          -50%,
+          -50%
+        );
+
+      pointer-events: none;
+    }
+
+
+    .voiceTime {
+      min-width: 39px;
+
+      color:
+        rgba(255,255,255,.78);
+
+      font-size: 10px;
+
+      font-variant-numeric:
+        tabular-nums;
+
+      text-align: right;
+    }
+
+
+    .voiceNativeAudio {
+      display:
+        none !important;
+    }
+
+
+    /* =====================================================
+       LLAMADAS / VIDEOLLAMADAS
+       ===================================================== */
+
+    .callVideoArea {
+      position: fixed;
+
+      inset: 0;
+
+      z-index: 7000;
+
+      display: none;
+
+      overflow: hidden;
+
+      background:
+        #000;
+    }
+
+
+    .callVideoArea.open {
+      display: block;
+    }
+
+
+    .remoteVideo {
+      width: 100%;
+      height: 100%;
+
+      object-fit: cover;
+
+      background:
+        #000;
+    }
+
+
+    .localVideo {
+      position: absolute;
+
+      width:
+        min(
+          28vw,
+          220px
+        );
+
+      aspect-ratio:
+        3 / 4;
+
+      right: 18px;
+      top: 18px;
+
+      z-index: 30;
+
+      border:
+        2px solid
+        rgba(104,255,114,.45);
+
+      border-radius: 18px;
+
+      object-fit: cover;
+
+      background:
+        #111;
+
+      box-shadow:
+        0 10px 35px
+        rgba(0,0,0,.45);
+
+      cursor: grab;
+
+      touch-action: none;
+
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+
+    .localVideo.dragging {
+      cursor: grabbing;
+
+      transform:
+        scale(1.03);
+    }
+
+
+    .callControls {
+      position: absolute;
+
+      left: 50%;
+      bottom:
+        max(
+          28px,
+          env(safe-area-inset-bottom)
+        );
+
+      z-index: 50;
+
+      display: flex;
+
+      gap: 14px;
+
+      transform:
+        translateX(-50%);
+    }
+
+
+    .callControl {
+      width: 58px;
+      height: 58px;
+
+      display: grid;
+      place-items: center;
+
+      border: 0;
+      border-radius: 50%;
+
+      background:
+        rgba(255,255,255,.18);
+
+      color:
+        white;
+
+      font-size: 22px;
+
+      cursor: pointer;
+
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+
+
+    .callControl.end {
+      background:
+        #e94141;
+    }
+
+
+    /* =====================================================
+       BARRA DE ACCIONES SOCIALES
+       ===================================================== */
+
+    .vxSocialBar {
+      position: fixed;
+
+      right:
+        calc(
+          14px +
+          env(safe-area-inset-right)
+        );
+
+      top:
+        calc(
+          82px +
+          env(safe-area-inset-top)
+        );
+
+      z-index: 130;
+
+      display: flex;
+
+      gap: 8px;
+    }
+
+
+    .vxAction {
+      width: 42px;
+      height: 42px;
+
+      display: grid;
+      place-items: center;
+
+      padding: 0;
+
+      border:
+        1px solid
+        rgba(104,255,114,.25);
+
+      border-radius: 50%;
+
+      background:
+        #122016;
+
+      color:
+        white;
+
+      font-size: 18px;
+
+      cursor: pointer;
+    }
+
+
+    /* =====================================================
+       ESTADOS / AVISOS
+       ===================================================== */
+
+    .vobixStatusMessage {
+      padding:
+        10px
+        12px;
+
+      border:
+        1px solid
+        rgba(104,255,114,.12);
+
+      border-radius: 12px;
+
+      background:
+        rgba(104,255,114,.04);
+
+      color:
+        rgba(255,255,255,.72);
+
+      font-size: 12px;
+      line-height: 1.4;
+    }
+
+
+    .vobixStatusMessage.error {
+      border-color:
+        rgba(255,102,102,.25);
+
+      background:
+        rgba(255,102,102,.06);
+
+      color:
+        #ffaaaa;
+    }
+
+
+    /* =====================================================
+       MÓVIL
+       ===================================================== */
+
+    @media(max-width:720px) {
+
+      :root {
+        --topbar-height: 64px;
+        --composer-height: 72px;
+      }
+
+
+      .vobixTopbar {
+        gap: 8px;
+
+        padding:
+          8px
+          10px;
+      }
+
+
+      .avatar {
+        width: 46px;
+        height: 46px;
+        min-width: 46px;
+
+        font-size: 22px;
+      }
+
+
+      .vobixIdentity strong {
+        font-size: 17px;
+      }
+
+
+      .vobixIconButton {
+        width: 42px;
+        height: 42px;
+        min-width: 42px;
+      }
+
+
+      .messages {
+        padding:
+          12px
+          10px
+          18px;
+      }
+
+
+      .messageBubble {
+        max-width: 84%;
+      }
+
+
+      .vobixComposer {
+        gap: 8px;
+
+        padding:
+          8px
+          10px;
+      }
+
+
+      .vobixActionSlot,
+      .vobixComposerAction {
+        width: 50px;
+        height: 50px;
+        min-width: 50px;
+      }
+
+
+      .vobixWelcome {
+        padding:
+          34px
+          18px;
+      }
+
+
+      .vobixWelcomeLogo {
+        width: 88px;
+        height: 88px;
+
+        font-size: 46px;
+      }
+
+
+      .localVideo {
+        width: 105px;
+
+        right: 12px;
+        top: 12px;
+      }
+
+
+      .voiceMessage {
+        width:
+          min(
+            270px,
+            73vw
+          );
+
+        min-width: 190px;
+      }
+
+
+      .vxSocialBar {
+        right:
+          calc(
+            8px +
+            env(safe-area-inset-right)
+          );
+
+        top:
+          calc(
+            72px +
+            env(safe-area-inset-top)
+          );
+      }
+
+    }
+
+
+    @media(max-width:380px) {
+
+      .vobixIdentity strong {
+        font-size: 15px;
+      }
+
+
+      .voiceMessage {
+        min-width: 175px;
+
+        width: 70vw;
+      }
+
+
+      .voiceTime {
+        min-width: 34px;
+
+        font-size: 9px;
+      }
+
+
+      .localVideo {
+        width: 92px;
+      }
+
+    }
+
+
+  </style>
+</head>
+
+
+<body>
+
+
+  <!-- ===================================================
+       APP PRINCIPAL
+       =================================================== -->
+
+  <div
+    id="vobixApp"
+    class="vobixApp"
+  >
+
+
+    <!-- =================================================
+         CABECERA
+         ================================================= -->
+
+    <header class="vobixTopbar">
+
+      <button
+        id="backToInboxButton"
+        class="vobixIconButton"
+        type="button"
+        aria-label="Volver a conversaciones"
+        title="Volver"
+      >
+        ‹
+      </button>
+
+      <div
+        id="myAvatar"
+        class="avatar"
+        aria-label="Contacto de esta conversación"
+      >
+        V
+      </div>
+
+
+      <div class="vobixIdentity">
+
+        <strong id="topbarUserName">
+          VOBIXCHAT
+        </strong>
+
+        <span id="vobixConnectionStatus">
+          Chat seguro
+        </span>
+
+      </div>
+
+
+      <button
+        id="audioCallButton"
+        class="vobixIconButton"
+        type="button"
+        aria-label="Llamada"
+        title="Llamada"
+      >
+        ☎
+      </button>
+
+
+      <button
+        id="videoCallButton"
+        class="vobixIconButton"
+        type="button"
+        aria-label="Videollamada"
+        title="Videollamada"
+      >
+        ◉
+      </button>
+
+
+      <button
+        id="sendPhotoButton"
+        class="vobixIconButton"
+        type="button"
+        aria-label="Enviar foto"
+        title="Enviar foto"
+      >
+        📷
+      </button>
+
+
+      <button
+        id="chatOptionsButton"
+        class="vobixIconButton"
+        type="button"
+        aria-label="Más opciones"
+        title="Más opciones"
+      >
+        ⋮
+      </button>
+
+    </header>
+
+
+    <!-- =================================================
+         MENSAJES
+         ================================================= -->
+
+    <main class="vobixMain">
+
+      <section
+        id="messages"
+        class="messages"
+        aria-live="polite"
+      >
+
+        <div
+          id="vobixWelcome"
+          class="vobixWelcome"
+        >
+
+          <div class="vobixWelcomeLogo">
+            V
+          </div>
+
+          <h1>
+            VOBIXCHAT
+          </h1>
+
+          <p>
+            Mensajes, notas de voz, llamadas,
+            videollamadas y notificaciones.
+          </p>
+
+        </div>
+
+      </section>
+
+    </main>
+
+
+    <!-- =================================================
+         ESCRIBIR / MICRO / ENVIAR
+         ================================================= -->
+
+    <div class="vobixComposer">
+
+      <button id="emojiButton" class="vobixIconButton" type="button"
+        aria-label="Emojis" title="Emojis">😊</button>
+
+      <button id="cameraButton" class="vobixIconButton" type="button"
+        aria-label="Cámara" title="Cámara">📷</button>
+
+      <button id="attachButton" class="vobixIconButton" type="button"
+        aria-label="Adjuntar documento" title="Adjuntar documento">📎</button>
+
+      <textarea
+        id="messageInput"
+        rows="1"
+        placeholder="Escribe un mensaje…"
+        aria-label="Mensaje"
+        autocomplete="off"
+      ></textarea>
+
+
+      <div
+        class="vobixActionSlot"
+        aria-label="Grabar o enviar"
+      >
+
+        <!--
+          VACÍO:
+          SE VE EL MICRO.
+        -->
+
+        <button
+          id="voiceButton"
+          class="vobixIconButton vobixComposerAction isVisible"
+          type="button"
+          aria-label="Nota de voz"
+          title="Nota de voz"
+        >
+          🎙️
+        </button>
+
+
+        <!--
+          CUANDO ESCRIBE:
+          ESTE BOTÓN SE COLOCA EN EL MISMO
+          SITIO DEL MICRO.
+        -->
+
+        <button
+          id="sendButton"
+          class="vobixSend vobixComposerAction"
+          type="button"
+          aria-label="Enviar"
+          title="Enviar"
+        >
+          ➤
+        </button>
+
+      </div>
+
+    </div>
+
+
+  </div>
+
+
+  <!-- ===================================================
+       INPUT PARA FOTOS DEL CHAT
+       =================================================== -->
+
+  <input
+    id="chatPhotoInput"
+    type="file"
+    accept="image/*"
+    capture="environment"
+    hidden
+  >
+
+  <input
+    id="chatDocumentInput"
+    type="file"
+    accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.zip,application/pdf,text/plain"
+    hidden
+  >
+
+
+  <!-- ===================================================
+       MENÚ DE TRES PUNTOS
+       =================================================== -->
+
+  <div
+    id="chatOptionsMenu"
+    class="chatOptionsMenu"
+  >
+
+    <button id="backToInboxMenuButton" class="chatOptionButton" type="button">
+      <span class="chatOptionIcon">←</span>
+      <span class="chatOptionText">Conversaciones</span>
+    </button>
+
+
+    <button
+      id="openProfileButton"
+      class="chatOptionButton"
+      type="button"
+    >
+      <span class="chatOptionIcon">
+        🖼️
+      </span>
+
+      <span class="chatOptionText">
+        Mi perfil
+      </span>
+    </button>
+
+
+    <button
+      id="openNotificationsButton"
+      class="chatOptionButton"
+      type="button"
+    >
+      <span class="chatOptionIcon">
+        🔔
+      </span>
+
+      <span class="chatOptionText">
+        Sonidos y notificaciones
+      </span>
+    </button>
+
+
+    <button
+      id="refreshChatButton"
+      class="chatOptionButton"
+      type="button"
+    >
+      <span class="chatOptionIcon">
+        ↻
+      </span>
+
+      <span class="chatOptionText">
+        Actualizar conversaciones
+      </span>
+    </button>
+
+
+    <button
+      id="logoutButton"
+      class="chatOptionButton chatOptionDanger"
+      type="button"
+    >
+      <span class="chatOptionIcon">
+        ⇥
+      </span>
+
+      <span class="chatOptionText">
+        Cerrar sesión
+      </span>
+    </button>
+
+  </div>
+
+
+  <!-- ===================================================
+       PERSONAS
+       =================================================== -->
+
+  <div
+    id="peopleDrawer"
+    class="vxDrawer"
+    aria-hidden="true"
+  >
+
+    <div class="vxCard">
+
+      <div class="vxCardHeader">
+
+        <h2>
+          Personas
+        </h2>
+
+        <button
+          id="closePeopleButton"
+          class="vxClose"
+          type="button"
+        >
+          Cerrar
+        </button>
+
+      </div>
+
+
+      <p class="vxDescription">
+        Busca un usuario registrado para abrir
+        una sala privada 1×1.
+      </p>
+
+
+      <div class="vxSearch">
+
+        <input
+          id="peopleSearchInput"
+          type="search"
+          placeholder="Nombre o teléfono"
+          autocomplete="off"
+          enterkeyhint="search"
+        >
+
+
+        <button
+          id="peopleSearchButton"
+          class="vxPrimary"
+          type="button"
+        >
+          Buscar
+        </button>
+
+      </div>
+
+
+      <div
+        id="peopleSearchResults"
+        class="vxResults"
+      ></div>
+
+
+      <div class="vxSectionTitle">
+        Conversaciones
+      </div>
+
+
+      <div
+        id="conversationList"
+        class="vxResults"
+      >
+        Cargando conversaciones…
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <!-- ===================================================
+       PERFIL
+       =================================================== -->
+
+  <div
+    id="profilePanel"
+    class="profilePanel"
+    aria-hidden="true"
+  >
+
+    <div class="profileCard">
+
+      <div
+        id="profilePhotoPreview"
+        class="profilePhotoPreview"
+      >
+        V
+      </div>
+
+
+      <h2
+        id="profileUserName"
+        class="profilePanelTitle"
+      >
+        VOBIXCHAT
+      </h2>
+
+
+      <div
+        id="profilePhone"
+        class="profilePanelSubtitle"
+      >
+        Mi perfil
+      </div>
+
+
+      <input
+        id="profilePhotoInput"
+        type="file"
+        accept="image/*"
+      >
+
+
+      <button
+        id="changeProfilePhotoButton"
+        class="profileAction primary"
+        type="button"
+      >
+        📷 Cambiar foto de perfil
+      </button>
+
+
+      <button
+        id="removeProfilePhotoButton"
+        class="profileAction danger"
+        type="button"
+      >
+        🗑 Quitar foto
+      </button>
+
+
+      <button
+        id="closeProfileButton"
+        class="profileAction profileClose"
+        type="button"
+      >
+        Cerrar
+      </button>
+
+    </div>
+
+  </div>
+
+
+  <!-- ===================================================
+       NOTIFICACIONES
+       =================================================== -->
+
+  <div
+    id="notificationPanel"
+    class="notificationPanel"
+    aria-hidden="true"
+  >
+
+    <div class="notificationCard">
+
+      <div class="notificationTitle">
+        Sonidos y notificaciones
+      </div>
+
+
+      <div class="notificationDescription">
+        Configura los avisos de VOBIXCHAT.
+      </div>
+
+
+      <div class="settingRow">
+
+        <div class="settingInfo">
+
+          <div class="settingName">
+            Sonido de mensajes
+          </div>
+
+          <div class="settingDescription">
+            Reproducir sonido cuando llega
+            un mensaje.
+          </div>
+
+        </div>
+
+
+        <button
+          id="messageSoundSwitch"
+          class="vobixSwitch on"
+          type="button"
+          aria-label="Sonido de mensajes"
+        ></button>
+
+      </div>
+
+
+      <div class="settingRow">
+
+        <div class="settingInfo">
+
+          <div class="settingName">
+            Notificaciones
+          </div>
+
+          <div class="settingDescription">
+            Mostrar avisos de mensajes
+            y llamadas.
+          </div>
+
+        </div>
+
+
+        <button
+          id="notificationSwitch"
+          class="vobixSwitch on"
+          type="button"
+          aria-label="Notificaciones"
+        ></button>
+
+      </div>
+
+
+      <button
+        id="closeNotificationButton"
+        class="profileAction profileClose"
+        type="button"
+      >
+        Cerrar
+      </button>
+
+    </div>
+
+  </div>
+
+
+  <!-- ===================================================
+       VIDEOLLAMADA
+       =================================================== -->
+
+  <div
+    id="callVideoArea"
+    class="callVideoArea"
+  >
+
+    <video
+      id="remoteVideo"
+      class="remoteVideo"
+      autoplay
+      playsinline
+    ></video>
+
+
+    <video
+      id="localVideo"
+      class="localVideo"
+      autoplay
+      muted
+      playsinline
+    ></video>
+
+
+    <div class="callControls">
+
+      <button
+        id="toggleCallMicButton"
+        class="callControl"
+        type="button"
+        aria-label="Micrófono"
+      >
+        🎙️
+      </button>
+
+
+      <button
+        id="toggleCallCameraButton"
+        class="callControl"
+        type="button"
+        aria-label="Cámara"
+      >
+        📹
+      </button>
+
+
+      <button
+        id="endCallButton"
+        class="callControl end"
+        type="button"
+        aria-label="Colgar"
+      >
+        ✕
+      </button>
+
+    </div>
+
+  </div>
+
+
+  <!-- ===================================================
+       FIN BLOQUE 2 DE 6
+
+       NO PONGAS </body>
+       NO PONGAS </html>
+
+       BLOQUE 3 EMPIEZA EL JAVASCRIPT
+       Y CONECTA TODOS ESTOS BOTONES.
+       =================================================== -->
+    <!-- ===================================================
+       VOBIXCHAT
+       PUBLIC/chat.html
+       V2 CORREGIDO
+       BLOQUE 3 DE 6
+
+       INICIO DEL ÚNICO JAVASCRIPT PRINCIPAL
+       =================================================== -->
+
+  <script>
+  (() => {
+
+    'use strict';
+
+
+    /* =====================================================
+       REFERENCIAS
+       ===================================================== */
+
+    const $ = id =>
+      document.getElementById(id);
+
+
+    /* =====================================================
+       ESTADO ÚNICO DE LA APP
+
+       IMPORTANTE:
+       ESTE OBJETO SE CREA UNA SOLA VEZ.
+       LOS BLOQUES 4, 5 Y 6 CONTINÚAN DENTRO
+       DE ESTA MISMA FUNCIÓN.
+       ===================================================== */
+
+    const app = {
+
+      token: '',
+
+      me: null,
+
+      socket: null,
+
+      conversation: null,
+
+      peer: null,
+
+      mediaRecorder: null,
+
+      recordingStream: null,
+
+      recordingChunks: [],
+
+      localStream: null,
+
+      peerConnection: null,
+
+      callType: null,
+
+      callId: null,
+
+      messageSound: true,
+
+      notifications: true
+
+    };
+
+
+    /* =====================================================
+       ELEMENTOS PRINCIPALES
+       ===================================================== */
+
+    const elements = {
+
+      messageInput:
+        $('messageInput'),
+
+      voiceButton:
+        $('voiceButton'),
+
+      sendButton:
+        $('sendButton'),
+
+      messages:
+        $('messages'),
+
+      welcome:
+        $('vobixWelcome'),
+
+      connectionStatus:
+        $('vobixConnectionStatus'),
+
+      avatar:
+        $('myAvatar'),
+
+      topbarUserName:
+        $('topbarUserName'),
+
+      chatOptionsButton:
+        $('chatOptionsButton'),
+
+      chatOptionsMenu:
+        $('chatOptionsMenu'),
+
+      openPeopleButton:
+        $('openPeopleButton'),
+
+      peopleDrawer:
+        $('peopleDrawer'),
+
+      closePeopleButton:
+        $('closePeopleButton'),
+
+      peopleSearchInput:
+        $('peopleSearchInput'),
+
+      peopleSearchButton:
+        $('peopleSearchButton'),
+
+      peopleSearchResults:
+        $('peopleSearchResults'),
+
+      conversationList:
+        $('conversationList'),
+
+      audioCallButton:
+        $('audioCallButton'),
+
+      videoCallButton:
+        $('videoCallButton'),
+
+      sendPhotoButton:
+        $('sendPhotoButton'),
+
+      chatPhotoInput:
+        $('chatPhotoInput'),
+
+      openProfileButton:
+        $('openProfileButton'),
+
+      profilePanel:
+        $('profilePanel'),
+
+      closeProfileButton:
+        $('closeProfileButton'),
+
+      changeProfilePhotoButton:
+        $('changeProfilePhotoButton'),
+
+      removeProfilePhotoButton:
+        $('removeProfilePhotoButton'),
+
+      profilePhotoInput:
+        $('profilePhotoInput'),
+
+      profilePhotoPreview:
+        $('profilePhotoPreview'),
+
+      profileUserName:
+        $('profileUserName'),
+
+      profilePhone:
+        $('profilePhone'),
+
+      openNotificationsButton:
+        $('openNotificationsButton'),
+
+      notificationPanel:
+        $('notificationPanel'),
+
+      closeNotificationButton:
+        $('closeNotificationButton'),
+
+      messageSoundSwitch:
+        $('messageSoundSwitch'),
+
+      notificationSwitch:
+        $('notificationSwitch'),
+
+      refreshChatButton:
+        $('refreshChatButton'),
+
+      logoutButton:
+        $('logoutButton'),
+
+      callVideoArea:
+        $('callVideoArea'),
+
+      remoteVideo:
+        $('remoteVideo'),
+
+      localVideo:
+        $('localVideo'),
+
+      toggleCallMicButton:
+        $('toggleCallMicButton'),
+
+      toggleCallCameraButton:
+        $('toggleCallCameraButton'),
+
+      endCallButton:
+        $('endCallButton')
+
+    };
+
+
+    /* =====================================================
+       LOG DE ARRANQUE
+
+       SI ESTE MENSAJE APARECE EN CONSOLA,
+       EL JAVASCRIPT SÍ ARRANCÓ.
+       ===================================================== */
+
+    console.log(
+      '[VOBIXCHAT] chat.html V2 iniciado'
+    );
+
+
+    /* =====================================================
+       TOKEN
+
+       BUSCAMOS LAS FORMAS USADAS POR VOBIXCHAT.
+       ===================================================== */
+
+    function getAuthToken() {
+
+      try {
+
+        return (
+          localStorage.getItem(
+            'vobix_token'
+          ) ||
+
+          sessionStorage.getItem(
+            'vobix_token'
+          ) ||
+
+          localStorage.getItem(
+            'token'
+          ) ||
+
+          sessionStorage.getItem(
+            'token'
+          ) ||
+
+          ''
+        );
+
+      } catch (error) {
+
+        console.error(
+          '[VOBIXCHAT TOKEN]',
+          error
+        );
+
+        return '';
+
+      }
+
+    }
+
+
+    app.token =
+      getAuthToken();
+
+
+    /* =====================================================
+       LEER USUARIO LOCAL
+       ===================================================== */
+
+    function readStoredUser() {
+
+      const keys = [
+        'vobix_user',
+        'user',
+        'vobixUser',
+        'currentUser'
+      ];
+
+
+      for (
+        const key
+        of keys
+      ) {
+
+        try {
+
+          const value =
+            localStorage.getItem(
+              key
+            ) ||
+            sessionStorage.getItem(
+              key
+            );
+
+
+          if (!value) {
+            continue;
+          }
+
+
+          const parsed =
+            JSON.parse(
+              value
+            );
+
+
+          if (
+            parsed &&
+            typeof parsed ===
+              'object'
+          ) {
+
+            return parsed;
+
+          }
+
+        } catch (error) {
+
+          // Seguimos buscando.
+
+        }
+
+      }
+
+
+      return null;
+
+    }
+
+
+    app.me =
+      readStoredUser();
+
+
+    /* =====================================================
+       NOMBRE DEL USUARIO
+       ===================================================== */
+
+    function userName(
+      user
+    ) {
+
+      if (!user) {
+        return 'VOBIXCHAT';
+      }
+
+
+      return (
+        user.username ||
+        user.name ||
+        user.displayName ||
+        user.display_name ||
+        user.vobix_id ||
+        user.vobixId ||
+        'VOBIXCHAT'
+      );
+
+    }
+
+
+    /* =====================================================
+       ID DEL USUARIO
+       ===================================================== */
+
+    function userId(
+      user
+    ) {
+
+      if (!user) {
+        return null;
+      }
+
+
+      return (
+        user.id ||
+        user._id ||
+        user.user_id ||
+        user.userId ||
+        null
+      );
+
+    }
+
+
+    /* =====================================================
+       TELÉFONO
+       ===================================================== */
+
+    function userPhone(
+      user
+    ) {
+
+      if (!user) {
+        return '';
+      }
+
+
+      return (
+        user.phone ||
+        user.phone_number ||
+        user.phoneNumber ||
+        user.telephone ||
+        ''
+      );
+
+    }
+
+
+    /* =====================================================
+       INICIAL
+       ===================================================== */
+
+    function userInitial(
+      user
+    ) {
+
+      const name =
+        String(
+          userName(user)
+        )
+        .trim();
+
+
+      return (
+        name
+          .charAt(0)
+          .toUpperCase() ||
+        'V'
+      );
+
+    }
+
+
+    /* =====================================================
+       ESCAPAR TEXTO
+
+       EVITA QUE NOMBRES O MENSAJES PUEDAN
+       INSERTAR HTML.
+       ===================================================== */
+
+    function escapeHtml(
+      value
+    ) {
+
+      return String(
+        value ?? ''
+      )
+      .replace(
+        /&/g,
+        '&amp;'
+      )
+      .replace(
+        /</g,
+        '&lt;'
+      )
+      .replace(
+        />/g,
+        '&gt;'
+      )
+      .replace(
+        /"/g,
+        '&quot;'
+      )
+      .replace(
+        /'/g,
+        '&#039;'
+      );
+
+    }
+
+
+    /* =====================================================
+       AVISO SIMPLE
+       ===================================================== */
+
+    function notifyUser(
+      message
+    ) {
+
+      console.log(
+        '[VOBIXCHAT]',
+        message
+      );
+
+
+      const status =
+        elements.connectionStatus;
+
+
+      if (!status) {
+        return;
+      }
+
+
+      const previous =
+        status.textContent;
+
+
+      status.textContent =
+        message;
+
+
+      window.setTimeout(
+        () => {
+
+          if (
+            status.textContent ===
+            message
+          ) {
+
+            status.textContent =
+              app.socket &&
+              app.socket.connected
+                ? 'Conectado · Chat seguro'
+                : previous;
+
+          }
+
+        },
+        2800
+      );
+
+    }
+
+
+    /* =====================================================
+       API
+
+       AQUÍ SE AÑADE EL TOKEN A TODAS LAS
+       PETICIONES DEL CHAT.
+       ===================================================== */
+
+    async function api(
+      url,
+      options = {}
+    ) {
+
+      const token =
+        getAuthToken();
+
+
+      if (token) {
+
+        app.token =
+          token;
+
+      }
+
+
+      const bodyIsFormData =
+        options.body instanceof
+        FormData;
+
+
+      const headers = {
+
+        ...(
+          bodyIsFormData
+            ? {}
+            : {
+                'Content-Type':
+                  'application/json'
+              }
+        ),
+
+        ...(
+          app.token
+            ? {
+                Authorization:
+                  'Bearer ' +
+                  app.token
+              }
+            : {}
+        ),
+
+        ...(
+          options.headers ||
+          {}
+        )
+
+      };
+
+
+      const response =
+        await fetch(
+          url,
+          {
+            ...options,
+
+            credentials:
+              'include',
+
+            headers
+          }
+        );
+
+
+      const contentType =
+        response.headers.get(
+          'content-type'
+        ) ||
+        '';
+
+
+      let data =
+        null;
+
+
+      if (
+        contentType.includes(
+          'application/json'
+        )
+      ) {
+
+        try {
+
+          data =
+            await response.json();
+
+        } catch (error) {
+
+          data =
+            null;
+
+        }
+
+      } else {
+
+        try {
+
+          data =
+            await response.text();
+
+        } catch (error) {
+
+          data =
+            null;
+
+        }
+
+      }
+
+
+      if (!response.ok) {
+
+        const message =
+
+          (
+            data &&
+            typeof data ===
+              'object' &&
+            (
+              data.error ||
+              data.message ||
+              data.msg
+            )
+          ) ||
+
+          (
+            typeof data ===
+              'string' &&
+            data
+          ) ||
+
+          (
+            'Error ' +
+            response.status
+          );
+
+
+        console.error(
+          '[VOBIXCHAT API]',
+          response.status,
+          url,
+          data
+        );
+
+
+        const error =
+          new Error(
+            message
+          );
+
+
+        error.status =
+          response.status;
+
+
+        throw error;
+
+      }
+
+
+      return data;
+
+    }
+
+
+    /* =====================================================
+       ABRIR / CERRAR PANEL
+       ===================================================== */
+
+    function setPanel(
+      panel,
+      open
+    ) {
+
+      if (!panel) {
+        return;
+      }
+
+
+      panel.classList.toggle(
+        'open',
+        !!open
+      );
+
+
+      panel.setAttribute(
+        'aria-hidden',
+        open
+          ? 'false'
+          : 'true'
+      );
+
+    }
+
+
+    /* =====================================================
+       MENÚ ⋮
+       ===================================================== */
+
+    function closeOptionsMenu() {
+
+      if (
+        !elements
+          .chatOptionsMenu
+      ) {
+
+        return;
+      }
+
+
+      elements
+        .chatOptionsMenu
+        .classList
+        .remove(
+          'open'
+        );
+
+    }
+
+
+    function toggleOptionsMenu() {
+
+      if (
+        !elements
+          .chatOptionsMenu
+      ) {
+
+        return;
+      }
+
+
+      elements
+        .chatOptionsMenu
+        .classList
+        .toggle(
+          'open'
+        );
+
+    }
+
+
+    /* =====================================================
+       MICRO ↔ ENVIAR
+
+       ESTA FUNCIÓN ES LA QUE SOLUCIONA:
+
+       CAMPO VACÍO = 🎙️
+       ESCRIBIENDO   = ➤
+       ===================================================== */
+
+    function syncComposerAction() {
+
+      if (
+        !elements.messageInput ||
+        !elements.voiceButton ||
+        !elements.sendButton
+      ) {
+
+        return;
+      }
+
+
+      const hasText =
+        elements
+          .messageInput
+          .value
+          .trim()
+          .length >
+        0;
+
+
+      elements
+        .voiceButton
+        .classList
+        .toggle(
+          'isVisible',
+          !hasText
+        );
+
+
+      elements
+        .sendButton
+        .classList
+        .toggle(
+          'isVisible',
+          hasText
+        );
+
+    }
+
+
+    /* =====================================================
+       AUTO ALTURA DEL CAMPO
+       ===================================================== */
+
+    function resizeMessageInput() {
+
+      const input =
+        elements.messageInput;
+
+
+      if (!input) {
+        return;
+      }
+
+
+      input.style.height =
+        'auto';
+
+
+      input.style.height =
+        Math.min(
+          input.scrollHeight,
+          120
+        ) +
+        'px';
+
+    }
+
+
+    /* =====================================================
+       INPUT DEL MENSAJE
+
+       ESTE LISTENER SE CONECTA AHORA MISMO,
+       NO DEPENDE DEL SOCKET NI DEL SERVIDOR.
+       ===================================================== */
+
+    if (
+      elements.messageInput
+    ) {
+
+      elements
+        .messageInput
+        .addEventListener(
+          'input',
+          () => {
+
+            syncComposerAction();
+
+            resizeMessageInput();
+
+          }
+        );
+
+
+      elements
+        .messageInput
+        .addEventListener(
+          'keydown',
+          event => {
+
+            if (
+              event.key ===
+                'Enter' &&
+              !event.shiftKey
+            ) {
+
+              event.preventDefault();
+
+
+              if (
+                elements
+                  .messageInput
+                  .value
+                  .trim()
+              ) {
+
+                elements
+                  .sendButton
+                  ?.click();
+
+              }
+
+            }
+
+          }
+        );
+
+    }
+
+
+    /* =====================================================
+       BOTÓN ⋮
+
+       TAMPOCO DEPENDE DEL SERVIDOR.
+       ===================================================== */
+
+    if (
+      elements.chatOptionsButton
+    ) {
+
+      elements
+        .chatOptionsButton
+        .addEventListener(
+          'click',
+          event => {
+
+            event.preventDefault();
+
+            event.stopPropagation();
+
+            toggleOptionsMenu();
+
+          }
+        );
+
+    }
+
+
+    /* =====================================================
+       CERRAR MENÚ AL TOCAR FUERA
+       ===================================================== */
+
+    document.addEventListener(
+      'pointerdown',
+      event => {
+
+        if (
+          !elements
+            .chatOptionsMenu ||
+          !elements
+            .chatOptionsMenu
+            .classList
+            .contains(
+              'open'
+            )
+        ) {
+
+          return;
+        }
+
+
+        if (
+          elements
+            .chatOptionsMenu
+            .contains(
+              event.target
+            )
+        ) {
+
+          return;
+        }
+
+
+        if (
+          elements
+            .chatOptionsButton &&
+          elements
+            .chatOptionsButton
+            .contains(
+              event.target
+            )
+        ) {
+
+          return;
+        }
+
+
+        closeOptionsMenu();
+
+      }
+    );
+
+
+    /* =====================================================
+       PERSONAS
+       ===================================================== */
+
+    function openPeople() {
+
+      closeOptionsMenu();
+
+
+      setPanel(
+        elements.peopleDrawer,
+        true
+      );
+
+
+      if (
+        elements
+          .peopleSearchInput
+      ) {
+
+        window.setTimeout(
+          () => {
+
+            elements
+              .peopleSearchInput
+              .focus();
+
+          },
+          100
+        );
+
+      }
+
+
+      loadConversations();
+
+    }
+
+
+    function closePeople() {
+
+      setPanel(
+        elements.peopleDrawer,
+        false
+      );
+
+    }
+
+
+    if (
+      elements.openPeopleButton
+    ) {
+
+      elements
+        .openPeopleButton
+        .addEventListener(
+          'click',
+          openPeople
+        );
+
+    }
+
+
+    if (
+      elements.closePeopleButton
+    ) {
+
+      elements
+        .closePeopleButton
+        .addEventListener(
+          'click',
+          closePeople
+        );
+
+    }
+
+
+    if (
+      elements.peopleDrawer
+    ) {
+
+      elements
+        .peopleDrawer
+        .addEventListener(
+          'pointerdown',
+          event => {
+
+            if (
+              event.target ===
+              elements.peopleDrawer
+            ) {
+
+              closePeople();
+
+            }
+
+          }
+        );
+
+    }
+
+
+    /* =====================================================
+       NORMALIZAR RESPUESTA DE USUARIOS
+       ===================================================== */
+
+    function extractUsers(
+      data
+    ) {
+
+      if (
+        Array.isArray(data)
+      ) {
+
+        return data;
+
+      }
+
+
+      if (
+        Array.isArray(
+          data?.users
+        )
+      ) {
+
+        return data.users;
+
+      }
+
+
+      if (
+        Array.isArray(
+          data?.results
+        )
+      ) {
+
+        return data.results;
+
+      }
+
+
+      if (
+        Array.isArray(
+          data?.data
+        )
+      ) {
+
+        return data.data;
+
+      }
+
+
+      return [];
+
+    }
+
+
+    /* =====================================================
+       MOSTRAR RESULTADOS
+       ===================================================== */
+
+    function renderPeopleResults(
+      users
+    ) {
+
+      const container =
+        elements
+          .peopleSearchResults;
+
+
+      if (!container) {
+        return;
+      }
+
+
+      container.innerHTML =
+        '';
+
+
+      if (!users.length) {
+
+        container.innerHTML =
+          '<div class="vobixStatusMessage">' +
+          'No encontré usuarios con esa búsqueda.' +
+          '</div>';
+
+        return;
+
+      }
+
+
+      users.forEach(
+        user => {
+
+          const row =
+            document.createElement(
+              'div'
+            );
+
+
+          row.className =
+            'vxPerson';
+
+
+          const info =
+            document.createElement(
+              'div'
+            );
+
+
+          info.className =
+            'vxPersonInfo';
+
+
+          const name =
+            document.createElement(
+              'strong'
+            );
+
+
+          name.textContent =
+            userName(
+              user
+            );
+
+
+          const details =
+            document.createElement(
+              'small'
+            );
+
+
+          const parts =
+            [];
+
+
+          if (
+            user.vobix_id ||
+            user.vobixId
+          ) {
+
+            parts.push(
+              user.vobix_id ||
+              user.vobixId
+            );
+
+          }
+
+
+          if (
+            userPhone(user)
+          ) {
+
+            parts.push(
+              userPhone(user)
+            );
+
+          }
+
+
+          details.textContent =
+            parts.join(
+              ' · '
+            ) ||
+            'Usuario registrado';
+
+
+          info.append(
+            name,
+            details
+          );
+
+
+          const button =
+            document.createElement(
+              'button'
+            );
+
+
+          button.type =
+            'button';
+
+
+          button.className =
+            'vxPrimary';
+
+
+          button.textContent =
+            'Chat 1×1';
+
+
+          button.addEventListener(
+            'click',
+            () => {
+
+              openPrivateConversation(
+                user
+              );
+
+            }
+          );
+
+
+          row.append(
+            info,
+            button
+          );
+
+
+          container.appendChild(
+            row
+          );
+
+        }
+      );
+
+    }
+
+
+    /* =====================================================
+       BUSCAR USUARIO
+
+       IMPORTANTE:
+       ESTE BOTÓN QUEDA CONECTADO AQUÍ.
+
+       LA RUTA UTILIZADA ES:
+       /api/chat/users/search?q=
+       ===================================================== */
+
+    async function searchPeople() {
+
+      const input =
+        elements
+          .peopleSearchInput;
+
+
+      const container =
+        elements
+          .peopleSearchResults;
+
+
+      if (
+        !input ||
+        !container
+      ) {
+
+        return;
+
+      }
+
+
+      const query =
+        input.value
+          .trim();
+
+
+      if (
+        query.length <
+        2
+      ) {
+
+        container.innerHTML =
+          '<div class="vobixStatusMessage">' +
+          'Escribe al menos 2 caracteres.' +
+          '</div>';
+
+        return;
+
+      }
+
+
+      container.innerHTML =
+        '<div class="vobixStatusMessage">' +
+        'Buscando…' +
+        '</div>';
+
+
+      try {
+
+        const data =
+          await api(
+            '/api/chat/users/search?q=' +
+            encodeURIComponent(
+              query
+            )
+          );
+
+
+        const users =
+          extractUsers(
+            data
+          );
+
+
+        renderPeopleResults(
+          users
+        );
+
+
+      } catch (error) {
+
+        console.error(
+          '[VOBIXCHAT BUSCAR]',
+          error
+        );
+
+
+        container.innerHTML =
+          '<div class="vobixStatusMessage error">' +
+          escapeHtml(
+            error.status === 401
+              ? 'Sesión no autorizada. Vuelve a entrar a VOBIXCHAT.'
+              : (
+                  'No se pudo buscar: ' +
+                  error.message
+                )
+          ) +
+          '</div>';
+
+      }
+
+    }
+
+
+    /* =====================================================
+       CONECTAR BOTÓN BUSCAR
+
+       NO USA onclick GLOBAL.
+       USA addEventListener DIRECTAMENTE.
+       ===================================================== */
+
+    if (
+      elements.peopleSearchButton
+    ) {
+
+      elements
+        .peopleSearchButton
+        .addEventListener(
+          'click',
+          event => {
+
+            event.preventDefault();
+
+            searchPeople();
+
+          }
+        );
+
+    }
+
+
+    /* =====================================================
+       ENTER TAMBIÉN BUSCA
+       ===================================================== */
+
+    if (
+      elements.peopleSearchInput
+    ) {
+
+      elements
+        .peopleSearchInput
+        .addEventListener(
+          'keydown',
+          event => {
+
+            if (
+              event.key ===
+              'Enter'
+            ) {
+
+              event.preventDefault();
+
+              searchPeople();
+
+            }
+
+          }
+        );
+
+    }
+
+
+    /* =====================================================
+       PERFIL
+       ===================================================== */
+
+    function openProfile() {
+
+      closeOptionsMenu();
+
+
+      renderProfile();
+
+
+      setPanel(
+        elements.profilePanel,
+        true
+      );
+
+    }
+
+
+    function closeProfile() {
+
+      setPanel(
+        elements.profilePanel,
+        false
+      );
+
+    }
+
+
+    if (
+      elements.openProfileButton
+    ) {
+
+      elements
+        .openProfileButton
+        .addEventListener(
+          'click',
+          openProfile
+        );
+
+    }
+
+
+    if (
+      elements.avatar
+    ) {
+
+      elements
+        .avatar
+        .addEventListener(
+          'click',
+          openProfile
+        );
+
+
+      elements
+        .avatar
+        .addEventListener(
+          'keydown',
+          event => {
+
+            if (
+              event.key ===
+                'Enter' ||
+              event.key ===
+                ' '
+            ) {
+
+              event.preventDefault();
+
+              openProfile();
+
+            }
+
+          }
+        );
+
+    }
+
+
+    if (
+      elements.closeProfileButton
+    ) {
+
+      elements
+        .closeProfileButton
+        .addEventListener(
+          'click',
+          closeProfile
+        );
+
+    }
+
+
+    /* =====================================================
+       NOTIFICACIONES
+       ===================================================== */
+
+    function openNotifications() {
+
+      closeOptionsMenu();
+
+
+      setPanel(
+        elements.notificationPanel,
+        true
+      );
+
+    }
+
+
+    function closeNotifications() {
+
+      setPanel(
+        elements.notificationPanel,
+        false
+      );
+
+    }
+
+
+    if (
+      elements.openNotificationsButton
+    ) {
+
+      elements
+        .openNotificationsButton
+        .addEventListener(
+          'click',
+          openNotifications
+        );
+
+    }
+
+
+    if (
+      elements.closeNotificationButton
+    ) {
+
+      elements
+        .closeNotificationButton
+        .addEventListener(
+          'click',
+          closeNotifications
+        );
+
+    }
+
+
+    /* =====================================================
+       ESTADO INICIAL DEL COMPOSITOR
+
+       AL CARGAR:
+       MICRO VISIBLE.
+       ===================================================== */
+
+    syncComposerAction();
+
+    resizeMessageInput();
+
+
+    /* =====================================================
+       FIN BLOQUE 3 DE 6
+
+       MUY IMPORTANTE:
+       NO PONGAS </script>
+       NO PONGAS })();
+
+       EL BLOQUE 4 CONTINÚA EXACTAMENTE
+       DENTRO DE ESTE MISMO JAVASCRIPT.
+       ===================================================== */
+      /* =====================================================
+       VOBIXCHAT
+       PUBLIC/chat.html
+       V2 CORREGIDO
+       BLOQUE 4 DE 6
+
+       CONTINÚA DENTRO DEL MISMO:
+       (() => {
+         'use strict';
+
+       NO SE CREA OTRO <script>
+       NO SE REPITEN CONST GLOBALES
+       ===================================================== */
+
+
+    /* =====================================================
+       FOTO DE PERFIL LOCAL
+
+       UNA SOLA CLAVE.
+       NO SE VUELVE A DECLARAR EN OTRO BLOQUE.
+       ===================================================== */
+
+    const PROFILE_PHOTO_KEY =
+      'vobixchat_profile_photo';
+
+
+    function getStoredProfilePhoto() {
+
+      try {
+
+        return (
+          localStorage.getItem(
+            PROFILE_PHOTO_KEY
+          ) ||
+          ''
+        );
+
+      } catch (error) {
+
+        console.warn(
+          '[VOBIXCHAT PROFILE READ]',
+          error
+        );
+
+        return '';
+
+      }
+
+    }
+
+
+    function saveStoredProfilePhoto(
+      value
+    ) {
+
+      try {
+
+        if (value) {
+
+          localStorage.setItem(
+            PROFILE_PHOTO_KEY,
+            value
+          );
+
+        } else {
+
+          localStorage.removeItem(
+            PROFILE_PHOTO_KEY
+          );
+
+        }
+
+      } catch (error) {
+
+        console.warn(
+          '[VOBIXCHAT PROFILE SAVE]',
+          error
+        );
+
+      }
+
+    }
+
+
+    /* =====================================================
+       PINTAR AVATAR
+       ===================================================== */
+
+    function renderAvatarPhoto(
+      photo = getStoredProfilePhoto()
+    ) {
+
+      const initial =
+        userInitial(
+          app.me
+        );
+
+
+      if (
+        elements.avatar
+      ) {
+
+        if (photo) {
+
+          elements
+            .avatar
+            .style
+            .backgroundImage =
+            `url("${photo}")`;
+
+
+          elements
+            .avatar
+            .classList
+            .add(
+              'hasPhoto'
+            );
+
+
+          elements
+            .avatar
+            .textContent =
+            '';
+
+        } else {
+
+          elements
+            .avatar
+            .style
+            .backgroundImage =
+            '';
+
+
+          elements
+            .avatar
+            .classList
+            .remove(
+              'hasPhoto'
+            );
+
+
+          elements
+            .avatar
+            .textContent =
+            initial;
+
+        }
+
+      }
+
+
+      if (
+        elements.profilePhotoPreview
+      ) {
+
+        elements
+          .profilePhotoPreview
+          .innerHTML =
+          '';
+
+
+        if (photo) {
+
+          const image =
+            document.createElement(
+              'img'
+            );
+
+
+          image.src =
+            photo;
+
+
+          image.alt =
+            'Foto de perfil';
+
+
+          elements
+            .profilePhotoPreview
+            .appendChild(
+              image
+            );
+
+        } else {
+
+          elements
+            .profilePhotoPreview
+            .textContent =
+            initial;
+
+        }
+
+      }
+
+    }
+
+
+    /* =====================================================
+       PINTAR DATOS DEL PERFIL
+       ===================================================== */
+
+    function renderProfile() {
+
+      const name =
+        userName(
+          app.me
+        );
+
+
+      const phone =
+        userPhone(
+          app.me
+        );
+
+
+      if (
+        elements.topbarUserName
+      ) {
+
+        elements
+          .topbarUserName
+          .textContent =
+          name;
+
+      }
+
+
+      if (
+        elements.profileUserName
+      ) {
+
+        elements
+          .profileUserName
+          .textContent =
+          name;
+
+      }
+
+
+      if (
+        elements.profilePhone
+      ) {
+
+        elements
+          .profilePhone
+          .textContent =
+          phone ||
+          'Mi perfil VOBIXCHAT';
+
+      }
+
+
+      renderAvatarPhoto();
+
+    }
+
+
+    /* =====================================================
+       CAMBIAR FOTO
+       ===================================================== */
+
+    if (
+      elements.changeProfilePhotoButton &&
+      elements.profilePhotoInput
+    ) {
+
+      elements
+        .changeProfilePhotoButton
+        .addEventListener(
+          'click',
+          () => {
+
+            elements
+              .profilePhotoInput
+              .value =
+              '';
+
+
+            elements
+              .profilePhotoInput
+              .click();
+
+          }
+        );
+
+    }
+
+
+    /* =====================================================
+       LEER FOTO ELEGIDA
+       ===================================================== */
+
+    if (
+      elements.profilePhotoInput
+    ) {
+
+      elements
+        .profilePhotoInput
+        .addEventListener(
+          'change',
+          () => {
+
+            const file =
+              elements
+                .profilePhotoInput
+                .files?.[0];
+
+
+            if (!file) {
+              return;
+            }
+
+
+            if (
+              !String(
+                file.type ||
+                ''
+              ).startsWith(
+                'image/'
+              )
+            ) {
+
+              notifyUser(
+                'Selecciona una imagen'
+              );
+
+              return;
+
+            }
+
+
+            const reader =
+              new FileReader();
+
+
+            reader.onload =
+              () => {
+
+                const photo =
+                  String(
+                    reader.result ||
+                    ''
+                  );
+
+
+                if (!photo) {
+                  return;
+                }
+
+
+                saveStoredProfilePhoto(
+                  photo
+                );
+
+
+                renderAvatarPhoto(
+                  photo
+                );
+
+
+                notifyUser(
+                  'Foto actualizada'
+                );
+
+              };
+
+
+            reader.onerror =
+              () => {
+
+                notifyUser(
+                  'No se pudo leer la foto'
+                );
+
+              };
+
+
+            reader.readAsDataURL(
+              file
+            );
+
+          }
+        );
+
+    }
+
+
+    /* =====================================================
+       QUITAR FOTO
+       ===================================================== */
+
+    if (
+      elements.removeProfilePhotoButton
+    ) {
+
+      elements
+        .removeProfilePhotoButton
+        .addEventListener(
+          'click',
+          () => {
+
+            saveStoredProfilePhoto(
+              ''
+            );
+
+
+            renderAvatarPhoto(
+              ''
+            );
+
+
+            notifyUser(
+              'Foto eliminada'
+            );
+
+          }
+        );
+
+    }
+
+
+    /* =====================================================
+       PREFERENCIAS
+       ===================================================== */
+
+    function readBooleanPreference(
+      key,
+      defaultValue
+    ) {
+
+      try {
+
+        const value =
+          localStorage.getItem(
+            key
+          );
+
+
+        if (
+          value === null
+        ) {
+
+          return defaultValue;
+
+        }
+
+
+        return (
+          value ===
+          'true'
+        );
+
+      } catch (error) {
+
+        return defaultValue;
+
+      }
+
+    }
+
+
+    function saveBooleanPreference(
+      key,
+      value
+    ) {
+
+      try {
+
+        localStorage.setItem(
+          key,
+          String(
+            !!value
+          )
+        );
+
+      } catch (error) {
+
+        console.warn(
+          '[VOBIXCHAT PREFERENCE]',
+          error
+        );
+
+      }
+
+    }
+
+
+    app.messageSound =
+      readBooleanPreference(
+        'vobix_message_sound',
+        true
+      );
+
+
+    app.notifications =
+      readBooleanPreference(
+        'vobix_notifications',
+        true
+      );
+
+
+    function renderPreferenceSwitches() {
+
+      if (
+        elements.messageSoundSwitch
+      ) {
+
+        elements
+          .messageSoundSwitch
+          .classList
+          .toggle(
+            'on',
+            app.messageSound
+          );
+
+      }
+
+
+      if (
+        elements.notificationSwitch
+      ) {
+
+        elements
+          .notificationSwitch
+          .classList
+          .toggle(
+            'on',
+            app.notifications
+          );
+
+      }
+
+    }
+
+
+    if (
+      elements.messageSoundSwitch
+    ) {
+
+      elements
+        .messageSoundSwitch
+        .addEventListener(
+          'click',
+          () => {
+
+            app.messageSound =
+              !app.messageSound;
+
+
+            saveBooleanPreference(
+              'vobix_message_sound',
+              app.messageSound
+            );
+
+
+            renderPreferenceSwitches();
+
+          }
+        );
+
+    }
+
+
+    if (
+      elements.notificationSwitch
+    ) {
+
+      elements
+        .notificationSwitch
+        .addEventListener(
+          'click',
+          async () => {
+
+            app.notifications =
+              !app.notifications;
+
+
+            if (
+              app.notifications &&
+              'Notification' in window &&
+              Notification.permission ===
+                'default'
+            ) {
+
+              try {
+
+                const permission =
+                  await Notification
+                    .requestPermission();
+
+
+                if (
+                  permission !==
+                  'granted'
+                ) {
+
+                  app.notifications =
+                    false;
+
+                }
+
+              } catch (error) {
+
+                console.warn(
+                  '[VOBIXCHAT NOTIFICATION]',
+                  error
+                );
+
+              }
+
+            }
+
+
+            saveBooleanPreference(
+              'vobix_notifications',
+              app.notifications
+            );
+
+
+            renderPreferenceSwitches();
+
+          }
+        );
+
+    }
+
+
+    /* =====================================================
+       SONIDO DE MENSAJE
+
+       SE GENERA CON WEB AUDIO.
+       NO DEPENDE DE ARCHIVOS EXTERNOS.
+       ===================================================== */
+
+    let audioContext =
+      null;
+
+
+    function getAudioContext() {
+
+      if (audioContext) {
+
+        return audioContext;
+
+      }
+
+
+      const AudioContextClass =
+        window.AudioContext ||
+        window.webkitAudioContext;
+
+
+      if (
+        !AudioContextClass
+      ) {
+
+        return null;
+
+      }
+
+
+      audioContext =
+        new AudioContextClass();
+
+
+      return audioContext;
+
+    }
+
+
+    async function unlockAudio() {
+
+      const context =
+        getAudioContext();
+
+
+      if (!context) {
+        return;
+      }
+
+
+      try {
+
+        if (
+          context.state ===
+          'suspended'
+        ) {
+
+          await context.resume();
+
+        }
+
+      } catch (error) {
+
+        console.warn(
+          '[VOBIXCHAT AUDIO]',
+          error
+        );
+
+      }
+
+    }
+
+
+    function playMessageSound() {
+
+      if (
+        !app.messageSound
+      ) {
+
+        return;
+
+      }
+
+
+      const context =
+        getAudioContext();
+
+
+      if (!context) {
+        return;
+      }
+
+
+      try {
+
+        const oscillator =
+          context.createOscillator();
+
+
+        const gain =
+          context.createGain();
+
+
+        oscillator.type =
+          'sine';
+
+
+        oscillator.frequency
+          .setValueAtTime(
+            760,
+            context.currentTime
+          );
+
+
+        oscillator.frequency
+          .exponentialRampToValueAtTime(
+            1040,
+            context.currentTime +
+              .10
+          );
+
+
+        gain.gain
+          .setValueAtTime(
+            .0001,
+            context.currentTime
+          );
+
+
+        gain.gain
+          .exponentialRampToValueAtTime(
+            .10,
+            context.currentTime +
+              .015
+          );
+
+
+        gain.gain
+          .exponentialRampToValueAtTime(
+            .0001,
+            context.currentTime +
+              .18
+          );
+
+
+        oscillator.connect(
+          gain
+        );
+
+
+        gain.connect(
+          context.destination
+        );
+
+
+        oscillator.start();
+
+
+        oscillator.stop(
+          context.currentTime +
+            .20
+        );
+
+
+      } catch (error) {
+
+        console.warn(
+          '[VOBIXCHAT MESSAGE SOUND]',
+          error
+        );
+
+      }
+
+    }
+
+
+    /* =====================================================
+       DESBLOQUEAR AUDIO EN PRIMER TOQUE
+       ===================================================== */
+
+    document.addEventListener(
+      'pointerdown',
+      () => {
+
+        unlockAudio();
+
+      },
+      {
+        once: true
+      }
+    );
+
+
+    /* =====================================================
+       NOTIFICACIÓN DEL NAVEGADOR
+       ===================================================== */
+
+    function showBrowserNotification(
+      title,
+      body
+    ) {
+
+      if (
+        !app.notifications ||
+        !('Notification' in window) ||
+        Notification.permission !==
+          'granted'
+      ) {
+
+        return;
+
+      }
+
+
+      if (
+        document.visibilityState ===
+        'visible'
+      ) {
+
+        return;
+
+      }
+
+
+      try {
+
+        new Notification(
+          title,
+          {
+            body:
+              String(
+                body ||
+                ''
+              )
+          }
+        );
+
+      } catch (error) {
+
+        console.warn(
+          '[VOBIXCHAT BROWSER NOTIFICATION]',
+          error
+        );
+
+      }
+
+    }
+
+
+    /* =====================================================
+       FOTO DEL CHAT
+       ===================================================== */
+
+    if (
+      elements.sendPhotoButton &&
+      elements.chatPhotoInput
+    ) {
+
+      elements
+        .sendPhotoButton
+        .addEventListener(
+          'click',
+          () => {
+
+            if (
+              !app.conversation
+            ) {
+
+              notifyUser(
+                'Abre primero un chat 1×1'
+              );
+
+              return;
+
+            }
+
+
+            elements
+              .chatPhotoInput
+              .value =
+              '';
+
+
+            elements
+              .chatPhotoInput
+              .click();
+
+          }
+        );
+
+    }
+
+
+    if (
+      elements.chatPhotoInput
+    ) {
+
+      elements
+        .chatPhotoInput
+        .addEventListener(
+          'change',
+          async () => {
+
+            const file =
+              elements
+                .chatPhotoInput
+                .files?.[0];
+
+
+            if (!file) {
+              return;
+            }
+
+
+            if (
+              !String(
+                file.type ||
+                ''
+              ).startsWith(
+                'image/'
+              )
+            ) {
+
+              notifyUser(
+                'Selecciona una foto'
+              );
+
+              return;
+
+            }
+
+
+            if (
+              !app.conversation
+            ) {
+
+              notifyUser(
+                'Abre primero un chat 1×1'
+              );
+
+              return;
+
+            }
+
+
+            try {
+
+              const form =
+                new FormData();
+
+
+              form.append(
+                'file',
+                file
+              );
+
+
+              const conversationId =
+                app.conversation.id ||
+                app.conversation._id;
+
+
+              form.append(
+                'conversationId',
+                conversationId
+              );
+
+
+              const data =
+                await api(
+                  '/api/chat/files',
+                  {
+                    method:
+                      'POST',
+
+                    body:
+                      form
+                  }
+                );
+
+
+              const payload = {
+
+                conversationId,
+
+                file:
+                  data?.file ||
+                  data
+
+              };
+
+
+              if (
+                app.socket &&
+                app.socket.connected
+              ) {
+
+                app.socket.emit(
+                  'chat:file',
+                  payload
+                );
+
+              }
+
+
+              notifyUser(
+                'Foto enviada'
+              );
+
+
+            } catch (error) {
+
+              console.error(
+                '[VOBIXCHAT PHOTO]',
+                error
+              );
+
+
+              notifyUser(
+                'No se pudo enviar la foto'
+              );
+
+            } finally {
+
+              elements
+                .chatPhotoInput
+                .value =
+                '';
+
+            }
+
+          }
+        );
+
+    }
+
+
+    /* =====================================================
+       RENDER DE MENSAJE DE TEXTO
+       ===================================================== */
+
+    function renderTextMessage(
+      message,
+      mine = false
+    ) {
+
+      if (
+        !elements.messages
+      ) {
+
+        return;
+
+      }
+
+
+      const welcome =
+        elements
+          .messages
+          .querySelector(
+            '#vobixWelcome'
+          );
+
+
+      if (welcome) {
+
+        welcome.remove();
+
+      }
+
+
+      const row =
+        document.createElement(
+          'div'
+        );
+
+
+      row.className =
+        'messageRow ' +
+        (
+          mine
+            ? 'mine'
+            : 'theirs'
+        );
+
+
+      const bubble =
+        document.createElement(
+          'div'
+        );
+
+
+      bubble.className =
+        'messageBubble';
+
+
+      const text =
+        document.createElement(
+          'div'
+        );
+
+
+      text.textContent =
+        message.text ||
+        message.message ||
+        message.body ||
+        '';
+
+
+      bubble.appendChild(
+        text
+      );
+
+
+      const rawDate =
+        message.created_at ||
+        message.createdAt ||
+        message.timestamp ||
+        null;
+
+
+      if (rawDate) {
+
+        const date =
+          new Date(
+            rawDate
+          );
+
+
+        if (
+          !Number.isNaN(
+            date.getTime()
+          )
+        ) {
+
+          const time =
+            document.createElement(
+              'span'
+            );
+
+
+          time.className =
+            'messageTime';
+
+
+          time.textContent =
+            date.toLocaleTimeString(
+              [],
+              {
+                hour:
+                  '2-digit',
+
+                minute:
+                  '2-digit'
+              }
+            );
+
+
+          bubble.appendChild(
+            time
+          );
+
+        }
+
+      }
+
+
+      row.appendChild(
+        bubble
+      );
+
+
+      elements
+        .messages
+        .appendChild(
+          row
+        );
+
+
+      elements
+        .messages
+        .scrollTop =
+        elements
+          .messages
+          .scrollHeight;
+
+    }
+
+
+    /* =====================================================
+       DETERMINAR SI EL MENSAJE ES MÍO
+       ===================================================== */
+
+    function messageIsMine(
+      message
+    ) {
+
+      if (
+        typeof message.mine ===
+        'boolean'
+      ) {
+
+        return message.mine;
+
+      }
+
+
+      const myId =
+        userId(
+          app.me
+        );
+
+
+      const senderId =
+        message.senderId ||
+        message.sender_id ||
+        message.userId ||
+        message.user_id ||
+        message.sender?.id ||
+        message.sender?._id ||
+        null;
+
+
+      if (
+        myId &&
+        senderId
+      ) {
+
+        return (
+          String(myId) ===
+          String(senderId)
+        );
+
+      }
+
+
+      return false;
+
+    }
+
+
+    /* =====================================================
+       RENDER GENERAL
+       ===================================================== */
+
+    function renderIncomingMessage(
+      message
+    ) {
+
+      if (!message) {
+        return;
+      }
+
+
+      renderTextMessage(
+        message,
+        messageIsMine(
+          message
+        )
+      );
+
+    }
+
+
+    /* =====================================================
+       ENVIAR MENSAJE
+
+       EL BOTÓN ➤ YA QUEDÓ CONECTADO
+       VISUALMENTE EN BLOQUE 3.
+
+       AQUÍ CONECTAMOS SU ENVÍO.
+       ===================================================== */
+
+    async function sendCurrentMessage() {
+
+      const input =
+        elements.messageInput;
+
+
+      if (!input) {
+        return;
+      }
+
+
+      const text =
+        input.value
+          .trim();
+
+
+      if (!text) {
+
+        syncComposerAction();
+
+        return;
+
+      }
+
+
+      if (
+        !app.conversation
+      ) {
+
+        notifyUser(
+          'Busca una persona y abre un chat 1×1'
+        );
+
+        return;
+
+      }
+
+
+      const conversationId =
+        app.conversation.id ||
+        app.conversation._id;
+
+
+      if (
+        !conversationId
+      ) {
+
+        notifyUser(
+          'La conversación no tiene ID'
+        );
+
+        return;
+
+      }
+
+
+      const payload = {
+
+        conversationId,
+
+        text
+
+      };
+
+
+      let sent =
+        false;
+
+
+      /* ===================================================
+         PRIMERO SOCKET
+         =================================================== */
+
+      if (
+        app.socket &&
+        app.socket.connected
+      ) {
+
+        try {
+
+          app.socket.emit(
+            'chat:message',
+            payload
+          );
+
+
+          sent =
+            true;
+
+        } catch (error) {
+
+          console.warn(
+            '[VOBIXCHAT SOCKET SEND]',
+            error
+          );
+
+        }
+
+      }
+
+
+      /* ===================================================
+         SI SOCKET NO ESTÁ DISPONIBLE,
+         INTENTAR HTTP.
+         =================================================== */
+
+      if (!sent) {
+
+        try {
+
+          await api(
+            '/api/chat/messages',
+            {
+              method:
+                'POST',
+
+              body:
+                JSON.stringify(
+                  payload
+                )
+            }
+          );
+
+
+          sent =
+            true;
+
+        } catch (error) {
+
+          console.error(
+            '[VOBIXCHAT MESSAGE SEND]',
+            error
+          );
+
+
+          notifyUser(
+            'No se pudo enviar el mensaje'
+          );
+
+          return;
+
+        }
+
+      }
+
+
+      if (sent) {
+
+        renderTextMessage(
+          {
+            text,
+            createdAt:
+              new Date()
+                .toISOString()
+          },
+          true
+        );
+
+
+        input.value =
+          '';
+
+
+        resizeMessageInput();
+
+        syncComposerAction();
+
+        input.focus();
+
+      }
+
+    }
+
+
+    if (
+      elements.sendButton
+    ) {
+
+      elements
+        .sendButton
+        .addEventListener(
+          'click',
+          event => {
+
+            event.preventDefault();
+
+            sendCurrentMessage();
+
+          }
+        );
+
+    }
+
+
+    /* =====================================================
+       MICRO / NOTA DE VOZ
+       ===================================================== */
+
+    function stopRecordingTracks() {
+
+      if (
+        app.recordingStream
+      ) {
+
+        app
+          .recordingStream
+          .getTracks()
+          .forEach(
+            track => {
+
+              track.stop();
+
+            }
+          );
+
+      }
+
+
+      app.recordingStream =
+        null;
+
+    }
+
+
+    async function startVoiceRecording() {
+
+      if (
+        !app.conversation
+      ) {
+
+        notifyUser(
+          'Abre primero un chat 1×1'
+        );
+
+        return;
+
+      }
+
+
+      if (
+        !navigator.mediaDevices ||
+        !navigator.mediaDevices
+          .getUserMedia ||
+        !window.MediaRecorder
+      ) {
+
+        notifyUser(
+          'Este navegador no permite notas de voz'
+        );
+
+        return;
+
+      }
+
+
+      try {
+
+        app.recordingStream =
+          await navigator
+            .mediaDevices
+            .getUserMedia(
+              {
+                audio: true
+              }
+            );
+
+
+        app.recordingChunks =
+          [];
+
+
+        app.mediaRecorder =
+          new MediaRecorder(
+            app.recordingStream
+          );
+
+
+        app.mediaRecorder
+          .addEventListener(
+            'dataavailable',
+            event => {
+
+              if (
+                event.data &&
+                event.data.size >
+                  0
+              ) {
+
+                app
+                  .recordingChunks
+                  .push(
+                    event.data
+                  );
+
+              }
+
+            }
+          );
+
+
+        app.mediaRecorder
+          .addEventListener(
+            'start',
+            () => {
+
+              elements
+                .voiceButton
+                ?.classList
+                .add(
+                  'isRecording'
+                );
+
+
+              if (
+                elements.voiceButton
+              ) {
+
+                elements
+                  .voiceButton
+                  .textContent =
+                  '■';
+
+
+                elements
+                  .voiceButton
+                  .setAttribute(
+                    'aria-label',
+                    'Detener nota de voz'
+                  );
+
+              }
+
+
+              notifyUser(
+                'Grabando nota de voz…'
+              );
+
+            }
+          );
+
+
+        app.mediaRecorder
+          .addEventListener(
+            'stop',
+            async () => {
+
+              elements
+                .voiceButton
+                ?.classList
+                .remove(
+                  'isRecording'
+                );
+
+
+              if (
+                elements.voiceButton
+              ) {
+
+                elements
+                  .voiceButton
+                  .textContent =
+                  '🎙️';
+
+
+                elements
+                  .voiceButton
+                  .setAttribute(
+                    'aria-label',
+                    'Nota de voz'
+                  );
+
+              }
+
+
+              const mimeType =
+                app.mediaRecorder
+                  ?.mimeType ||
+                'audio/webm';
+
+
+              const blob =
+                new Blob(
+                  app.recordingChunks,
+                  {
+                    type:
+                      mimeType
+                  }
+                );
+
+
+              stopRecordingTracks();
+
+
+              if (!blob.size) {
+
+                notifyUser(
+                  'La nota de voz quedó vacía'
+                );
+
+                return;
+
+              }
+
+
+              await sendVoiceBlob(
+                blob
+              );
+
+            }
+          );
+
+
+        app.mediaRecorder
+          .addEventListener(
+            'error',
+            error => {
+
+              console.error(
+                '[VOBIXCHAT RECORDER]',
+                error
+              );
+
+
+              stopRecordingTracks();
+
+
+              elements
+                .voiceButton
+                ?.classList
+                .remove(
+                  'isRecording'
+                );
+
+
+              if (
+                elements.voiceButton
+              ) {
+
+                elements
+                  .voiceButton
+                  .textContent =
+                  '🎙️';
+
+              }
+
+
+              notifyUser(
+                'Error al grabar la nota de voz'
+              );
+
+            }
+          );
+
+
+        app.mediaRecorder
+          .start();
+
+
+      } catch (error) {
+
+        console.error(
+          '[VOBIXCHAT MICROPHONE]',
+          error
+        );
+
+
+        stopRecordingTracks();
+
+
+        notifyUser(
+          'No se pudo activar el micrófono'
+        );
+
+      }
+
+    }
+
+
+    function stopVoiceRecording() {
+
+      if (
+        app.mediaRecorder &&
+        app.mediaRecorder.state ===
+          'recording'
+      ) {
+
+        app.mediaRecorder.stop();
+
+      }
+
+    }
+
+
+    function toggleVoiceRecording() {
+
+      if (
+        app.mediaRecorder &&
+        app.mediaRecorder.state ===
+          'recording'
+      ) {
+
+        stopVoiceRecording();
+
+        return;
+
+      }
+
+
+      startVoiceRecording();
+
+    }
+
+
+    if (
+      elements.voiceButton
+    ) {
+
+      elements
+        .voiceButton
+        .addEventListener(
+          'click',
+          event => {
+
+            event.preventDefault();
+
+            toggleVoiceRecording();
+
+          }
+        );
+
+    }
+
+
+    /* =====================================================
+       ENVIAR BLOB DE VOZ
+
+       PRIMERO INTENTA EL ENDPOINT DE ARCHIVOS.
+       DESPUÉS AVISA POR SOCKET.
+       ===================================================== */
+
+    async function sendVoiceBlob(
+      blob
+    ) {
+
+      if (
+        !app.conversation
+      ) {
+
+        return;
+
+      }
+
+
+      const conversationId =
+        app.conversation.id ||
+        app.conversation._id;
+
+
+      const extension =
+        blob.type.includes(
+          'ogg'
+        )
+          ? 'ogg'
+          : (
+              blob.type.includes(
+                'mp4'
+              )
+                ? 'm4a'
+                : 'webm'
+            );
+
+
+      const file =
+        new File(
+          [blob],
+          'vobix-voice-' +
+          Date.now() +
+          '.' +
+          extension,
+          {
+            type:
+              blob.type ||
+              'audio/webm'
+          }
+        );
+
+
+      const form =
+        new FormData();
+
+
+      form.append(
+        'file',
+        file
+      );
+
+
+      form.append(
+        'conversationId',
+        conversationId
+      );
+
+
+      try {
+
+        const uploaded =
+          await api(
+            '/api/chat/files',
+            {
+              method:
+                'POST',
+
+              body:
+                form
+            }
+          );
+
+
+        const payload = {
+
+          conversationId,
+
+          file:
+            uploaded?.file ||
+            uploaded,
+
+          type:
+            'voice'
+
+        };
+
+
+        if (
+          app.socket &&
+          app.socket.connected
+        ) {
+
+          app.socket.emit(
+            'chat:voice',
+            payload
+          );
+
+        }
+
+
+        renderLocalVoiceMessage(
+          blob
+        );
+
+
+        notifyUser(
+          'Nota de voz enviada'
+        );
+
+
+      } catch (error) {
+
+        console.error(
+          '[VOBIXCHAT VOICE SEND]',
+          error
+        );
+
+
+        notifyUser(
+          'No se pudo enviar la nota de voz'
+        );
+
+      }
+
+    }
+
+
+    /* =====================================================
+       MOSTRAR NOTA DE VOZ LOCAL
+       ===================================================== */
+
+    function renderLocalVoiceMessage(
+      blob
+    ) {
+
+      if (
+        !elements.messages
+      ) {
+
+        return;
+
+      }
+
+
+      const welcome =
+        elements
+          .messages
+          .querySelector(
+            '#vobixWelcome'
+          );
+
+
+      if (welcome) {
+
+        welcome.remove();
+
+      }
+
+
+      const row =
+        document.createElement(
+          'div'
+        );
+
+
+      row.className =
+        'messageRow mine';
+
+
+      const bubble =
+        document.createElement(
+          'div'
+        );
+
+
+      bubble.className =
+        'messageBubble';
+
+
+      const audio =
+        document.createElement(
+          'audio'
+        );
+
+
+      audio.controls =
+        true;
+
+
+      audio.preload =
+        'metadata';
+
+
+      audio.src =
+        URL.createObjectURL(
+          blob
+        );
+
+
+      bubble.appendChild(
+        audio
+      );
+
+
+      row.appendChild(
+        bubble
+      );
+
+
+      elements
+        .messages
+        .appendChild(
+          row
+        );
+
+
+      elements
+        .messages
+        .scrollTop =
+        elements
+          .messages
+          .scrollHeight;
+
+    }
+
+
+    /* =====================================================
+       ACTUALIZAR CONVERSACIONES
+       ===================================================== */
+
+    if (
+      elements.refreshChatButton
+    ) {
+
+      elements
+        .refreshChatButton
+        .addEventListener(
+          'click',
+          () => {
+
+            closeOptionsMenu();
+
+            loadConversations();
+
+            notifyUser(
+              'Actualizando conversaciones…'
+            );
+
+          }
+        );
+
+    }
+
+
+    /* =====================================================
+       CERRAR SESIÓN
+
+       NO TOCA LA INTERFAZ EXTERIOR.
+       SOLO LIMPIA SESIÓN Y VUELVE AL INICIO.
+       ===================================================== */
+
+    if (
+      elements.logoutButton
+    ) {
+
+      elements
+        .logoutButton
+        .addEventListener(
+          'click',
+          () => {
+
+            closeOptionsMenu();
+
+
+            try {
+
+              localStorage.removeItem(
+                'vobix_token'
+              );
+
+
+              sessionStorage.removeItem(
+                'vobix_token'
+              );
+
+
+              localStorage.removeItem(
+                'token'
+              );
+
+
+              sessionStorage.removeItem(
+                'token'
+              );
+
+            } catch (error) {
+
+              console.warn(
+                '[VOBIXCHAT LOGOUT]',
+                error
+              );
+
+            }
+
+
+            window.location.href =
+              '/';
+
+          }
+        );
+
+    }
+
+
+    /* =====================================================
+       PINTADO INICIAL
+       ===================================================== */
+
+    renderProfile();
+
+    renderPreferenceSwitches();
+
+
+    /* =====================================================
+       FIN BLOQUE 4 DE 6
+
+       NO CIERRES:
+       })();
+       </script>
+       </body>
+       </html>
+
+       BLOQUE 5 CONTINÚA AQUÍ MISMO.
+
+       BLOQUE 5:
+       - ABRIR CHAT 1×1
+       - CONVERSACIONES
+       - MENSAJES
+       - SOCKET.IO AUTENTICADO
+       ===================================================== */
+           /* =====================================================
+       VOBIXCHAT
+       PUBLIC/chat.html
+       V2 CORREGIDO
+       BLOQUE 5 DE 6
+
+       - CONVERSACIONES 1×1
+       - ABRIR CHAT CON PERSONA
+       - CARGAR MENSAJES
+       - SOCKET.IO
+       - RECIBIR MENSAJES
+       ===================================================== */
+
+
+    /* =====================================================
+       NORMALIZAR CONVERSACIONES
+       ===================================================== */
+
+    function extractConversations(
+      data
+    ) {
+
+      if (
+        Array.isArray(data)
+      ) {
+
+        return data;
+
+      }
+
+
+      if (
+        Array.isArray(
+          data?.conversations
+        )
+      ) {
+
+        return data.conversations;
+
+      }
+
+
+      if (
+        Array.isArray(
+          data?.results
+        )
+      ) {
+
+        return data.results;
+
+      }
+
+
+      if (
+        Array.isArray(
+          data?.data
+        )
+      ) {
+
+        return data.data;
+
+      }
+
+
+      return [];
+
+    }
+
+
+    /* =====================================================
+       OBTENER LA OTRA PERSONA
+       ===================================================== */
+
+    function getConversationPeer(
+      conversation
+    ) {
+
+      if (!conversation) {
+
+        return null;
+
+      }
+
+
+      if (
+        conversation.peer
+      ) {
+
+        return conversation.peer;
+
+      }
+
+
+      if (
+        conversation.otherUser
+      ) {
+
+        return conversation.otherUser;
+
+      }
+
+
+      if (
+        conversation.other_user
+      ) {
+
+        return conversation.other_user;
+
+      }
+
+
+      if (
+        conversation.user
+      ) {
+
+        return conversation.user;
+
+      }
+
+
+      if (
+        conversation.contact
+      ) {
+
+        return conversation.contact;
+
+      }
+
+
+      const participants =
+        conversation.participants ||
+        conversation.users ||
+        conversation.members ||
+        [];
+
+
+      if (
+        Array.isArray(
+          participants
+        ) &&
+        participants.length
+      ) {
+
+        const myId =
+          userId(
+            app.me
+          );
+
+
+        if (myId) {
+
+          const other =
+            participants.find(
+              participant => {
+
+                const id =
+                  userId(
+                    participant
+                  );
+
+
+                return (
+                  id &&
+                  String(id) !==
+                  String(myId)
+                );
+
+              }
+            );
+
+
+          if (other) {
+
+            return other;
+
+          }
+
+        }
+
+
+        return (
+          participants[0] ||
+          null
+        );
+
+      }
+
+
+      return null;
+
+    }
+
+
+    /* =====================================================
+       ID DE CONVERSACIÓN
+       ===================================================== */
+
+    function conversationId(
+      conversation
+    ) {
+
+      if (!conversation) {
+
+        return null;
+
+      }
+
+
+      return (
+        conversation.id ||
+        conversation._id ||
+        conversation.conversationId ||
+        conversation.conversation_id ||
+        null
+      );
+
+    }
+
+
+    /* =====================================================
+       RENDER LISTA DE CONVERSACIONES
+       ===================================================== */
+
+    function renderConversations(
+      conversations
+    ) {
+
+      const container =
+        elements
+          .conversationList;
+
+
+      if (!container) {
+
+        return;
+
+      }
+
+
+      container.innerHTML =
+        '';
+
+
+      if (
+        !conversations.length
+      ) {
+
+        container.innerHTML =
+          '<div class="vobixStatusMessage">' +
+          'Todavía no tienes conversaciones.' +
+          '</div>';
+
+        return;
+
+      }
+
+
+      conversations.forEach(
+        conversation => {
+
+          const peer =
+            getConversationPeer(
+              conversation
+            );
+
+
+          const button =
+            document.createElement(
+              'button'
+            );
+
+
+          button.type =
+            'button';
+
+
+          button.className =
+            'vxConversation';
+
+
+          if (
+            conversationId(
+              app.conversation
+            ) &&
+            String(
+              conversationId(
+                app.conversation
+              )
+            ) ===
+            String(
+              conversationId(
+                conversation
+              )
+            )
+          ) {
+
+            button.classList.add(
+              'active'
+            );
+
+          }
+
+
+          const avatar =
+            document.createElement(
+              'div'
+            );
+
+
+          avatar.className =
+            'vxConversationAvatar';
+
+
+          avatar.textContent =
+            userInitial(
+              peer
+            );
+
+
+          const info =
+            document.createElement(
+              'div'
+            );
+
+
+          info.className =
+            'vxConversationInfo';
+
+
+          const name =
+            document.createElement(
+              'div'
+            );
+
+
+          name.className =
+            'vxConversationName';
+
+
+          name.textContent =
+            userName(
+              peer
+            );
+
+
+          const last =
+            document.createElement(
+              'div'
+            );
+
+
+          last.className =
+            'vxConversationLast';
+
+
+          last.textContent =
+            conversation.lastMessage?.text ||
+            conversation.last_message?.text ||
+            conversation.lastMessage ||
+            conversation.last_message ||
+            'Chat privado';
+
+
+          info.append(
+            name,
+            last
+          );
+
+
+          button.append(
+            avatar,
+            info
+          );
+
+
+          button.addEventListener(
+            'click',
+            () => {
+
+              selectConversation(
+                conversation,
+                peer
+              );
+
+            }
+          );
+
+
+          container.appendChild(
+            button
+          );
+
+        }
+      );
+
+    }
+
+
+    /* =====================================================
+       CARGAR CONVERSACIONES
+
+       RUTA:
+       GET /api/chat/conversations
+       ===================================================== */
+
+    async function loadConversations() {
+
+      const container =
+        elements
+          .conversationList;
+
+
+      if (container) {
+
+        container.innerHTML =
+          '<div class="vobixStatusMessage">' +
+          'Cargando conversaciones…' +
+          '</div>';
+
+      }
+
+
+      try {
+
+        const data =
+          await api(
+            '/api/chat/conversations'
+          );
+
+
+        const conversations =
+          extractConversations(
+            data
+          );
+
+
+        renderConversations(
+          conversations
+        );
+
+
+      } catch (error) {
+
+        console.error(
+          '[VOBIXCHAT CONVERSATIONS]',
+          error
+        );
+
+
+        if (container) {
+
+          container.innerHTML =
+            '<div class="vobixStatusMessage error">' +
+            escapeHtml(
+              'No se pudieron cargar las conversaciones: ' +
+              error.message
+            ) +
+            '</div>';
+
+        }
+
+      }
+
+    }
+
+
+    /* =====================================================
+       EXTRAER CONVERSACIÓN DE RESPUESTA
+       ===================================================== */
+
+    function extractConversation(
+      data
+    ) {
+
+      if (!data) {
+
+        return null;
+
+      }
+
+
+      return (
+        data.conversation ||
+        data.chat ||
+        data.data ||
+        data
+      );
+
+    }
+
+
+    /* =====================================================
+       CREAR / ABRIR CHAT PRIVADO
+
+       SE INTENTAN LOS FORMATOS MÁS COMUNES
+       DEL BACKEND SIN TOCAR server.js.
+       ===================================================== */
+
+    async function openPrivateConversation(
+      user
+    ) {
+
+      if (!user) {
+
+        return;
+
+      }
+
+
+      const targetId =
+        userId(
+          user
+        );
+
+
+      if (!targetId) {
+
+        notifyUser(
+          'Ese usuario no tiene un ID válido'
+        );
+
+        return;
+
+      }
+
+
+      if (
+        userId(app.me) &&
+        String(
+          userId(app.me)
+        ) ===
+        String(
+          targetId
+        )
+      ) {
+
+        notifyUser(
+          'No puedes abrir un chat contigo mismo'
+        );
+
+        return;
+
+      }
+
+
+      if (
+        elements
+          .peopleSearchResults
+      ) {
+
+        elements
+          .peopleSearchResults
+          .innerHTML =
+          '<div class="vobixStatusMessage">' +
+          'Abriendo chat con ' +
+          escapeHtml(
+            userName(user)
+          ) +
+          '…' +
+          '</div>';
+
+      }
+
+
+      let created =
+        null;
+
+
+      let lastError =
+        null;
+
+
+      const attempts = [
+
+        {
+          url:
+            '/api/chat/conversations',
+
+          body: {
+            userId:
+              targetId
+          }
+        },
+
+        {
+          url:
+            '/api/chat/conversations',
+
+          body: {
+            targetUserId:
+              targetId
+          }
+        },
+
+        {
+          url:
+            '/api/chat/conversations',
+
+          body: {
+            otherUserId:
+              targetId
+          }
+        }
+
+      ];
+
+
+      for (
+        const attempt
+        of attempts
+      ) {
+
+        try {
+
+          const data =
+            await api(
+              attempt.url,
+              {
+                method:
+                  'POST',
+
+                body:
+                  JSON.stringify(
+                    attempt.body
+                  )
+              }
+            );
+
+
+          created =
+            extractConversation(
+              data
+            );
+
+
+          if (
+            created &&
+            conversationId(
+              created
+            )
+          ) {
+
+            break;
+
+          }
+
+
+        } catch (error) {
+
+          lastError =
+            error;
+
+
+          /*
+            400 / 404:
+            probamos el siguiente formato.
+
+            401 / 403:
+            no tiene sentido seguir.
+          */
+
+          if (
+            error.status ===
+              401 ||
+            error.status ===
+              403
+          ) {
+
+            break;
+
+          }
+
+        }
+
+      }
+
+
+      if (
+        !created ||
+        !conversationId(
+          created
+        )
+      ) {
+
+        console.error(
+          '[VOBIXCHAT OPEN PRIVATE]',
+          lastError
+        );
+
+
+        if (
+          elements
+            .peopleSearchResults
+        ) {
+
+          elements
+            .peopleSearchResults
+            .innerHTML =
+            '<div class="vobixStatusMessage error">' +
+            escapeHtml(
+              lastError?.message ||
+              'No se pudo abrir la conversación.'
+            ) +
+            '</div>';
+
+        }
+
+
+        return;
+
+      }
+
+
+      await selectConversation(
+        created,
+        user
+      );
+
+
+      closePeople();
+
+
+      loadConversations();
+
+    }
+
+
+    /* =====================================================
+       SELECCIONAR CONVERSACIÓN
+       ===================================================== */
+
+    async function selectConversation(
+      conversation,
+      peer = null
+    ) {
+
+      const id =
+        conversationId(
+          conversation
+        );
+
+
+      if (!id) {
+
+        notifyUser(
+          'Conversación inválida'
+        );
+
+        return;
+
+      }
+
+
+      app.conversation =
+        conversation;
+
+
+      app.peer =
+        peer ||
+        getConversationPeer(
+          conversation
+        );
+
+
+      if (
+        elements.topbarUserName
+      ) {
+
+        elements
+          .topbarUserName
+          .textContent =
+          userName(
+            app.peer
+          );
+
+      }
+
+
+      if (
+        elements.connectionStatus
+      ) {
+
+        elements
+          .connectionStatus
+          .textContent =
+          'Chat privado · cargando…';
+
+      }
+
+
+      closePeople();
+
+
+      clearMessages();
+
+
+      joinConversationRoom(
+        id
+      );
+
+
+      await loadMessages(
+        id
+      );
+
+
+      if (
+        elements.connectionStatus
+      ) {
+
+        elements
+          .connectionStatus
+          .textContent =
+          app.socket &&
+          app.socket.connected
+            ? 'Conectado · Chat seguro'
+            : 'Chat privado';
+
+      }
+
+
+      loadConversations();
+
+    }
+
+
+    /* =====================================================
+       LIMPIAR MENSAJES
+       ===================================================== */
+
+    function clearMessages() {
+
+      if (
+        !elements.messages
+      ) {
+
+        return;
+
+      }
+
+
+      elements
+        .messages
+        .innerHTML =
+        '';
+
+    }
+
+
+    /* =====================================================
+       NORMALIZAR MENSAJES
+       ===================================================== */
+
+    function extractMessages(
+      data
+    ) {
+
+      if (
+        Array.isArray(data)
+      ) {
+
+        return data;
+
+      }
+
+
+      if (
+        Array.isArray(
+          data?.messages
+        )
+      ) {
+
+        return data.messages;
+
+      }
+
+
+      if (
+        Array.isArray(
+          data?.results
+        )
+      ) {
+
+        return data.results;
+
+      }
+
+
+      if (
+        Array.isArray(
+          data?.data
+        )
+      ) {
+
+        return data.data;
+
+      }
+
+
+      return [];
+
+    }
+
+
+    /* =====================================================
+       CARGAR MENSAJES
+
+       SE PRUEBA PRIMERO:
+       /api/chat/conversations/:id/messages
+
+       Y COMO RESPALDO:
+       /api/chat/messages?conversationId=:id
+       ===================================================== */
+
+    async function loadMessages(
+      id
+    ) {
+
+      if (!id) {
+
+        return;
+
+      }
+
+
+      let data =
+        null;
+
+
+      try {
+
+        data =
+          await api(
+            '/api/chat/conversations/' +
+            encodeURIComponent(
+              id
+            ) +
+            '/messages'
+          );
+
+
+      } catch (firstError) {
+
+        console.warn(
+          '[VOBIXCHAT MESSAGE ROUTE 1]',
+          firstError
+        );
+
+
+        try {
+
+          data =
+            await api(
+              '/api/chat/messages?conversationId=' +
+              encodeURIComponent(
+                id
+              )
+            );
+
+
+        } catch (secondError) {
+
+          console.error(
+            '[VOBIXCHAT LOAD MESSAGES]',
+            secondError
+          );
+
+
+          if (
+            elements.messages
+          ) {
+
+            elements
+              .messages
+              .innerHTML =
+              '<div class="vobixStatusMessage error">' +
+              escapeHtml(
+                'No se pudieron cargar los mensajes: ' +
+                secondError.message
+              ) +
+              '</div>';
+
+          }
+
+
+          return;
+
+        }
+
+      }
+
+
+      const messages =
+        extractMessages(
+          data
+        );
+
+
+      clearMessages();
+
+
+      if (
+        !messages.length
+      ) {
+
+        if (
+          elements.messages
+        ) {
+
+          const empty =
+            document.createElement(
+              'div'
+            );
+
+
+          empty.className =
+            'vobixStatusMessage';
+
+
+          empty.textContent =
+            'Chat privado con ' +
+            userName(
+              app.peer
+            ) +
+            '. Envía el primer mensaje.';
+
+
+          elements
+            .messages
+            .appendChild(
+              empty
+            );
+
+        }
+
+
+        return;
+
+      }
+
+
+      messages.forEach(
+        message => {
+
+          renderIncomingMessage(
+            message
+          );
+
+        }
+      );
+
+    }
+
+
+    /* =====================================================
+       SOCKET.IO
+
+       NO SE CREA MÁS DE UN SOCKET.
+       ===================================================== */
+
+    function connectSocket() {
+
+      if (
+        app.socket
+      ) {
+
+        return app.socket;
+
+      }
+
+
+      if (
+        typeof window.io !==
+        'function'
+      ) {
+
+        console.warn(
+          '[VOBIXCHAT SOCKET] Socket.IO todavía no está disponible'
+        );
+
+
+        if (
+          elements.connectionStatus
+        ) {
+
+          elements
+            .connectionStatus
+            .textContent =
+            'Chat disponible · socket desconectado';
+
+        }
+
+
+        return null;
+
+      }
+
+
+      const token =
+        getAuthToken();
+
+
+      app.token =
+        token ||
+        app.token;
+
+
+      try {
+
+        app.socket =
+          window.io(
+            {
+              transports: [
+                'websocket',
+                'polling'
+              ],
+
+              auth: {
+                token:
+                  app.token ||
+                  ''
+              },
+
+              extraHeaders:
+                app.token
+                  ? {
+                      Authorization:
+                        'Bearer ' +
+                        app.token
+                    }
+                  : undefined
+            }
+          );
+
+
+      } catch (error) {
+
+        console.error(
+          '[VOBIXCHAT SOCKET CREATE]',
+          error
+        );
+
+
+        return null;
+
+      }
+
+
+      /* ===================================================
+         CONECTADO
+         =================================================== */
+
+      app.socket.on(
+        'connect',
+        () => {
+
+          console.log(
+            '[VOBIXCHAT SOCKET] conectado',
+            app.socket.id
+          );
+
+
+          if (
+            elements.connectionStatus
+          ) {
+
+            elements
+              .connectionStatus
+              .textContent =
+              'Conectado · Chat seguro';
+
+          }
+
+
+          const id =
+            conversationId(
+              app.conversation
+            );
+
+
+          if (id) {
+
+            joinConversationRoom(
+              id
+            );
+
+          }
+
+        }
+      );
+
+
+      /* ===================================================
+         ERROR
+         =================================================== */
+
+      app.socket.on(
+        'connect_error',
+        error => {
+
+          console.error(
+            '[VOBIXCHAT SOCKET ERROR]',
+            error
+          );
+
+
+          if (
+            elements.connectionStatus
+          ) {
+
+            elements
+              .connectionStatus
+              .textContent =
+              'Chat disponible · reconectando…';
+
+          }
+
+        }
+      );
+
+
+      /* ===================================================
+         DESCONECTADO
+         =================================================== */
+
+      app.socket.on(
+        'disconnect',
+        reason => {
+
+          console.warn(
+            '[VOBIXCHAT SOCKET DISCONNECT]',
+            reason
+          );
+
+
+          if (
+            elements.connectionStatus
+          ) {
+
+            elements
+              .connectionStatus
+              .textContent =
+              'Reconectando…';
+
+          }
+
+        }
+      );
+
+
+      /* ===================================================
+         RECIBIR MENSAJE
+
+         SOPORTAMOS LOS DOS NOMBRES MÁS COMUNES
+         PARA NO DEJAR EL FRONTEND MUDO.
+         =================================================== */
+
+      const onIncomingMessage =
+        message => {
+
+          if (!message) {
+
+            return;
+
+          }
+
+
+          const activeId =
+            conversationId(
+              app.conversation
+            );
+
+
+          const incomingId =
+            message.conversationId ||
+            message.conversation_id ||
+            message.conversation?.id ||
+            message.conversation?._id ||
+            null;
+
+
+          /*
+            Si hay conversación activa y el mensaje
+            pertenece a otra, no lo pintamos dentro
+            del chat actual.
+          */
+
+          if (
+            activeId &&
+            incomingId &&
+            String(activeId) !==
+            String(incomingId)
+          ) {
+
+            playMessageSound();
+
+
+            showBrowserNotification(
+              'VOBIXCHAT',
+              message.text ||
+              message.message ||
+              'Nuevo mensaje'
+            );
+
+
+            loadConversations();
+
+            return;
+
+          }
+
+
+          /*
+            Evitar duplicar nuestro propio mensaje,
+            porque el frontend ya lo pintó al enviarlo.
+          */
+
+          if (
+            messageIsMine(
+              message
+            )
+          ) {
+
+            return;
+
+          }
+
+
+          renderIncomingMessage(
+            message
+          );
+
+
+          playMessageSound();
+
+
+          showBrowserNotification(
+            userName(
+              message.sender ||
+              app.peer
+            ),
+            message.text ||
+            message.message ||
+            'Nuevo mensaje'
+          );
+
+
+          loadConversations();
+
+        };
+
+
+      app.socket.on(
+        'chat:message',
+        onIncomingMessage
+      );
+
+
+      app.socket.on(
+        'message:new',
+        onIncomingMessage
+      );
+
+
+      /* ===================================================
+         CONVERSACIÓN ACTUALIZADA
+         =================================================== */
+
+      app.socket.on(
+        'chat:conversation',
+        () => {
+
+          loadConversations();
+
+        }
+      );
+
+
+      app.socket.on(
+        'conversation:updated',
+        () => {
+
+          loadConversations();
+
+        }
+      );
+
+
+      return app.socket;
+
+    }
+
+
+    /* =====================================================
+       ENTRAR A SALA PRIVADA
+       ===================================================== */
+
+    function joinConversationRoom(
+      id
+    ) {
+
+      if (!id) {
+
+        return;
+
+      }
+
+
+      if (
+        !app.socket
+      ) {
+
+        connectSocket();
+
+      }
+
+
+      if (
+        !app.socket
+      ) {
+
+        return;
+
+      }
+
+
+      const join =
+        () => {
+
+          try {
+
+            app.socket.emit(
+              'chat:join',
+              {
+                conversationId:
+                  id
+              }
+            );
+
+
+            /*
+              EVENTO DE RESPALDO.
+              Si el servidor solo escucha "join",
+              también recibe el ID.
+            */
+
+            app.socket.emit(
+              'join',
+              {
+                conversationId:
+                  id
+              }
+            );
+
+
+          } catch (error) {
+
+            console.error(
+              '[VOBIXCHAT JOIN]',
+              error
+            );
+
+          }
+
+        };
+
+
+      if (
+        app.socket.connected
+      ) {
+
+        join();
+
+      } else {
+
+        app.socket.once(
+          'connect',
+          join
+        );
+
+      }
+
+    }
+
+
+    /* =====================================================
+       CARGAR SOCKET.IO CLIENT
+
+       server.js normalmente expone:
+       /socket.io/socket.io.js
+
+       NO NECESITAMOS CDN.
+       ===================================================== */
+
+    function loadSocketClient() {
+
+      return new Promise(
+        resolve => {
+
+          if (
+            typeof window.io ===
+            'function'
+          ) {
+
+            resolve(
+              true
+            );
+
+            return;
+
+          }
+
+
+          const existing =
+            document.querySelector(
+              'script[data-vobix-socket]'
+            );
+
+
+          if (existing) {
+
+            existing.addEventListener(
+              'load',
+              () => {
+
+                resolve(
+                  typeof window.io ===
+                  'function'
+                );
+
+              },
+              {
+                once: true
+              }
+            );
+
+
+            existing.addEventListener(
+              'error',
+              () => {
+
+                resolve(
+                  false
+                );
+
+              },
+              {
+                once: true
+              }
+            );
+
+
+            return;
+
+          }
+
+
+          const script =
+            document.createElement(
+              'script'
+            );
+
+
+          script.src =
+            '/socket.io/socket.io.js';
+
+
+          script.async =
+            true;
+
+
+          script.dataset
+            .vobixSocket =
+            '1';
+
+
+          script.onload =
+            () => {
+
+              resolve(
+                typeof window.io ===
+                'function'
+              );
+
+            };
+
+
+          script.onerror =
+            () => {
+
+              console.error(
+                '[VOBIXCHAT] No cargó /socket.io/socket.io.js'
+              );
+
+
+              resolve(
+                false
+              );
+
+            };
+
+
+          document.head.appendChild(
+            script
+          );
+
+        }
+      );
+
+    }
+
+
+    /* =====================================================
+       ARRANQUE DEL SOCKET
+       ===================================================== */
+
+    async function startSocket() {
+
+      const loaded =
+        await loadSocketClient();
+
+
+      if (!loaded) {
+
+        if (
+          elements.connectionStatus
+        ) {
+
+          elements
+            .connectionStatus
+            .textContent =
+            'Chat disponible · sin Socket.IO';
+
+        }
+
+
+        return;
+
+      }
+
+
+      connectSocket();
+
+    }
+
+
+    /* =====================================================
+       RECUPERAR USUARIO DESDE API
+
+       NO BLOQUEA LOS BOTONES.
+       SI FALLA, EL CHAT SIGUE ARRANCADO.
+       ===================================================== */
+
+    async function loadCurrentUser() {
+
+      const possibleRoutes = [
+        '/api/chat/me',
+        '/api/auth/me',
+        '/api/me'
+      ];
+
+
+      for (
+        const route
+        of possibleRoutes
+      ) {
+
+        try {
+
+          const data =
+            await api(
+              route
+            );
+
+
+          const user =
+            data?.user ||
+            data?.me ||
+            data?.data ||
+            data;
+
+
+          if (
+            user &&
+            typeof user ===
+              'object' &&
+            !Array.isArray(
+              user
+            )
+          ) {
+
+            app.me =
+              user;
+
+
+            renderProfile();
+
+
+            return user;
+
+          }
+
+
+        } catch (error) {
+
+          /*
+            NO DETENEMOS LA APP.
+            PROBAMOS LA SIGUIENTE RUTA.
+          */
+
+        }
+
+      }
+
+
+      renderProfile();
+
+
+      return app.me;
+
+    }
+
+
+    /* =====================================================
+       INICIO PRINCIPAL
+
+       IMPORTANTE:
+       LOS BOTONES YA ESTÁN CONECTADOS ANTES
+       DE LLEGAR AQUÍ.
+
+       AUNQUE UNA PETICIÓN API FALLE,
+       EL BOTÓN BUSCAR Y MICRO/ENVIAR
+       NO QUEDAN MUERTOS.
+       ===================================================== */
+
+    async function initializeChat() {
+
+      console.log(
+        '[VOBIXCHAT] Inicializando chat'
+      );
+
+
+      if (
+        !app.token
+      ) {
+
+        console.warn(
+          '[VOBIXCHAT] Token no encontrado en almacenamiento'
+        );
+
+      }
+
+
+      await loadCurrentUser();
+
+
+      startSocket();
+
+
+      // =====================================================
+      // ENTRADA DIRECTA DESDE inbox.html A LA SALA PRIVADA 1x1
+      // =====================================================
+      const entryParams = new URLSearchParams(window.location.search);
+      const requestedConversationId =
+        entryParams.get('conversationId') ||
+        sessionStorage.getItem('vobix_active_conversation') ||
+        '';
+
+      const requestedPeerId =
+        entryParams.get('userId') ||
+        sessionStorage.getItem('vobix_active_peer_id') ||
+        '';
+
+      const requestedPeerName =
+        entryParams.get('userName') ||
+        sessionStorage.getItem('vobix_active_peer_name') ||
+        'Contacto';
+
+      let openedRequestedConversation = false;
+
+      if (requestedConversationId) {
+        try {
+          const conversationsData =
+            await api('/api/chat/conversations');
+
+          const conversations =
+            extractConversations(conversationsData);
+
+          const requestedConversation =
+            conversations.find(item =>
+              String(conversationId(item) || '') ===
+              String(requestedConversationId)
+            );
+
+          if (requestedConversation) {
+            const requestedPeer = requestedPeerId
+              ? {
+                  id: requestedPeerId,
+                  userId: requestedPeerId,
+                  username: requestedPeerName,
+                  name: requestedPeerName
+                }
+              : null;
+
+            await selectConversation(
+              requestedConversation,
+              requestedPeer
+            );
+
+            openedRequestedConversation = true;
+          }
+        } catch (entryError) {
+          console.error(
+            '[VOBIXCHAT DIRECT ROOM]',
+            entryError
+          );
+        }
+      }
+
+      if (!openedRequestedConversation) {
+        await loadConversations();
+      }
+
+
+      syncComposerAction();
+
+
+      renderProfile();
+
+
+      renderPreferenceSwitches();
+
+
+      console.log(
+        '[VOBIXCHAT] Interfaz activa'
+      );
+
+    }
+
+
+    /* =====================================================
+       ARRANCAR
+       ===================================================== */
+
+    initializeChat()
+      .catch(
+        error => {
+
+          /*
+            IMPORTANTE:
+            UN ERROR DE INICIALIZACIÓN NO DEBE
+            DESACTIVAR LOS BOTONES YA CONECTADOS.
+          */
+
+          console.error(
+            '[VOBIXCHAT INIT]',
+            error
+          );
+
+
+          syncComposerAction();
+
+        }
+      );
+
+
+    /* =====================================================
+       FIN BLOQUE 5 DE 6
+
+       NO CIERRES TODAVÍA:
+
+       })();
+       </script>
+       </body>
+       </html>
+
+       BLOQUE 6 CONTINÚA AQUÍ.
+
+       BLOQUE 6:
+       - LLAMADAS
+       - VIDEOLLAMADAS
+       - CÁMARA LOCAL
+       - CIERRE CORRECTO DEL ÚNICO SCRIPT
+       - CIERRE BODY / HTML
+       ===================================================== */
+           /* =====================================================
+       VOBIXCHAT
+       PUBLIC/chat.html
+       V2 CORREGIDO
+       BLOQUE 6 DE 6
+
+       - LLAMADAS
+       - VIDEOLLAMADAS
+       - WEBRTC
+       - CONTROLES
+       - LIMPIEZA
+       - CIERRE DEFINITIVO DEL ARCHIVO
+       ===================================================== */
+
+
+    /* =====================================================
+       CONFIGURACIÓN WEBRTC
+       ===================================================== */
+
+    const RTC_CONFIGURATION = {
+
+      iceServers: [
+
+        {
+          urls:
+            'stun:stun.l.google.com:19302'
+        },
+
+        {
+          urls:
+            'stun:stun1.l.google.com:19302'
+        }
+
+      ]
+
+    };
+
+
+    /* =====================================================
+       ID DE LLAMADA
+       ===================================================== */
+
+    function createCallId() {
+
+      if (
+        window.crypto &&
+        typeof window.crypto.randomUUID ===
+          'function'
+      ) {
+
+        return window.crypto.randomUUID();
+
+      }
+
+
+      return (
+        'vobix-' +
+        Date.now() +
+        '-' +
+        Math.random()
+          .toString(36)
+          .slice(2)
+      );
+
+    }
+
+
+    /* =====================================================
+       CREAR PEER CONNECTION
+       ===================================================== */
+
+    function createPeerConnection() {
+
+      if (
+        app.peerConnection
+      ) {
+
+        return app.peerConnection;
+
+      }
+
+
+      if (
+        typeof RTCPeerConnection ===
+        'undefined'
+      ) {
+
+        notifyUser(
+          'Este navegador no permite llamadas WebRTC'
+        );
+
+        return null;
+
+      }
+
+
+      const pc =
+        new RTCPeerConnection(
+          RTC_CONFIGURATION
+        );
+
+
+      app.peerConnection =
+        pc;
+
+
+      /* ===================================================
+         ENVIAR ICE CANDIDATE
+         =================================================== */
+
+      pc.onicecandidate =
+        event => {
+
+          if (
+            !event.candidate ||
+            !app.socket ||
+            !app.socket.connected
+          ) {
+
+            return;
+
+          }
+
+
+          app.socket.emit(
+            'call:ice',
+            {
+
+              callId:
+                app.callId,
+
+              conversationId:
+                conversationId(
+                  app.conversation
+                ),
+
+              candidate:
+                event.candidate
+
+            }
+          );
+
+        };
+
+
+      /* ===================================================
+         RECIBIR AUDIO / VIDEO REMOTO
+         =================================================== */
+
+      pc.ontrack =
+        event => {
+
+          if (
+            !elements.remoteVideo
+          ) {
+
+            return;
+
+          }
+
+
+          const stream =
+            event.streams?.[0];
+
+
+          if (stream) {
+
+            elements
+              .remoteVideo
+              .srcObject =
+              stream;
+
+          }
+
+        };
+
+
+      /* ===================================================
+         ESTADO DE CONEXIÓN
+         =================================================== */
+
+      pc.onconnectionstatechange =
+        () => {
+
+          const state =
+            pc.connectionState;
+
+
+          console.log(
+            '[VOBIXCHAT CALL STATE]',
+            state
+          );
+
+
+          if (
+            state ===
+              'failed' ||
+            state ===
+              'closed'
+          ) {
+
+            endLocalCall(
+              false
+            );
+
+          }
+
+        };
+
+
+      /* ===================================================
+         AGREGAR TRACKS LOCALES
+         =================================================== */
+
+      if (
+        app.localStream
+      ) {
+
+        app
+          .localStream
+          .getTracks()
+          .forEach(
+            track => {
+
+              pc.addTrack(
+                track,
+                app.localStream
+              );
+
+            }
+          );
+
+      }
+
+
+      return pc;
+
+    }
+
+
+    /* =====================================================
+       PEDIR MICRO / CÁMARA PARA LLAMADA
+       ===================================================== */
+
+    async function prepareCallMedia(
+      type
+    ) {
+
+      if (
+        !navigator.mediaDevices ||
+        !navigator.mediaDevices
+          .getUserMedia
+      ) {
+
+        throw new Error(
+          'El navegador no permite acceso a cámara/micrófono'
+        );
+
+      }
+
+
+      if (
+        app.localStream
+      ) {
+
+        app
+          .localStream
+          .getTracks()
+          .forEach(
+            track => {
+
+              track.stop();
+
+            }
+          );
+
+
+        app.localStream =
+          null;
+
+      }
+
+
+      app.localStream =
+        await navigator
+          .mediaDevices
+          .getUserMedia(
+            {
+
+              audio:
+                true,
+
+              video:
+                type ===
+                'video'
+
+            }
+          );
+
+
+      if (
+        elements.localVideo
+      ) {
+
+        elements
+          .localVideo
+          .srcObject =
+          app.localStream;
+
+
+        elements
+          .localVideo
+          .style
+          .display =
+          type ===
+          'video'
+            ? 'block'
+            : 'none';
+
+      }
+
+
+      return app.localStream;
+
+    }
+
+
+    /* =====================================================
+       ABRIR PANTALLA DE LLAMADA
+       ===================================================== */
+
+    function showCallScreen(
+      type
+    ) {
+
+      if (
+        !elements.callVideoArea
+      ) {
+
+        return;
+
+      }
+
+
+      elements
+        .callVideoArea
+        .classList
+        .add(
+          'open'
+        );
+
+
+      /*
+        PARA LLAMADA DE AUDIO
+        DEJAMOS FONDO OSCURO.
+      */
+
+      if (
+        type ===
+        'audio'
+      ) {
+
+        if (
+          elements.remoteVideo
+        ) {
+
+          elements
+            .remoteVideo
+            .style
+            .opacity =
+            '0';
+
+        }
+
+      } else {
+
+        if (
+          elements.remoteVideo
+        ) {
+
+          elements
+            .remoteVideo
+            .style
+            .opacity =
+            '1';
+
+        }
+
+      }
+
+    }
+
+
+    /* =====================================================
+       OCULTAR PANTALLA
+       ===================================================== */
+
+    function hideCallScreen() {
+
+      if (
+        elements.callVideoArea
+      ) {
+
+        elements
+          .callVideoArea
+          .classList
+          .remove(
+            'open'
+          );
+
+      }
+
+
+      if (
+        elements.remoteVideo
+      ) {
+
+        elements
+          .remoteVideo
+          .srcObject =
+          null;
+
+      }
+
+
+      if (
+        elements.localVideo
+      ) {
+
+        elements
+          .localVideo
+          .srcObject =
+          null;
+
+      }
+
+    }
+
+
+    /* =====================================================
+       INICIAR LLAMADA
+       ===================================================== */
+
+    async function startCall(
+      type
+    ) {
+
+      if (
+        !app.conversation
+      ) {
+
+        notifyUser(
+          'Abre primero un chat 1×1'
+        );
+
+        return;
+
+      }
+
+
+      if (
+        !app.socket ||
+        !app.socket.connected
+      ) {
+
+        notifyUser(
+          'Esperando conexión del chat'
+        );
+
+        return;
+
+      }
+
+
+      try {
+
+        app.callType =
+          type;
+
+
+        app.callId =
+          createCallId();
+
+
+        await prepareCallMedia(
+          type
+        );
+
+
+        showCallScreen(
+          type
+        );
+
+
+        const pc =
+          createPeerConnection();
+
+
+        if (!pc) {
+
+          throw new Error(
+            'No se pudo iniciar WebRTC'
+          );
+
+        }
+
+
+        const offer =
+          await pc.createOffer();
+
+
+        await pc.setLocalDescription(
+          offer
+        );
+
+
+        app.socket.emit(
+          'call:offer',
+          {
+
+            callId:
+              app.callId,
+
+            conversationId:
+              conversationId(
+                app.conversation
+              ),
+
+            type,
+
+            offer:
+              pc.localDescription
+
+          }
+        );
+
+
+        notifyUser(
+          type ===
+          'video'
+            ? 'Iniciando videollamada…'
+            : 'Iniciando llamada…'
+        );
+
+
+      } catch (error) {
+
+        console.error(
+          '[VOBIXCHAT START CALL]',
+          error
+        );
+
+
+        notifyUser(
+          'No se pudo iniciar la llamada'
+        );
+
+
+        endLocalCall(
+          false
+        );
+
+      }
+
+    }
+
+
+    /* =====================================================
+       BOTÓN LLAMADA
+       ===================================================== */
+
+    if (
+      elements.audioCallButton
+    ) {
+
+      elements
+        .audioCallButton
+        .addEventListener(
+          'click',
+          event => {
+
+            event.preventDefault();
+
+            startCall(
+              'audio'
+            );
+
+          }
+        );
+
+    }
+
+
+    /* =====================================================
+       BOTÓN VIDEOLLAMADA
+       ===================================================== */
+
+    if (
+      elements.videoCallButton
+    ) {
+
+      elements
+        .videoCallButton
+        .addEventListener(
+          'click',
+          event => {
+
+            event.preventDefault();
+
+            startCall(
+              'video'
+            );
+
+          }
+        );
+
+    }
+
+
+    /* =====================================================
+       RECIBIR OFERTA
+       ===================================================== */
+
+    async function handleIncomingCallOffer(
+      payload
+    ) {
+
+      if (
+        !payload ||
+        !payload.offer
+      ) {
+
+        return;
+
+      }
+
+
+      /*
+        SI ESTAMOS EN OTRA CONVERSACIÓN,
+        NO MEZCLAMOS LAS LLAMADAS.
+      */
+
+      const activeConversationId =
+        conversationId(
+          app.conversation
+        );
+
+
+      const incomingConversationId =
+        payload.conversationId ||
+        payload.conversation_id ||
+        null;
+
+
+      if (
+        activeConversationId &&
+        incomingConversationId &&
+        String(
+          activeConversationId
+        ) !==
+        String(
+          incomingConversationId
+        )
+      ) {
+
+        showBrowserNotification(
+          'VOBIXCHAT',
+          'Llamada entrante'
+        );
+
+        return;
+
+      }
+
+
+      try {
+
+        app.callId =
+          payload.callId ||
+          createCallId();
+
+
+        app.callType =
+          payload.type ||
+          'audio';
+
+
+        await prepareCallMedia(
+          app.callType
+        );
+
+
+        showCallScreen(
+          app.callType
+        );
+
+
+        const pc =
+          createPeerConnection();
+
+
+        if (!pc) {
+
+          throw new Error(
+            'No se pudo crear la conexión'
+          );
+
+        }
+
+
+        await pc.setRemoteDescription(
+          new RTCSessionDescription(
+            payload.offer
+          )
+        );
+
+
+        const answer =
+          await pc.createAnswer();
+
+
+        await pc.setLocalDescription(
+          answer
+        );
+
+
+        if (
+          app.socket &&
+          app.socket.connected
+        ) {
+
+          app.socket.emit(
+            'call:answer',
+            {
+
+              callId:
+                app.callId,
+
+              conversationId:
+                incomingConversationId ||
+                activeConversationId,
+
+              answer:
+                pc.localDescription
+
+            }
+          );
+
+        }
+
+
+        notifyUser(
+          'Llamada conectando…'
+        );
+
+
+      } catch (error) {
+
+        console.error(
+          '[VOBIXCHAT INCOMING CALL]',
+          error
+        );
+
+
+        endLocalCall(
+          false
+        );
+
+      }
+
+    }
+
+
+    /* =====================================================
+       RECIBIR RESPUESTA
+       ===================================================== */
+
+    async function handleCallAnswer(
+      payload
+    ) {
+
+      if (
+        !payload ||
+        !payload.answer ||
+        !app.peerConnection
+      ) {
+
+        return;
+
+      }
+
+
+      try {
+
+        await app
+          .peerConnection
+          .setRemoteDescription(
+            new RTCSessionDescription(
+              payload.answer
+            )
+          );
+
+
+        notifyUser(
+          'Llamada conectada'
+        );
+
+
+      } catch (error) {
+
+        console.error(
+          '[VOBIXCHAT CALL ANSWER]',
+          error
+        );
+
+      }
+
+    }
+
+
+    /* =====================================================
+       RECIBIR ICE
+       ===================================================== */
+
+    async function handleRemoteIce(
+      payload
+    ) {
+
+      if (
+        !payload ||
+        !payload.candidate ||
+        !app.peerConnection
+      ) {
+
+        return;
+
+      }
+
+
+      try {
+
+        await app
+          .peerConnection
+          .addIceCandidate(
+            new RTCIceCandidate(
+              payload.candidate
+            )
+          );
+
+
+      } catch (error) {
+
+        console.warn(
+          '[VOBIXCHAT ICE]',
+          error
+        );
+
+      }
+
+    }
+
+
+    /* =====================================================
+       CONECTAR EVENTOS DE LLAMADA AL SOCKET
+       ===================================================== */
+
+    function attachCallSocketEvents() {
+
+      if (
+        !app.socket ||
+        app.socket
+          .__vobixCallEventsAttached
+      ) {
+
+        return;
+
+      }
+
+
+      app.socket
+        .__vobixCallEventsAttached =
+        true;
+
+
+      app.socket.on(
+        'call:offer',
+        handleIncomingCallOffer
+      );
+
+
+      app.socket.on(
+        'call:answer',
+        handleCallAnswer
+      );
+
+
+      app.socket.on(
+        'call:ice',
+        handleRemoteIce
+      );
+
+
+      app.socket.on(
+        'call:end',
+        payload => {
+
+          if (
+            payload?.callId &&
+            app.callId &&
+            String(
+              payload.callId
+            ) !==
+            String(
+              app.callId
+            )
+          ) {
+
+            return;
+
+          }
+
+
+          endLocalCall(
+            false
+          );
+
+        }
+      );
+
+    }
+
+
+    /* =====================================================
+       COMO EL SOCKET PUEDE CONECTAR DESPUÉS,
+       ESPERAMOS SIN BLOQUEAR LA APP.
+       ===================================================== */
+
+    const callSocketWatcher =
+      window.setInterval(
+        () => {
+
+          if (
+            app.socket
+          ) {
+
+            attachCallSocketEvents();
+
+
+            if (
+              app.socket.connected
+            ) {
+
+              window.clearInterval(
+                callSocketWatcher
+              );
+
+            }
+
+          }
+
+        },
+        500
+      );
+
+
+    /*
+      NO DEJAMOS ESTE WATCHER VIVO PARA SIEMPRE.
+    */
+
+    window.setTimeout(
+      () => {
+
+        window.clearInterval(
+          callSocketWatcher
+        );
+
+
+        attachCallSocketEvents();
+
+      },
+      15000
+    );
+
+
+    /* =====================================================
+       MICRO DE LLAMADA ON / OFF
+       ===================================================== */
+
+    if (
+      elements.toggleCallMicButton
+    ) {
+
+      elements
+        .toggleCallMicButton
+        .addEventListener(
+          'click',
+          () => {
+
+            if (
+              !app.localStream
+            ) {
+
+              return;
+
+            }
+
+
+            const tracks =
+              app
+                .localStream
+                .getAudioTracks();
+
+
+            if (
+              !tracks.length
+            ) {
+
+              return;
+
+            }
+
+
+            const enabled =
+              !tracks[0]
+                .enabled;
+
+
+            tracks.forEach(
+              track => {
+
+                track.enabled =
+                  enabled;
+
+              }
+            );
+
+
+            elements
+              .toggleCallMicButton
+              .textContent =
+              enabled
+                ? '🎙️'
+                : '🔇';
+
+          }
+        );
+
+    }
+
+
+    /* =====================================================
+       CÁMARA ON / OFF
+       ===================================================== */
+
+    if (
+      elements.toggleCallCameraButton
+    ) {
+
+      elements
+        .toggleCallCameraButton
+        .addEventListener(
+          'click',
+          () => {
+
+            if (
+              !app.localStream
+            ) {
+
+              return;
+
+            }
+
+
+            const tracks =
+              app
+                .localStream
+                .getVideoTracks();
+
+
+            if (
+              !tracks.length
+            ) {
+
+              notifyUser(
+                'Esta llamada no tiene cámara'
+              );
+
+              return;
+
+            }
+
+
+            const enabled =
+              !tracks[0]
+                .enabled;
+
+
+            tracks.forEach(
+              track => {
+
+                track.enabled =
+                  enabled;
+
+              }
+            );
+
+
+            elements
+              .toggleCallCameraButton
+              .textContent =
+              enabled
+                ? '📹'
+                : '🚫';
+
+          }
+        );
+
+    }
+
+
+    /* =====================================================
+       TERMINAR LLAMADA LOCAL
+       ===================================================== */
+
+    function endLocalCall(
+      notifyRemote = true
+    ) {
+
+      const oldCallId =
+        app.callId;
+
+
+      if (
+        notifyRemote &&
+        app.socket &&
+        app.socket.connected &&
+        oldCallId
+      ) {
+
+        try {
+
+          app.socket.emit(
+            'call:end',
+            {
+
+              callId:
+                oldCallId,
+
+              conversationId:
+                conversationId(
+                  app.conversation
+                )
+
+            }
+          );
+
+        } catch (error) {
+
+          console.warn(
+            '[VOBIXCHAT CALL END EMIT]',
+            error
+          );
+
+        }
+
+      }
+
+
+      if (
+        app.peerConnection
+      ) {
+
+        try {
+
+          app.peerConnection
+            .ontrack =
+            null;
+
+
+          app.peerConnection
+            .onicecandidate =
+            null;
+
+
+          app.peerConnection
+            .close();
+
+        } catch (error) {
+
+          console.warn(
+            '[VOBIXCHAT CLOSE PC]',
+            error
+          );
+
+        }
+
+
+        app.peerConnection =
+          null;
+
+      }
+
+
+      if (
+        app.localStream
+      ) {
+
+        app
+          .localStream
+          .getTracks()
+          .forEach(
+            track => {
+
+              try {
+
+                track.stop();
+
+              } catch (error) {
+
+                // Nada.
+
+              }
+
+            }
+          );
+
+
+        app.localStream =
+          null;
+
+      }
+
+
+      app.callId =
+        null;
+
+
+      app.callType =
+        null;
+
+
+      hideCallScreen();
+
+
+      if (
+        elements.toggleCallMicButton
+      ) {
+
+        elements
+          .toggleCallMicButton
+          .textContent =
+          '🎙️';
+
+      }
+
+
+      if (
+        elements.toggleCallCameraButton
+      ) {
+
+        elements
+          .toggleCallCameraButton
+          .textContent =
+          '📹';
+
+      }
+
+    }
+
+
+    /* =====================================================
+       BOTÓN COLGAR
+       ===================================================== */
+
+    if (
+      elements.endCallButton
+    ) {
+
+      elements
+        .endCallButton
+        .addEventListener(
+          'click',
+          () => {
+
+            endLocalCall(
+              true
+            );
+
+          }
+        );
+
+    }
+
+
+    /* =====================================================
+       HACER VIDEO LOCAL ARRASTRABLE
+       ===================================================== */
+
+    function makeLocalVideoDraggable() {
+
+      const video =
+        elements.localVideo;
+
+
+      if (!video) {
+
+        return;
+
+      }
+
+
+      let dragging =
+        false;
+
+
+      let startX =
+        0;
+
+
+      let startY =
+        0;
+
+
+      let originLeft =
+        0;
+
+
+      let originTop =
+        0;
+
+
+      video.addEventListener(
+        'pointerdown',
+        event => {
+
+          dragging =
+            true;
+
+
+          const rect =
+            video
+              .getBoundingClientRect();
+
+
+          startX =
+            event.clientX;
+
+
+          startY =
+            event.clientY;
+
+
+          originLeft =
+            rect.left;
+
+
+          originTop =
+            rect.top;
+
+
+          video
+            .classList
+            .add(
+              'dragging'
+            );
+
+
+          try {
+
+            video
+              .setPointerCapture(
+                event.pointerId
+              );
+
+          } catch (error) {
+
+            // No es crítico.
+
+          }
+
+        }
+      );
+
+
+      video.addEventListener(
+        'pointermove',
+        event => {
+
+          if (!dragging) {
+
+            return;
+
+          }
+
+
+          const dx =
+            event.clientX -
+            startX;
+
+
+          const dy =
+            event.clientY -
+            startY;
+
+
+          const maxLeft =
+            window.innerWidth -
+            video.offsetWidth;
+
+
+          const maxTop =
+            window.innerHeight -
+            video.offsetHeight;
+
+
+          const left =
+            Math.max(
+              0,
+              Math.min(
+                maxLeft,
+                originLeft +
+                dx
+              )
+            );
+
+
+          const top =
+            Math.max(
+              0,
+              Math.min(
+                maxTop,
+                originTop +
+                dy
+              )
+            );
+
+
+          video.style.left =
+            left +
+            'px';
+
+
+          video.style.top =
+            top +
+            'px';
+
+
+          video.style.right =
+            'auto';
+
+
+          video.style.bottom =
+            'auto';
+
+        }
+      );
+
+
+      const stopDragging =
+        event => {
+
+          if (!dragging) {
+
+            return;
+
+          }
+
+
+          dragging =
+            false;
+
+
+          video
+            .classList
+            .remove(
+              'dragging'
+            );
+
+
+          try {
+
+            video
+              .releasePointerCapture(
+                event.pointerId
+              );
+
+          } catch (error) {
+
+            // No es crítico.
+
+          }
+
+        };
+
+
+      video.addEventListener(
+        'pointerup',
+        stopDragging
+      );
+
+
+      video.addEventListener(
+        'pointercancel',
+        stopDragging
+      );
+
+    }
+
+
+    makeLocalVideoDraggable();
+
+
+    /* =====================================================
+       ESCAPE CIERRA PANELES
+       ===================================================== */
+
+    document.addEventListener(
+      'keydown',
+      event => {
+
+        if (
+          event.key !==
+          'Escape'
+        ) {
+
+          return;
+
+        }
+
+
+        closeOptionsMenu();
+
+
+        setPanel(
+          elements.peopleDrawer,
+          false
+        );
+
+
+        setPanel(
+          elements.profilePanel,
+          false
+        );
+
+
+        setPanel(
+          elements.notificationPanel,
+          false
+        );
+
+      }
+    );
+
+
+    /* =====================================================
+       AL VOLVER A LA PESTAÑA
+       ===================================================== */
+
+    document.addEventListener(
+      'visibilitychange',
+      () => {
+
+        if (
+          document.visibilityState ===
+            'visible'
+        ) {
+
+          const id =
+            conversationId(
+              app.conversation
+            );
+
+
+          if (id) {
+
+            loadMessages(
+              id
+            );
+
+          }
+
+
+          loadConversations();
+
+        }
+
+      }
+    );
+
+
+    /* =====================================================
+       LIMPIEZA AL SALIR
+       ===================================================== */
+
+    window.addEventListener(
+      'beforeunload',
+      () => {
+
+        stopRecordingTracks();
+
+
+        if (
+          app.localStream
+        ) {
+
+          app
+            .localStream
+            .getTracks()
+            .forEach(
+              track => {
+
+                track.stop();
+
+              }
+            );
+
+        }
+
+
+        if (
+          app.peerConnection
+        ) {
+
+          try {
+
+            app.peerConnection
+              .close();
+
+          } catch (error) {
+
+            // Nada.
+
+          }
+
+        }
+
+      }
+    );
+
+
+    /* =====================================================
+       COMPROBACIÓN FINAL DE ELEMENTOS CRÍTICOS
+       ===================================================== */
+
+    const criticalElements = [
+
+      'messageInput',
+      'voiceButton',
+      'sendButton',
+      'chatOptionsButton',
+      'openPeopleButton',
+      'peopleSearchInput',
+      'peopleSearchButton',
+      'peopleSearchResults'
+
+    ];
+
+
+    const missingElements =
+      criticalElements.filter(
+        key => {
+
+          return !elements[key];
+
+        }
+      );
+
+
+    if (
+      missingElements.length
+    ) {
+
+      console.error(
+        '[VOBIXCHAT] Faltan elementos:',
+        missingElements
+      );
+
+    } else {
+
+      console.log(
+        '[VOBIXCHAT] Botones principales conectados'
+      );
+
+    }
+
+
+    /* =====================================================
+       GARANTIZAR ESTADO FINAL DEL COMPOSITOR
+       ===================================================== */
+
+    syncComposerAction();
+
+    resizeMessageInput();
+
+    renderProfile();
+
+    renderPreferenceSwitches();
+
+
+    console.log(
+      '[VOBIXCHAT] chat.html V2 cargado completamente'
+    );
+
+
+    /* =====================================================
+       CIERRE DEL ÚNICO IIFE
+       ===================================================== */
+
+  })();
+  </script>
+
+
+
+<script>
+(function(){
+  'use strict';
+
+  const $ = id => document.getElementById(id);
+  const params = new URLSearchParams(location.search);
+  const conversationId = params.get('conversationId') ||
+    sessionStorage.getItem('vobix_active_conversation') || '';
+  const peerId = params.get('userId') ||
+    sessionStorage.getItem('vobix_active_peer_id') || '';
+  const peerName = sessionStorage.getItem('vobix_active_peer_name') || 'Contacto';
+
+  // No redirigir automáticamente al inbox desde este script auxiliar.
+  // La inicialización principal de VOBIXCHAT decide qué conversación abrir.
+  if (conversationId) {
+    sessionStorage.setItem('vobix_active_conversation', conversationId);
+  }
+  if (peerId) {
+    sessionStorage.setItem('vobix_active_peer_id', peerId);
+  }
+
+  const goBack = () => location.href = '/inbox.html';
+  $('backToInboxButton')?.addEventListener('click', goBack);
+  $('backToInboxMenuButton')?.addEventListener('click', goBack);
+
+  // Dentro de la sala mostramos al contacto seleccionado, no la lista completa.
+  if ($('topbarUserName') && peerName) $('topbarUserName').textContent = peerName;
+
+  // Cámara únicamente desde la barra inferior.
+  $('cameraButton')?.addEventListener('click', () => $('chatPhotoInput')?.click());
+
+  // Documentos.
+  $('attachButton')?.addEventListener('click', () => $('chatDocumentInput')?.click());
+
+  // Selector de emojis sencillo y local.
+  const emojiButton = $('emojiButton');
+  const messageInput = $('messageInput');
+  if (emojiButton && messageInput) {
+    const emojis = ['😊','😂','❤️','👍','🙏','😍','🔥','🎉','😢','😮','👏','💚'];
+    let pos = 0;
+    emojiButton.addEventListener('click', () => {
+      const emoji = emojis[pos++ % emojis.length];
+      const start = messageInput.selectionStart ?? messageInput.value.length;
+      const end = messageInput.selectionEnd ?? start;
+      messageInput.value =
+        messageInput.value.slice(0,start) + emoji + messageInput.value.slice(end);
+      messageInput.focus();
+      messageInput.dispatchEvent(new Event('input', {bubbles:true}));
+    });
+  }
+
+  async function uploadDocument(file){
+    if (!file) return;
+    const token = localStorage.getItem('vobix_token') || localStorage.getItem('token') || '';
+    const form = new FormData();
+    form.append('file', file);
+    form.append('conversationId', conversationId);
+    form.append('type', 'document');
+
+    try {
+      const response = await fetch('/api/chat/files', {
+        method:'POST',
+        headers: token ? {Authorization:`Bearer ${token}`} : {},
+        body:form
+      });
+      if (!response.ok) throw new Error('No se pudo enviar el documento');
+      const uploaded = await response.json();
+
+      // Si Socket.IO está activo, avisamos a la sala privada.
+      if (window.io) {
+        window.__vobixRoomSocket = window.__vobixRoomSocket || io();
+        window.__vobixRoomSocket.emit('chat:file', {
+          conversationId,
+          userId: peerId,
+          type:'document',
+          file: uploaded.file || uploaded
+        });
+      }
+    } catch (error) {
+      console.error('[VOBIXCHAT DOCUMENT]', error);
+      alert(error.message);
+    } finally {
+      $('chatDocumentInput').value = '';
+    }
+  }
+
+  $('chatDocumentInput')?.addEventListener('change', e => {
+    uploadDocument(e.target.files?.[0]);
+  });
+
+  // Evita que esta sala privada navegue a otra persona desde el chat.
+  // El cambio de contacto se hace al volver a inbox.html.
+  document.documentElement.dataset.vobixPrivateRoom = conversationId;
+})();
+</script>
+
+</body>
+</html>
