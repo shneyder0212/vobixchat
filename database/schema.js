@@ -94,7 +94,6 @@ async function initializeDatabase() {
         created_at TIMESTAMPTZ DEFAULT NOW(),
 
         updated_at TIMESTAMPTZ DEFAULT NOW()
-
       );
     `);
 
@@ -205,7 +204,6 @@ async function initializeDatabase() {
         expires_at TIMESTAMPTZ,
 
         revoked BOOLEAN DEFAULT FALSE
-
       );
     `);
 
@@ -271,7 +269,6 @@ async function initializeDatabase() {
 
         failure_count INTEGER NOT NULL
           DEFAULT 0
-
       );
     `);
 
@@ -345,15 +342,12 @@ async function initializeDatabase() {
       ON push_subscriptions(endpoint);
     `);
 
-
     await database.query(`
       CREATE INDEX IF NOT EXISTS
       push_subscriptions_user_idx
       ON push_subscriptions(user_id);
     `);
-
-
-    await database.query(`
+       await database.query(`
       CREATE INDEX IF NOT EXISTS
       push_subscriptions_enabled_idx
       ON push_subscriptions(
@@ -468,7 +462,6 @@ async function initializeDatabase() {
         created_at TIMESTAMPTZ DEFAULT NOW(),
 
         updated_at TIMESTAMPTZ DEFAULT NOW()
-
       );
     `);
 
@@ -564,6 +557,8 @@ async function initializeDatabase() {
         archived BOOLEAN
           DEFAULT FALSE,
 
+        last_read_at TIMESTAMPTZ,
+
         UNIQUE (
           conversation_id,
           user_id
@@ -572,6 +567,10 @@ async function initializeDatabase() {
       );
     `);
 
+
+    // ====================================================
+    // MIGRACIONES CONVERSATION PARTICIPANTS
+    // ====================================================
 
     await database.query(`
       ALTER TABLE conversation_participants
@@ -595,6 +594,24 @@ async function initializeDatabase() {
       ALTER TABLE conversation_participants
       ADD COLUMN IF NOT EXISTS archived BOOLEAN
       DEFAULT FALSE;
+    `);
+
+    /*
+    ========================================================
+     NUEVO:
+     ÚLTIMA LECTURA DE LA CONVERSACIÓN
+
+     Necesario para:
+     - mensajes leídos
+     - contador de no leídos
+     - Socket.IO
+     - chat privado 1x1
+    ========================================================
+    */
+
+    await database.query(`
+      ALTER TABLE conversation_participants
+      ADD COLUMN IF NOT EXISTS last_read_at TIMESTAMPTZ;
     `);
 
 
@@ -645,7 +662,6 @@ async function initializeDatabase() {
         created_at TIMESTAMPTZ DEFAULT NOW(),
 
         updated_at TIMESTAMPTZ DEFAULT NOW()
-
       );
     `);
 
@@ -697,8 +713,7 @@ async function initializeDatabase() {
       ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ
       DEFAULT NOW();
     `);
-
-    await database.query(`
+      await database.query(`
       ALTER TABLE messages
       ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ
       DEFAULT NOW();
@@ -729,10 +744,54 @@ async function initializeDatabase() {
       ADD COLUMN IF NOT EXISTS file_name TEXT;
     `);
 
+    /*
+    ========================================================
+     COMPATIBILIDAD MIME
+
+     file_mime:
+     - Se conserva para código anterior.
+
+     mime_type:
+     - Lo utiliza el nuevo chat privado 1x1.
+
+     NO BORRAMOS NINGUNA COLUMNA.
+    ========================================================
+    */
+
     await database.query(`
       ALTER TABLE messages
       ADD COLUMN IF NOT EXISTS file_mime TEXT;
     `);
+
+    await database.query(`
+      ALTER TABLE messages
+      ADD COLUMN IF NOT EXISTS mime_type TEXT;
+    `);
+
+
+    // ====================================================
+    // MIGRAR MIME ANTIGUO -> NUEVO
+    // ====================================================
+
+    await database.query(`
+      UPDATE messages
+      SET mime_type = file_mime
+      WHERE mime_type IS NULL
+        AND file_mime IS NOT NULL;
+    `);
+
+
+    // ====================================================
+    // MANTENER COMPATIBILIDAD NUEVO -> ANTIGUO
+    // ====================================================
+
+    await database.query(`
+      UPDATE messages
+      SET file_mime = mime_type
+      WHERE file_mime IS NULL
+        AND mime_type IS NOT NULL;
+    `);
+
 
     await database.query(`
       ALTER TABLE messages
@@ -777,12 +836,10 @@ async function initializeDatabase() {
         'VOBIXCHAT DATABASE: sender_id legacy detectado'
       );
 
-
       await database.query(`
         ALTER TABLE messages
         ALTER COLUMN sender_id DROP NOT NULL;
       `);
-
 
       await database.query(`
         UPDATE messages
@@ -790,7 +847,6 @@ async function initializeDatabase() {
         WHERE sender_user_id IS NULL
           AND sender_id IS NOT NULL;
       `);
-
 
       console.log(
         'VOBIXCHAT DATABASE: compatibilidad sender_id preparada'
@@ -958,7 +1014,7 @@ async function initializeDatabase() {
 
     await database.query(`
       CREATE INDEX IF NOT EXISTS
-      trust_signals_user_idx
+           trust_signals_user_idx
       ON trust_signals(user_id);
     `);
 
@@ -1023,7 +1079,7 @@ async function initializeDatabase() {
     );
 
     console.log(
-      'VOBIXCHAT DATABASE: participants verificada'
+      'VOBIXCHAT DATABASE: participants + last_read_at verificada'
     );
 
     console.log(
@@ -1031,7 +1087,7 @@ async function initializeDatabase() {
     );
 
     console.log(
-      'VOBIXCHAT DATABASE: multimedia verificada'
+      'VOBIXCHAT DATABASE: multimedia + mime_type verificada'
     );
 
     console.log(
@@ -1076,4 +1132,4 @@ async function initializeDatabase() {
 
 module.exports = {
   initializeDatabase
-};
+}; 
