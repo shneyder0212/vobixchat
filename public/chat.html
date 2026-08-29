@@ -579,7 +579,6 @@
   align-items: center;
 
   cursor: pointer;
-
   touch-action: none;
 }
 
@@ -896,7 +895,7 @@
    FIN BLOQUE 1 DE 6
    CONTINÚA DIRECTAMENTE CON BLOQUE 2
    ========================================================= */
-/* =========================================================
+    /* =========================================================
    VOBIXCHAT
    CHAT.HTML CORREGIDO
    BLOQUE 2 DE 6
@@ -924,11 +923,9 @@
   --danger: #ff6666;
 }
 
-
 * {
   box-sizing: border-box;
 }
-
 
 html,
 body {
@@ -937,7 +934,6 @@ body {
   margin: 0;
   padding: 0;
 }
-
 
 body {
   background: var(--bg);
@@ -966,17 +962,14 @@ textarea {
   font: inherit;
 }
 
-
 button {
   -webkit-tap-highlight-color: transparent;
 }
-
 
 input,
 textarea {
   font-size: 16px;
 }
-
 
 video,
 audio,
@@ -1006,80 +999,962 @@ body {
    ========================================================= */
 
   </style>
+
 <script src="/socket.io/socket.io.js"></script>
+
 </head>
 
 
 <body>
 
 
-
-<!-- VOBIXCHAT - INTERFAZ PRINCIPAL RECONSTRUIDA -->
-<style>
-.vobixApp{min-height:100dvh;display:flex;flex-direction:column;background:linear-gradient(180deg,#071009 0%,#0b160d 100%)}
-.vobixTopbar{min-height:68px;display:flex;align-items:center;gap:12px;padding:10px 14px;border-bottom:1px solid rgba(104,255,114,.15);background:rgba(11,22,13,.96);position:sticky;top:0;z-index:100}
-#myAvatar{width:44px;height:44px;min-width:44px;border-radius:50%;display:grid;place-items:center;background:#17341d;border:2px solid rgba(104,255,114,.55);font-weight:800;color:#68ff72}
-.vobixIdentity{flex:1;min-width:0}.vobixIdentity strong{display:block;font-size:16px}.vobixIdentity span{display:block;color:rgba(255,255,255,.6);font-size:12px}
-.vobixIconButton{width:42px;height:42px;border:0;border-radius:50%;background:#122016;color:#fff;font-size:20px;cursor:pointer}
-.vobixMain{flex:1;display:flex;flex-direction:column;min-height:0}
-.messages{flex:1;overflow:auto;padding:18px 14px 120px;display:flex;flex-direction:column;gap:10px}
-.vobixWelcome{margin:auto;width:min(460px,92%);text-align:center;padding:28px 20px;border:1px solid rgba(104,255,114,.14);border-radius:22px;background:rgba(18,32,22,.72)}
-.vobixWelcomeLogo{width:68px;height:68px;margin:0 auto 14px;border-radius:22px;display:grid;place-items:center;background:#17341d;color:#68ff72;font-size:31px;font-weight:900}
-.vobixWelcome h1{font-size:23px;margin:0 0 8px}.vobixWelcome p{margin:0;color:rgba(255,255,255,.62);line-height:1.5}
-.vobixComposer{position:fixed;left:0;right:0;bottom:0;z-index:90;display:flex;align-items:flex-end;gap:8px;padding:10px 12px;padding-bottom:max(10px,env(safe-area-inset-bottom));border-top:1px solid rgba(104,255,114,.14);background:rgba(7,16,9,.97)}
-.vobixComposer textarea{flex:1;min-height:44px;max-height:120px;resize:none;padding:11px 14px;border:1px solid rgba(104,255,114,.18);border-radius:20px;outline:none;background:#122016;color:#fff}
-.vobixSend{width:46px;height:46px;min-width:46px;border:0;border-radius:50%;background:#68ff72;color:#071009;font-size:20px;font-weight:900}
-.vobixActionSlot{position:relative;width:46px;height:46px;min-width:46px;flex:0 0 46px}
-.vobixComposerAction{position:absolute;inset:0;width:46px!important;height:46px!important;min-width:46px!important;opacity:0;visibility:hidden;pointer-events:none;transform:scale(.86);transition:opacity .14s ease,transform .14s ease,visibility .14s}
-.vobixComposerAction.isVisible{opacity:1;visibility:visible;pointer-events:auto;transform:scale(1)}
-#voiceButton.isRecording{background:#68ff72;color:#071009;box-shadow:0 0 0 6px rgba(104,255,114,.13);animation:vobixMicPulse 1s infinite}
-@keyframes vobixMicPulse{50%{transform:scale(.92)}}
-.callVideoArea{display:none;position:fixed;inset:0;z-index:3000;background:#000}.callVideoArea.open{display:block}
-.remoteVideo{width:100%;height:100%;object-fit:cover}.localVideo{position:absolute;width:min(28vw,220px);aspect-ratio:3/4;border-radius:18px;object-fit:cover;background:#111}
-</style>
-
-<div id="vobixApp" class="vobixApp">
-<header class="vobixTopbar">
-<div id="myAvatar" class="avatar" role="button" aria-label="Abrir mi perfil">V</div>
-<div class="vobixIdentity"><strong>VOBIXCHAT</strong><span id="vobixConnectionStatus">Chat seguro</span></div>
-<button id="sendPhotoButton" class="vobixIconButton" type="button" aria-label="Enviar foto">📷</button>
-<button id="chatOptionsButton" class="vobixIconButton" type="button" data-chat-options aria-label="Más opciones">⋮</button>
-</header>
-<main class="vobixMain"><section id="messages" class="messages" aria-live="polite">
-<div class="vobixWelcome"><div class="vobixWelcomeLogo">V</div><h1>VOBIXCHAT</h1><p>Mensajes, notas de voz, llamadas, videollamadas y notificaciones.</p></div>
-</section></main>
-<div class="vobixComposer">
-<textarea id="messageInput" rows="1" placeholder="Escribe un mensaje…" aria-label="Mensaje"></textarea>
-<div class="vobixActionSlot" aria-label="Grabar o enviar">
-<button id="voiceButton" class="vobixIconButton vobixComposerAction isVisible" type="button" aria-label="Nota de voz">🎙️</button>
-<button id="sendButton" class="vobixSend vobixComposerAction" type="button" aria-label="Enviar">➤</button>
-</div>
-</div></div>
-
-
-<style id="vobixSocialStyles">
-.vxSocialBar{position:fixed;right:14px;top:82px;z-index:130;display:flex;gap:8px}.vxAction{width:42px;height:42px;border:1px solid rgba(104,255,114,.25);border-radius:50%;background:#122016;color:#fff;font-size:18px}.vxDrawer{display:none;position:fixed;inset:0;z-index:2200;background:rgba(0,0,0,.72);backdrop-filter:blur(8px);padding:18px}.vxDrawer.open{display:flex;align-items:center;justify-content:center}.vxCard{width:min(520px,100%);max-height:85dvh;overflow:auto;background:#0b160d;border:1px solid rgba(104,255,114,.25);border-radius:24px;padding:18px;color:#fff}.vxCard h2{margin:0 0 12px}.vxSearch{display:flex;gap:8px}.vxSearch input{flex:1;min-width:0;padding:12px 14px;border-radius:16px;border:1px solid rgba(104,255,114,.22);background:#122016;color:#fff;outline:none}.vxPrimary{border:0;border-radius:16px;padding:11px 14px;background:#68ff72;color:#071009;font-weight:800}.vxGhost{border:1px solid rgba(104,255,114,.22);border-radius:16px;padding:10px 13px;background:#122016;color:#fff}.vxList{display:flex;flex-direction:column;gap:8px;margin-top:14px}.vxPerson{display:flex;align-items:center;gap:10px;padding:11px;border:1px solid rgba(104,255,114,.13);border-radius:16px;background:#101d13}.vxPersonInfo{flex:1;min-width:0}.vxPersonInfo strong,.vxPersonInfo small{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.vxPersonInfo small{color:rgba(255,255,255,.55)}.vxRoomTitle{display:none;position:fixed;left:74px;top:22px;z-index:131;font-size:12px;color:#68ff72}.vxRoomTitle.on{display:block}.vxAttach{display:none}.vxEmojiTray{display:none;position:fixed;bottom:72px;left:62px;z-index:150;background:#122016;border:1px solid rgba(104,255,114,.2);border-radius:16px;padding:8px;gap:5px;flex-wrap:wrap;width:220px}.vxEmojiTray.open{display:flex}.vxEmojiTray button{border:0;background:transparent;font-size:23px}.vobixComposer{padding-left:104px;padding-right:12px}.vxComposerLeft,.vxComposerRight{position:fixed;bottom:max(11px,env(safe-area-inset-bottom));z-index:110;width:42px;height:42px;border:0;border-radius:50%;background:#122016;color:#fff;font-size:19px}.vxComposerLeft{left:8px}.vxComposerRight{left:54px;right:auto}.vobixSend{z-index:111}@media(max-width:600px){.vxSocialBar{right:8px;top:76px}.vxAction{width:38px;height:38px}.vxRoomTitle{left:65px;top:18px}.vobixComposer{padding-left:100px;padding-right:8px}}
-</style>
-
-<div class="vxSocialBar" aria-label="Acciones de chat">
-<button id="vxPeople" class="vxAction" type="button" title="Buscar e invitar">👥</button>
-<button id="vxVoiceCall" class="vxAction" type="button" title="Llamar">📞</button>
-<button id="vxVideoCall" class="vxAction" type="button" title="Videollamada">📹</button>
-<button id="vxAddPeople" class="vxAction" type="button" title="Agregar participantes">＋</button>
-</div>
-<div id="vxRoomTitle" class="vxRoomTitle">Sala privada 1×1</div>
-<button id="vxEmoji" class="vxComposerLeft" type="button" title="Emojis">😊</button>
-<button id="vxAttach" class="vxComposerRight" type="button" title="Documento">📎</button>
-<input id="vxFile" class="vxAttach" type="file" accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.txt">
-<div id="vxEmojiTray" class="vxEmojiTray"></div>
-<div id="vxDrawer" class="vxDrawer" aria-hidden="true"><section class="vxCard"><div style="display:flex;align-items:center;gap:8px"><h2 style="flex:1">Personas</h2><button id="vxClose" class="vxGhost" type="button">Cerrar</button></div><p style="color:rgba(255,255,255,.6);margin-top:0">Busca un usuario registrado para abrir una sala privada 1×1.</p><div class="vxSearch"><input id="vxSearch" placeholder="Nombre o teléfono" autocomplete="off"><button id="vxSearchBtn" class="vxPrimary" type="button">Buscar</button></div><div id="vxResults" class="vxList"></div><h3>Conversaciones</h3><div id="vxConversations" class="vxList"></div></section></div>
-<div id="callVideoArea" class="callVideoArea">
-<video id="remoteVideo" class="remoteVideo" autoplay playsinline></video>
-<video id="localVideo" class="localVideo" autoplay playsinline muted></video>
-</div>
-
 <!-- =========================================================
      VOBIXCHAT
+     INTERFAZ PRINCIPAL
+     ========================================================= -->
+
+<style>
+
+.vobixApp {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  background:
+    linear-gradient(
+      180deg,
+      #071009 0%,
+      #0b160d 100%
+    );
+}
+
+.vobixTopbar {
+  min-height: 68px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+
+  border-bottom:
+    1px solid
+    rgba(104,255,114,.15);
+
+  background:
+    rgba(11,22,13,.96);
+
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+#myAvatar {
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+
+  border-radius: 50%;
+
+  display: grid;
+  place-items: center;
+
+  background: #17341d;
+
+  border:
+    2px solid
+    rgba(104,255,114,.55);
+
+  font-weight: 800;
+  color: #68ff72;
+}
+
+.vobixIdentity {
+  flex: 1;
+  min-width: 0;
+}
+
+.vobixIdentity strong {
+  display: block;
+  font-size: 16px;
+}
+
+.vobixIdentity span {
+  display: block;
+  color: rgba(255,255,255,.6);
+  font-size: 12px;
+}
+
+.vobixIconButton {
+  width: 42px;
+  height: 42px;
+
+  border: 0;
+  border-radius: 50%;
+
+  background: #122016;
+  color: #fff;
+
+  font-size: 20px;
+  cursor: pointer;
+}
+
+.vobixMain {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.messages {
+  flex: 1;
+  overflow: auto;
+
+  padding:
+    18px
+    14px
+    120px;
+
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.vobixWelcome {
+  margin: auto;
+
+  width: min(
+    460px,
+    92%
+  );
+
+  text-align: center;
+
+  padding: 28px 20px;
+
+  border:
+    1px solid
+    rgba(104,255,114,.14);
+
+  border-radius: 22px;
+
+  background:
+    rgba(18,32,22,.72);
+}
+
+.vobixWelcomeLogo {
+  width: 68px;
+  height: 68px;
+
+  margin:
+    0 auto 14px;
+
+  border-radius: 22px;
+
+  display: grid;
+  place-items: center;
+
+  background: #17341d;
+  color: #68ff72;
+
+  font-size: 31px;
+  font-weight: 900;
+}
+
+.vobixWelcome h1 {
+  font-size: 23px;
+  margin: 0 0 8px;
+}
+
+.vobixWelcome p {
+  margin: 0;
+
+  color:
+    rgba(255,255,255,.62);
+
+  line-height: 1.5;
+}
+
+.vobixComposer {
+  position: fixed;
+
+  left: 0;
+  right: 0;
+  bottom: 0;
+
+  z-index: 90;
+
+  display: flex;
+  align-items: flex-end;
+
+  gap: 8px;
+
+  padding: 10px 12px;
+
+  padding-bottom:
+    max(
+      10px,
+      env(safe-area-inset-bottom)
+    );
+
+  border-top:
+    1px solid
+    rgba(104,255,114,.14);
+
+  background:
+    rgba(7,16,9,.97);
+}
+
+.vobixComposer textarea {
+  flex: 1;
+
+  min-height: 44px;
+  max-height: 120px;
+
+  resize: none;
+
+  padding: 11px 14px;
+
+  border:
+    1px solid
+    rgba(104,255,114,.18);
+
+  border-radius: 20px;
+
+  outline: none;
+
+  background: #122016;
+  color: #fff;
+}
+
+.vobixSend {
+  width: 46px;
+  height: 46px;
+  min-width: 46px;
+
+  border: 0;
+  border-radius: 50%;
+
+  background: #68ff72;
+  color: #071009;
+
+  font-size: 20px;
+  font-weight: 900;
+}
+
+.vobixActionSlot {
+  position: relative;
+
+  width: 46px;
+  height: 46px;
+
+  min-width: 46px;
+  flex: 0 0 46px;
+}
+
+.vobixComposerAction {
+  position: absolute;
+  inset: 0;
+
+  width: 46px !important;
+  height: 46px !important;
+  min-width: 46px !important;
+
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+
+  transform:
+    scale(.86);
+
+  transition:
+    opacity .14s ease,
+    transform .14s ease,
+    visibility .14s;
+}
+
+.vobixComposerAction.isVisible {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+
+  transform:
+    scale(1);
+}
+
+#voiceButton.isRecording {
+  background: #68ff72;
+  color: #071009;
+
+  box-shadow:
+    0 0 0 6px
+    rgba(104,255,114,.13);
+
+  animation:
+    vobixMicPulse
+    1s
+    infinite;
+}
+
+@keyframes vobixMicPulse {
+
+  50% {
+    transform:
+      scale(.92);
+  }
+
+}
+
+.callVideoArea {
+  display: none;
+
+  position: fixed;
+  inset: 0;
+
+  z-index: 3000;
+
+  background: #000;
+}
+
+.callVideoArea.open {
+  display: block;
+}
+
+.remoteVideo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.localVideo {
+  position: absolute;
+
+  width:
+    min(
+      28vw,
+      220px
+    );
+
+  aspect-ratio: 3 / 4;
+
+  border-radius: 18px;
+
+  object-fit: cover;
+
+  background: #111;
+}
+
+</style>
+
+
+<div
+  id="vobixApp"
+  class="vobixApp"
+>
+
+  <header class="vobixTopbar">
+
+    <div
+      id="myAvatar"
+      class="avatar"
+      role="button"
+      aria-label="Abrir mi perfil"
+    >
+      V
+    </div>
+
+    <div class="vobixIdentity">
+
+      <strong>
+        VOBIXCHAT
+      </strong>
+
+      <span id="vobixConnectionStatus">
+        Chat seguro
+      </span>
+
+    </div>
+
+    <button
+      id="sendPhotoButton"
+      class="vobixIconButton"
+      type="button"
+      aria-label="Enviar foto"
+    >
+      📷
+    </button>
+
+    <button
+      id="chatOptionsButton"
+      class="vobixIconButton"
+      type="button"
+      data-chat-options
+      aria-label="Más opciones"
+    >
+      ⋮
+    </button>
+
+  </header>
+
+
+  <main class="vobixMain">
+
+    <section
+      id="messages"
+      class="messages"
+      aria-live="polite"
+    >
+
+      <div class="vobixWelcome">
+
+        <div class="vobixWelcomeLogo">
+          V
+        </div>
+
+        <h1>
+          VOBIXCHAT
+        </h1>
+
+        <p>
+          Mensajes, notas de voz, llamadas,
+          videollamadas y notificaciones.
+        </p>
+
+      </div>
+
+    </section>
+
+  </main>
+
+
+  <div class="vobixComposer">
+
+    <textarea
+      id="messageInput"
+      rows="1"
+      placeholder="Escribe un mensaje…"
+      aria-label="Mensaje"
+    ></textarea>
+
+    <div
+      class="vobixActionSlot"
+      aria-label="Grabar o enviar"
+    >
+
+      <button
+        id="voiceButton"
+        class="vobixIconButton vobixComposerAction isVisible"
+        type="button"
+        aria-label="Nota de voz"
+      >
+        🎙️
+      </button>
+
+      <button
+        id="sendButton"
+        class="vobixSend vobixComposerAction"
+        type="button"
+        aria-label="Enviar"
+      >
+        ➤
+      </button>
+
+    </div>
+
+  </div>
+
+</div>
+
+
+<!-- =========================================================
+     PERSONAS / SALA PRIVADA 1x1
+     ========================================================= -->
+
+<style id="vobixSocialStyles">
+
+.vxSocialBar {
+  position: fixed;
+  right: 14px;
+  top: 82px;
+
+  z-index: 130;
+
+  display: flex;
+  gap: 8px;
+}
+
+.vxAction {
+  width: 42px;
+  height: 42px;
+
+  border:
+    1px solid
+    rgba(104,255,114,.25);
+
+  border-radius: 50%;
+
+  background: #122016;
+  color: #fff;
+
+  font-size: 18px;
+}
+
+.vxDrawer {
+  display: none;
+
+  position: fixed;
+  inset: 0;
+
+  z-index: 2200;
+
+  background:
+    rgba(0,0,0,.72);
+
+  backdrop-filter:
+    blur(8px);
+
+  padding: 18px;
+}
+
+.vxDrawer.open {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.vxCard {
+  width:
+    min(
+      520px,
+      100%
+    );
+
+  max-height: 85dvh;
+
+  overflow: auto;
+
+  background: #0b160d;
+
+  border:
+    1px solid
+    rgba(104,255,114,.25);
+
+  border-radius: 24px;
+
+  padding: 18px;
+
+  color: #fff;
+}
+
+.vxCard h2 {
+  margin: 0 0 12px;
+}
+
+.vxSearch {
+  display: flex;
+  gap: 8px;
+}
+
+.vxSearch input {
+  flex: 1;
+  min-width: 0;
+
+  padding: 12px 14px;
+
+  border-radius: 16px;
+
+  border:
+    1px solid
+    rgba(104,255,114,.22);
+
+  background: #122016;
+  color: #fff;
+
+  outline: none;
+}
+
+.vxPrimary {
+  border: 0;
+
+  border-radius: 16px;
+
+  padding: 11px 14px;
+
+  background: #68ff72;
+  color: #071009;
+
+  font-weight: 800;
+}
+
+.vxGhost {
+  border:
+    1px solid
+    rgba(104,255,114,.22);
+
+  border-radius: 16px;
+
+  padding: 10px 13px;
+
+  background: #122016;
+  color: #fff;
+}
+
+.vxList {
+  display: flex;
+  flex-direction: column;
+
+  gap: 8px;
+
+  margin-top: 14px;
+}
+
+.vxPerson {
+  display: flex;
+  align-items: center;
+
+  gap: 10px;
+
+  padding: 11px;
+
+  border:
+    1px solid
+    rgba(104,255,114,.13);
+
+  border-radius: 16px;
+
+  background: #101d13;
+}
+
+.vxPersonInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.vxPersonInfo strong,
+.vxPersonInfo small {
+  display: block;
+
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.vxPersonInfo small {
+  color:
+    rgba(255,255,255,.55);
+}
+
+.vxRoomTitle {
+  display: none;
+
+  position: fixed;
+
+  left: 74px;
+  top: 22px;
+
+  z-index: 131;
+
+  font-size: 12px;
+  color: #68ff72;
+}
+
+.vxRoomTitle.on {
+  display: block;
+}
+
+.vxAttach {
+  display: none;
+}
+
+.vxEmojiTray {
+  display: none;
+
+  position: fixed;
+
+  bottom: 72px;
+  left: 62px;
+
+  z-index: 150;
+
+  background: #122016;
+
+  border:
+    1px solid
+    rgba(104,255,114,.2);
+
+  border-radius: 16px;
+
+  padding: 8px;
+
+  gap: 5px;
+  flex-wrap: wrap;
+
+  width: 220px;
+}
+
+.vxEmojiTray.open {
+  display: flex;
+}
+
+.vxEmojiTray button {
+  border: 0;
+  background: transparent;
+  font-size: 23px;
+}
+
+.vobixComposer {
+  padding-left: 104px;
+  padding-right: 12px;
+}
+
+.vxComposerLeft,
+.vxComposerRight {
+  position: fixed;
+
+  bottom:
+    max(
+      11px,
+      env(safe-area-inset-bottom)
+    );
+
+  z-index: 110;
+
+  width: 42px;
+  height: 42px;
+
+  border: 0;
+  border-radius: 50%;
+
+  background: #122016;
+  color: #fff;
+
+  font-size: 19px;
+}
+
+.vxComposerLeft {
+  left: 8px;
+}
+
+.vxComposerRight {
+  left: 54px;
+  right: auto;
+}
+
+.vobixSend {
+  z-index: 111;
+}
+
+@media(max-width:600px) {
+
+  .vxSocialBar {
+    right: 8px;
+    top: 76px;
+  }
+
+  .vxAction {
+    width: 38px;
+    height: 38px;
+  }
+
+  .vxRoomTitle {
+    left: 65px;
+    top: 18px;
+  }
+
+  .vobixComposer {
+    padding-left: 100px;
+    padding-right: 8px;
+  }
+
+}
+
+</style>
+
+
+<div
+  class="vxSocialBar"
+  aria-label="Acciones de chat"
+>
+
+  <button
+    id="vxPeople"
+    class="vxAction"
+    type="button"
+    title="Buscar e invitar"
+  >
+    👥
+  </button>
+
+  <button
+    id="vxVoiceCall"
+    class="vxAction"
+    type="button"
+    title="Llamar"
+  >
+    📞
+  </button>
+
+  <button
+    id="vxVideoCall"
+    class="vxAction"
+    type="button"
+    title="Videollamada"
+  >
+    📹
+  </button>
+
+  <button
+    id="vxAddPeople"
+    class="vxAction"
+    type="button"
+    title="Agregar participantes"
+  >
+    ＋
+  </button>
+
+</div>
+
+
+<div
+  id="vxRoomTitle"
+  class="vxRoomTitle"
+>
+  Sala privada 1×1
+</div>
+
+
+<button
+  id="vxEmoji"
+  class="vxComposerLeft"
+  type="button"
+  title="Emojis"
+>
+  😊
+</button>
+
+
+<button
+  id="vxAttach"
+  class="vxComposerRight"
+  type="button"
+  title="Documento"
+>
+  📎
+</button>
+
+
+<input
+  id="vxFile"
+  class="vxAttach"
+  type="file"
+  accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.txt"
+>
+
+
+<div
+  id="vxEmojiTray"
+  class="vxEmojiTray"
+></div>
+
+
+<div
+  id="vxDrawer"
+  class="vxDrawer"
+  aria-hidden="true"
+>
+
+  <section class="vxCard">
+
+    <div
+      style="
+        display:flex;
+        align-items:center;
+        gap:8px;
+      "
+    >
+
+      <h2 style="flex:1">
+        Personas
+      </h2>
+
+      <button
+        id="vxClose"
+        class="vxGhost"
+        type="button"
+      >
+        Cerrar
+      </button>
+
+    </div>
+
+    <p
+      style="
+        color:rgba(255,255,255,.6);
+        margin-top:0;
+      "
+    >
+      Busca un usuario registrado para abrir
+      una sala privada 1×1.
+    </p>
+
+    <div class="vxSearch">
+
+      <input
+        id="vxSearch"
+        placeholder="Nombre o teléfono"
+        autocomplete="off"
+      >
+
+      <button
+        id="vxSearchBtn"
+        class="vxPrimary"
+        type="button"
+      >
+        Buscar
+      </button>
+
+    </div>
+
+    <div
+      id="vxResults"
+      class="vxList"
+    ></div>
+
+    <h3>
+      Conversaciones
+    </h3>
+
+    <div
+      id="vxConversations"
+      class="vxList"
+    ></div>
+
+  </section>
+
+</div>
+
+
+<div
+  id="callVideoArea"
+  class="callVideoArea"
+>
+
+  <video
+    id="remoteVideo"
+    class="remoteVideo"
+    autoplay
+    playsinline
+  ></video>
+
+  <video
+    id="localVideo"
+    class="localVideo"
+    autoplay
+    playsinline
+    muted
+  ></video>
+
+</div>
+
+
+<!-- =========================================================
      MENÚ DE TRES PUNTOS
      ========================================================= -->
 
@@ -1189,12 +2064,9 @@ body {
       class="profilePhotoPreview"
     >
 
-      <span
-        id="profilePhotoInitial"
-      >
+      <span id="profilePhotoInitial">
         V
       </span>
-
 
       <img
         id="profilePhotoImage"
@@ -1319,18 +2191,12 @@ body {
     </div>
 
 
-    <div
-      class="notificationDescription"
-    >
+    <div class="notificationDescription">
       Configura mensajes, llamadas,
       videollamadas y notificaciones Push
       de este dispositivo.
     </div>
 
-
-    <!-- =====================================================
-         NOTIFICACIONES PUSH
-         ===================================================== -->
 
     <div class="settingRow">
 
@@ -1349,7 +2215,6 @@ body {
 
       </div>
 
-
       <button
         id="notificationSwitch"
         class="vobixSwitch"
@@ -1361,10 +2226,6 @@ body {
 
     </div>
 
-
-    <!-- =====================================================
-         SONIDO DE MENSAJES
-         ===================================================== -->
 
     <div class="settingRow">
 
@@ -1381,7 +2242,6 @@ body {
 
       </div>
 
-
       <button
         id="messageSoundSwitch"
         class="vobixSwitch on"
@@ -1393,10 +2253,6 @@ body {
 
     </div>
 
-
-    <!-- =====================================================
-         LLAMADA ENTRANTE
-         ===================================================== -->
 
     <div class="settingRow">
 
@@ -1413,7 +2269,6 @@ body {
 
       </div>
 
-
       <button
         id="incomingCallSoundSwitch"
         class="vobixSwitch on"
@@ -1425,10 +2280,6 @@ body {
 
     </div>
 
-
-    <!-- =====================================================
-         LLAMADA SALIENTE
-         ===================================================== -->
 
     <div class="settingRow">
 
@@ -1445,7 +2296,6 @@ body {
 
       </div>
 
-
       <button
         id="outgoingCallSoundSwitch"
         class="vobixSwitch on"
@@ -1457,10 +2307,6 @@ body {
 
     </div>
 
-
-    <!-- =====================================================
-         VIBRACIÓN
-         ===================================================== -->
 
     <div class="settingRow">
 
@@ -1476,7 +2322,6 @@ body {
 
       </div>
 
-
       <button
         id="vibrationSwitch"
         class="vobixSwitch on"
@@ -1488,10 +2333,6 @@ body {
 
     </div>
 
-
-    <!-- =====================================================
-         ESTADO PUSH
-         ===================================================== -->
 
     <div class="settingRow">
 
@@ -1510,7 +2351,6 @@ body {
 
       </div>
 
-
       <span
         id="pushStatusIcon"
         aria-hidden="true"
@@ -1525,10 +2365,6 @@ body {
 
     </div>
 
-
-    <!-- =====================================================
-         AYUDA IPHONE
-         ===================================================== -->
 
     <div
       id="iosPushHelp"
@@ -1562,10 +2398,6 @@ body {
 
     </div>
 
-
-    <!-- =====================================================
-         PRUEBAS
-         ===================================================== -->
 
     <button
       id="notificationPanelTestSound"
@@ -1654,8 +2486,7 @@ body {
 
 <!-- =========================================================
      JAVASCRIPT VOBIXCHAT
-
-     BLOQUE 3 CONTINÚA AQUÍ.
+     BLOQUE 3 CONTINÚA AQUÍ
      ========================================================= -->
 
 <script>
@@ -1665,7 +2496,7 @@ body {
    FIN BLOQUE 2 DE 6
    CONTINÚA DIRECTAMENTE CON BLOQUE 3
    ========================================================= */
-/* =========================================================
+  /* =========================================================
    VOBIXCHAT
    CHAT.HTML CORREGIDO
    BLOQUE 3 DE 6
@@ -1698,7 +2529,6 @@ function vobixShowToast(message) {
 
     window.showToast(message);
     return;
-
   }
 
   console.log(
@@ -1732,7 +2562,6 @@ const vobixDefaultPreferences = {
 
   vibration:
     true
-
 };
 
 
@@ -1747,7 +2576,6 @@ function loadVobixPreferences() {
         ) ||
         '{}'
       );
-
 
     return {
 
@@ -1807,12 +2635,10 @@ function setVobixSwitch(
     return;
   }
 
-
   button.classList.toggle(
     'on',
     !!enabled
   );
-
 
   button.setAttribute(
     'aria-checked',
@@ -1835,16 +2661,13 @@ function openChatOptionsMenu() {
       'chatOptionsMenu'
     );
 
-
   if (!menu) {
     return;
   }
 
-
   menu.classList.add(
     'open'
   );
-
 
   menu.setAttribute(
     'aria-hidden',
@@ -1861,16 +2684,13 @@ function closeChatOptionsMenu() {
       'chatOptionsMenu'
     );
 
-
   if (!menu) {
     return;
   }
 
-
   menu.classList.remove(
     'open'
   );
-
 
   menu.setAttribute(
     'aria-hidden',
@@ -1925,7 +2745,6 @@ function connectVobixOptionsButton() {
   ) {
 
     return;
-
   }
 
 
@@ -1939,20 +2758,16 @@ function connectVobixOptionsButton() {
     event => {
 
       event.preventDefault();
-
       event.stopPropagation();
-
 
       const menu =
         vobixEl(
           'chatOptionsMenu'
         );
 
-
       if (!menu) {
         return;
       }
-
 
       if (
         menu.classList.contains(
@@ -1987,7 +2802,6 @@ document.addEventListener(
         'chatOptionsMenu'
       );
 
-
     if (
       !menu ||
       !menu.classList.contains(
@@ -1996,7 +2810,6 @@ document.addEventListener(
     ) {
 
       return;
-
     }
 
 
@@ -2007,7 +2820,6 @@ document.addEventListener(
     ) {
 
       return;
-
     }
 
 
@@ -2034,7 +2846,6 @@ document.addEventListener(
     ) {
 
       return;
-
     }
 
 
@@ -2052,28 +2863,23 @@ function openVobixProfilePanel() {
 
   closeChatOptionsMenu();
 
-
   const panel =
     vobixEl(
       'profilePanel'
     );
 
-
   if (!panel) {
     return;
   }
-
 
   panel.classList.add(
     'open'
   );
 
-
   panel.setAttribute(
     'aria-hidden',
     'false'
   );
-
 
   renderMyProfilePhoto();
 
@@ -2087,16 +2893,13 @@ function closeVobixProfilePanel() {
       'profilePanel'
     );
 
-
   if (!panel) {
     return;
   }
 
-
   panel.classList.remove(
     'open'
   );
-
 
   panel.setAttribute(
     'aria-hidden',
@@ -2114,28 +2917,23 @@ function openVobixNotificationPanel() {
 
   closeChatOptionsMenu();
 
-
   const panel =
     vobixEl(
       'notificationPanel'
     );
 
-
   if (!panel) {
     return;
   }
-
 
   panel.classList.add(
     'open'
   );
 
-
   panel.setAttribute(
     'aria-hidden',
     'false'
   );
-
 
   updateVobixPreferenceSwitches();
 
@@ -2149,16 +2947,13 @@ function closeVobixNotificationPanel() {
       'notificationPanel'
     );
 
-
   if (!panel) {
     return;
   }
 
-
   panel.classList.remove(
     'open'
   );
-
 
   panel.setAttribute(
     'aria-hidden',
@@ -2233,7 +3028,6 @@ function connectPreferenceSwitch(
   ) {
 
     return;
-
   }
 
 
@@ -2288,7 +3082,6 @@ function getVobixAudioContext() {
   ) {
 
     return vobixAudioContext;
-
   }
 
 
@@ -2520,7 +3313,6 @@ function playVobixMessageSound() {
   ) {
 
     return;
-
   }
 
 
@@ -2574,7 +3366,6 @@ function playIncomingRingtonePattern() {
   ) {
 
     return;
-
   }
 
 
@@ -2628,7 +3419,6 @@ function startIncomingRingtone() {
 
   unlockVobixAudio();
 
-
   playIncomingRingtonePattern();
 
 
@@ -2670,7 +3460,6 @@ function stopIncomingRingtone() {
       vobixIncomingRingtoneTimer
     );
 
-
     vobixIncomingRingtoneTimer =
       null;
 
@@ -2689,7 +3478,7 @@ function stopIncomingRingtone() {
 
 
 /* =========================================================
-   TONO SALIENTE
+   TIMBRE SALIENTE
    ========================================================= */
 
 let vobixOutgoingRingtoneTimer =
@@ -2704,13 +3493,12 @@ function playOutgoingRingtonePattern() {
   ) {
 
     return;
-
   }
 
 
   playVobixTone(
     440,
-    0.55,
+    0.42,
     0.075,
     0
   );
@@ -2718,9 +3506,9 @@ function playOutgoingRingtonePattern() {
 
   playVobixTone(
     480,
-    0.55,
+    0.42,
     0.065,
-    0.05
+    0.46
   );
 
 }
@@ -2741,7 +3529,6 @@ function startOutgoingRingtone() {
 
 
   unlockVobixAudio();
-
 
   playOutgoingRingtonePattern();
 
@@ -2765,7 +3552,6 @@ function stopOutgoingRingtone() {
       vobixOutgoingRingtoneTimer
     );
 
-
     vobixOutgoingRingtoneTimer =
       null;
 
@@ -2775,26 +3561,331 @@ function stopOutgoingRingtone() {
 
 
 /* =========================================================
+   FOTO DE PERFIL LOCAL
+   ========================================================= */
+
+const VOBIX_PROFILE_PHOTO_KEY =
+  'vobixchat_profile_photo';
+
+
+function getStoredProfilePhoto() {
+
+  try {
+
+    return (
+      localStorage.getItem(
+        VOBIX_PROFILE_PHOTO_KEY
+      ) ||
+      ''
+    );
+
+  } catch (error) {
+
+    return '';
+
+  }
+
+}
+
+
+function getCurrentUserName() {
+
+  try {
+
+    const user =
+      JSON.parse(
+        localStorage.getItem(
+          'vobix_user'
+        ) ||
+        localStorage.getItem(
+          'user'
+        ) ||
+        '{}'
+      );
+
+
+    return (
+      user.username ||
+      user.name ||
+      user.display_name ||
+      'V'
+    );
+
+  } catch (error) {
+
+    return 'V';
+
+  }
+
+}
+
+
+function getCurrentUserInitial() {
+
+  const name =
+    getCurrentUserName()
+      .trim();
+
+
+  return (
+    name.charAt(0)
+      .toUpperCase() ||
+    'V'
+  );
+
+}
+
+
+function renderMyProfilePhoto() {
+
+  const photo =
+    getStoredProfilePhoto();
+
+
+  const initial =
+    getCurrentUserInitial();
+
+
+  const avatar =
+    vobixEl(
+      'myAvatar'
+    );
+
+
+  const preview =
+    vobixEl(
+      'profilePhotoPreview'
+    );
+
+
+  const previewImage =
+    vobixEl(
+      'profilePhotoImage'
+    );
+
+
+  const previewInitial =
+    vobixEl(
+      'profilePhotoInitial'
+    );
+
+
+  if (avatar) {
+
+    avatar.textContent =
+      photo
+        ? ''
+        : initial;
+
+
+    avatar.classList.toggle(
+      'hasPhoto',
+      !!photo
+    );
+
+
+    avatar.style
+      .backgroundImage =
+      photo
+        ? `url("${photo}")`
+        : '';
+
+  }
+
+
+  if (
+    previewImage &&
+    previewInitial
+  ) {
+
+    if (photo) {
+
+      previewImage.src =
+        photo;
+
+      previewImage.hidden =
+        false;
+
+      previewInitial.hidden =
+        true;
+
+    } else {
+
+      previewImage.removeAttribute(
+        'src'
+      );
+
+      previewImage.hidden =
+        true;
+
+      previewInitial.hidden =
+        false;
+
+      previewInitial.textContent =
+        initial;
+
+    }
+
+  }
+
+
+  if (preview) {
+
+    preview.classList.toggle(
+      'hasPhoto',
+      !!photo
+    );
+
+  }
+
+}
+
+
+/* =========================================================
+   GUARDAR FOTO
+   ========================================================= */
+
+function saveProfilePhotoFile(
+  file
+) {
+
+  if (!file) {
+    return;
+  }
+
+
+  if (
+    !String(
+      file.type ||
+      ''
+    ).startsWith(
+      'image/'
+    )
+  ) {
+
+    vobixShowToast(
+      'Selecciona una imagen.'
+    );
+
+    return;
+  }
+
+
+  const reader =
+    new FileReader();
+
+
+  reader.onload =
+    event => {
+
+      try {
+
+        const value =
+          String(
+            event.target
+              ?.result ||
+            ''
+          );
+
+
+        localStorage.setItem(
+          VOBIX_PROFILE_PHOTO_KEY,
+          value
+        );
+
+
+        renderMyProfilePhoto();
+
+
+        vobixShowToast(
+          'Foto de perfil actualizada.'
+        );
+
+      } catch (error) {
+
+        console.error(
+          '[VOBIXCHAT FOTO]',
+          error
+        );
+
+
+        vobixShowToast(
+          'No se pudo guardar la foto.'
+        );
+
+      }
+
+    };
+
+
+  reader.readAsDataURL(
+    file
+  );
+
+}
+
+
+/* =========================================================
+   QUITAR FOTO
+   ========================================================= */
+
+function removeVobixProfilePhoto() {
+
+  try {
+
+    localStorage.removeItem(
+      VOBIX_PROFILE_PHOTO_KEY
+    );
+
+  } catch (error) {}
+
+
+  renderMyProfilePhoto();
+
+
+  vobixShowToast(
+    'Foto eliminada.'
+  );
+
+}
+
+
+/* =========================================================
+   FIN BLOQUE 3 DE 6
+   CONTINÚA DIRECTAMENTE CON BLOQUE 4
+   ========================================================= */
+  /* =========================================================
+   VOBIXCHAT
+   CHAT.HTML CORREGIDO
+   BLOQUE 4 DE 6
+
+   - TIMBRES
+   - FOTO DE PERFIL
+   - CONEXIÓN DE BOTONES
+   - PREFERENCIAS
+   - FUNCIONES GLOBALES
+   ========================================================= */
+
+
+/* =========================================================
    DETENER TODOS LOS SONIDOS DE LLAMADA
    ========================================================= */
 
 function stopAllCallSounds() {
 
   stopIncomingRingtone();
-
   stopOutgoingRingtone();
 
 }
 
 
 /* =========================================================
-   PRUEBAS
+   PRUEBAS DE SONIDO
    ========================================================= */
 
 function testVobixMessageSound() {
 
   unlockVobixAudio();
-
   playVobixMessageSound();
 
 }
@@ -2805,7 +3896,6 @@ function testVobixIncomingRingtone() {
   unlockVobixAudio();
 
   startIncomingRingtone();
-
 
   setTimeout(
     stopIncomingRingtone,
@@ -2820,7 +3910,6 @@ function testVobixOutgoingRingtone() {
   unlockVobixAudio();
 
   startOutgoingRingtone();
-
 
   setTimeout(
     stopOutgoingRingtone,
@@ -2965,7 +4054,6 @@ function renderMyProfilePhoto(
         .backgroundImage =
         `url("${photo}")`;
 
-
       myAvatar.classList.add(
         'hasPhoto'
       );
@@ -2975,7 +4063,6 @@ function renderMyProfilePhoto(
       myAvatar.style
         .backgroundImage =
         '';
-
 
       myAvatar.classList.remove(
         'hasPhoto'
@@ -3112,7 +4199,6 @@ function openVobixChatPhotoPicker() {
   if (input) {
 
     input.value = '';
-
     input.click();
 
   }
@@ -3135,7 +4221,6 @@ function openVobixChatCamera() {
   if (input) {
 
     input.value = '';
-
     input.click();
 
   }
@@ -3256,6 +4341,10 @@ function connectVobixUi() {
   }
 
 
+  /* =======================================================
+     ELEGIR FOTO DE PERFIL
+     ======================================================= */
+
   const choosePhoto =
     vobixEl(
       'chooseProfilePhotoButton'
@@ -3286,7 +4375,6 @@ function connectVobixUi() {
       () => {
 
         photoInput.value = '';
-
         photoInput.click();
 
       }
@@ -3321,6 +4409,10 @@ function connectVobixUi() {
   }
 
 
+  /* =======================================================
+     TOMAR FOTO
+     ======================================================= */
+
   const cameraButton =
     vobixEl(
       'takeProfilePhotoButton'
@@ -3351,7 +4443,6 @@ function connectVobixUi() {
       () => {
 
         cameraInput.value = '';
-
         cameraInput.click();
 
       }
@@ -3385,6 +4476,10 @@ function connectVobixUi() {
 
   }
 
+
+  /* =======================================================
+     QUITAR FOTO
+     ======================================================= */
 
   const removePhoto =
     vobixEl(
@@ -3428,6 +4523,10 @@ function connectVobixUi() {
   }
 
 
+  /* =======================================================
+     ABRIR PERFIL TOCANDO AVATAR
+     ======================================================= */
+
   const myAvatar =
     vobixEl(
       'myAvatar'
@@ -3454,6 +4553,10 @@ function connectVobixUi() {
   }
 
 
+  /* =======================================================
+     PREFERENCIAS
+     ======================================================= */
+
   connectPreferenceSwitch(
     'messageSoundSwitch',
     'messageSound'
@@ -3478,6 +4581,10 @@ function connectVobixUi() {
   );
 
 
+  /* =======================================================
+     BOTONES PRUEBA SONIDO MENSAJE
+     ======================================================= */
+
   const testMessageButtons = [
 
     vobixEl(
@@ -3501,7 +4608,9 @@ function connectVobixUi() {
             .vobixConnected ===
           '1'
         ) {
+
           return;
+
         }
 
 
@@ -3518,6 +4627,10 @@ function connectVobixUi() {
       }
     );
 
+
+  /* =======================================================
+     PRUEBA TIMBRE ENTRANTE
+     ======================================================= */
 
   const testIncomingButtons = [
 
@@ -3542,7 +4655,9 @@ function connectVobixUi() {
             .vobixConnected ===
           '1'
         ) {
+
           return;
+
         }
 
 
@@ -3559,6 +4674,10 @@ function connectVobixUi() {
       }
     );
 
+
+  /* =======================================================
+     PRUEBA TIMBRE SALIENTE
+     ======================================================= */
 
   const outgoingTest =
     vobixEl(
@@ -3587,7 +4706,6 @@ function connectVobixUi() {
 
 
   updateVobixPreferenceSwitches();
-
   renderMyProfilePhoto();
 
 }
@@ -3665,3148 +4783,7 @@ window.stopAllCallSounds =
 
 
 /* =========================================================
-   FIN BLOQUE 3 DE 6
-
-   NO CIERRES <\/script>.
-   BLOQUE 4 CONTINÚA DIRECTAMENTE AQUÍ.
-   ========================================================= */
-/* =========================================================
-   VOBIXCHAT
-   CHAT.HTML CORREGIDO
-   BLOQUE 4 DE 6
-
-   - NOTAS DE VOZ
-   - PLAY / PAUSA
-   - BARRA DE PROGRESO
-   - DURACIÓN
-   - SEEK
-   - VIDEO LOCAL / REMOTO
-   - INTERCAMBIO GRANDE ↔ PEQUEÑO
-   - CUADRO PEQUEÑO ARRASTRABLE
-   - IPHONE / ANDROID / PC
-   ========================================================= */
-
-
-/* =========================================================
-   FORMATEAR DURACIÓN DE AUDIO
-   ========================================================= */
-
-function formatVobixVoiceTime(seconds) {
-
-  const value =
-    Number(seconds);
-
-
-  if (
-    !Number.isFinite(value) ||
-    value < 0
-  ) {
-
-    return '0:00';
-
-  }
-
-
-  const minutes =
-    Math.floor(
-      value / 60
-    );
-
-
-  const remainingSeconds =
-    Math.floor(
-      value % 60
-    );
-
-
-  return (
-    `${minutes}:` +
-    String(
-      remainingSeconds
-    ).padStart(
-      2,
-      '0'
-    )
-  );
-
-}
-
-
-/* =========================================================
-   DETENER OTRAS NOTAS DE VOZ
-   ========================================================= */
-
-let vobixCurrentVoiceAudio =
-  null;
-
-
-function stopOtherVobixVoiceAudio(
-  currentAudio
-) {
-
-  if (
-    !vobixCurrentVoiceAudio ||
-    vobixCurrentVoiceAudio ===
-      currentAudio
-  ) {
-
-    return;
-
-  }
-
-
-  try {
-
-    vobixCurrentVoiceAudio.pause();
-
-  } catch (error) {}
-
-
-  vobixCurrentVoiceAudio =
-    null;
-
-}
-
-
-/* =========================================================
-   BUSCAR URL DE AUDIO
-   ========================================================= */
-
-function getVobixAudioSource(audio) {
-
-  if (!audio) {
-
-    return '';
-
-  }
-
-
-  return (
-    audio.currentSrc ||
-    audio.src ||
-    audio.querySelector(
-      'source'
-    )?.src ||
-    ''
-  );
-
-}
-
-
-/* =========================================================
-   CREAR CONTROL VISUAL DE NOTA DE VOZ
-   ========================================================= */
-
-function createVobixVoiceControl(audio) {
-
-  if (
-    !audio ||
-    audio.dataset
-      .vobixVoiceReady ===
-      '1'
-  ) {
-
-    return;
-
-  }
-
-
-  audio.dataset
-    .vobixVoiceReady =
-    '1';
-
-
-  audio.classList.add(
-    'voiceNativeAudio'
-  );
-
-
-  const wrapper =
-    document.createElement(
-      'div'
-    );
-
-
-  wrapper.className =
-    'voiceMessage';
-
-
-  wrapper.dataset
-    .vobixVoiceControl =
-    '1';
-
-
-  /* =======================================================
-     BOTÓN PLAY
-     ======================================================= */
-
-  const playButton =
-    document.createElement(
-      'button'
-    );
-
-
-  playButton.type =
-    'button';
-
-
-  playButton.className =
-    'voicePlayButton';
-
-
-  playButton.textContent =
-    '▶';
-
-
-  playButton.setAttribute(
-    'aria-label',
-    'Reproducir nota de voz'
-  );
-
-
-  /* =======================================================
-     ÁREA DE PROGRESO
-     ======================================================= */
-
-  const progressArea =
-    document.createElement(
-      'div'
-    );
-
-
-  progressArea.className =
-    'voiceProgressArea';
-
-
-  const progressTrack =
-    document.createElement(
-      'div'
-    );
-
-
-  progressTrack.className =
-    'voiceProgressTrack';
-
-
-  const progressFill =
-    document.createElement(
-      'div'
-    );
-
-
-  progressFill.className =
-    'voiceProgressFill';
-
-
-  const progressDot =
-    document.createElement(
-      'div'
-    );
-
-
-  progressDot.className =
-    'voiceProgressDot';
-
-
-  progressTrack.appendChild(
-    progressFill
-  );
-
-
-  progressTrack.appendChild(
-    progressDot
-  );
-
-
-  progressArea.appendChild(
-    progressTrack
-  );
-
-
-  /* =======================================================
-     DURACIÓN
-     ======================================================= */
-
-  const time =
-    document.createElement(
-      'span'
-    );
-
-
-  time.className =
-    'voiceTime';
-
-
-  time.textContent =
-    '0:00';
-
-
-  /* =======================================================
-     MONTAR CONTROL
-     ======================================================= */
-
-  wrapper.appendChild(
-    playButton
-  );
-
-
-  wrapper.appendChild(
-    progressArea
-  );
-
-
-  wrapper.appendChild(
-    time
-  );
-
-
-  audio.insertAdjacentElement(
-    'afterend',
-    wrapper
-  );
-
-
-  /* =======================================================
-     ACTUALIZAR INTERFAZ
-     ======================================================= */
-
-  function updateVoiceUi() {
-
-    const duration =
-      Number(
-        audio.duration
-      );
-
-
-    const current =
-      Number(
-        audio.currentTime
-      ) || 0;
-
-
-    if (
-      Number.isFinite(duration) &&
-      duration > 0
-    ) {
-
-      const percent =
-        Math.max(
-          0,
-          Math.min(
-            100,
-            (
-              current /
-              duration
-            ) * 100
-          )
-        );
-
-
-      progressFill.style.width =
-        `${percent}%`;
-
-
-      progressDot.style.left =
-        `${percent}%`;
-
-
-      if (
-        current > 0 &&
-        current < duration
-      ) {
-
-        time.textContent =
-          formatVobixVoiceTime(
-            duration -
-            current
-          );
-
-      } else {
-
-        time.textContent =
-          formatVobixVoiceTime(
-            duration
-          );
-
-      }
-
-    }
-
-  }
-
-
-  /* =======================================================
-     METADATA
-     ======================================================= */
-
-  audio.addEventListener(
-    'loadedmetadata',
-    updateVoiceUi
-  );
-
-
-  audio.addEventListener(
-    'durationchange',
-    updateVoiceUi
-  );
-
-
-  audio.addEventListener(
-    'timeupdate',
-    updateVoiceUi
-  );
-
-
-  /* =======================================================
-     PLAY
-     ======================================================= */
-
-  audio.addEventListener(
-    'play',
-    () => {
-
-      stopOtherVobixVoiceAudio(
-        audio
-      );
-
-
-      vobixCurrentVoiceAudio =
-        audio;
-
-
-      playButton.textContent =
-        '❚❚';
-
-
-      playButton.setAttribute(
-        'aria-label',
-        'Pausar nota de voz'
-      );
-
-    }
-  );
-
-
-  /* =======================================================
-     PAUSA
-     ======================================================= */
-
-  audio.addEventListener(
-    'pause',
-    () => {
-
-      playButton.textContent =
-        '▶';
-
-
-      playButton.setAttribute(
-        'aria-label',
-        'Reproducir nota de voz'
-      );
-
-    }
-  );
-
-
-  /* =======================================================
-     TERMINÓ
-     ======================================================= */
-
-  audio.addEventListener(
-    'ended',
-    () => {
-
-      playButton.textContent =
-        '▶';
-
-
-      try {
-
-        audio.currentTime =
-          0;
-
-      } catch (error) {}
-
-
-      vobixCurrentVoiceAudio =
-        null;
-
-
-      updateVoiceUi();
-
-    }
-  );
-
-
-  /* =======================================================
-     CLICK PLAY / PAUSA
-     ======================================================= */
-
-  playButton.addEventListener(
-    'click',
-    async event => {
-
-      event.preventDefault();
-
-      event.stopPropagation();
-
-
-      await unlockVobixAudio();
-
-
-      if (audio.paused) {
-
-        stopOtherVobixVoiceAudio(
-          audio
-        );
-
-
-        try {
-
-          await audio.play();
-
-        } catch (error) {
-
-          console.warn(
-            '[VOBIXCHAT VOICE]',
-            error
-          );
-
-        }
-
-      } else {
-
-        audio.pause();
-
-      }
-
-    }
-  );
-
-
-  /* =======================================================
-     MOVER POSICIÓN DEL AUDIO
-     ======================================================= */
-
-  function seekVoice(event) {
-
-    const duration =
-      Number(
-        audio.duration
-      );
-
-
-    if (
-      !Number.isFinite(duration) ||
-      duration <= 0
-    ) {
-
-      return;
-
-    }
-
-
-    const rect =
-      progressArea
-        .getBoundingClientRect();
-
-
-    if (!rect.width) {
-
-      return;
-
-    }
-
-
-    const clientX =
-      event.clientX;
-
-
-    const ratio =
-      Math.max(
-        0,
-        Math.min(
-          1,
-          (
-            clientX -
-            rect.left
-          ) /
-          rect.width
-        )
-      );
-
-
-    try {
-
-      audio.currentTime =
-        duration *
-        ratio;
-
-    } catch (error) {}
-
-
-    updateVoiceUi();
-
-  }
-
-
-  progressArea.addEventListener(
-    'pointerdown',
-    event => {
-
-      event.preventDefault();
-
-      event.stopPropagation();
-
-
-      try {
-
-        progressArea
-          .setPointerCapture(
-            event.pointerId
-          );
-
-      } catch (error) {}
-
-
-      seekVoice(event);
-
-    }
-  );
-
-
-  progressArea.addEventListener(
-    'pointermove',
-    event => {
-
-      if (
-        !progressArea
-          .hasPointerCapture?.(
-            event.pointerId
-          )
-      ) {
-
-        return;
-
-      }
-
-
-      seekVoice(event);
-
-    }
-  );
-
-
-  if (
-    audio.readyState >=
-    1
-  ) {
-
-    updateVoiceUi();
-
-  }
-
-}
-
-
-/* =========================================================
-   DETECTAR NOTAS DE VOZ
-   ========================================================= */
-
-function isVobixVoiceAudio(audio) {
-
-  if (!audio) {
-
-    return false;
-
-  }
-
-
-  if (
-    audio.dataset
-      .ringtone ===
-      '1' ||
-    audio.dataset
-      .notificationSound ===
-      '1'
-  ) {
-
-    return false;
-
-  }
-
-
-  if (
-    audio.closest(
-      '.message, .messageRow, .bubble, [data-message]'
-    )
-  ) {
-
-    return true;
-
-  }
-
-
-  const src =
-    getVobixAudioSource(
-      audio
-    ).toLowerCase();
-
-
-  return (
-    src.includes(
-      'voice'
-    ) ||
-    src.includes(
-      'audio'
-    ) ||
-    src.includes(
-      'record'
-    )
-  );
-
-}
-
-
-/* =========================================================
-   CONECTAR NOTAS EXISTENTES
-   ========================================================= */
-
-function connectExistingVobixVoiceNotes(
-  root = document
-) {
-
-  const audios =
-    root.querySelectorAll
-      ? root.querySelectorAll(
-          'audio'
-        )
-      : [];
-
-
-  audios.forEach(
-    audio => {
-
-      if (
-        isVobixVoiceAudio(
-          audio
-        )
-      ) {
-
-        createVobixVoiceControl(
-          audio
-        );
-
-      }
-
-    }
-  );
-
-}
-
-
-/* =========================================================
-   OBSERVAR NUEVAS NOTAS
-   ========================================================= */
-
-const vobixVoiceObserver =
-  new MutationObserver(
-    mutations => {
-
-      mutations.forEach(
-        mutation => {
-
-          mutation.addedNodes
-            .forEach(
-              node => {
-
-                if (
-                  !(node instanceof Element)
-                ) {
-
-                  return;
-
-                }
-
-
-                if (
-                  node.matches?.(
-                    'audio'
-                  ) &&
-                  isVobixVoiceAudio(
-                    node
-                  )
-                ) {
-
-                  createVobixVoiceControl(
-                    node
-                  );
-
-                }
-
-
-                connectExistingVobixVoiceNotes(
-                  node
-                );
-
-              }
-            );
-
-        }
-      );
-
-    }
-  );
-
-
-if (document.body) {
-
-  vobixVoiceObserver.observe(
-    document.body,
-    {
-      childList: true,
-      subtree: true
-    }
-  );
-
-}
-
-
-/* =========================================================
-   VIDEOLLAMADA
-   ========================================================= */
-
-let vobixVideoDragState =
-  null;
-
-
-/* =========================================================
-   ÁREA DE VIDEO
-   ========================================================= */
-
-function getVobixCallVideoArea() {
-
-  return (
-    document.querySelector(
-      '.callVideoArea'
-    ) ||
-    vobixEl(
-      'callVideoArea'
-    )
-  );
-
-}
-
-
-/* =========================================================
-   VIDEO LOCAL
-   ========================================================= */
-
-function getVobixLocalVideo() {
-
-  return (
-    document.querySelector(
-      '.localVideo'
-    ) ||
-    vobixEl(
-      'localVideo'
-    )
-  );
-
-}
-
-
-/* =========================================================
-   VIDEO REMOTO
-   ========================================================= */
-
-function getVobixRemoteVideo() {
-
-  return (
-    document.querySelector(
-      '.remoteVideo'
-    ) ||
-    vobixEl(
-      'remoteVideo'
-    )
-  );
-
-}
-
-
-/* =========================================================
-   SABER CUÁL ES EL VIDEO PEQUEÑO
-   ========================================================= */
-
-function getVobixSmallVideo() {
-
-  const area =
-    getVobixCallVideoArea();
-
-
-  if (!area) {
-
-    return null;
-
-  }
-
-
-  if (
-    area.classList.contains(
-      'videoSwapped'
-    )
-  ) {
-
-    return getVobixRemoteVideo();
-
-  }
-
-
-  return getVobixLocalVideo();
-
-}
-
-
-/* =========================================================
-   LIMPIAR POSICIÓN
-   ========================================================= */
-
-function resetVobixVideoPosition(video) {
-
-  if (!video) {
-
-    return;
-
-  }
-
-
-  video.style.left = '';
-
-  video.style.top = '';
-
-  video.style.right = '';
-
-  video.style.bottom = '';
-
-}
-
-
-/* =========================================================
-   LIMITAR CUADRO A PANTALLA
-   ========================================================= */
-
-function clampVobixSmallVideoPosition(
-  video,
-  left,
-  top
-) {
-
-  const area =
-    getVobixCallVideoArea();
-
-
-  if (
-    !video ||
-    !area
-  ) {
-
-    return {
-      left,
-      top
-    };
-
-  }
-
-
-  const areaRect =
-    area.getBoundingClientRect();
-
-
-  const videoRect =
-    video.getBoundingClientRect();
-
-
-  const maxLeft =
-    Math.max(
-      0,
-      areaRect.width -
-      videoRect.width
-    );
-
-
-  const maxTop =
-    Math.max(
-      0,
-      areaRect.height -
-      videoRect.height
-    );
-
-
-  return {
-
-    left:
-      Math.max(
-        0,
-        Math.min(
-          maxLeft,
-          left
-        )
-      ),
-
-    top:
-      Math.max(
-        0,
-        Math.min(
-          maxTop,
-          top
-        )
-      )
-
-  };
-
-}
-
-
-/* =========================================================
-   COMENZAR ARRASTRE
-   ========================================================= */
-
-function beginVobixVideoDrag(
-  event,
-  video
-) {
-
-  if (!video) {
-
-    return;
-
-  }
-
-
-  if (
-    typeof event.button ===
-      'number' &&
-    event.button > 0
-  ) {
-
-    return;
-
-  }
-
-
-  const area =
-    getVobixCallVideoArea();
-
-
-  if (!area) {
-
-    return;
-
-  }
-
-
-  event.preventDefault();
-
-  event.stopPropagation();
-
-
-  const areaRect =
-    area.getBoundingClientRect();
-
-
-  const videoRect =
-    video.getBoundingClientRect();
-
-
-  const currentLeft =
-    videoRect.left -
-    areaRect.left;
-
-
-  const currentTop =
-    videoRect.top -
-    areaRect.top;
-
-
-  video.style.right =
-    'auto';
-
-
-  video.style.bottom =
-    'auto';
-
-
-  video.style.left =
-    `${currentLeft}px`;
-
-
-  video.style.top =
-    `${currentTop}px`;
-
-
-  video.classList.add(
-    'dragging'
-  );
-
-
-  try {
-
-    video.setPointerCapture(
-      event.pointerId
-    );
-
-  } catch (error) {}
-
-
-  vobixVideoDragState = {
-
-    pointerId:
-      event.pointerId,
-
-    video:
-
-      video,
-
-    startX:
-      event.clientX,
-
-    startY:
-      event.clientY,
-
-    startLeft:
-      currentLeft,
-
-    startTop:
-      currentTop,
-
-    moved:
-      false
-
-  };
-
-}
-
-
-/* =========================================================
-   MOVER CUADRO
-   ========================================================= */
-
-function moveVobixVideoDrag(event) {
-
-  const state =
-    vobixVideoDragState;
-
-
-  if (
-    !state ||
-    state.pointerId !==
-      event.pointerId
-  ) {
-
-    return;
-
-  }
-
-
-  event.preventDefault();
-
-
-  const deltaX =
-    event.clientX -
-    state.startX;
-
-
-  const deltaY =
-    event.clientY -
-    state.startY;
-
-
-  if (
-    Math.abs(deltaX) > 4 ||
-    Math.abs(deltaY) > 4
-  ) {
-
-    state.moved =
-      true;
-
-  }
-
-
-  const position =
-    clampVobixSmallVideoPosition(
-      state.video,
-      state.startLeft +
-        deltaX,
-      state.startTop +
-        deltaY
-    );
-
-
-  state.video.style.left =
-    `${position.left}px`;
-
-
-  state.video.style.top =
-    `${position.top}px`;
-
-}
-
-
-/* =========================================================
-   TERMINAR ARRASTRE
-   ========================================================= */
-
-function endVobixVideoDrag(event) {
-
-  const state =
-    vobixVideoDragState;
-
-
-  if (
-    !state ||
-    state.pointerId !==
-      event.pointerId
-  ) {
-
-    return;
-
-  }
-
-
-  state.video.classList.remove(
-    'dragging'
-  );
-
-
-  try {
-
-    state.video
-      .releasePointerCapture(
-        event.pointerId
-      );
-
-  } catch (error) {}
-
-
-  if (state.moved) {
-
-    const draggedVideo =
-      state.video;
-
-
-    draggedVideo.dataset
-      .vobixJustDragged =
-      '1';
-
-
-    setTimeout(
-      () => {
-
-        if (draggedVideo) {
-
-          delete draggedVideo
-            .dataset
-            .vobixJustDragged;
-
-        }
-
-      },
-      250
-    );
-
-  }
-
-
-  vobixVideoDragState =
-    null;
-
-}
-
-
-/* =========================================================
-   INTERCAMBIAR VIDEO GRANDE / PEQUEÑO
-   ========================================================= */
-
-function swapVobixCallVideos() {
-
-  const area =
-    getVobixCallVideoArea();
-
-
-  if (!area) {
-
-    return;
-
-  }
-
-
-  const oldSmall =
-    getVobixSmallVideo();
-
-
-  if (
-    oldSmall?.dataset
-      .vobixJustDragged ===
-      '1'
-  ) {
-
-    return;
-
-  }
-
-
-  area.classList.toggle(
-    'videoSwapped'
-  );
-
-
-  const local =
-    getVobixLocalVideo();
-
-
-  const remote =
-    getVobixRemoteVideo();
-
-
-  resetVobixVideoPosition(
-    local
-  );
-
-
-  resetVobixVideoPosition(
-    remote
-  );
-
-
-  setTimeout(
-    connectVobixVideoDragging,
-    50
-  );
-
-}
-
-
-/* =========================================================
-   CONECTAR ARRASTRE
-   ========================================================= */
-
-function connectVobixVideoDragging() {
-
-  const local =
-    getVobixLocalVideo();
-
-
-  const remote =
-    getVobixRemoteVideo();
-
-
-  [
-    local,
-    remote
-  ]
-    .filter(Boolean)
-    .forEach(
-      video => {
-
-        if (
-          video.dataset
-            .vobixDragConnected ===
-          '1'
-        ) {
-
-          return;
-
-        }
-
-
-        video.dataset
-          .vobixDragConnected =
-          '1';
-
-
-        video.addEventListener(
-          'pointerdown',
-          event => {
-
-            if (
-              video !==
-              getVobixSmallVideo()
-            ) {
-
-              return;
-
-            }
-
-
-            beginVobixVideoDrag(
-              event,
-              video
-            );
-
-          }
-        );
-
-
-        video.addEventListener(
-          'pointermove',
-          moveVobixVideoDrag
-        );
-
-
-        video.addEventListener(
-          'pointerup',
-          endVobixVideoDrag
-        );
-
-
-        video.addEventListener(
-          'pointercancel',
-          endVobixVideoDrag
-        );
-
-
-        video.addEventListener(
-          'click',
-          event => {
-
-            if (
-              video !==
-              getVobixSmallVideo()
-            ) {
-
-              return;
-
-            }
-
-
-            if (
-              video.dataset
-                .vobixJustDragged ===
-                '1'
-            ) {
-
-              event.preventDefault();
-
-              event.stopPropagation();
-
-              return;
-
-            }
-
-
-            swapVobixCallVideos();
-
-          }
-        );
-
-      }
-    );
-
-}
-
-
-/* =========================================================
-   MANTENER VIDEO DENTRO DE PANTALLA
-   ========================================================= */
-
-function keepVobixSmallVideoInside() {
-
-  const video =
-    getVobixSmallVideo();
-
-
-  const area =
-    getVobixCallVideoArea();
-
-
-  if (
-    !video ||
-    !area
-  ) {
-
-    return;
-
-  }
-
-
-  const left =
-    parseFloat(
-      video.style.left
-    );
-
-
-  const top =
-    parseFloat(
-      video.style.top
-    );
-
-
-  if (
-    !Number.isFinite(left) ||
-    !Number.isFinite(top)
-  ) {
-
-    return;
-
-  }
-
-
-  const position =
-    clampVobixSmallVideoPosition(
-      video,
-      left,
-      top
-    );
-
-
-  video.style.left =
-    `${position.left}px`;
-
-
-  video.style.top =
-    `${position.top}px`;
-
-}
-
-
-/* =========================================================
-   RESIZE / ROTACIÓN
-   ========================================================= */
-
-window.addEventListener(
-  'resize',
-  keepVobixSmallVideoInside
-);
-
-
-window.addEventListener(
-  'orientationchange',
-  () => {
-
-    setTimeout(
-      keepVobixSmallVideoInside,
-      250
-    );
-
-  }
-);
-
-
-/* =========================================================
-   OBSERVAR CREACIÓN DE VIDEOS
-   ========================================================= */
-
-const vobixVideoObserver =
-  new MutationObserver(
-    () => {
-
-      connectVobixVideoDragging();
-
-    }
-  );
-
-
-if (document.body) {
-
-  vobixVideoObserver.observe(
-    document.body,
-    {
-      childList: true,
-      subtree: true
-    }
-  );
-
-}
-
-
-/* =========================================================
-   CONECTAR AHORA
-   ========================================================= */
-
-connectExistingVobixVoiceNotes();
-
-connectVobixVideoDragging();
-
-
-/* =========================================================
-   EXPONER FUNCIONES
-   ========================================================= */
-
-window.createVobixVoiceControl =
-  createVobixVoiceControl;
-
-
-window.connectExistingVobixVoiceNotes =
-  connectExistingVobixVoiceNotes;
-
-
-window.connectVobixVideoDragging =
-  connectVobixVideoDragging;
-
-
-window.swapVobixCallVideos =
-  swapVobixCallVideos;
-
-
-/* =========================================================
-   FIN BLOQUE 4 DE 6
-
-   NO CIERRES <\/script>.
-   BLOQUE 5 CONTINÚA DIRECTAMENTE AQUÍ.
-   ========================================================= */
-/* =========================================================
-   VOBIXCHAT
-   CHAT.HTML CORREGIDO
-   BLOQUE 5 DE 6
-
-   - MENSAJES
-   - SONIDOS
-   - LLAMADAS
-   - VIDEOLLAMADAS
-   - SOCKET.IO
-   - FOTOS
-   - NOTIFICACIÓN LOCAL
-   ========================================================= */
-
-
-/* =========================================================
-   ESTADO
-   ========================================================= */
-
-let vobixLastMessageSoundAt = 0;
-let vobixLastIncomingCallAt = 0;
-let vobixLastOutgoingCallAt = 0;
-
-
-/* =========================================================
-   EVITAR SONIDOS DUPLICADOS
-   ========================================================= */
-
-function canPlayVobixMessageSound() {
-
-  const now = Date.now();
-
-  if (
-    now - vobixLastMessageSoundAt <
-    500
-  ) {
-
-    return false;
-
-  }
-
-  vobixLastMessageSoundAt = now;
-
-  return true;
-}
-
-
-/* =========================================================
-   MENSAJE NUEVO
-   ========================================================= */
-
-function handleVobixIncomingMessage(
-  message
-) {
-
-  try {
-
-    const myUserId =
-      window.currentUserId ||
-      window.myUserId ||
-      window.userId ||
-      null;
-
-
-    const senderId =
-      message?.senderId ||
-      message?.sender_id ||
-      message?.fromUserId ||
-      message?.from_user_id ||
-      message?.userId ||
-      message?.user_id ||
-      message?.from ||
-      null;
-
-
-    /*
-      Si el mensaje lo mandé yo,
-      no reproducimos sonido.
-    */
-
-    if (
-      myUserId &&
-      senderId &&
-      String(myUserId) ===
-        String(senderId)
-    ) {
-
-      return;
-
-    }
-
-  } catch (error) {}
-
-
-  if (
-    canPlayVobixMessageSound()
-  ) {
-
-    playVobixMessageSound();
-
-  }
-
-}
-
-
-/* =========================================================
-   LLAMADA ENTRANTE
-   ========================================================= */
-
-function handleVobixIncomingCall(
-  data = {}
-) {
-
-  const now = Date.now();
-
-
-  if (
-    now -
-    vobixLastIncomingCallAt <
-    1000
-  ) {
-
-    return;
-
-  }
-
-
-  vobixLastIncomingCallAt =
-    now;
-
-
-  stopOutgoingRingtone();
-
-  startIncomingRingtone();
-
-
-  if (
-    vobixPreferences.vibration &&
-    navigator.vibrate
-  ) {
-
-    navigator.vibrate(
-      [
-        500,
-        200,
-        500,
-        200,
-        800
-      ]
-    );
-
-  }
-
-
-  console.log(
-    '[VOBIXCHAT CALL] Entrante',
-    data
-  );
-
-}
-
-
-/* =========================================================
-   LLAMADA SALIENTE
-   ========================================================= */
-
-function handleVobixOutgoingCall(
-  data = {}
-) {
-
-  const now = Date.now();
-
-
-  if (
-    now -
-    vobixLastOutgoingCallAt <
-    1000
-  ) {
-
-    return;
-
-  }
-
-
-  vobixLastOutgoingCallAt =
-    now;
-
-
-  stopIncomingRingtone();
-
-  startOutgoingRingtone();
-
-
-  console.log(
-    '[VOBIXCHAT CALL] Saliente',
-    data
-  );
-
-}
-
-
-/* =========================================================
-   LLAMADA CONTESTADA
-   ========================================================= */
-
-function handleVobixCallAnswered(
-  data = {}
-) {
-
-  stopAllCallSounds();
-
-
-  console.log(
-    '[VOBIXCHAT CALL] Contestada',
-    data
-  );
-
-}
-
-
-/* =========================================================
-   LLAMADA RECHAZADA
-   ========================================================= */
-
-function handleVobixCallRejected(
-  data = {}
-) {
-
-  stopAllCallSounds();
-
-
-  console.log(
-    '[VOBIXCHAT CALL] Rechazada',
-    data
-  );
-
-}
-
-
-/* =========================================================
-   LLAMADA FINALIZADA
-   ========================================================= */
-
-function handleVobixCallEnded(
-  data = {}
-) {
-
-  stopAllCallSounds();
-
-
-  console.log(
-    '[VOBIXCHAT CALL] Finalizada',
-    data
-  );
-
-}
-
-
-/* =========================================================
-   LLAMADA CANCELADA
-   ========================================================= */
-
-function handleVobixCallCancelled(
-  data = {}
-) {
-
-  stopAllCallSounds();
-
-
-  console.log(
-    '[VOBIXCHAT CALL] Cancelada',
-    data
-  );
-
-}
-
-
-/* =========================================================
-   LLAMADA FALLIDA
-   ========================================================= */
-
-function handleVobixCallFailed(
-  data = {}
-) {
-
-  stopAllCallSounds();
-
-
-  console.log(
-    '[VOBIXCHAT CALL] Fallida',
-    data
-  );
-
-}
-
-
-/* =========================================================
-   OBTENER SOCKET.IO EXISTENTE
-   ========================================================= */
-
-function getVobixSocket() {
-
-  return (
-    window.socket ||
-    window.chatSocket ||
-    window.vobixSocket ||
-    null
-  );
-
-}
-
-
-/* =========================================================
-   CONECTAR EVENTOS SOCKET.IO
-   ========================================================= */
-
-function connectVobixSocketEnhancements() {
-
-  const socket =
-    getVobixSocket();
-
-
-  if (
-    !socket ||
-    typeof socket.on !==
-      'function'
-  ) {
-
-    return false;
-
-  }
-
-
-  if (
-    socket.__vobixEnhancementsConnected
-  ) {
-
-    return true;
-
-  }
-
-
-  socket.__vobixEnhancementsConnected =
-    true;
-
-
-  console.log(
-    '[VOBIXCHAT] Socket.IO detectado'
-  );
-
-
-  /* =======================================================
-     MENSAJES
-     ======================================================= */
-
-  const messageEvents = [
-
-    'message',
-    'new_message',
-    'newMessage',
-    'chat_message',
-    'chatMessage',
-    'message_received',
-    'messageReceived'
-
-  ];
-
-
-  messageEvents.forEach(
-    eventName => {
-
-      socket.on(
-        eventName,
-        data => {
-
-          handleVobixIncomingMessage(
-            data
-          );
-
-
-          setTimeout(
-            () => {
-
-              connectExistingVobixVoiceNotes();
-
-            },
-            100
-          );
-
-        }
-      );
-
-    }
-  );
-
-
-  /* =======================================================
-     LLAMADAS ENTRANTES
-     ======================================================= */
-
-  const incomingCallEvents = [
-
-    'incoming_call',
-    'incomingCall',
-    'call_incoming',
-    'callIncoming',
-    'incoming-call',
-    'incoming_video_call',
-    'incomingVideoCall',
-    'video_call_incoming',
-    'videoCallIncoming'
-
-  ];
-
-
-  incomingCallEvents.forEach(
-    eventName => {
-
-      socket.on(
-        eventName,
-        data => {
-
-          handleVobixIncomingCall(
-            data
-          );
-
-        }
-      );
-
-    }
-  );
-
-
-  /* =======================================================
-     LLAMADA CONTESTADA
-     ======================================================= */
-
-  const answeredEvents = [
-
-    'call_answered',
-    'callAnswered',
-    'call_accepted',
-    'callAccepted',
-    'answer_call',
-    'video_call_answered',
-    'videoCallAnswered'
-
-  ];
-
-
-  answeredEvents.forEach(
-    eventName => {
-
-      socket.on(
-        eventName,
-        data => {
-
-          handleVobixCallAnswered(
-            data
-          );
-
-        }
-      );
-
-    }
-  );
-
-
-  /* =======================================================
-     LLAMADA RECHAZADA
-     ======================================================= */
-
-  const rejectedEvents = [
-
-    'call_rejected',
-    'callRejected',
-    'call_declined',
-    'callDeclined',
-    'reject_call',
-    'video_call_rejected',
-    'videoCallRejected'
-
-  ];
-
-
-  rejectedEvents.forEach(
-    eventName => {
-
-      socket.on(
-        eventName,
-        data => {
-
-          handleVobixCallRejected(
-            data
-          );
-
-        }
-      );
-
-    }
-  );
-
-
-  /* =======================================================
-     LLAMADA FINALIZADA
-     ======================================================= */
-
-  const endedEvents = [
-
-    'call_ended',
-    'callEnded',
-    'end_call',
-    'call_finished',
-    'callFinished',
-    'hangup',
-    'video_call_ended',
-    'videoCallEnded'
-
-  ];
-
-
-  endedEvents.forEach(
-    eventName => {
-
-      socket.on(
-        eventName,
-        data => {
-
-          handleVobixCallEnded(
-            data
-          );
-
-        }
-      );
-
-    }
-  );
-
-
-  /* =======================================================
-     LLAMADA CANCELADA
-     ======================================================= */
-
-  const cancelledEvents = [
-
-    'call_cancelled',
-    'callCanceled',
-    'callCancelled',
-    'cancel_call',
-    'outgoing_call_cancelled',
-    'video_call_cancelled'
-
-  ];
-
-
-  cancelledEvents.forEach(
-    eventName => {
-
-      socket.on(
-        eventName,
-        data => {
-
-          handleVobixCallCancelled(
-            data
-          );
-
-        }
-      );
-
-    }
-  );
-
-
-  /* =======================================================
-     LLAMADA FALLIDA
-     ======================================================= */
-
-  const failedEvents = [
-
-    'call_failed',
-    'callFailed',
-    'call_error',
-    'callError',
-    'call_timeout',
-    'callTimeout',
-    'user_busy',
-    'userBusy'
-
-  ];
-
-
-  failedEvents.forEach(
-    eventName => {
-
-      socket.on(
-        eventName,
-        data => {
-
-          handleVobixCallFailed(
-            data
-          );
-
-        }
-      );
-
-    }
-  );
-
-
-  return true;
-}
-
-
-/* =========================================================
-   ESPERAR SOCKET SI TODAVÍA NO EXISTE
-   ========================================================= */
-
-let vobixSocketConnectAttempts = 0;
-
-
-const vobixSocketConnectTimer =
-  setInterval(
-    () => {
-
-      vobixSocketConnectAttempts++;
-
-
-      if (
-        connectVobixSocketEnhancements() ||
-        vobixSocketConnectAttempts > 120
-      ) {
-
-        clearInterval(
-          vobixSocketConnectTimer
-        );
-
-      }
-
-    },
-    500
-  );
-
-
-/* =========================================================
-   DETECTAR BOTONES DE LLAMADA
-   ========================================================= */
-
-function isVobixCallButton(
-  element
-) {
-
-  if (!element) {
-
-    return false;
-
-  }
-
-
-  const id =
-    String(
-      element.id ||
-      ''
-    ).toLowerCase();
-
-
-  const className =
-    String(
-      element.className ||
-      ''
-    ).toLowerCase();
-
-
-  const aria =
-    String(
-      element.getAttribute?.(
-        'aria-label'
-      ) ||
-      ''
-    ).toLowerCase();
-
-
-  const title =
-    String(
-      element.getAttribute?.(
-        'title'
-      ) ||
-      ''
-    ).toLowerCase();
-
-
-  const text =
-    String(
-      element.textContent ||
-      ''
-    ).toLowerCase();
-
-
-  const value =
-    [
-      id,
-      className,
-      aria,
-      title,
-      text
-    ].join(
-      ' '
-    );
-
-
-  return (
-    value.includes(
-      'call'
-    ) ||
-    value.includes(
-      'llamar'
-    ) ||
-    value.includes(
-      'llamada'
-    ) ||
-    value.includes(
-      'video'
-    ) ||
-    value.includes(
-      'phone'
-    ) ||
-    value.includes(
-      'telefono'
-    ) ||
-    value.includes(
-      'teléfono'
-    )
-  );
-
-}
-
-
-/* =========================================================
-   DETECTAR BOTONES DE COLGAR / RECHAZAR
-   ========================================================= */
-
-function isVobixCallStopButton(
-  element
-) {
-
-  if (!element) {
-
-    return false;
-
-  }
-
-
-  const value =
-    String(
-      [
-        element.id,
-        element.className,
-        element.getAttribute?.(
-          'aria-label'
-        ),
-        element.getAttribute?.(
-          'title'
-        ),
-        element.textContent
-      ].join(
-        ' '
-      )
-    ).toLowerCase();
-
-
-  return (
-    value.includes(
-      'end'
-    ) ||
-    value.includes(
-      'hang'
-    ) ||
-    value.includes(
-      'reject'
-    ) ||
-    value.includes(
-      'decline'
-    ) ||
-    value.includes(
-      'cancel'
-    ) ||
-    value.includes(
-      'colgar'
-    ) ||
-    value.includes(
-      'rechazar'
-    ) ||
-    value.includes(
-      'cancelar'
-    )
-  );
-
-}
-
-
-/* =========================================================
-   CLICK GLOBAL PARA LLAMADAS
-   ========================================================= */
-
-document.addEventListener(
-  'click',
-  event => {
-
-    const button =
-      event.target.closest?.(
-        'button, [role="button"]'
-      );
-
-
-    if (!button) {
-
-      return;
-
-    }
-
-
-    if (
-      isVobixCallStopButton(
-        button
-      )
-    ) {
-
-      stopAllCallSounds();
-
-      return;
-
-    }
-
-
-    if (
-      isVobixCallButton(
-        button
-      )
-    ) {
-
-      /*
-        No activar tono saliente
-        desde botones de prueba.
-      */
-
-      if (
-        button.id ===
-          'testRingtoneButton' ||
-        button.id ===
-          'notificationPanelTestIncoming' ||
-        button.id ===
-          'notificationPanelTestOutgoing'
-      ) {
-
-        return;
-
-      }
-
-
-      handleVobixOutgoingCall(
-        {
-          source:
-            'button'
-        }
-      );
-
-    }
-
-  },
-  true
-);
-
-
-/* =========================================================
-   DETECTAR UI DE LLAMADA ENTRANTE
-   ========================================================= */
-
-function detectVobixCallUi() {
-
-  const incomingSelectors = [
-
-    '.incomingCall',
-    '.incoming-call',
-    '#incomingCall',
-    '#incomingCallScreen',
-    '[data-incoming-call="true"]'
-
-  ];
-
-
-  const incoming =
-    incomingSelectors
-      .map(
-        selector =>
-          document.querySelector(
-            selector
-          )
-      )
-      .find(
-        element =>
-          element &&
-          element.offsetParent !==
-            null
-      );
-
-
-  if (incoming) {
-
-    if (
-      incoming.dataset
-        .vobixRinging !==
-        '1'
-    ) {
-
-      incoming.dataset
-        .vobixRinging =
-        '1';
-
-
-      handleVobixIncomingCall(
-        {
-          source:
-            'ui'
-        }
-      );
-
-    }
-
-  }
-
-}
-
-
-/* =========================================================
-   OBSERVADOR DE LLAMADAS
-   ========================================================= */
-
-const vobixCallUiObserver =
-  new MutationObserver(
-    () => {
-
-      detectVobixCallUi();
-
-      connectVobixVideoDragging();
-
-    }
-  );
-
-
-if (document.body) {
-
-  vobixCallUiObserver.observe(
-    document.body,
-    {
-
-      childList:
-        true,
-
-      subtree:
-        true,
-
-      attributes:
-        true,
-
-      attributeFilter: [
-        'class',
-        'style',
-        'hidden'
-      ]
-
-    }
-  );
-
-}
-
-
-/* =========================================================
-   DETENER TIMBRES AL SALIR
-   ========================================================= */
-
-window.addEventListener(
-  'pagehide',
-  () => {
-
-    stopAllCallSounds();
-
-  }
-);
-
-
-/* =========================================================
-   BOTONES PARA ENVIAR FOTOS
-   ========================================================= */
-
-function connectVobixPhotoButtons() {
-
-  const photoButtons = [
-
-    vobixEl(
-      'sendPhotoButton'
-    ),
-
-    vobixEl(
-      'photoButton'
-    ),
-
-    vobixEl(
-      'imageButton'
-    ),
-
-    document.querySelector(
-      '[data-send-photo]'
-    )
-
-  ]
-    .filter(Boolean);
-
-
-  photoButtons.forEach(
-    button => {
-
-      if (
-        button.dataset
-          .vobixPhotoConnected ===
-        '1'
-      ) {
-
-        return;
-
-      }
-
-
-      button.dataset
-        .vobixPhotoConnected =
-        '1';
-
-
-      /*
-        Dejamos el click normal intacto
-        para no romper el sistema original.
-
-        Mantener pulsado / menú contextual
-        abre nuestro selector auxiliar.
-      */
-
-      button.addEventListener(
-        'contextmenu',
-        event => {
-
-          event.preventDefault();
-
-          openVobixChatPhotoPicker();
-
-        }
-      );
-
-    }
-  );
-
-}
-
-
-/* =========================================================
-   FOTO DE PERFIL EN AVATAR
-   ========================================================= */
-
-function applyVobixProfilePhotoToAvatar(
-  element,
-  photo
-) {
-
-  if (!element) {
-
-    return;
-
-  }
-
-
-  if (photo) {
-
-    element.style
-      .backgroundImage =
-      `url("${photo}")`;
-
-
-    element.style
-      .backgroundSize =
-      'cover';
-
-
-    element.style
-      .backgroundPosition =
-      'center';
-
-
-    element.classList.add(
-      'hasPhoto'
-    );
-
-  } else {
-
-    element.style
-      .backgroundImage =
-      '';
-
-
-    element.classList.remove(
-      'hasPhoto'
-    );
-
-  }
-
-}
-
-
-/* =========================================================
-   ACTUALIZAR MIS AVATARES
-   ========================================================= */
-
-function updateVobixOwnAvatars() {
-
-  const photo =
-    getLocalVobixProfilePhoto();
-
-
-  const selectors = [
-
-    '#myAvatar',
-    '.myAvatar',
-    '[data-my-avatar]',
-    '.localUserAvatar'
-
-  ];
-
-
-  selectors.forEach(
-    selector => {
-
-      document
-        .querySelectorAll(
-          selector
-        )
-        .forEach(
-          element => {
-
-            applyVobixProfilePhotoToAvatar(
-              element,
-              photo
-            );
-
-          }
-        );
-
-    }
-  );
-
-}
-
-
-/* =========================================================
-   INPUT DE FOTO AUXILIAR
-   ========================================================= */
-
-const vobixChatPhotoInput =
-  vobixEl(
-    'vobixChatPhotoInput'
-  );
-
-
-if (
-  vobixChatPhotoInput &&
-  vobixChatPhotoInput.dataset
-    .vobixConnected !==
-    '1'
-) {
-
-  vobixChatPhotoInput.dataset
-    .vobixConnected =
-    '1';
-
-
-  vobixChatPhotoInput
-    .addEventListener(
-      'change',
-      () => {
-
-        const file =
-          vobixChatPhotoInput
-            .files?.[0];
-
-
-        if (!file) {
-
-          return;
-
-        }
-
-
-        /*
-          Si tu chat ya tiene una función
-          para enviar imágenes, la usamos.
-        */
-
-        try {
-
-          if (
-            typeof window
-              .sendImageFile ===
-            'function'
-          ) {
-
-            window.sendImageFile(
-              file
-            );
-
-            return;
-
-          }
-
-
-          if (
-            typeof window
-              .sendPhoto ===
-            'function'
-          ) {
-
-            window.sendPhoto(
-              file
-            );
-
-            return;
-
-          }
-
-
-          if (
-            typeof window
-              .uploadChatImage ===
-            'function'
-          ) {
-
-            window.uploadChatImage(
-              file
-            );
-
-            return;
-
-          }
-
-        } catch (error) {
-
-          console.error(
-            '[VOBIXCHAT PHOTO]',
-            error
-          );
-
-        }
-
-
-        vobixShowToast(
-          'Foto seleccionada'
-        );
-
-      }
-    );
-
-}
-
-
-/* =========================================================
-   INPUT DE CÁMARA AUXILIAR
-   ========================================================= */
-
-const vobixChatCameraInput =
-  vobixEl(
-    'vobixChatCameraInput'
-  );
-
-
-if (
-  vobixChatCameraInput &&
-  vobixChatCameraInput.dataset
-    .vobixConnected !==
-    '1'
-) {
-
-  vobixChatCameraInput.dataset
-    .vobixConnected =
-    '1';
-
-
-  vobixChatCameraInput
-    .addEventListener(
-      'change',
-      () => {
-
-        const file =
-          vobixChatCameraInput
-            .files?.[0];
-
-
-        if (!file) {
-
-          return;
-
-        }
-
-
-        try {
-
-          if (
-            typeof window
-              .sendImageFile ===
-            'function'
-          ) {
-
-            window.sendImageFile(
-              file
-            );
-
-            return;
-
-          }
-
-
-          if (
-            typeof window
-              .sendPhoto ===
-            'function'
-          ) {
-
-            window.sendPhoto(
-              file
-            );
-
-            return;
-
-          }
-
-
-          if (
-            typeof window
-              .uploadChatImage ===
-            'function'
-          ) {
-
-            window.uploadChatImage(
-              file
-            );
-
-            return;
-
-          }
-
-        } catch (error) {
-
-          console.error(
-            '[VOBIXCHAT CAMERA]',
-            error
-          );
-
-        }
-
-
-        vobixShowToast(
-          'Foto tomada'
-        );
-
-      }
-    );
-
-}
-
-
-/* =========================================================
-   NOTIFICACIÓN LOCAL DE PRUEBA
-   ========================================================= */
-
-async function testVobixSystemNotification() {
-
-  if (
-    !('Notification' in window)
-  ) {
-
-    vobixShowToast(
-      'Este navegador no admite notificaciones'
-    );
-
-    return;
-
-  }
-
-
-  let permission =
-    Notification.permission;
-
-
-  if (
-    permission ===
-    'default'
-  ) {
-
-    permission =
-      await Notification
-        .requestPermission();
-
-  }
-
-
-  if (
-    permission !==
-    'granted'
-  ) {
-
-    vobixShowToast(
-      'Permiso de notificaciones no concedido'
-    );
-
-    return;
-
-  }
-
-
-  try {
-
-    if (
-      'serviceWorker' in
-      navigator
-    ) {
-
-      const registration =
-        await navigator
-          .serviceWorker
-          .ready;
-
-
-      await registration
-        .showNotification(
-          'VOBIXCHAT',
-          {
-
-            body:
-              'Las notificaciones están funcionando.',
-
-            icon:
-              '/icon.png',
-
-            tag:
-              'vobix-test',
-
-            data: {
-
-              type:
-                'message',
-
-              url:
-                '/chat.html'
-
-            }
-
-          }
-        );
-
-
-      return;
-
-    }
-
-
-    new Notification(
-      'VOBIXCHAT',
-      {
-
-        body:
-          'Las notificaciones están funcionando.'
-
-      }
-    );
-
-  } catch (error) {
-
-    console.error(
-      '[VOBIXCHAT NOTIFICATION]',
-      error
-    );
-
-
-    vobixShowToast(
-      'No se pudo mostrar la notificación'
-    );
-
-  }
-
-}
-
-
-/* =========================================================
-   BOTÓN DE PRUEBA DE NOTIFICACIÓN
-   ========================================================= */
-
-const vobixNotificationTestButton =
-  vobixEl(
-    'testNotificationButton'
-  );
-
-
-if (
-  vobixNotificationTestButton &&
-  vobixNotificationTestButton
-    .dataset
-    .vobixConnected !==
-    '1'
-) {
-
-  vobixNotificationTestButton
-    .dataset
-    .vobixConnected =
-    '1';
-
-
-  vobixNotificationTestButton
-    .addEventListener(
-      'click',
-      testVobixSystemNotification
-    );
-
-}
-
-
-/* =========================================================
-   INICIALIZACIÓN DE MEJORAS
-   ========================================================= */
-
-function initializeVobixEnhancements() {
-
-  connectVobixUi();
-
-  connectVobixPhotoButtons();
-
-  connectExistingVobixVoiceNotes();
-
-  connectVobixVideoDragging();
-
-  connectVobixSocketEnhancements();
-
-  updateVobixOwnAvatars();
-
-  detectVobixCallUi();
-
-}
-
-
-/* =========================================================
-   DOM READY
+   ARRANQUE DE ESTA PARTE
    ========================================================= */
 
 if (
@@ -6816,674 +4793,95 @@ if (
 
   document.addEventListener(
     'DOMContentLoaded',
-    initializeVobixEnhancements,
-    {
-      once: true
+    () => {
+
+      connectVobixUi();
+      renderMyProfilePhoto();
+
     }
   );
 
 } else {
 
-  initializeVobixEnhancements();
+  connectVobixUi();
+  renderMyProfilePhoto();
 
 }
 
 
 /* =========================================================
-   COMPONENTES DINÁMICOS
+   FIN BLOQUE 4 DE 6
+
+   IMPORTANTE:
+   EL BLOQUE 5 CONTIENE LA PARTE CRÍTICA:
+
+   - TOKEN vobix_token
+   - Authorization: Bearer
+   - BUSCAR USUARIOS
+   - NOMBRE
+   - TELÉFONO
+   - VOBIX ID
+   - SALA PRIVADA 1x1
+   - CONVERSACIONES
+   - SOCKET.IO AUTENTICADO
+
+   CONTINÚA DIRECTAMENTE CON BLOQUE 5
    ========================================================= */
-
-setTimeout(
-  initializeVobixEnhancements,
-  500
-);
-
-
-setTimeout(
-  initializeVobixEnhancements,
-  1500
-);
-
-
-setTimeout(
-  initializeVobixEnhancements,
-  3000
-);
-
-
-/* =========================================================
-   EXPONER FUNCIONES
-   ========================================================= */
-
-window.handleVobixIncomingMessage =
-  handleVobixIncomingMessage;
-
-
-window.handleVobixIncomingCall =
-  handleVobixIncomingCall;
-
-
-window.handleVobixOutgoingCall =
-  handleVobixOutgoingCall;
-
-
-window.handleVobixCallAnswered =
-  handleVobixCallAnswered;
-
-
-window.handleVobixCallRejected =
-  handleVobixCallRejected;
-
-
-window.handleVobixCallEnded =
-  handleVobixCallEnded;
-
-
-window.handleVobixCallCancelled =
-  handleVobixCallCancelled;
-
-
-window.handleVobixCallFailed =
-  handleVobixCallFailed;
-
-
-window.testVobixSystemNotification =
-  testVobixSystemNotification;
-
-
-/* =========================================================
-   FIN BLOQUE 5 DE 6
-
-   NO CIERRES <\/script>.
-
-   BLOQUE 6:
-   - /sw.js
-   - PUSH
-   - VAPID
-   - SUSCRIPCIÓN
-   - IPHONE
-   - INICIALIZACIÓN FINAL
-   - CIERRE <\/script>
-   - CIERRE </body>
-   - CIERRE </html>
-   ========================================================= */
-/* =========================================================
+  /* =========================================================
    VOBIXCHAT
    CHAT.HTML CORREGIDO
-   BLOQUE 6 DE 6
+   BLOQUE 5 DE 6
 
-   PUSH NOTIFICATIONS
-   - SERVICE WORKER /sw.js
-   - VAPID PUBLIC KEY
-   - PUSH MANAGER
-   - SUSCRIPCIÓN
-   - DESUSCRIPCIÓN
-   - IPHONE / PWA
-   - CLICK DE NOTIFICACIÓN
-   - RECUPERAR LLAMADA
-   - INICIALIZACIÓN FINAL
+   PARTE CRÍTICA:
+   - TOKEN
+   - AUTHORIZATION
+   - BUSCAR PERSONAS
+   - TELÉFONO
+   - NOMBRE
+   - VOBIX ID
+   - SALA PRIVADA 1x1
+   - CONVERSACIONES
+   - MENSAJES
+   - SOCKET.IO AUTENTICADO
    ========================================================= */
 
 
 /* =========================================================
-   CONFIGURACIÓN PUSH
+   TOKEN DE SESIÓN VOBIXCHAT
    ========================================================= */
 
-const VOBIX_SERVICE_WORKER_URL =
-  '/sw.js';
-
-
-const VOBIX_PUSH_PUBLIC_KEY_URL =
-  '/api/push/public-key';
-
-
-const VOBIX_PUSH_SUBSCRIBE_URL =
-  '/api/push/subscribe';
-
-
-const VOBIX_PUSH_UNSUBSCRIBE_URL =
-  '/api/push/unsubscribe';
-
-
-let vobixServiceWorkerRegistration =
-  null;
-
-
-let vobixPushSubscription =
-  null;
-
-
-let vobixPushBusy =
-  false;
-
-
-/* =========================================================
-   COMPROBAR SOPORTE PUSH
-   ========================================================= */
-
-function vobixPushSupported() {
-
-  return (
-    'serviceWorker' in navigator &&
-    'PushManager' in window &&
-    'Notification' in window
-  );
-
-}
-
-
-/* =========================================================
-   DETECTAR IPHONE / IPAD
-   ========================================================= */
-
-function isVobixIOS() {
-
-  return (
-    /iPad|iPhone|iPod/.test(
-      navigator.userAgent
-    ) ||
-    (
-      navigator.platform ===
-        'MacIntel' &&
-      navigator.maxTouchPoints >
-        1
-    )
-  );
-
-}
-
-
-/* =========================================================
-   SABER SI VOBIXCHAT ESTÁ INSTALADA COMO APP
-   ========================================================= */
-
-function isVobixStandalone() {
-
-  return (
-    window.matchMedia?.(
-      '(display-mode: standalone)'
-    )?.matches === true ||
-    window.navigator
-      .standalone === true
-  );
-
-}
-
-
-/* =========================================================
-   AYUDA PARA IPHONE
-   ========================================================= */
-
-function updateVobixIOSHelp() {
-
-  const help =
-    vobixEl(
-      'iosPushHelp'
-    );
-
-
-  if (!help) {
-
-    return;
-
-  }
-
-
-  if (
-    isVobixIOS() &&
-    !isVobixStandalone()
-  ) {
-
-    help.style.display =
-      'block';
-
-  } else {
-
-    help.style.display =
-      'none';
-
-  }
-
-}
-
-
-/* =========================================================
-   MOSTRAR ESTADO PUSH
-   ========================================================= */
-
-function setVobixPushStatus(
-  text,
-  icon = '🔔'
-) {
-
-  const status =
-    vobixEl(
-      'pushStatus'
-    );
-
-
-  const statusIcon =
-    vobixEl(
-      'pushStatusIcon'
-    );
-
-
-  if (status) {
-
-    status.textContent =
-      text;
-
-  }
-
-
-  if (statusIcon) {
-
-    statusIcon.textContent =
-      icon;
-
-  }
-
-}
-
-
-/* =========================================================
-   ACTUALIZAR ESTADO DEL PERMISO
-   ========================================================= */
-
-function updateVobixNotificationPermissionUi() {
-
-  const text =
-    vobixEl(
-      'notificationPermissionText'
-    );
-
-
-  const button =
-    vobixEl(
-      'notificationSwitch'
-    );
-
-
-  if (
-    !('Notification' in window)
-  ) {
-
-    if (text) {
-
-      text.textContent =
-        'Este navegador no admite notificaciones.';
-
-    }
-
-
-    setVobixSwitch(
-      button,
-      false
-    );
-
-
-    return;
-
-  }
-
-
-  const permission =
-    Notification.permission;
-
-
-  if (
-    permission ===
-    'granted'
-  ) {
-
-    if (text) {
-
-      text.textContent =
-        'Permitidas en este dispositivo.';
-
-    }
-
-
-    setVobixSwitch(
-      button,
-      !!vobixPushSubscription
-    );
-
-
-    return;
-
-  }
-
-
-  if (
-    permission ===
-    'denied'
-  ) {
-
-    if (text) {
-
-      text.textContent =
-        'Bloqueadas en la configuración del navegador.';
-
-    }
-
-
-    setVobixSwitch(
-      button,
-      false
-    );
-
-
-    return;
-
-  }
-
-
-  if (text) {
-
-    text.textContent =
-      'Toca para permitir notificaciones.';
-
-  }
-
-
-  setVobixSwitch(
-    button,
-    false
-  );
-
-}
-
-
-/* =========================================================
-   BASE64 URL -> UINT8ARRAY
-
-   NECESARIO PARA VAPID
-   ========================================================= */
-
-function urlBase64ToUint8Array(
-  base64String
-) {
-
-  const padding =
-    '='.repeat(
-      (
-        4 -
-        base64String.length %
-          4
-      ) %
-        4
-    );
-
-
-  const base64 =
-    (
-      base64String +
-      padding
-    )
-      .replace(
-        /-/g,
-        '+'
-      )
-      .replace(
-        /_/g,
-        '/'
-      );
-
-
-  const rawData =
-    window.atob(
-      base64
-    );
-
-
-  return Uint8Array.from(
-    [...rawData].map(
-      character =>
-        character.charCodeAt(0)
-    )
-  );
-
-}
-
-
-/* =========================================================
-   OBTENER CLAVE PÚBLICA VAPID DEL SERVIDOR
-
-   LA CLAVE PRIVADA NO VA AQUÍ.
-   ========================================================= */
-
-async function getVobixPublicVapidKey() {
-
-  const response =
-    await fetch(
-      VOBIX_PUSH_PUBLIC_KEY_URL,
-      {
-
-        method:
-          'GET',
-
-        credentials:
-          'include',
-
-        cache:
-          'no-store'
-
-      }
-    );
-
-
-  if (!response.ok) {
-
-    throw new Error(
-      'No se pudo obtener la clave pública VAPID'
-    );
-
-  }
-
-
-  const data =
-    await response.json();
-
-
-  const key =
-    data.publicKey ||
-    data.public_key ||
-    data.vapidPublicKey ||
-    data.vapid_public_key ||
-    data.key ||
-    '';
-
-
-  if (!key) {
-
-    throw new Error(
-      'El servidor no devolvió la clave pública VAPID'
-    );
-
-  }
-
-
-  return String(
-    key
-  ).trim();
-
-}
-
-
-/* =========================================================
-   REGISTRAR SERVICE WORKER
-   ========================================================= */
-
-async function registerVobixServiceWorker() {
-
-  if (
-    !('serviceWorker' in navigator)
-  ) {
-
-    throw new Error(
-      'Service Worker no disponible'
-    );
-
-  }
-
+function getVobixAuthToken() {
 
   try {
 
-    const registration =
-      await navigator
-        .serviceWorker
-        .register(
-          VOBIX_SERVICE_WORKER_URL,
-          {
+    return (
+      localStorage.getItem(
+        'vobix_token'
+      ) ||
 
-            scope:
-              '/'
+      localStorage.getItem(
+        'token'
+      ) ||
 
-          }
-        );
+      sessionStorage.getItem(
+        'vobix_token'
+      ) ||
 
+      sessionStorage.getItem(
+        'token'
+      ) ||
 
-    vobixServiceWorkerRegistration =
-      registration;
-
-
-    console.log(
-      '[VOBIXCHAT PUSH] Service Worker registrado:',
-      registration.scope
+      ''
     );
-
-
-    const readyRegistration =
-      await navigator
-        .serviceWorker
-        .ready;
-
-
-    vobixServiceWorkerRegistration =
-      readyRegistration;
-
-
-    return readyRegistration;
 
   } catch (error) {
 
     console.error(
-      '[VOBIXCHAT PUSH] Error registrando /sw.js:',
+      '[VOBIXCHAT TOKEN]',
       error
     );
 
-
-    throw error;
-
-  }
-
-}
-
-
-/* =========================================================
-   OBTENER SUSCRIPCIÓN EXISTENTE
-   ========================================================= */
-
-async function getExistingVobixPushSubscription() {
-
-  let registration =
-    vobixServiceWorkerRegistration;
-
-
-  if (!registration) {
-
-    registration =
-      await registerVobixServiceWorker();
-
-  }
-
-
-  const subscription =
-    await registration
-      .pushManager
-      .getSubscription();
-
-
-  vobixPushSubscription =
-    subscription;
-
-
-  return subscription;
-
-}
-
-
-/* =========================================================
-   IDENTIFICADOR DEL DISPOSITIVO
-   ========================================================= */
-
-function getVobixDeviceId() {
-
-  const key =
-    'vobixchat_push_device_id';
-
-
-  try {
-
-    let id =
-      localStorage.getItem(
-        key
-      );
-
-
-    if (id) {
-
-      return id;
-
-    }
-
-
-    if (
-      window.crypto?.randomUUID
-    ) {
-
-      id =
-        window.crypto
-          .randomUUID();
-
-    } else {
-
-      id =
-        (
-          Date.now()
-            .toString(36) +
-          '-' +
-          Math.random()
-            .toString(36)
-            .slice(2) +
-          '-' +
-          Math.random()
-            .toString(36)
-            .slice(2)
-        );
-
-    }
-
-
-    localStorage.setItem(
-      key,
-      id
-    );
-
-
-    return id;
-
-  } catch (error) {
-
-    return (
-      Date.now()
-        .toString(36) +
-      '-' +
-      Math.random()
-        .toString(36)
-        .slice(2)
-    );
+    return '';
 
   }
 
@@ -7491,807 +4889,1380 @@ function getVobixDeviceId() {
 
 
 /* =========================================================
-   ENVIAR SUSCRIPCIÓN PUSH AL SERVIDOR
+   API SEGURA VOBIXCHAT
+
+   ESTA FUNCIÓN MANDA:
+
+   Authorization: Bearer TOKEN
+
+   EN TODAS LAS PETICIONES DEL CHAT.
    ========================================================= */
 
-async function sendVobixSubscriptionToServer(
-  subscription
+async function vobixChatApi(
+  url,
+  options = {}
 ) {
 
-  if (!subscription) {
-
-    throw new Error(
-      'Suscripción Push vacía'
-    );
-
-  }
+  const token =
+    getVobixAuthToken();
 
 
-  const json =
-    subscription.toJSON
-      ? subscription.toJSON()
-      : subscription;
+  const isFormData =
+    options.body instanceof
+    FormData;
 
 
-  const payload = {
+  const headers = {
 
-    subscription:
-      json,
+    ...(
+      isFormData
+        ? {}
+        : {
+            'Content-Type':
+              'application/json'
+          }
+    ),
 
-    endpoint:
-      json.endpoint,
+    ...(
+      token
+        ? {
+            'Authorization':
+              'Bearer ' + token
+          }
+        : {}
+    ),
 
-    keys:
-      json.keys,
-
-    deviceId:
-      getVobixDeviceId(),
-
-    userAgent:
-      navigator.userAgent,
-
-    platform:
-      navigator.platform ||
-      '',
-
-    standalone:
-      isVobixStandalone(),
-
-    createdAt:
-      new Date()
-        .toISOString()
+    ...(
+      options.headers ||
+      {}
+    )
 
   };
 
 
   const response =
     await fetch(
-      VOBIX_PUSH_SUBSCRIBE_URL,
+      url,
       {
-
-        method:
-          'POST',
+        ...options,
 
         credentials:
           'include',
 
-        headers: {
-
-          'Content-Type':
-            'application/json'
-
-        },
-
-        body:
-          JSON.stringify(
-            payload
-          )
-
+        headers
       }
     );
 
 
-  if (!response.ok) {
+  let data =
+    null;
 
-    const text =
-      await response
-        .text()
-        .catch(
-          () => ''
-        );
+
+  try {
+
+    data =
+      await response.json();
+
+  } catch (error) {
+
+    data =
+      null;
+
+  }
+
+
+  if (
+    !response.ok
+  ) {
+
+    console.error(
+      '[VOBIXCHAT API ERROR]',
+      {
+        status:
+          response.status,
+
+        url,
+
+        data
+      }
+    );
+
+
+    if (
+      response.status ===
+      401
+    ) {
+
+      throw new Error(
+        'Sesión no autorizada'
+      );
+
+    }
 
 
     throw new Error(
-      `Error guardando Push: ${response.status} ${text}`
+      (
+        data &&
+        (
+          data.message ||
+          data.error ||
+          data.msg
+        )
+      ) ||
+      (
+        'Error ' +
+        response.status
+      )
     );
 
   }
 
 
-  return response;
+  return data;
 
 }
 
 
 /* =========================================================
-   ACTIVAR PUSH
+   RUNTIME SOCIAL VOBIXCHAT
    ========================================================= */
 
-async function enableVobixPush() {
+(() => {
 
-  if (vobixPushBusy) {
-
-    return false;
-
-  }
+  'use strict';
 
 
-  vobixPushBusy =
-    true;
-
-
-  try {
-
-    if (
-      !vobixPushSupported()
-    ) {
-
-      setVobixPushStatus(
-        'Push no disponible en este navegador.',
-        '⚠️'
+  const $ =
+    id =>
+      document.getElementById(
+        id
       );
 
 
-      vobixShowToast(
-        'Este navegador no admite Push'
-      );
+  const state = {
+
+    conversation:
+      null,
+
+    peer:
+      null,
+
+    socket:
+      null
+
+  };
 
 
-      return false;
+  /* =======================================================
+     TOAST
+     ======================================================= */
 
-    }
+  const toast =
+    message => {
 
+      if (
+        typeof window
+          .showToast ===
+        'function'
+      ) {
 
-    if (
-      isVobixIOS() &&
-      !isVobixStandalone()
-    ) {
-
-      updateVobixIOSHelp();
-
-
-      setVobixPushStatus(
-        'En iPhone instala VobixChat en la pantalla de inicio.',
-        '📱'
-      );
-
-    }
-
-
-    let permission =
-      Notification.permission;
-
-
-    if (
-      permission ===
-      'default'
-    ) {
-
-      permission =
-        await Notification
-          .requestPermission();
-
-    }
-
-
-    if (
-      permission !==
-      'granted'
-    ) {
-
-      vobixPreferences
-        .notifications =
-        false;
-
-
-      saveVobixPreferences();
-
-
-      updateVobixNotificationPermissionUi();
-
-
-      setVobixPushStatus(
-        permission ===
-          'denied'
-          ? 'Notificaciones bloqueadas.'
-          : 'Permiso no concedido.',
-        '🔕'
-      );
-
-
-      return false;
-
-    }
-
-
-    setVobixPushStatus(
-      'Activando Push...',
-      '⏳'
-    );
-
-
-    const registration =
-      await registerVobixServiceWorker();
-
-
-    let subscription =
-      await registration
-        .pushManager
-        .getSubscription();
-
-
-    if (!subscription) {
-
-      const publicKey =
-        await getVobixPublicVapidKey();
-
-
-      subscription =
-        await registration
-          .pushManager
-          .subscribe(
-            {
-
-              userVisibleOnly:
-                true,
-
-              applicationServerKey:
-                urlBase64ToUint8Array(
-                  publicKey
-                )
-
-            }
+        return window
+          .showToast(
+            message
           );
 
-    }
-
-
-    vobixPushSubscription =
-      subscription;
-
-
-    await sendVobixSubscriptionToServer(
-      subscription
-    );
-
-
-    vobixPreferences
-      .notifications =
-      true;
-
-
-    saveVobixPreferences();
-
-
-    setVobixSwitch(
-      vobixEl(
-        'notificationSwitch'
-      ),
-      true
-    );
-
-
-    updateVobixNotificationPermissionUi();
-
-
-    setVobixPushStatus(
-      'Push activado en este dispositivo.',
-      '✅'
-    );
-
-
-    vobixShowToast(
-      'Notificaciones activadas'
-    );
-
-
-    return true;
-
-  } catch (error) {
-
-    console.error(
-      '[VOBIXCHAT PUSH] ENABLE ERROR',
-      error
-    );
-
-
-    vobixPreferences
-      .notifications =
-      false;
-
-
-    saveVobixPreferences();
-
-
-    setVobixSwitch(
-      vobixEl(
-        'notificationSwitch'
-      ),
-      false
-    );
-
-
-    setVobixPushStatus(
-      'No se pudo activar Push.',
-      '❌'
-    );
-
-
-    vobixShowToast(
-      'No se pudieron activar las notificaciones'
-    );
-
-
-    return false;
-
-  } finally {
-
-    vobixPushBusy =
-      false;
-
-  }
-
-}
-
-
-/* =========================================================
-   DESACTIVAR PUSH
-   ========================================================= */
-
-async function disableVobixPush() {
-
-  if (vobixPushBusy) {
-
-    return false;
-
-  }
-
-
-  vobixPushBusy =
-    true;
-
-
-  try {
-
-    let subscription =
-      vobixPushSubscription;
-
-
-    if (!subscription) {
-
-      subscription =
-        await getExistingVobixPushSubscription();
-
-    }
-
-
-    if (subscription) {
-
-      const json =
-        subscription.toJSON
-          ? subscription.toJSON()
-          : subscription;
-
-
-      try {
-
-        await fetch(
-          VOBIX_PUSH_UNSUBSCRIBE_URL,
-          {
-
-            method:
-              'POST',
-
-            credentials:
-              'include',
-
-            headers: {
-
-              'Content-Type':
-                'application/json'
-
-            },
-
-            body:
-              JSON.stringify(
-                {
-
-                  endpoint:
-                    json.endpoint,
-
-                  deviceId:
-                    getVobixDeviceId()
-
-                }
-              )
-
-          }
-        );
-
-      } catch (error) {
-
-        console.warn(
-          '[VOBIXCHAT PUSH] No se pudo avisar al servidor',
-          error
-        );
-
       }
 
 
-      await subscription
-        .unsubscribe();
-
-
-      vobixPushSubscription =
-        null;
-
-    }
-
-
-    vobixPreferences
-      .notifications =
-      false;
-
-
-    saveVobixPreferences();
-
-
-    setVobixSwitch(
-      vobixEl(
-        'notificationSwitch'
-      ),
-      false
-    );
-
-
-    updateVobixNotificationPermissionUi();
-
-
-    setVobixPushStatus(
-      'Push desactivado.',
-      '🔕'
-    );
-
-
-    vobixShowToast(
-      'Notificaciones desactivadas'
-    );
-
-
-    return true;
-
-  } catch (error) {
-
-    console.error(
-      '[VOBIXCHAT PUSH] DISABLE ERROR',
-      error
-    );
-
-
-    setVobixPushStatus(
-      'No se pudo desactivar Push.',
-      '❌'
-    );
-
-
-    return false;
-
-  } finally {
-
-    vobixPushBusy =
-      false;
-
-  }
-
-}
-
-
-/* =========================================================
-   SWITCH DE NOTIFICACIONES
-   ========================================================= */
-
-function connectVobixNotificationSwitch() {
-
-  const button =
-    vobixEl(
-      'notificationSwitch'
-    );
-
-
-  if (
-    !button ||
-    button.dataset
-      .vobixPushConnected ===
-      '1'
-  ) {
-
-    return;
-
-  }
-
-
-  button.dataset
-    .vobixPushConnected =
-    '1';
-
-
-  button.addEventListener(
-    'click',
-    async () => {
-
-      await unlockVobixAudio();
-
-
-      if (
-        vobixPushSubscription
-      ) {
-
-        await disableVobixPush();
-
-      } else {
-
-        await enableVobixPush();
-
-      }
-
-    }
-  );
-
-}
-
-
-/* =========================================================
-   COMPROBAR ESTADO PUSH
-   ========================================================= */
-
-async function refreshVobixPushState() {
-
-  updateVobixIOSHelp();
-
-
-  if (
-    !vobixPushSupported()
-  ) {
-
-    setVobixPushStatus(
-      'Push no disponible.',
-      '⚠️'
-    );
-
-
-    updateVobixNotificationPermissionUi();
-
-
-    return;
-
-  }
-
-
-  try {
-
-    const registration =
-      await registerVobixServiceWorker();
-
-
-    const subscription =
-      await registration
-        .pushManager
-        .getSubscription();
-
-
-    vobixPushSubscription =
-      subscription;
-
-
-    if (
-      subscription &&
-      Notification.permission ===
-        'granted'
-    ) {
-
-      vobixPreferences
-        .notifications =
-        true;
-
-
-      saveVobixPreferences();
-
-
-      setVobixPushStatus(
-        'Push activado en este dispositivo.',
-        '✅'
+      console.log(
+        '[VOBIXCHAT]',
+        message
       );
 
-
-      try {
-
-        await sendVobixSubscriptionToServer(
-          subscription
-        );
-
-      } catch (error) {
-
-        console.warn(
-          '[VOBIXCHAT PUSH] No se pudo renovar la suscripción',
-          error
-        );
-
-      }
-
-    } else {
-
-      vobixPreferences
-        .notifications =
-        false;
+    };
 
 
-      saveVobixPreferences();
+  /* =======================================================
+     ABRIR / CERRAR PERSONAS
+     ======================================================= */
+
+  function drawer(
+    open
+  ) {
+
+    const panel =
+      $('vxDrawer');
 
 
-      if (
-        Notification.permission ===
-        'denied'
-      ) {
-
-        setVobixPushStatus(
-          'Notificaciones bloqueadas.',
-          '🔕'
-        );
-
-      } else {
-
-        setVobixPushStatus(
-          'Push todavía no está activado.',
-          '🔔'
-        );
-
-      }
-
+    if (!panel) {
+      return;
     }
 
 
-    updateVobixNotificationPermissionUi();
-
-  } catch (error) {
-
-    console.error(
-      '[VOBIXCHAT PUSH] REFRESH ERROR',
-      error
+    panel.classList.toggle(
+      'open',
+      open
     );
 
 
-    setVobixPushStatus(
-      'No se pudo comprobar Push.',
-      '❌'
+    panel.setAttribute(
+      'aria-hidden',
+      String(
+        !open
+      )
     );
 
   }
 
-}
+
+  /* =======================================================
+     BOTÓN PERSONAS
+     ======================================================= */
+
+  const peopleButton =
+    $('vxPeople');
 
 
-/* =========================================================
-   MENSAJES DESDE sw.js
-   ========================================================= */
+  if (peopleButton) {
 
-function connectVobixServiceWorkerMessages() {
+    peopleButton.onclick =
+      () => {
 
-  if (
-    !('serviceWorker' in navigator)
-  ) {
-
-    return;
-
-  }
-
-
-  if (
-    navigator.serviceWorker
-      .__vobixMessageConnected
-  ) {
-
-    return;
-
-  }
-
-
-  navigator.serviceWorker
-    .__vobixMessageConnected =
-    true;
-
-
-  navigator.serviceWorker
-    .addEventListener(
-      'message',
-      event => {
-
-        const data =
-          event.data ||
-          {};
-
-
-        console.log(
-          '[VOBIXCHAT SW MESSAGE]',
-          data
+        drawer(
+          true
         );
 
+        loadConversations();
+
+      };
+
+  }
+
+
+  /* =======================================================
+     AGREGAR PERSONAS
+     ======================================================= */
+
+  const addPeopleButton =
+    $('vxAddPeople');
+
+
+  if (addPeopleButton) {
+
+    addPeopleButton.onclick =
+      () => {
+
+        drawer(
+          true
+        );
+
+        loadConversations();
+
+      };
+
+  }
+
+
+  /* =======================================================
+     CERRAR DRAWER
+     ======================================================= */
+
+  const closeButton =
+    $('vxClose');
+
+
+  if (closeButton) {
+
+    closeButton.onclick =
+      () =>
+        drawer(
+          false
+        );
+
+  }
+
+
+  const drawerElement =
+    $('vxDrawer');
+
+
+  if (drawerElement) {
+
+    drawerElement.onclick =
+      event => {
 
         if (
-          data.type ===
-          'VOBIX_NOTIFICATION_CLICK'
+          event.target ===
+          drawerElement
         ) {
 
-          handleVobixNotificationClickMessage(
-            data
+          drawer(
+            false
           );
 
         }
 
-      }
-    );
-
-}
-
-
-/* =========================================================
-   PROCESAR CLICK DE NOTIFICACIÓN
-   ========================================================= */
-
-function handleVobixNotificationClickMessage(
-  data
-) {
-
-  if (!data) {
-
-    return;
+      };
 
   }
 
 
-  const callId =
-    data.callId ||
-    data.payload?.callId ||
-    data.payload?.call_id ||
-    null;
+  /* =======================================================
+     EMOJIS
+     ======================================================= */
+
+  const emojis = [
+
+    '😀',
+    '😂',
+    '😍',
+    '🥰',
+    '😎',
+    '🤩',
+    '😭',
+    '😡',
+    '👍',
+    '🙏',
+    '❤️',
+    '🔥',
+    '🎉',
+    '💚',
+    '✅',
+    '👋'
+
+  ];
 
 
-  const conversationId =
-    data.conversationId ||
-    data.payload?.conversationId ||
-    data.payload?.conversation_id ||
-    null;
+  const tray =
+    $('vxEmojiTray');
 
 
-  const pushType =
-    String(
-      data.pushType ||
-      data.payload?.type ||
-      ''
-    ).toLowerCase();
+  if (tray) {
+
+    tray.innerHTML =
+      '';
 
 
-  if (conversationId) {
+    emojis.forEach(
+      emoji => {
+
+        const button =
+          document.createElement(
+            'button'
+          );
+
+
+        button.type =
+          'button';
+
+
+        button.textContent =
+          emoji;
+
+
+        button.onclick =
+          () => {
+
+            const input =
+              $('messageInput');
+
+
+            if (!input) {
+              return;
+            }
+
+
+            input.value +=
+              emoji;
+
+
+            input.dispatchEvent(
+              new Event(
+                'input',
+                {
+                  bubbles:
+                    true
+                }
+              )
+            );
+
+
+            input.focus();
+
+
+            tray.classList.remove(
+              'open'
+            );
+
+          };
+
+
+        tray.appendChild(
+          button
+        );
+
+      }
+    );
+
+  }
+
+
+  const emojiButton =
+    $('vxEmoji');
+
+
+  if (
+    emojiButton &&
+    tray
+  ) {
+
+    emojiButton.onclick =
+      () => {
+
+        tray.classList.toggle(
+          'open'
+        );
+
+      };
+
+  }
+
+
+  /* =======================================================
+     ARCHIVOS / DOCUMENTOS
+     ======================================================= */
+
+  const attachButton =
+    $('vxAttach');
+
+
+  const fileInput =
+    $('vxFile');
+
+
+  if (
+    attachButton &&
+    fileInput
+  ) {
+
+    attachButton.onclick =
+      () => {
+
+        fileInput.value =
+          '';
+
+        fileInput.click();
+
+      };
+
+
+    fileInput.onchange =
+      async () => {
+
+        const file =
+          fileInput.files?.[0];
+
+
+        if (!file) {
+          return;
+        }
+
+
+        if (
+          !state.conversation
+        ) {
+
+          toast(
+            'Abre primero una conversación privada.'
+          );
+
+          fileInput.value =
+            '';
+
+          return;
+
+        }
+
+
+        const conversationId =
+          state.conversation.id ||
+          state.conversation._id;
+
+
+        const form =
+          new FormData();
+
+
+        form.append(
+          'file',
+          file
+        );
+
+
+        form.append(
+          'conversationId',
+          conversationId
+        );
+
+
+        try {
+
+          const data =
+            await vobixChatApi(
+              '/api/chat/files',
+              {
+                method:
+                  'POST',
+
+                body:
+                  form
+              }
+            );
+
+
+          sendSocket(
+            'chat:file',
+            {
+              conversationId,
+              file:
+                data
+            }
+          );
+
+
+          toast(
+            'Archivo enviado'
+          );
+
+        } catch (error) {
+
+          console.error(
+            '[VOBIXCHAT FILE]',
+            error
+          );
+
+
+          toast(
+            error.message ||
+            'No se pudo enviar el archivo.'
+          );
+
+        } finally {
+
+          fileInput.value =
+            '';
+
+        }
+
+      };
+
+  }
+
+
+  /* =======================================================
+     CREAR FILA DE PERSONA
+     ======================================================= */
+
+  function personRow(
+    user
+  ) {
+
+    const row =
+      document.createElement(
+        'div'
+      );
+
+
+    row.className =
+      'vxPerson';
+
+
+    const info =
+      document.createElement(
+        'div'
+      );
+
+
+    info.className =
+      'vxPersonInfo';
+
+
+    const name =
+      document.createElement(
+        'strong'
+      );
+
+
+    name.textContent =
+      user.username ||
+      user.name ||
+      user.displayName ||
+      user.display_name ||
+      user.vobix_id ||
+      'Usuario';
+
+
+    const detail =
+      document.createElement(
+        'small'
+      );
+
+
+    const details =
+      [];
+
+
+    if (
+      user.vobix_id
+    ) {
+
+      details.push(
+        user.vobix_id
+      );
+
+    }
+
+
+    if (
+      user.phone
+    ) {
+
+      details.push(
+        user.phone
+      );
+
+    }
+
+
+    detail.textContent =
+      details.join(
+        ' · '
+      ) ||
+      user.status ||
+      'Usuario registrado';
+
+
+    info.append(
+      name,
+      detail
+    );
+
+
+    const button =
+      document.createElement(
+        'button'
+      );
+
+
+    button.className =
+      'vxPrimary';
+
+
+    button.type =
+      'button';
+
+
+    button.textContent =
+      'Chat 1×1';
+
+
+    button.onclick =
+      () =>
+        openPrivate(
+          user
+        );
+
+
+    row.append(
+      info,
+      button
+    );
+
+
+    return row;
+
+  }
+
+
+  /* =======================================================
+     BUSCAR USUARIOS
+
+     ENDPOINT:
+     GET /api/chat/users/search?q=...
+
+     AHORA ENVÍA EL TOKEN.
+     ======================================================= */
+
+  async function search() {
+
+    const input =
+      $('vxSearch');
+
+
+    const box =
+      $('vxResults');
+
+
+    if (
+      !input ||
+      !box
+    ) {
+
+      return;
+
+    }
+
+
+    const query =
+      input.value
+        .trim();
+
+
+    if (
+      query.length <
+      2
+    ) {
+
+      box.textContent =
+        'Escribe al menos 2 caracteres.';
+
+      return;
+
+    }
+
+
+    const token =
+      getVobixAuthToken();
+
+
+    if (!token) {
+
+      box.textContent =
+        'Tu sesión no tiene token. Vuelve a entrar a VOBIXCHAT.';
+
+      console.error(
+        '[VOBIXCHAT SEARCH] Token no encontrado'
+      );
+
+      return;
+
+    }
+
+
+    box.textContent =
+      'Buscando…';
+
 
     try {
 
+      const data =
+        await vobixChatApi(
+          '/api/chat/users/search?q=' +
+          encodeURIComponent(
+            query
+          )
+        );
+
+
+      const users =
+        Array.isArray(
+          data
+        )
+          ? data
+          : (
+              data?.users ||
+              data?.results ||
+              []
+            );
+
+
+      box.innerHTML =
+        '';
+
+
       if (
-        typeof window
-          .openConversationById ===
-        'function'
+        !users.length
       ) {
 
-        window
-          .openConversationById(
-            conversationId
-          );
+        box.textContent =
+          'No encontré usuarios registrados.';
 
-      } else if (
-        typeof window
-          .openConversation ===
-        'function'
-      ) {
-
-        window
-          .openConversation(
-            conversationId
-          );
+        return;
 
       }
 
+
+      users.forEach(
+        user => {
+
+          box.appendChild(
+            personRow(
+              user
+            )
+          );
+
+        }
+      );
+
+
     } catch (error) {
 
-      console.warn(
-        '[VOBIXCHAT PUSH] Error abriendo conversación',
+      console.error(
+        '[VOBIXCHAT SEARCH ERROR]',
+        error
+      );
+
+
+      box.textContent =
+        error.message ===
+        'Sesión no autorizada'
+          ? 'Sesión vencida. Vuelve a entrar a VOBIXCHAT.'
+          : (
+              'No se pudo buscar: ' +
+              (
+                error.message ||
+                'Error del servidor'
+              )
+            );
+
+    }
+
+  }
+
+
+  /* =======================================================
+     BOTÓN BUSCAR
+     ======================================================= */
+
+  const searchButton =
+    $('vxSearchBtn');
+
+
+  if (searchButton) {
+
+    searchButton.onclick =
+      search;
+
+  }
+
+
+  const searchInput =
+    $('vxSearch');
+
+
+  if (searchInput) {
+
+    searchInput.onkeydown =
+      event => {
+
+        if (
+          event.key ===
+          'Enter'
+        ) {
+
+          event.preventDefault();
+
+          search();
+
+        }
+
+      };
+
+  }
+
+
+  /* =======================================================
+     ABRIR SALA PRIVADA 1x1
+     ======================================================= */
+
+  async function openPrivate(
+    user
+  ) {
+
+    const userId =
+      user.id ||
+      user._id ||
+      user.userId;
+
+
+    if (!userId) {
+
+      toast(
+        'Este usuario no tiene un ID válido.'
+      );
+
+      return;
+
+    }
+
+
+    try {
+
+      const data =
+        await vobixChatApi(
+          '/api/chat/conversations/private',
+          {
+            method:
+              'POST',
+
+            body:
+              JSON.stringify(
+                {
+                  userId
+                }
+              )
+          }
+        );
+
+
+      state.conversation =
+        data.conversation ||
+        data;
+
+
+      state.peer =
+        user;
+
+
+      const roomTitle =
+        $('vxRoomTitle');
+
+
+      if (roomTitle) {
+
+        roomTitle.textContent =
+          (
+            user.username ||
+            user.name ||
+            user.vobix_id ||
+            'Usuario'
+          ) +
+          ' · Sala privada 1×1';
+
+
+        roomTitle.classList.add(
+          'on'
+        );
+
+      }
+
+
+      drawer(
+        false
+      );
+
+
+      joinRoom();
+
+
+      await loadMessages();
+
+
+      toast(
+        'Sala privada abierta'
+      );
+
+
+    } catch (error) {
+
+      console.error(
+        '[VOBIXCHAT PRIVATE ROOM]',
+        error
+      );
+
+
+      toast(
+        'No se pudo abrir la sala 1×1: ' +
+        (
+          error.message ||
+          'Error del servidor'
+        )
+      );
+
+    }
+
+  }
+
+
+  /* =======================================================
+     CARGAR CONVERSACIONES
+     ======================================================= */
+
+  async function loadConversations() {
+
+    const box =
+      $('vxConversations');
+
+
+    if (!box) {
+      return;
+    }
+
+
+    box.textContent =
+      'Cargando…';
+
+
+    try {
+
+      const data =
+        await vobixChatApi(
+          '/api/chat/conversations'
+        );
+
+
+      const conversations =
+        Array.isArray(
+          data
+        )
+          ? data
+          : (
+              data?.conversations ||
+              []
+            );
+
+
+      box.innerHTML =
+        '';
+
+
+      if (
+        !conversations.length
+      ) {
+
+        box.textContent =
+          'Todavía no hay conversaciones.';
+
+        return;
+
+      }
+
+
+      conversations.forEach(
+        conversation => {
+
+          const peer =
+            conversation.otherUser ||
+            conversation.peer ||
+            conversation.user ||
+            {};
+
+
+          const row =
+            personRow(
+              peer
+            );
+
+
+          const button =
+            row.querySelector(
+              'button'
+            );
+
+
+          if (button) {
+
+            button.textContent =
+              'Abrir';
+
+
+            button.onclick =
+              async () => {
+
+                state.conversation =
+                  conversation;
+
+
+                state.peer =
+                  peer;
+
+
+                const title =
+                  $('vxRoomTitle');
+
+
+                if (title) {
+
+                  title.textContent =
+                    (
+                      peer.username ||
+                      peer.name ||
+                      peer.vobix_id ||
+                      'Usuario'
+                    ) +
+                    ' · Sala privada 1×1';
+
+
+                  title.classList.add(
+                    'on'
+                  );
+
+                }
+
+
+                drawer(
+                  false
+                );
+
+
+                joinRoom();
+
+
+                await loadMessages();
+
+              };
+
+          }
+
+
+          box.appendChild(
+            row
+          );
+
+        }
+      );
+
+
+    } catch (error) {
+
+      console.error(
+        '[VOBIXCHAT CONVERSATIONS]',
+        error
+      );
+
+
+      box.textContent =
+        error.message ===
+        'Sesión no autorizada'
+          ? 'Sesión vencida. Vuelve a entrar.'
+          : 'No se pudieron cargar las conversaciones.';
+
+    }
+
+  }
+
+
+  /* =======================================================
+     SOCKET: ENTRAR A SALA
+     ======================================================= */
+
+  function joinRoom() {
+
+    if (
+      !state.socket ||
+      !state.conversation
+    ) {
+
+      return;
+
+    }
+
+
+    const conversationId =
+      state.conversation.id ||
+      state.conversation._id;
+
+
+    if (!conversationId) {
+      return;
+    }
+
+
+    sendSocket(
+      'chat:join',
+      {
+        conversationId
+      }
+    );
+
+  }
+
+
+  /* =======================================================
+     ENVIAR EVENTO SOCKET
+     ======================================================= */
+
+  function sendSocket(
+    eventName,
+    payload
+  ) {
+
+    if (
+      state.socket &&
+      state.socket.connected
+    ) {
+
+      state.socket.emit(
+        eventName,
+        payload
+      );
+
+
+      return true;
+
+    }
+
+
+    console.warn(
+      '[VOBIXCHAT SOCKET] No conectado:',
+      eventName
+    );
+
+
+    return false;
+
+  }
+
+
+  /* =======================================================
+     RENDER MENSAJE
+     ======================================================= */
+
+  function renderMessage(
+    message
+  ) {
+
+    const area =
+      $('messages');
+
+
+    if (!area) {
+      return;
+    }
+
+
+    const welcome =
+      area.querySelector(
+        '.vobixWelcome'
+      );
+
+
+    if (welcome) {
+
+      welcome.remove();
+
+    }
+
+
+    const element =
+      document.createElement(
+        'div'
+      );
+
+
+    element.style.cssText =
+      [
+        'max-width:78%',
+        'padding:10px 13px',
+        'border-radius:16px',
+        'background:#15251a',
+        (
+          'align-self:' +
+          (
+            message.mine
+              ? 'flex-end'
+              : 'flex-start'
+          )
+        ),
+        'white-space:pre-wrap',
+        'word-break:break-word'
+      ].join(
+        ';'
+      );
+
+
+    element.textContent =
+      message.text ||
+      message.message ||
+      message.body ||
+      '[archivo]';
+
+
+    area.appendChild(
+      element
+    );
+
+
+    area.scrollTop =
+      area.scrollHeight;
+
+  }
+
+
+  /* =======================================================
+     CARGAR MENSAJES
+     ======================================================= */
+
+  async function loadMessages() {
+
+    if (
+      !state.conversation
+    ) {
+
+      return;
+
+    }
+
+
+    const conversationId =
+      state.conversation.id ||
+      state.conversation._id;
+
+
+    if (!conversationId) {
+      return;
+    }
+
+
+    try {
+
+      const data =
+        await vobixChatApi(
+          '/api/chat/conversations/' +
+          encodeURIComponent(
+            conversationId
+          ) +
+          '/messages'
+        );
+
+
+      const messages =
+        Array.isArray(
+          data
+        )
+          ? data
+          : (
+              data?.messages ||
+              []
+            );
+
+
+      const area =
+        $('messages');
+
+
+      if (!area) {
+        return;
+      }
+
+
+      area.innerHTML =
+        '';
+
+
+      messages.forEach(
+        renderMessage
+      );
+
+
+      area.scrollTop =
+        area.scrollHeight;
+
+
+    } catch (error) {
+
+      console.error(
+        '[VOBIXCHAT MESSAGES]',
         error
       );
 
@@ -8300,744 +6271,1244 @@ function handleVobixNotificationClickMessage(
   }
 
 
-  if (
-    callId &&
-    (
-      pushType.includes(
-        'call'
-      ) ||
-      data.callType
-    )
-  ) {
+  /* =======================================================
+     ENVIAR MENSAJE
+     ======================================================= */
 
-    recoverVobixPushCall(
-      callId,
-      data
-    );
-
-  }
-
-}
+  const sendButton =
+    $('sendButton');
 
 
-/* =========================================================
-   RECUPERAR LLAMADA DESDE PUSH
-   ========================================================= */
+  if (sendButton) {
 
-function recoverVobixPushCall(
-  callId,
-  data = {}
-) {
-
-  if (!callId) {
-
-    return;
-
-  }
-
-
-  console.log(
-    '[VOBIXCHAT PUSH] Recuperando llamada',
-    callId
-  );
-
-
-  const socket =
-    getVobixSocket();
-
-
-  if (
-    socket &&
-    typeof socket.emit ===
-      'function'
-  ) {
-
-    socket.emit(
-      'push_call_opened',
-      {
-
-        callId:
-          callId,
-
-        call_id:
-          callId,
-
-        callType:
-          data.callType ||
-          data.payload?.callType ||
-          data.payload?.call_type ||
-          null,
-
-        callerId:
-          data.callerId ||
-          data.payload?.callerId ||
-          data.payload?.caller_id ||
-          data.payload?.from ||
-          null
-
-      }
-    );
-
-
-    return;
-
-  }
-
-
-  let attempts =
-    0;
-
-
-  const timer =
-    setInterval(
+    sendButton.addEventListener(
+      'click',
       () => {
 
-        attempts++;
+        const input =
+          $('messageInput');
 
 
-        const retrySocket =
-          getVobixSocket();
+        if (!input) {
+          return;
+        }
+
+
+        const text =
+          input.value
+            .trim();
+
+
+        if (!text) {
+          return;
+        }
 
 
         if (
-          retrySocket &&
-          typeof retrySocket.emit ===
-            'function'
+          !state.conversation
         ) {
 
-          clearInterval(
-            timer
+          toast(
+            'Abre primero una sala privada 1×1.'
           );
-
-
-          retrySocket.emit(
-            'push_call_opened',
-            {
-
-              callId:
-                callId,
-
-              call_id:
-                callId
-
-            }
-          );
-
 
           return;
 
         }
 
 
-        if (
-          attempts >=
-          20
-        ) {
+        const conversationId =
+          state.conversation.id ||
+          state.conversation._id;
 
-          clearInterval(
-            timer
+
+        const sent =
+          sendSocket(
+            'chat:message',
+            {
+              conversationId,
+              text
+            }
           );
+
+
+        if (!sent) {
+
+          toast(
+            'Reconectando al chat…'
+          );
+
+          return;
 
         }
 
-      },
-      500
-    );
 
-}
-
-
-/* =========================================================
-   LEER PARÁMETROS DE PUSH EN LA URL
-   ========================================================= */
-
-function processVobixPushUrl() {
-
-  let params;
-
-
-  try {
-
-    params =
-      new URLSearchParams(
-        window.location.search
-      );
-
-  } catch (error) {
-
-    return;
-
-  }
-
-
-  const conversationId =
-    params.get(
-      'conversation'
-    );
-
-
-  const incomingCall =
-    params.get(
-      'incomingCall'
-    );
-
-
-  const callId =
-    params.get(
-      'call'
-    );
-
-
-  const callerId =
-    params.get(
-      'from'
-    );
-
-
-  const callType =
-    params.get(
-      'callType'
-    );
-
-
-  if (conversationId) {
-
-    setTimeout(
-      () => {
-
-        try {
-
-          if (
-            typeof window
-              .openConversationById ===
-            'function'
-          ) {
-
-            window
-              .openConversationById(
-                conversationId
-              );
-
-          } else if (
-            typeof window
-              .openConversation ===
-            'function'
-          ) {
-
-            window
-              .openConversation(
-                conversationId
-              );
-
-          }
-
-        } catch (error) {}
-
-      },
-      700
-    );
-
-  }
-
-
-  if (
-    incomingCall ===
-      '1' &&
-    callId
-  ) {
-
-    setTimeout(
-      () => {
-
-        recoverVobixPushCall(
-          callId,
+        renderMessage(
           {
-
-            callerId:
-              callerId,
-
-            callType:
-              callType
-
+            text,
+            mine:
+              true
           }
         );
 
+
+        input.value =
+          '';
+
+
+        input.dispatchEvent(
+          new Event(
+            'input',
+            {
+              bubbles:
+                true
+            }
+          )
+        );
+
+
+        input.focus();
+
       },
-      800
+      true
     );
 
   }
 
-}
+
+  /* =======================================================
+     LLAMADAS
+     ======================================================= */
+
+  function call(
+    kind
+  ) {
+
+    if (
+      !state.conversation
+    ) {
+
+      toast(
+        'Abre primero una sala privada 1×1.'
+      );
+
+      return;
+
+    }
+
+
+    const payload = {
+
+      conversationId:
+        state.conversation.id ||
+        state.conversation._id,
+
+      userId:
+        state.peer &&
+        (
+          state.peer.id ||
+          state.peer._id ||
+          state.peer.userId
+        ),
+
+      type:
+        kind
+
+    };
+
+
+    sendSocket(
+      'call:start',
+      payload
+    );
+
+
+    if (
+      typeof window
+        .handleVobixOutgoingCall ===
+      'function'
+    ) {
+
+      window
+        .handleVobixOutgoingCall(
+          payload
+        );
+
+    }
+
+
+    if (
+      typeof window
+        .startOutgoingRingtone ===
+      'function'
+    ) {
+
+      window
+        .startOutgoingRingtone();
+
+    }
+
+
+    toast(
+      kind ===
+      'video'
+        ? 'Videollamada iniciada'
+        : 'Llamada iniciada'
+    );
+
+  }
+
+
+  const voiceCallButton =
+    $('vxVoiceCall');
+
+
+  if (voiceCallButton) {
+
+    voiceCallButton.onclick =
+      () =>
+        call(
+          'audio'
+        );
+
+  }
+
+
+  const videoCallButton =
+    $('vxVideoCall');
+
+
+  if (videoCallButton) {
+
+    videoCallButton.onclick =
+      () =>
+        call(
+          'video'
+        );
+
+  }
+
+
+  /* =======================================================
+     SOCKET.IO AUTENTICADO
+
+     IMPORTANTE:
+     AHORA PASAMOS EL MISMO TOKEN DE SESIÓN.
+     ======================================================= */
+
+  function connectAuthenticatedSocket() {
+
+    if (
+      typeof window.io !==
+      'function'
+    ) {
+
+      console.warn(
+        '[VOBIXCHAT SOCKET] Socket.IO no disponible'
+      );
+
+      return;
+
+    }
+
+
+    const token =
+      getVobixAuthToken();
+
+
+    if (!token) {
+
+      console.warn(
+        '[VOBIXCHAT SOCKET] No hay token'
+      );
+
+      return;
+
+    }
+
+
+    try {
+
+      state.socket =
+        window.io(
+          {
+            auth: {
+              token
+            },
+
+            transports: [
+              'websocket',
+              'polling'
+            ],
+
+            reconnection:
+              true,
+
+            reconnectionAttempts:
+              Infinity,
+
+            reconnectionDelay:
+              800,
+
+            reconnectionDelayMax:
+              5000
+          }
+        );
+
+
+      state.socket.on(
+        'connect',
+        () => {
+
+          const status =
+            $('vobixConnectionStatus');
+
+
+          if (status) {
+
+            status.textContent =
+              'Conectado · Chat seguro';
+
+          }
+
+
+          console.log(
+            '[VOBIXCHAT SOCKET] conectado',
+            state.socket.id
+          );
+
+
+          joinRoom();
+
+        }
+      );
+
+
+      state.socket.on(
+        'connect_error',
+        error => {
+
+          console.error(
+            '[VOBIXCHAT SOCKET ERROR]',
+            error
+          );
+
+
+          const status =
+            $('vobixConnectionStatus');
+
+
+          if (status) {
+
+            status.textContent =
+              'Reconectando…';
+
+          }
+
+        }
+      );
+
+
+      state.socket.on(
+        'disconnect',
+        () => {
+
+          const status =
+            $('vobixConnectionStatus');
+
+
+          if (status) {
+
+            status.textContent =
+              'Reconectando…';
+
+          }
+
+        }
+      );
+
+
+      /* ===================================================
+         MENSAJE ENTRANTE
+         =================================================== */
+
+      state.socket.on(
+        'chat:message',
+        message => {
+
+          const currentId =
+            state.conversation &&
+            (
+              state.conversation.id ||
+              state.conversation._id
+            );
+
+
+          if (
+            !state.conversation ||
+            !message.conversationId ||
+            String(
+              message.conversationId
+            ) ===
+            String(
+              currentId
+            )
+          ) {
+
+            renderMessage(
+              message
+            );
+
+
+            if (
+              typeof window
+                .handleVobixIncomingMessage ===
+              'function'
+            ) {
+
+              window
+                .handleVobixIncomingMessage(
+                  message
+                );
+
+            }
+
+
+            if (
+              typeof window
+                .playVobixMessageSound ===
+              'function'
+            ) {
+
+              window
+                .playVobixMessageSound();
+
+            }
+
+          }
+
+        }
+      );
+
+
+      /* ===================================================
+         LLAMADA ENTRANTE
+         =================================================== */
+
+      state.socket.on(
+        'call:incoming',
+        callData => {
+
+          if (
+            typeof window
+              .handleVobixIncomingCall ===
+            'function'
+          ) {
+
+            window
+              .handleVobixIncomingCall(
+                callData
+              );
+
+          }
+
+
+          if (
+            typeof window
+              .startIncomingRingtone ===
+            'function'
+          ) {
+
+            window
+              .startIncomingRingtone();
+
+          }
+
+        }
+      );
+
+
+      /* ===================================================
+         LLAMADA CONTESTADA
+         =================================================== */
+
+      state.socket.on(
+        'call:answered',
+        callData => {
+
+          if (
+            typeof window
+              .stopAllCallSounds ===
+            'function'
+          ) {
+
+            window
+              .stopAllCallSounds();
+
+          }
+
+
+          if (
+            typeof window
+              .handleVobixCallAnswered ===
+            'function'
+          ) {
+
+            window
+              .handleVobixCallAnswered(
+                callData
+              );
+
+          }
+
+        }
+      );
+
+
+      /* ===================================================
+         LLAMADA FINALIZADA
+         =================================================== */
+
+      state.socket.on(
+        'call:ended',
+        callData => {
+
+          if (
+            typeof window
+              .stopAllCallSounds ===
+            'function'
+          ) {
+
+            window
+              .stopAllCallSounds();
+
+          }
+
+
+          if (
+            typeof window
+              .handleVobixCallEnded ===
+            'function'
+          ) {
+
+            window
+              .handleVobixCallEnded(
+                callData
+              );
+
+          }
+
+        }
+      );
+
+
+    } catch (error) {
+
+      console.error(
+        '[VOBIXCHAT SOCKET]',
+        error
+      );
+
+    }
+
+  }
+
+
+  /* =======================================================
+     INICIAR SOCKET
+     ======================================================= */
+
+  connectAuthenticatedSocket();
+
+
+  /* =======================================================
+     EXPORTAR FUNCIONES
+     ======================================================= */
+
+  window.VobixSocial = {
+
+    search,
+
+    loadConversations,
+
+    openPrivate,
+
+    loadMessages,
+
+    state
+
+  };
+
+
+})();
 
 
 /* =========================================================
-   ACTUALIZACIÓN DEL SERVICE WORKER
+   FIN BLOQUE 5 DE 6
+
+   CONTINÚA DIRECTAMENTE CON BLOQUE 6
+   ========================================================= */
+  /* =========================================================
+   VOBIXCHAT
+   CHAT.HTML CORREGIDO
+   BLOQUE 6 DE 6
+
+   - MICRO / NOTAS DE VOZ
+   - BOTÓN ENVIAR AUTOMÁTICO
+   - ENTER PARA ENVIAR
+   - EMOJIS
+   - CIERRE DEL ARCHIVO
    ========================================================= */
 
-function connectVobixServiceWorkerUpdates(
-  registration
-) {
 
-  if (!registration) {
+/* =========================================================
+   MICRO ↔ BOTÓN ENVIAR
+
+   SIN TEXTO:
+   🎙️
+
+   CUANDO ESCRIBES:
+   ➤
+   ========================================================= */
+
+(() => {
+
+  'use strict';
+
+
+  const input =
+    document.getElementById(
+      'messageInput'
+    );
+
+
+  const mic =
+    document.getElementById(
+      'voiceButton'
+    );
+
+
+  const send =
+    document.getElementById(
+      'sendButton'
+    );
+
+
+  if (
+    !input ||
+    !mic ||
+    !send
+  ) {
 
     return;
 
   }
 
 
-  registration.addEventListener(
-    'updatefound',
+  /* =======================================================
+     CAMBIAR MICRO / ENVIAR
+     ======================================================= */
+
+  const syncAction =
     () => {
 
-      const worker =
-        registration
-          .installing;
+      const writing =
+        input.value
+          .trim()
+          .length >
+        0;
 
 
-      if (!worker) {
+      mic.classList.toggle(
+        'isVisible',
+        !writing
+      );
 
-        return;
+
+      send.classList.toggle(
+        'isVisible',
+        writing
+      );
+
+    };
+
+
+  input.addEventListener(
+    'input',
+    syncAction
+  );
+
+
+  /* =======================================================
+     ENTER ENVÍA
+     SHIFT + ENTER SALTO DE LÍNEA
+     ======================================================= */
+
+  input.addEventListener(
+    'keydown',
+    event => {
+
+      if (
+        event.key ===
+          'Enter' &&
+        !event.shiftKey &&
+        input.value
+          .trim()
+      ) {
+
+        event.preventDefault();
+
+
+        send.click();
+
+
+        setTimeout(
+          syncAction,
+          0
+        );
+
+      }
+
+    }
+  );
+
+
+  send.addEventListener(
+    'click',
+    () => {
+
+      setTimeout(
+        syncAction,
+        0
+      );
+
+    }
+  );
+
+
+  /* =======================================================
+     EMOJIS ACTIVAN BOTÓN ENVIAR
+     ======================================================= */
+
+  const emojiTray =
+    document.getElementById(
+      'vxEmojiTray'
+    );
+
+
+  if (emojiTray) {
+
+    emojiTray.addEventListener(
+      'click',
+      () => {
+
+        setTimeout(
+          () => {
+
+            input.dispatchEvent(
+              new Event(
+                'input',
+                {
+                  bubbles:
+                    true
+                }
+              )
+            );
+
+          },
+          0
+        );
+
+      }
+    );
+
+  }
+
+
+  /* =======================================================
+     NOTA DE VOZ
+
+     TOCAR UNA VEZ:
+     COMIENZA A GRABAR
+
+     TOCAR OTRA VEZ:
+     TERMINA
+     ======================================================= */
+
+  let recorder =
+    null;
+
+
+  let stream =
+    null;
+
+
+  let chunks =
+    [];
+
+
+  /* =======================================================
+     DETENER MICRÓFONO
+     ======================================================= */
+
+  const stopTracks =
+    () => {
+
+      if (stream) {
+
+        stream
+          .getTracks()
+          .forEach(
+            track => {
+
+              track.stop();
+
+            }
+          );
 
       }
 
 
-      worker.addEventListener(
-        'statechange',
-        () => {
+      stream =
+        null;
 
-          if (
-            worker.state ===
-              'installed' &&
-            navigator
-              .serviceWorker
-              .controller
-          ) {
+    };
 
-            try {
 
-              worker.postMessage(
+  /* =======================================================
+     BOTÓN MICRO
+     ======================================================= */
+
+  mic.addEventListener(
+    'click',
+    async () => {
+
+      try {
+
+        /* =================================================
+           SI YA ESTÁ GRABANDO:
+           DETENER
+           ================================================= */
+
+        if (
+          recorder &&
+          recorder.state ===
+            'recording'
+        ) {
+
+          recorder.stop();
+
+          return;
+
+        }
+
+
+        /* =================================================
+           COMPROBAR SOPORTE
+           ================================================= */
+
+        if (
+          !navigator
+            .mediaDevices
+            ?.getUserMedia ||
+          !window.MediaRecorder
+        ) {
+
+          alert(
+            'Este navegador no permite grabar notas de voz.'
+          );
+
+          return;
+
+        }
+
+
+        /* =================================================
+           PEDIR MICRÓFONO
+           ================================================= */
+
+        stream =
+          await navigator
+            .mediaDevices
+            .getUserMedia(
+              {
+                audio:
+                  true
+              }
+            );
+
+
+        chunks =
+          [];
+
+
+        /* =================================================
+           CREAR GRABADOR
+           ================================================= */
+
+        recorder =
+          new MediaRecorder(
+            stream
+          );
+
+
+        /* =================================================
+           RECIBIR AUDIO
+           ================================================= */
+
+        recorder.addEventListener(
+          'dataavailable',
+          event => {
+
+            if (
+              event.data &&
+              event.data.size
+            ) {
+
+              chunks.push(
+                event.data
+              );
+
+            }
+
+          }
+        );
+
+
+        /* =================================================
+           EMPEZÓ GRABACIÓN
+           ================================================= */
+
+        recorder.addEventListener(
+          'start',
+          () => {
+
+            mic.classList.add(
+              'isRecording'
+            );
+
+
+            mic.textContent =
+              '■';
+
+
+            mic.setAttribute(
+              'aria-label',
+              'Detener nota de voz'
+            );
+
+          }
+        );
+
+
+        /* =================================================
+           TERMINÓ GRABACIÓN
+           ================================================= */
+
+        recorder.addEventListener(
+          'stop',
+          () => {
+
+            mic.classList.remove(
+              'isRecording'
+            );
+
+
+            mic.textContent =
+              '🎙️';
+
+
+            mic.setAttribute(
+              'aria-label',
+              'Nota de voz'
+            );
+
+
+            const blob =
+              new Blob(
+                chunks,
                 {
-
                   type:
-                    'SKIP_WAITING'
-
+                    recorder
+                      .mimeType ||
+                    'audio/webm'
                 }
               );
 
-            } catch (error) {}
+
+            stopTracks();
+
+
+            if (
+              !blob.size
+            ) {
+
+              return;
+
+            }
+
+
+            /* =============================================
+               MOSTRAR NOTA LOCALMENTE
+               ============================================= */
+
+            const url =
+              URL.createObjectURL(
+                blob
+              );
+
+
+            const messages =
+              document.getElementById(
+                'messages'
+              );
+
+
+            if (messages) {
+
+              const welcome =
+                messages.querySelector(
+                  '.vobixWelcome'
+                );
+
+
+              if (welcome) {
+
+                welcome.remove();
+
+              }
+
+
+              const box =
+                document.createElement(
+                  'div'
+                );
+
+
+              box.className =
+                'voiceMessage mine';
+
+
+              box.style
+                .alignSelf =
+                'flex-end';
+
+
+              const audio =
+                document.createElement(
+                  'audio'
+                );
+
+
+              audio.controls =
+                true;
+
+
+              audio.src =
+                url;
+
+
+              box.appendChild(
+                audio
+              );
+
+
+              messages.appendChild(
+                box
+              );
+
+
+              messages.scrollTop =
+                messages.scrollHeight;
+
+            }
+
+
+            /* =============================================
+               ENVIAR NOTA A SALA PRIVADA
+               ============================================= */
+
+            const social =
+              window.VobixSocial;
+
+
+            const state =
+              social &&
+              social.state;
+
+
+            const conversation =
+              state &&
+              state.conversation;
+
+
+            const socket =
+              state &&
+              state.socket;
+
+
+            if (
+              conversation &&
+              socket &&
+              socket.connected
+            ) {
+
+              const conversationId =
+                conversation.id ||
+                conversation._id;
+
+
+              const reader =
+                new FileReader();
+
+
+              reader.onloadend =
+                () => {
+
+                  socket.emit(
+                    'chat:voice',
+                    {
+                      conversationId,
+
+                      audio:
+                        reader.result,
+
+                      mimeType:
+                        blob.type
+                    }
+                  );
+
+                };
+
+
+              reader.readAsDataURL(
+                blob
+              );
+
+            } else {
+
+              console.warn(
+                '[VOBIXCHAT VOICE] No hay sala privada conectada'
+              );
+
+            }
 
           }
-
-        }
-      );
-
-    }
-  );
-
-}
+        );
 
 
-/* =========================================================
-   NUEVO SERVICE WORKER ACTIVO
-   ========================================================= */
+        /* =================================================
+           ERROR DEL GRABADOR
+           ================================================= */
 
-if (
-  'serviceWorker' in navigator
-) {
+        recorder.addEventListener(
+          'error',
+          () => {
 
-  navigator.serviceWorker
-    .addEventListener(
-      'controllerchange',
-      () => {
+            stopTracks();
 
-        console.log(
-          '[VOBIXCHAT PUSH] Nuevo Service Worker activo'
+
+            mic.classList.remove(
+              'isRecording'
+            );
+
+
+            mic.textContent =
+              '🎙️';
+
+          }
+        );
+
+
+        /* =================================================
+           COMENZAR GRABACIÓN
+           ================================================= */
+
+        recorder.start();
+
+
+      } catch (error) {
+
+        console.error(
+          '[VOBIXCHAT MICRO]',
+          error
+        );
+
+
+        stopTracks();
+
+
+        mic.classList.remove(
+          'isRecording'
+        );
+
+
+        mic.textContent =
+          '🎙️';
+
+
+        mic.setAttribute(
+          'aria-label',
+          'Nota de voz'
+        );
+
+
+        alert(
+          'No se pudo activar el micrófono. Revisa el permiso del navegador.'
         );
 
       }
-    );
 
-}
-
-
-/* =========================================================
-   INICIALIZAR PUSH
-   ========================================================= */
-
-async function initializeVobixPush() {
-
-  connectVobixNotificationSwitch();
-
-  connectVobixServiceWorkerMessages();
-
-  updateVobixIOSHelp();
-
-
-  if (
-    !vobixPushSupported()
-  ) {
-
-    updateVobixNotificationPermissionUi();
-
-
-    setVobixPushStatus(
-      'Push no disponible en este navegador.',
-      '⚠️'
-    );
-
-
-    return;
-
-  }
-
-
-  try {
-
-    const registration =
-      await registerVobixServiceWorker();
-
-
-    connectVobixServiceWorkerUpdates(
-      registration
-    );
-
-
-    await refreshVobixPushState();
-
-
-    processVobixPushUrl();
-
-  } catch (error) {
-
-    console.error(
-      '[VOBIXCHAT PUSH] INIT ERROR',
-      error
-    );
-
-
-    setVobixPushStatus(
-      'Error iniciando notificaciones.',
-      '❌'
-    );
-
-  }
-
-}
-
-
-/* =========================================================
-   REACTIVAR AL VOLVER A VOBIXCHAT
-   ========================================================= */
-
-document.addEventListener(
-  'visibilitychange',
-  () => {
-
-    if (
-      document.visibilityState ===
-      'visible'
-    ) {
-
-      unlockVobixAudio();
-
-
-      setTimeout(
-        refreshVobixPushState,
-        500
-      );
-
-    }
-
-  }
-);
-
-
-/* =========================================================
-   RECUPERAR INTERNET
-   ========================================================= */
-
-window.addEventListener(
-  'online',
-  () => {
-
-    setTimeout(
-      refreshVobixPushState,
-      500
-    );
-
-  }
-);
-
-
-/* =========================================================
-   ARRANQUE FINAL
-   ========================================================= */
-
-async function startVobixFinalEnhancements() {
-
-  try {
-
-    connectVobixUi();
-
-    connectVobixPhotoButtons();
-
-    connectExistingVobixVoiceNotes();
-
-    connectVobixVideoDragging();
-
-    connectVobixSocketEnhancements();
-
-    updateVobixOwnAvatars();
-
-    detectVobixCallUi();
-
-
-    await initializeVobixPush();
-
-
-    console.log(
-      '================================='
-    );
-
-    console.log(
-      'VOBIXCHAT ENHANCEMENTS READY'
-    );
-
-    console.log(
-      'Service Worker: /sw.js'
-    );
-
-    console.log(
-      'Push:',
-      vobixPushSupported()
-    );
-
-    console.log(
-      'Notification:',
-      (
-        'Notification' in window
-          ? Notification.permission
-          : 'NO SOPORTADO'
-      )
-    );
-
-    console.log(
-      'iOS:',
-      isVobixIOS()
-    );
-
-    console.log(
-      'Standalone:',
-      isVobixStandalone()
-    );
-
-    console.log(
-      '================================='
-    );
-
-  } catch (error) {
-
-    console.error(
-      '[VOBIXCHAT FINAL INIT]',
-      error
-    );
-
-  }
-
-}
-
-
-/* =========================================================
-   EJECUTAR ARRANQUE FINAL
-   ========================================================= */
-
-if (
-  document.readyState ===
-  'loading'
-) {
-
-  document.addEventListener(
-    'DOMContentLoaded',
-    startVobixFinalEnhancements,
-    {
-      once:
-        true
     }
   );
 
-} else {
 
-  startVobixFinalEnhancements();
-
-}
-
-
-/* =========================================================
-   FUNCIONES GLOBALES PUSH
-   ========================================================= */
-
-window.enableVobixPush =
-  enableVobixPush;
-
-
-window.disableVobixPush =
-  disableVobixPush;
-
-
-window.refreshVobixPushState =
-  refreshVobixPushState;
-
-
-window.registerVobixServiceWorker =
-  registerVobixServiceWorker;
-
-
-window.recoverVobixPushCall =
-  recoverVobixPushCall;
-
-
-/* =========================================================
-   FIN DEL JAVASCRIPT
-   ========================================================= */
-
-</script>
-
-
-\n<script id="vobixSocialRuntime">
-(()=>{
-'use strict';
-const $=id=>document.getElementById(id); const state={conversation:null,peer:null,socket:null};
-const api=async(url,opt={})=>{const r=await fetch(url,{credentials:'include',headers:{...(opt.body instanceof FormData?{}:{'Content-Type':'application/json'}),...(opt.headers||{})},...opt});let data=null;try{data=await r.json()}catch(e){}if(!r.ok)throw new Error((data&&(data.message||data.error))||('Error '+r.status));return data};
-const toast=m=>{if(typeof window.showToast==='function')return window.showToast(m);console.log('[VOBIXCHAT]',m)};
-function drawer(on){$('vxDrawer').classList.toggle('open',on);$('vxDrawer').setAttribute('aria-hidden',String(!on))}
-$('vxPeople').onclick=()=>{drawer(true);loadConversations()}; $('vxAddPeople').onclick=()=>{drawer(true);loadConversations()}; $('vxClose').onclick=()=>drawer(false); $('vxDrawer').onclick=e=>{if(e.target===$('vxDrawer'))drawer(false)};
-const emojis=['😀','😂','😍','🥰','😎','🤩','😭','😡','👍','🙏','❤️','🔥','🎉','💚','✅','👋']; const tray=$('vxEmojiTray'); emojis.forEach(x=>{const b=document.createElement('button');b.type='button';b.textContent=x;b.onclick=()=>{const i=$('messageInput');i.value+=x;i.focus();tray.classList.remove('open')};tray.appendChild(b)}); $('vxEmoji').onclick=()=>tray.classList.toggle('open');
-$('vxAttach').onclick=()=>$('vxFile').click(); $('vxFile').onchange=async()=>{const f=$('vxFile').files[0];if(!f)return; if(!state.conversation)return toast('Abre primero una conversación privada.'); const fd=new FormData();fd.append('file',f);fd.append('conversationId',state.conversation.id||state.conversation._id);try{const d=await api('/api/chat/files',{method:'POST',body:fd});sendSocket('chat:file',{conversationId:state.conversation.id||state.conversation._id,file:d});toast('Archivo enviado')}catch(e){toast('El servidor todavía no tiene activa la subida de archivos.')}finally{$('vxFile').value=''}};
-function personRow(u){const row=document.createElement('div');row.className='vxPerson';const info=document.createElement('div');info.className='vxPersonInfo';const strong=document.createElement('strong');strong.textContent=u.username||u.name||u.displayName||'Usuario';const small=document.createElement('small');small.textContent=u.phone||u.status||'Usuario registrado';info.append(strong,small);const b=document.createElement('button');b.className='vxPrimary';b.type='button';b.textContent='Chat 1×1';b.onclick=()=>openPrivate(u);row.append(info,b);return row}
-async function search(){const q=$('vxSearch').value.trim();if(!q)return;const box=$('vxResults');box.textContent='Buscando…';try{const d=await api('/api/chat/users/search?q='+encodeURIComponent(q));const arr=Array.isArray(d)?d:(d.users||d.results||[]);box.innerHTML='';if(!arr.length)box.textContent='No encontré usuarios registrados.';arr.forEach(u=>box.appendChild(personRow(u)))}catch(e){box.textContent='No se pudo buscar. Comprueba que /api/chat/users/search esté activo en el servidor.'}}
-$('vxSearchBtn').onclick=search;$('vxSearch').onkeydown=e=>{if(e.key==='Enter')search()};
-async function openPrivate(u){try{const d=await api('/api/chat/conversations/private',{method:'POST',body:JSON.stringify({userId:u.id||u._id||u.userId})});state.conversation=d.conversation||d;state.peer=u;$('vxRoomTitle').textContent=(u.username||u.name||'Usuario')+' · Sala privada 1×1';$('vxRoomTitle').classList.add('on');drawer(false);joinRoom();loadMessages();toast('Sala privada abierta')}catch(e){toast('El servidor todavía no tiene activa la creación de salas 1×1.')}}
-async function loadConversations(){const box=$('vxConversations');box.textContent='Cargando…';try{const d=await api('/api/chat/conversations');const arr=Array.isArray(d)?d:(d.conversations||[]);box.innerHTML='';if(!arr.length)box.textContent='Todavía no hay conversaciones.';arr.forEach(c=>{const peer=c.otherUser||c.peer||c.user||{};const row=personRow(peer);row.querySelector('button').textContent='Abrir';row.querySelector('button').onclick=()=>{state.conversation=c;state.peer=peer;$('vxRoomTitle').textContent=(peer.username||peer.name||'Usuario')+' · Sala privada 1×1';$('vxRoomTitle').classList.add('on');drawer(false);joinRoom();loadMessages()};box.appendChild(row)})}catch(e){box.textContent='Conversaciones disponibles cuando el backend de chat esté activo.'}}
-function joinRoom(){if(!state.socket||!state.conversation)return;sendSocket('chat:join',{conversationId:state.conversation.id||state.conversation._id})}
-function sendSocket(ev,p){if(state.socket&&state.socket.connected)state.socket.emit(ev,p)}
-function renderMessage(m){const area=$('messages');if(!area)return;const welcome=area.querySelector('.vobixWelcome');if(welcome)welcome.remove();const d=document.createElement('div');d.style.cssText='max-width:78%;padding:10px 13px;border-radius:16px;background:#15251a;align-self:'+(m.mine?'flex-end':'flex-start')+';white-space:pre-wrap;word-break:break-word';d.textContent=m.text||m.message||m.body||'[archivo]';area.appendChild(d);area.scrollTop=area.scrollHeight}
-async function loadMessages(){if(!state.conversation)return;try{const id=state.conversation.id||state.conversation._id;const d=await api('/api/chat/conversations/'+encodeURIComponent(id)+'/messages');const arr=Array.isArray(d)?d:(d.messages||[]);const area=$('messages');area.innerHTML='';arr.forEach(renderMessage)}catch(e){}}
-const oldSend=$('sendButton');if(oldSend){oldSend.addEventListener('click',()=>{const i=$('messageInput');const text=i.value.trim();if(!text||!state.conversation)return;sendSocket('chat:message',{conversationId:state.conversation.id||state.conversation._id,text});renderMessage({text,mine:true});i.value=''},true)}
-function call(kind){if(!state.conversation)return toast('Abre primero una sala privada 1×1.');const payload={conversationId:state.conversation.id||state.conversation._id,userId:state.peer&&(state.peer.id||state.peer._id),type:kind};sendSocket('call:start',payload);if(typeof window.handleVobixOutgoingCall==='function')window.handleVobixOutgoingCall(payload);toast(kind==='video'?'Videollamada iniciada':'Llamada iniciada')}
-$('vxVoiceCall').onclick=()=>call('audio');$('vxVideoCall').onclick=()=>call('video');
-if(typeof window.io==='function'){try{state.socket=window.io({transports:['websocket','polling']});state.socket.on('connect',()=>{const s=$('vobixConnectionStatus');if(s)s.textContent='Conectado · Chat seguro';joinRoom()});state.socket.on('disconnect',()=>{const s=$('vobixConnectionStatus');if(s)s.textContent='Reconectando…'});state.socket.on('chat:message',m=>{if(!state.conversation||!m.conversationId||String(m.conversationId)===String(state.conversation.id||state.conversation._id)){renderMessage(m);if(typeof window.handleVobixIncomingMessage==='function')window.handleVobixIncomingMessage(m)}});state.socket.on('call:incoming',c=>{if(typeof window.handleVobixIncomingCall==='function')window.handleVobixIncomingCall(c);if(typeof window.startIncomingRingtone==='function')window.startIncomingRingtone()});state.socket.on('call:answered',c=>{if(typeof window.stopAllCallSounds==='function')window.stopAllCallSounds();if(typeof window.handleVobixCallAnswered==='function')window.handleVobixCallAnswered(c)});state.socket.on('call:ended',c=>{if(typeof window.stopAllCallSounds==='function')window.stopAllCallSounds();if(typeof window.handleVobixCallEnded==='function')window.handleVobixCallEnded(c)})}catch(e){console.warn('Socket.IO no disponible',e)}}
-window.VobixSocial={search,loadConversations,openPrivate,state};
-})();
-</script>\n
-<script id="vobixComposerSmartAction">
-(() => {
-  const input = document.getElementById('messageInput');
-  const mic = document.getElementById('voiceButton');
-  const send = document.getElementById('sendButton');
-  if (!input || !mic || !send) return;
-
-  const syncAction = () => {
-    const writing = input.value.trim().length > 0;
-    mic.classList.toggle('isVisible', !writing);
-    send.classList.toggle('isVisible', writing);
-  };
-
-  input.addEventListener('input', syncAction);
-  input.addEventListener('keydown', (event) => {
-    if (event.key === 'Enter' && !event.shiftKey && input.value.trim()) {
-      event.preventDefault();
-      send.click();
-      setTimeout(syncAction, 0);
-    }
-  });
-  send.addEventListener('click', () => setTimeout(syncAction, 0));
-
-  // Los emojis también activan automáticamente el botón Enviar.
-  const emojiTray = document.getElementById('vxEmojiTray');
-  if (emojiTray) {
-    emojiTray.addEventListener('click', () => {
-      setTimeout(() => {
-        input.dispatchEvent(new Event('input', { bubbles: true }));
-      }, 0);
-    });
-  }
-
-  // Nota de voz: tocar una vez para grabar, tocar otra vez para terminar.
-  let recorder = null;
-  let stream = null;
-  let chunks = [];
-
-  const stopTracks = () => {
-    if (stream) stream.getTracks().forEach(track => track.stop());
-    stream = null;
-  };
-
-  mic.addEventListener('click', async () => {
-    try {
-      if (recorder && recorder.state === 'recording') {
-        recorder.stop();
-        return;
-      }
-      if (!navigator.mediaDevices?.getUserMedia || !window.MediaRecorder) {
-        alert('Este navegador no permite grabar notas de voz.');
-        return;
-      }
-      stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      chunks = [];
-      recorder = new MediaRecorder(stream);
-      recorder.addEventListener('dataavailable', e => { if (e.data?.size) chunks.push(e.data); });
-      recorder.addEventListener('start', () => {
-        mic.classList.add('isRecording');
-        mic.textContent = '■';
-        mic.setAttribute('aria-label', 'Detener nota de voz');
-      });
-      recorder.addEventListener('stop', () => {
-        mic.classList.remove('isRecording');
-        mic.textContent = '🎙️';
-        mic.setAttribute('aria-label', 'Nota de voz');
-        const blob = new Blob(chunks, { type: recorder.mimeType || 'audio/webm' });
-        stopTracks();
-        if (!blob.size) return;
-
-        const url = URL.createObjectURL(blob);
-        const messages = document.getElementById('messages');
-        if (messages) {
-          const box = document.createElement('div');
-          box.className = 'voiceMessage mine';
-          const audio = document.createElement('audio');
-          audio.controls = true;
-          audio.src = url;
-          box.appendChild(audio);
-          messages.appendChild(box);
-          messages.scrollTop = messages.scrollHeight;
-        }
-
-        // Si la sala privada está activa, entrega la nota al socket en formato Data URL.
-        const state = window.vobixSocialState || window.state;
-        const conversation = state && state.conversation;
-        if (conversation && typeof window.sendSocket === 'function') {
-          const reader = new FileReader();
-          reader.onloadend = () => window.sendSocket('chat:voice', {
-            conversationId: conversation.id || conversation._id,
-            audio: reader.result,
-            mimeType: blob.type
-          });
-          reader.readAsDataURL(blob);
-        }
-      });
-      recorder.addEventListener('error', stopTracks);
-      recorder.start();
-    } catch (error) {
-      stopTracks();
-      mic.classList.remove('isRecording');
-      mic.textContent = '🎙️';
-      alert('No se pudo activar el micrófono. Revisa el permiso del navegador.');
-    }
-  });
+  /* =======================================================
+     ESTADO INICIAL
+     ======================================================= */
 
   syncAction();
+
+
 })();
+
+
+/* =========================================================
+   COMPROBACIÓN FINAL DE SESIÓN
+
+   NO REDIRIGE AUTOMÁTICAMENTE.
+   SOLO DEJA REGISTRO PARA DEPURAR.
+   ========================================================= */
+
+(() => {
+
+  const token =
+    getVobixAuthToken();
+
+
+  if (token) {
+
+    console.log(
+      '[VOBIXCHAT] Sesión disponible'
+    );
+
+  } else {
+
+    console.warn(
+      '[VOBIXCHAT] No se encontró token de sesión'
+    );
+
+  }
+
+})();
+
+
+/* =========================================================
+   VOBIXCHAT CHAT.HTML
+   FIN
+   ========================================================= */
+
 </script>
+
 </body>
 </html>
