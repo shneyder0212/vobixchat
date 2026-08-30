@@ -1,0 +1,1158 @@
+'use strict';
+
+/*
+==========================================================
+ VOBIXCHAT DATABASE SCHEMA
+ database/schema.js
+
+ Inicialización y migración automática PostgreSQL.
+
+ OBJETIVOS:
+ - NO borrar usuarios
+ - NO borrar conversaciones
+ - NO borrar mensajes
+ - NO eliminar tablas existentes
+ - Reparar estructuras antiguas
+ - Mantener compatibilidad con columnas legacy
+ - Preparar fotos de perfil
+ - Preparar Web Push / iPhone / PWA
+==========================================================
+*/
+
+const database = require('./db');
+
+
+// ========================================================
+// COMPROBAR SI EXISTE UNA COLUMNA
+// ========================================================
+
+async function columnExists(
+  tableName,
+  columnName
+) {
+
+  const result =
+    await database.query(
+      `
+      SELECT EXISTS (
+        SELECT 1
+        FROM information_schema.columns
+        WHERE table_schema = 'public'
+          AND table_name = $1
+          AND column_name = $2
+      ) AS exists
+      `,
+      [
+        tableName,
+        columnName
+      ]
+    );
+
+  return result.rows[0].exists;
+}
+
+
+// ========================================================
+// INICIALIZAR / MIGRAR
+// ========================================================
+
+async function initializeDatabase() {
+
+  console.log(
+    'VOBIXCHAT DATABASE: comprobando estructura...'
+  );
+
+  try {
+
+    // ====================================================
+    // UUID
+    // ====================================================
+
+    await database.query(`
+      CREATE EXTENSION IF NOT EXISTS pgcrypto;
+    `);
+
+
+    // ====================================================
+    // USERS
+    // ====================================================
+
+    await database.query(`
+      CREATE TABLE IF NOT EXISTS users (
+
+        id UUID PRIMARY KEY
+          DEFAULT gen_random_uuid(),
+
+        username TEXT NOT NULL,
+
+        phone TEXT UNIQUE NOT NULL,
+
+        verified BOOLEAN DEFAULT FALSE,
+
+        online BOOLEAN DEFAULT FALSE,
+
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+
+        updated_at TIMESTAMPTZ DEFAULT NOW()
+      );
+    `);
+
+
+    // ====================================================
+    // MIGRACIONES USERS
+    // ====================================================
+
+    await database.query(`
+      ALTER TABLE users
+      ADD COLUMN IF NOT EXISTS vobix_id VARCHAR(40);
+    `);
+
+    await database.query(`
+      ALTER TABLE users
+      ADD COLUMN IF NOT EXISTS avatar_url TEXT;
+    `);
+
+    await database.query(`
+      ALTER TABLE users
+      ADD COLUMN IF NOT EXISTS bio VARCHAR(250);
+    `);
+
+    await database.query(`
+      ALTER TABLE users
+      ADD COLUMN IF NOT EXISTS language VARCHAR(20)
+      DEFAULT 'es';
+    `);
+
+    await database.query(`
+      ALTER TABLE users
+      ADD COLUMN IF NOT EXISTS last_seen TIMESTAMPTZ;
+    `);
+
+    await database.query(`
+      ALTER TABLE users
+      ADD COLUMN IF NOT EXISTS discover_by_phone BOOLEAN
+      DEFAULT TRUE;
+    `);
+
+    await database.query(`
+      ALTER TABLE users
+      ADD COLUMN IF NOT EXISTS discover_by_vobix_id BOOLEAN
+      DEFAULT TRUE;
+    `);
+
+    await database.query(`
+      ALTER TABLE users
+      ADD COLUMN IF NOT EXISTS show_last_seen BOOLEAN
+      DEFAULT TRUE;
+    `);
+
+    await database.query(`
+      ALTER TABLE users
+      ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ
+      DEFAULT NOW();
+    `);
+
+    await database.query(`
+      ALTER TABLE users
+      ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ
+      DEFAULT NOW();
+    `);
+
+    await database.query(`
+      ALTER TABLE users
+      ADD COLUMN IF NOT EXISTS security_reverified_at TIMESTAMPTZ;
+    `);
+
+    await database.query(`
+      CREATE TABLE IF NOT EXISTS friendships (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        requester_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        addressee_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        status VARCHAR(20) NOT NULL DEFAULT 'pending',
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        CHECK (requester_id <> addressee_id),
+        UNIQUE (requester_id, addressee_id)
+      );
+    `);
+
+    await database.query(`
+      CREATE INDEX IF NOT EXISTS friendships_addressee_status_idx
+      ON friendships(addressee_id, status);
+    `);
+
+
+    // ====================================================
+    // ÍNDICES USERS
+    // ====================================================
+
+    await database.query(`
+      CREATE UNIQUE INDEX IF NOT EXISTS
+      users_vobix_id_unique
+      ON users (LOWER(vobix_id))
+      WHERE vobix_id IS NOT NULL;
+    `);
+
+    await database.query(`
+      CREATE INDEX IF NOT EXISTS
+      users_phone_idx
+      ON users(phone);
+    `);
+
+
+    // ====================================================
+    // SESSIONS
+    // ====================================================
+
+    await database.query(`
+      CREATE TABLE IF NOT EXISTS sessions (
+
+        id UUID PRIMARY KEY
+          DEFAULT gen_random_uuid(),
+
+        user_id UUID NOT NULL
+          REFERENCES users(id)
+          ON DELETE CASCADE,
+
+        token_hash TEXT UNIQUE NOT NULL,
+
+        device_name VARCHAR(150),
+
+        platform VARCHAR(80),
+
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+
+        last_used_at TIMESTAMPTZ DEFAULT NOW(),
+
+        expires_at TIMESTAMPTZ,
+
+        revoked BOOLEAN DEFAULT FALSE
+      );
+    `);
+
+    await database.query(`
+      CREATE INDEX IF NOT EXISTS
+      sessions_user_idx
+      ON sessions(user_id);
+    `);
+
+
+    // ====================================================
+    // PUSH SUBSCRIPTIONS
+    //
+    // IMPORTANTE:
+    // users.id es UUID.
+    // Por eso user_id también es UUID.
+    //
+    // Esta tabla permitirá:
+    //
+    // iPhone
+    // Android
+    // PC
+    // varios dispositivos del mismo usuario
+    //
+    // ====================================================
+
+    await database.query(`
+      CREATE TABLE IF NOT EXISTS push_subscriptions (
+
+        id UUID PRIMARY KEY
+          DEFAULT gen_random_uuid(),
+
+        user_id UUID NOT NULL
+          REFERENCES users(id)
+          ON DELETE CASCADE,
+
+        endpoint TEXT NOT NULL,
+
+        p256dh TEXT NOT NULL,
+
+        auth TEXT NOT NULL,
+
+        user_agent TEXT,
+
+        device_name VARCHAR(150),
+
+        platform VARCHAR(80),
+
+        enabled BOOLEAN NOT NULL
+          DEFAULT TRUE,
+
+        created_at TIMESTAMPTZ NOT NULL
+          DEFAULT NOW(),
+
+        updated_at TIMESTAMPTZ NOT NULL
+          DEFAULT NOW(),
+
+        last_used_at TIMESTAMPTZ,
+
+        last_success_at TIMESTAMPTZ,
+
+        last_failure_at TIMESTAMPTZ,
+
+        failure_count INTEGER NOT NULL
+          DEFAULT 0
+      );
+    `);
+
+
+    // ====================================================
+    // MIGRACIONES PUSH
+    // ====================================================
+
+    await database.query(`
+      ALTER TABLE push_subscriptions
+      ADD COLUMN IF NOT EXISTS user_agent TEXT;
+    `);
+
+    await database.query(`
+      ALTER TABLE push_subscriptions
+      ADD COLUMN IF NOT EXISTS device_name VARCHAR(150);
+    `);
+
+    await database.query(`
+      ALTER TABLE push_subscriptions
+      ADD COLUMN IF NOT EXISTS platform VARCHAR(80);
+    `);
+
+    await database.query(`
+      ALTER TABLE push_subscriptions
+      ADD COLUMN IF NOT EXISTS enabled BOOLEAN
+      DEFAULT TRUE;
+    `);
+
+    await database.query(`
+      ALTER TABLE push_subscriptions
+      ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ
+      DEFAULT NOW();
+    `);
+
+    await database.query(`
+      ALTER TABLE push_subscriptions
+      ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ
+      DEFAULT NOW();
+    `);
+
+    await database.query(`
+      ALTER TABLE push_subscriptions
+      ADD COLUMN IF NOT EXISTS last_used_at TIMESTAMPTZ;
+    `);
+
+    await database.query(`
+      ALTER TABLE push_subscriptions
+      ADD COLUMN IF NOT EXISTS last_success_at TIMESTAMPTZ;
+    `);
+
+    await database.query(`
+      ALTER TABLE push_subscriptions
+      ADD COLUMN IF NOT EXISTS last_failure_at TIMESTAMPTZ;
+    `);
+
+    await database.query(`
+      ALTER TABLE push_subscriptions
+      ADD COLUMN IF NOT EXISTS failure_count INTEGER
+      DEFAULT 0;
+    `);
+
+
+    // ====================================================
+    // ENDPOINT PUSH ÚNICO
+    // ====================================================
+
+    await database.query(`
+      CREATE UNIQUE INDEX IF NOT EXISTS
+      push_subscriptions_endpoint_unique
+      ON push_subscriptions(endpoint);
+    `);
+
+    await database.query(`
+      CREATE INDEX IF NOT EXISTS
+      push_subscriptions_user_idx
+      ON push_subscriptions(user_id);
+    `);
+       await database.query(`
+      CREATE INDEX IF NOT EXISTS
+      push_subscriptions_enabled_idx
+      ON push_subscriptions(
+        user_id,
+        enabled
+      );
+    `);
+
+
+    // ====================================================
+    // CONTACTS
+    // ====================================================
+
+    await database.query(`
+      CREATE TABLE IF NOT EXISTS contacts (
+
+        id UUID PRIMARY KEY
+          DEFAULT gen_random_uuid(),
+
+        owner_user_id UUID NOT NULL
+          REFERENCES users(id)
+          ON DELETE CASCADE,
+
+        contact_user_id UUID NOT NULL
+          REFERENCES users(id)
+          ON DELETE CASCADE,
+
+        alias VARCHAR(100),
+
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+
+        UNIQUE (
+          owner_user_id,
+          contact_user_id
+        ),
+
+        CHECK (
+          owner_user_id <> contact_user_id
+        )
+
+      );
+    `);
+
+
+    await database.query(`
+      CREATE INDEX IF NOT EXISTS
+      contacts_owner_idx
+      ON contacts(owner_user_id);
+    `);
+
+
+    // ====================================================
+    // BLOCKS
+    // ====================================================
+
+    await database.query(`
+      CREATE TABLE IF NOT EXISTS user_blocks (
+
+        id UUID PRIMARY KEY
+          DEFAULT gen_random_uuid(),
+
+        blocker_user_id UUID NOT NULL
+          REFERENCES users(id)
+          ON DELETE CASCADE,
+
+        blocked_user_id UUID NOT NULL
+          REFERENCES users(id)
+          ON DELETE CASCADE,
+
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+
+        UNIQUE (
+          blocker_user_id,
+          blocked_user_id
+        ),
+
+        CHECK (
+          blocker_user_id <> blocked_user_id
+        )
+
+      );
+    `);
+
+
+    await database.query(`
+      CREATE INDEX IF NOT EXISTS
+      blocks_blocker_idx
+      ON user_blocks(blocker_user_id);
+    `);
+
+
+    // ====================================================
+    // CONVERSATIONS
+    // ====================================================
+
+    await database.query(`
+      CREATE TABLE IF NOT EXISTS conversations (
+
+        id UUID PRIMARY KEY
+          DEFAULT gen_random_uuid(),
+
+        type VARCHAR(30)
+          NOT NULL
+          DEFAULT 'private',
+
+        title VARCHAR(150),
+
+        created_by UUID
+          REFERENCES users(id)
+          ON DELETE SET NULL,
+
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+
+        updated_at TIMESTAMPTZ DEFAULT NOW()
+      );
+    `);
+
+
+    // ====================================================
+    // MIGRACIONES CONVERSATIONS
+    // ====================================================
+
+    await database.query(`
+      ALTER TABLE conversations
+      ADD COLUMN IF NOT EXISTS type VARCHAR(30)
+      DEFAULT 'private';
+    `);
+
+    await database.query(`
+      ALTER TABLE conversations
+      ADD COLUMN IF NOT EXISTS title VARCHAR(150);
+    `);
+
+    await database.query(`
+      ALTER TABLE conversations
+      ADD COLUMN IF NOT EXISTS created_by UUID;
+    `);
+
+    await database.query(`
+      ALTER TABLE conversations
+      ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ
+      DEFAULT NOW();
+    `);
+
+    await database.query(`
+      ALTER TABLE conversations
+      ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ
+      DEFAULT NOW();
+    `);
+
+
+    // ====================================================
+    // FK CONVERSATIONS -> USERS
+    // ====================================================
+
+    await database.query(`
+      DO $$
+      BEGIN
+
+        IF NOT EXISTS (
+          SELECT 1
+          FROM pg_constraint
+          WHERE conrelid = 'conversations'::regclass
+            AND conname = 'conversations_created_by_fkey'
+        ) THEN
+
+          ALTER TABLE conversations
+          ADD CONSTRAINT conversations_created_by_fkey
+          FOREIGN KEY (created_by)
+          REFERENCES users(id)
+          ON DELETE SET NULL;
+
+        END IF;
+
+      END
+      $$;
+    `);
+
+
+    // ====================================================
+    // CONVERSATION PARTICIPANTS
+    // ====================================================
+
+    await database.query(`
+      CREATE TABLE IF NOT EXISTS conversation_participants (
+
+        id UUID PRIMARY KEY
+          DEFAULT gen_random_uuid(),
+
+        conversation_id UUID NOT NULL
+          REFERENCES conversations(id)
+          ON DELETE CASCADE,
+
+        user_id UUID NOT NULL
+          REFERENCES users(id)
+          ON DELETE CASCADE,
+
+        role VARCHAR(30)
+          DEFAULT 'member',
+
+        joined_at TIMESTAMPTZ
+          DEFAULT NOW(),
+
+        muted BOOLEAN
+          DEFAULT FALSE,
+
+        archived BOOLEAN
+          DEFAULT FALSE,
+
+        last_read_at TIMESTAMPTZ,
+
+        UNIQUE (
+          conversation_id,
+          user_id
+        )
+
+      );
+    `);
+
+
+    // ====================================================
+    // MIGRACIONES CONVERSATION PARTICIPANTS
+    // ====================================================
+
+    await database.query(`
+      ALTER TABLE conversation_participants
+      ADD COLUMN IF NOT EXISTS role VARCHAR(30)
+      DEFAULT 'member';
+    `);
+
+    await database.query(`
+      ALTER TABLE conversation_participants
+      ADD COLUMN IF NOT EXISTS joined_at TIMESTAMPTZ
+      DEFAULT NOW();
+    `);
+
+    await database.query(`
+      ALTER TABLE conversation_participants
+      ADD COLUMN IF NOT EXISTS muted BOOLEAN
+      DEFAULT FALSE;
+    `);
+
+    await database.query(`
+      ALTER TABLE conversation_participants
+      ADD COLUMN IF NOT EXISTS archived BOOLEAN
+      DEFAULT FALSE;
+    `);
+
+    /*
+    ========================================================
+     NUEVO:
+     ÚLTIMA LECTURA DE LA CONVERSACIÓN
+
+     Necesario para:
+     - mensajes leídos
+     - contador de no leídos
+     - Socket.IO
+     - chat privado 1x1
+    ========================================================
+    */
+
+    await database.query(`
+      ALTER TABLE conversation_participants
+      ADD COLUMN IF NOT EXISTS last_read_at TIMESTAMPTZ;
+    `);
+
+
+    await database.query(`
+      CREATE INDEX IF NOT EXISTS
+      conversation_participants_user_idx
+      ON conversation_participants(user_id);
+    `);
+
+
+    await database.query(`
+      CREATE INDEX IF NOT EXISTS
+      conversation_participants_conversation_idx
+      ON conversation_participants(conversation_id);
+    `);
+
+
+    // ====================================================
+    // MESSAGES
+    // ====================================================
+
+    await database.query(`
+      CREATE TABLE IF NOT EXISTS messages (
+
+        id UUID PRIMARY KEY
+          DEFAULT gen_random_uuid(),
+
+        conversation_id UUID
+          REFERENCES conversations(id)
+          ON DELETE CASCADE,
+
+        sender_user_id UUID
+          REFERENCES users(id)
+          ON DELETE SET NULL,
+
+        message_type VARCHAR(30)
+          NOT NULL
+          DEFAULT 'text',
+
+        content TEXT,
+
+        reply_to_message_id UUID,
+
+        edited BOOLEAN DEFAULT FALSE,
+
+        deleted BOOLEAN DEFAULT FALSE,
+
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+
+        updated_at TIMESTAMPTZ DEFAULT NOW()
+      );
+    `);
+
+
+    // ====================================================
+    // MIGRACIONES MESSAGES BÁSICAS
+    // ====================================================
+
+    await database.query(`
+      ALTER TABLE messages
+      ADD COLUMN IF NOT EXISTS conversation_id UUID;
+    `);
+
+    await database.query(`
+      ALTER TABLE messages
+      ADD COLUMN IF NOT EXISTS sender_user_id UUID;
+    `);
+
+    await database.query(`
+      ALTER TABLE messages
+      ADD COLUMN IF NOT EXISTS message_type VARCHAR(30)
+      DEFAULT 'text';
+    `);
+
+    await database.query(`
+      ALTER TABLE messages
+      ADD COLUMN IF NOT EXISTS content TEXT;
+    `);
+
+    await database.query(`
+      ALTER TABLE messages
+      ADD COLUMN IF NOT EXISTS reply_to_message_id UUID;
+    `);
+
+    await database.query(`
+      ALTER TABLE messages
+      ADD COLUMN IF NOT EXISTS edited BOOLEAN
+      DEFAULT FALSE;
+    `);
+
+    await database.query(`
+      ALTER TABLE messages
+      ADD COLUMN IF NOT EXISTS deleted BOOLEAN
+      DEFAULT FALSE;
+    `);
+
+    await database.query(`
+      ALTER TABLE messages
+      ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ
+      DEFAULT NOW();
+    `);
+      await database.query(`
+      ALTER TABLE messages
+      ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ
+      DEFAULT NOW();
+    `);
+
+
+    // ====================================================
+    // MULTIMEDIA
+    //
+    // Fotos
+    // Vídeos
+    // Notas de voz
+    // Documentos
+    // ====================================================
+
+    await database.query(`
+      ALTER TABLE messages
+      ADD COLUMN IF NOT EXISTS file_url TEXT;
+    `);
+
+    await database.query(`
+      ALTER TABLE messages
+      ADD COLUMN IF NOT EXISTS file_public_id TEXT;
+    `);
+
+    await database.query(`
+      ALTER TABLE messages
+      ADD COLUMN IF NOT EXISTS file_name TEXT;
+    `);
+
+    /*
+    ========================================================
+     COMPATIBILIDAD MIME
+
+     file_mime:
+     - Se conserva para código anterior.
+
+     mime_type:
+     - Lo utiliza el nuevo chat privado 1x1.
+
+     NO BORRAMOS NINGUNA COLUMNA.
+    ========================================================
+    */
+
+    await database.query(`
+      ALTER TABLE messages
+      ADD COLUMN IF NOT EXISTS file_mime TEXT;
+    `);
+
+    await database.query(`
+      ALTER TABLE messages
+      ADD COLUMN IF NOT EXISTS mime_type TEXT;
+    `);
+
+
+    // ====================================================
+    // MIGRAR MIME ANTIGUO -> NUEVO
+    // ====================================================
+
+    await database.query(`
+      UPDATE messages
+      SET mime_type = file_mime
+      WHERE mime_type IS NULL
+        AND file_mime IS NOT NULL;
+    `);
+
+
+    // ====================================================
+    // MANTENER COMPATIBILIDAD NUEVO -> ANTIGUO
+    // ====================================================
+
+    await database.query(`
+      UPDATE messages
+      SET file_mime = mime_type
+      WHERE file_mime IS NULL
+        AND mime_type IS NOT NULL;
+    `);
+
+
+    await database.query(`
+      ALTER TABLE messages
+      ADD COLUMN IF NOT EXISTS file_size BIGINT;
+    `);
+
+    await database.query(`
+      ALTER TABLE messages
+      ADD COLUMN IF NOT EXISTS file_resource_type VARCHAR(40);
+    `);
+
+    await database.query(`
+      ALTER TABLE messages
+      ADD COLUMN IF NOT EXISTS media_duration NUMERIC;
+    `);
+
+    await database.query(`
+      ALTER TABLE messages
+      ADD COLUMN IF NOT EXISTS media_width INTEGER;
+    `);
+
+    await database.query(`
+      ALTER TABLE messages
+      ADD COLUMN IF NOT EXISTS media_height INTEGER;
+    `);
+
+
+    // ====================================================
+    // COMPATIBILIDAD sender_id ANTIGUO
+    // ====================================================
+
+    const hasLegacySenderId =
+      await columnExists(
+        'messages',
+        'sender_id'
+      );
+
+
+    if (hasLegacySenderId) {
+
+      console.log(
+        'VOBIXCHAT DATABASE: sender_id legacy detectado'
+      );
+
+      await database.query(`
+        ALTER TABLE messages
+        ALTER COLUMN sender_id DROP NOT NULL;
+      `);
+
+      await database.query(`
+        UPDATE messages
+        SET sender_user_id = sender_id
+        WHERE sender_user_id IS NULL
+          AND sender_id IS NOT NULL;
+      `);
+
+      console.log(
+        'VOBIXCHAT DATABASE: compatibilidad sender_id preparada'
+      );
+
+    }
+
+
+    // ====================================================
+    // COMPATIBILIDAD COLUMNA text ANTIGUA
+    // ====================================================
+
+    const hasLegacyText =
+      await columnExists(
+        'messages',
+        'text'
+      );
+
+
+    if (hasLegacyText) {
+
+      await database.query(`
+        UPDATE messages
+        SET content = text
+        WHERE content IS NULL
+          AND text IS NOT NULL;
+      `);
+
+    }
+
+
+    // ====================================================
+    // FOREIGN KEY conversation_id
+    // ====================================================
+
+    await database.query(`
+      DO $$
+      BEGIN
+
+        IF NOT EXISTS (
+          SELECT 1
+          FROM pg_constraint
+          WHERE conrelid = 'messages'::regclass
+            AND conname = 'messages_conversation_id_fkey'
+        ) THEN
+
+          ALTER TABLE messages
+          ADD CONSTRAINT messages_conversation_id_fkey
+          FOREIGN KEY (conversation_id)
+          REFERENCES conversations(id)
+          ON DELETE CASCADE;
+
+        END IF;
+
+      END
+      $$;
+    `);
+
+
+    // ====================================================
+    // FOREIGN KEY sender_user_id
+    // ====================================================
+
+    await database.query(`
+      DO $$
+      BEGIN
+
+        IF NOT EXISTS (
+          SELECT 1
+          FROM pg_constraint
+          WHERE conrelid = 'messages'::regclass
+            AND conname = 'messages_sender_user_id_fkey'
+        ) THEN
+
+          ALTER TABLE messages
+          ADD CONSTRAINT messages_sender_user_id_fkey
+          FOREIGN KEY (sender_user_id)
+          REFERENCES users(id)
+          ON DELETE SET NULL;
+
+        END IF;
+
+      END
+      $$;
+    `);
+
+
+    // ====================================================
+    // ÍNDICE MENSAJES
+    // ====================================================
+
+    await database.query(`
+      CREATE INDEX IF NOT EXISTS
+      messages_conversation_created_idx
+      ON messages(
+        conversation_id,
+        created_at DESC
+      );
+    `);
+
+
+    // ====================================================
+    // MESSAGE RECEIPTS
+    // ====================================================
+
+    await database.query(`
+      CREATE TABLE IF NOT EXISTS message_receipts (
+
+        id UUID PRIMARY KEY
+          DEFAULT gen_random_uuid(),
+
+        message_id UUID NOT NULL
+          REFERENCES messages(id)
+          ON DELETE CASCADE,
+
+        user_id UUID NOT NULL
+          REFERENCES users(id)
+          ON DELETE CASCADE,
+
+        delivered_at TIMESTAMPTZ,
+
+        read_at TIMESTAMPTZ,
+
+        created_at TIMESTAMPTZ
+          DEFAULT NOW(),
+
+        UNIQUE (
+          message_id,
+          user_id
+        )
+
+      );
+    `);
+
+
+    // ====================================================
+    // TRUST SIGNALS
+    // ====================================================
+
+    await database.query(`
+      CREATE TABLE IF NOT EXISTS trust_signals (
+
+        id UUID PRIMARY KEY
+          DEFAULT gen_random_uuid(),
+
+        user_id UUID NOT NULL
+          REFERENCES users(id)
+          ON DELETE CASCADE,
+
+        signal_type VARCHAR(80)
+          NOT NULL,
+
+        signal_value TEXT,
+
+        source VARCHAR(80),
+
+        confidence NUMERIC(5,4),
+
+        created_at TIMESTAMPTZ
+          DEFAULT NOW()
+
+      );
+    `);
+
+
+    await database.query(`
+      CREATE INDEX IF NOT EXISTS
+           trust_signals_user_idx
+      ON trust_signals(user_id);
+    `);
+
+
+    // ====================================================
+    // AUDIT EVENTS
+    // ====================================================
+
+    await database.query(`
+      CREATE TABLE IF NOT EXISTS audit_events (
+
+        id UUID PRIMARY KEY
+          DEFAULT gen_random_uuid(),
+
+        user_id UUID
+          REFERENCES users(id)
+          ON DELETE SET NULL,
+
+        event_type VARCHAR(100)
+          NOT NULL,
+
+        entity_type VARCHAR(80),
+
+        entity_id VARCHAR(100),
+
+        metadata JSONB,
+
+        created_at TIMESTAMPTZ
+          DEFAULT NOW()
+
+      );
+    `);
+
+
+    await database.query(`
+      CREATE INDEX IF NOT EXISTS
+      audit_events_created_idx
+      ON audit_events(
+        created_at DESC
+      );
+    `);
+
+
+    // ====================================================
+    // FINAL
+    // ====================================================
+
+    console.log(
+      'VOBIXCHAT DATABASE: estructura preparada correctamente'
+    );
+
+    console.log(
+      'VOBIXCHAT DATABASE: users verificada'
+    );
+
+    console.log(
+      'VOBIXCHAT DATABASE: avatar_url verificado'
+    );
+
+    console.log(
+      'VOBIXCHAT DATABASE: conversations verificada'
+    );
+
+    console.log(
+      'VOBIXCHAT DATABASE: participants + last_read_at verificada'
+    );
+
+    console.log(
+      'VOBIXCHAT DATABASE: messages verificada'
+    );
+
+    console.log(
+      'VOBIXCHAT DATABASE: multimedia + mime_type verificada'
+    );
+
+    console.log(
+      'VOBIXCHAT DATABASE: push_subscriptions verificada'
+    );
+
+    console.log(
+      'VOBIXCHAT DATABASE: compatibilidad legacy verificada'
+    );
+
+    console.log(
+      'VOBIXCHAT DATABASE: migraciones completadas'
+    );
+
+
+    return true;
+
+
+  } catch (error) {
+
+    console.error(
+      'VOBIXCHAT DATABASE SCHEMA ERROR:',
+      error.message
+    );
+
+
+    console.error(
+      error
+    );
+
+
+    return false;
+
+  }
+
+}
+
+
+// ========================================================
+// EXPORTACIÓN
+// ========================================================
+
+module.exports = {
+  initializeDatabase
+}; 
