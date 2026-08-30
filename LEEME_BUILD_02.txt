@@ -1,0 +1,49 @@
+VOBIXCHAT - BUILD 02
+SALA PRIVADA + LLAMADAS / VIDEOLLAMADAS
+=======================================
+
+REEMPLAZAR SOLO:
+1. /public/chat.html
+2. /server.js
+
+NO BORRAR NADA MAS.
+
+CORRECCIONES:
+- Cabecera de la sala como referencia aprobada:
+  volver + avatar/nombre del OTRO usuario + videollamada + llamada + tres puntos.
+- Eliminada la cámara extra de la cabecera.
+- Icono real de videollamada en lugar del círculo.
+- Llamadas ya NO se aceptan automáticamente.
+- Pantalla de llamada entrante con ACEPTAR / RECHAZAR.
+- Timbre entrante y tono de llamada saliente mientras la app está abierta.
+- La cámara/micrófono del receptor se solicitan AL ACEPTAR, no antes.
+- WebRTC usa el flujo moderno:
+  call:start -> call:incoming -> call:accept -> webrtc:offer/answer/ice.
+- Vídeo local flotante.
+- Tocar el cuadro local intercambia grande/pequeño.
+- Cuadro pequeño sigue siendo arrastrable.
+- Cancelación de eco, supresión de ruido y ganancia automática.
+- Calidad adaptativa hasta 4K cuando navegador/dispositivo/red lo soportan.
+- Nuevo endpoint /api/rtc/config.
+- Soporte TURN mediante variables de entorno.
+
+MUY IMPORTANTE PARA EL VIDEO NEGRO:
+WebRTC directo con solo STUN NO puede atravesar todas las redes móviles/router.
+Para máxima compatibilidad debes configurar un servidor TURN en Render:
+
+TURN_URL
+TURN_USERNAME
+TURN_CREDENTIAL
+
+Sin TURN las llamadas pueden funcionar en algunas redes y fallar (pantalla negra)
+en otras. El BUILD 02 ya está preparado para usar TURN en cuanto pongamos esas
+tres variables.
+
+PRUEBA:
+A) Portátil llama al móvil.
+B) El móvil debe mostrar llamada entrante SIN entrar automáticamente.
+C) Debe sonar mientras VOBIX está abierta.
+D) Toca RECHAZAR: no conecta.
+E) Vuelve a llamar y toca ACEPTAR: entonces solicita micro/cámara y conecta.
+F) En videollamada, toca el cuadro pequeño para intercambiar tamaño.
+=======================================
