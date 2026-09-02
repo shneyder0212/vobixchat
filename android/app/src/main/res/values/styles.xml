@@ -1,9 +1,0 @@
-<resources>
-    <style name="Theme.VobixChat" parent="android:style/Theme.Material.Light.NoActionBar">
-        <item name="android:fontFamily">sans</item>
-        <item name="android:colorAccent">#63D438</item>
-        <item name="android:navigationBarColor">#17261B</item>
-        <item name="android:windowLightStatusBar">false</item>
-        <item name="android:statusBarColor">#173624</item>
-    </style>
-</resources>
