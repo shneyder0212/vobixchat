@@ -1,0 +1,480 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#18221d">
+<title>VOBIXCHAT</title>
+<style>
+:root{
+  --bg:#1b2520;--bg2:#111814;--panel:#223029;--panel2:#293a31;
+  --text:#f5fff6;--muted:#aebbb2;--accent:#7cff35;--line:rgba(124,255,53,.18)
+}
+*{box-sizing:border-box}html,body{margin:0;min-height:100%;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg2);color:var(--text)}
+body{background:radial-gradient(circle at 68% 22%,color-mix(in srgb,var(--accent) 10%,transparent),transparent 30%),linear-gradient(135deg,var(--bg),var(--bg2))}
+button,input{font:inherit}button{cursor:pointer;color:inherit}
+.shell{min-height:100vh;display:grid;grid-template-columns:245px 1fr}
+.side{padding:25px 18px;border-right:1px solid var(--line);background:rgba(13,20,16,.6)}
+.brand{display:flex;align-items:center;gap:12px;font-weight:900;margin-bottom:28px}.vlogo{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;background:var(--accent);color:#173018;font-size:23px;font-weight:1000;box-shadow:0 0 25px color-mix(in srgb,var(--accent) 22%,transparent)}
+.new{width:100%;padding:13px;border:0;border-radius:10px;background:var(--accent);color:#142415;font-weight:900;margin-bottom:18px}
+.nav button{width:100%;padding:13px 10px;border:0;border-radius:10px;background:transparent;text-align:left;margin:3px 0}.nav button:hover{background:rgba(255,255,255,.05)}.nav i{font-style:normal;display:inline-block;width:30px}
+.me{position:fixed;left:18px;bottom:25px;width:205px;display:flex;align-items:center;gap:10px;padding:10px;border-top:1px solid var(--line)}
+.avatar{width:46px;height:46px;border-radius:50%;border:2px solid var(--accent);display:grid;place-items:center;background:var(--panel2);color:var(--accent);font-weight:900}
+.main{min-width:0}.topbar{height:78px;border-bottom:1px solid var(--line);display:flex;align-items:center;padding:0 28px;gap:14px;background:rgba(18,26,22,.65);backdrop-filter:blur(10px)}
+.back{border:0;background:transparent;font-size:26px}.head{flex:1}.head b,.head span{display:block}.head span{font-size:12px;color:var(--accent)}.dots{border:0;background:transparent;font-size:28px}
+.content{padding:24px;max-width:1050px;margin:auto}
+.searchbox{display:flex;gap:8px;margin-bottom:18px}.searchbox input{flex:1;padding:13px 15px;border:1px solid var(--line);border-radius:12px;background:#121b16;color:var(--text);outline:none}.searchbox input:focus{border-color:var(--accent)}.searchbox button{border:0;border-radius:12px;padding:0 20px;background:var(--accent);color:#142415;font-weight:900}
+.inviteBox{display:flex;gap:8px;align-items:center;margin:0 0 14px;padding:11px;border:1px solid var(--line);border-radius:12px;background:rgba(5,20,12,.62)}.inviteBox input{min-width:0;flex:1;padding:11px 12px;border:1px solid var(--line);border-radius:9px;background:#121b16;color:var(--text);outline:none}.inviteBox button{border:0;border-radius:9px;padding:11px 13px;background:#183522;color:var(--accent);font-weight:800}.inviteBox .smsInvite{background:var(--accent);color:#142415}
+.results{display:none;margin-bottom:18px;padding:10px;border:1px solid var(--line);border-radius:14px;background:var(--panel)}
+.result{width:100%;display:flex;align-items:center;gap:10px;border:0;background:transparent;padding:10px;border-radius:10px;text-align:left}.result:hover{background:rgba(255,255,255,.05)}
+.profile{display:none;border:1px solid var(--line);border-radius:18px;background:linear-gradient(135deg,color-mix(in srgb,var(--panel) 94%,transparent),color-mix(in srgb,var(--accent) 4%,var(--panel)));overflow:hidden}
+.hero{text-align:center;padding:27px 20px 20px}.hero .avatar{width:72px;height:72px;margin:auto;font-size:30px}.hero h1{margin:10px 0 2px;font-size:26px}.online{color:var(--accent);font-size:13px}.phone{margin:13px 0 3px}.sub{color:var(--muted);font-size:13px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;padding:0 20px 20px}.stat{padding:14px;border:1px solid var(--line);border-radius:12px;background:rgba(255,255,255,.025)}.stat small{display:block;color:var(--muted);margin-bottom:5px}.stat b{font-size:14px}.secure{margin:0 20px 18px;padding:15px;border:1px solid var(--line);border-radius:12px;display:flex;gap:12px;align-items:flex-start}.secure .lock{font-size:23px;color:var(--accent)}.secure b{color:var(--accent)}.secure p{margin:4px 0 0;color:var(--muted);font-size:12px}
+.actions{display:grid;grid-template-columns:1fr 1fr 1.35fr;gap:10px;padding:0 20px 20px}.actions button{padding:14px;border-radius:11px;border:1px solid var(--line);background:var(--panel2);font-weight:800}.actions .open{background:var(--accent);color:#132414;border-color:transparent}
+.notice{display:none;margin-top:14px;border:1px solid var(--line);border-radius:14px;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;background:rgba(255,255,255,.025)}
+.switch{width:46px;height:25px;border-radius:20px;background:var(--accent);position:relative}.switch:after{content:"";position:absolute;width:19px;height:19px;border-radius:50%;right:3px;top:3px;background:white}
+.history{margin-top:16px;border:1px solid var(--line);border-radius:14px;padding:12px;background:rgba(255,255,255,.02)}.history h3{margin:4px 5px 10px}.conversation{width:100%;border:0;background:transparent;display:flex;gap:10px;align-items:center;padding:9px;border-radius:10px;text-align:left}.conversation:hover{background:rgba(255,255,255,.05)}.conversation .avatar{width:38px;height:38px}.conversation span{color:var(--muted);font-size:12px;display:block}
+.settings{position:fixed;inset:0;z-index:20;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.65);padding:20px}.settings.open{display:flex}.settingsBox{width:min(430px,100%);background:#1e2c25;border:1px solid var(--line);border-radius:18px;padding:22px}.settingsExit{width:100%;margin-top:12px;padding:13px;border:1px solid var(--line);border-radius:11px;background:transparent;color:var(--text);font-weight:900}.row{display:flex;align-items:center;justify-content:space-between;margin:18px 0}.row input{width:62px;height:40px}.save{width:100%;padding:13px;border:0;border-radius:11px;background:var(--accent);color:#142415;font-weight:900}
+.settingsMenuButton{width:100%;margin:10px 0;padding:15px;border:1px solid var(--line);border-radius:12px;background:#142e20;color:var(--text);text-align:left;font-weight:900}.settingsMenuButton small{display:block;margin-top:4px;color:var(--muted);font-weight:500}.settingsView{display:none}.settingsView.open{display:block}.settingsSelect{width:100%;padding:12px;border:1px solid var(--line);border-radius:10px;background:#10251a;color:var(--text)}
+.error{display:none;padding:10px 0;color:#ffb5b5}
+@media(max-width:760px){
+ .shell{display:block}.side{display:none}.topbar{height:65px;padding:0 14px}.content{padding:12px}.stats{grid-template-columns:1fr 1fr;padding:0 12px 12px}.secure{margin:0 12px 12px}.actions{grid-template-columns:1fr 1fr;padding:0 12px 12px}.actions .open{grid-column:1/-1}.hero{padding-top:22px}.searchbox{margin-top:2px}.notice{margin-top:10px}
+}
+
+/* FIDELIDAD VISUAL AL BOCETO OFICIAL */
+:root{--bg:#10231a;--bg2:#07120d;--panel:#10251a;--panel2:#142e20;--accent:#9cff18;--line:rgba(156,255,24,.24)}
+html,body{min-height:100dvh;background:#07120d}
+body{background:radial-gradient(circle at 62% 12%,rgba(143,255,42,.12),transparent 34%),linear-gradient(140deg,#132b20,#06110c 68%)}
+.shell{grid-template-columns:320px minmax(0,1fr);max-width:1440px;min-height:100dvh;margin:auto;border-left:1px solid rgba(255,255,255,.04);border-right:1px solid rgba(255,255,255,.04);box-shadow:0 0 80px rgba(0,0,0,.38)}
+.side{position:relative;padding:34px 24px 100px;background:linear-gradient(180deg,rgba(13,35,24,.98),rgba(5,18,11,.98));overflow-y:auto}
+.brand{font-size:25px;letter-spacing:.02em}.vlogo{width:76px;height:76px;border-radius:50%;border:3px solid var(--accent);background:#07120d;color:var(--accent);font-size:43px;box-shadow:0 0 25px rgba(156,255,24,.25)}
+.new{font-size:16px;background:linear-gradient(180deg,#87e514,#55ad00);box-shadow:0 9px 26px rgba(88,200,0,.22)}
+.nav button{font-size:16px}.nav i{color:var(--accent);font-size:20px}
+/* Nunca mostrar historial ni perfil en la zona inferior izquierda. */
+.side .history,.side .me,.side [data-legacy-history],.side .legacyHistory{display:none!important}
+.topbar{height:76px;background:rgba(18,42,29,.78)}.content{max-width:1080px;padding:16px 26px 30px}
+.searchbox{margin:0 0 14px}.searchbox input{height:48px;border-radius:9px;background:rgba(9,26,17,.78)}
+.profile{border-radius:16px;background:radial-gradient(circle at 50% 10%,rgba(124,255,53,.12),transparent 34%),linear-gradient(180deg,rgba(23,52,36,.94),rgba(7,24,15,.97));box-shadow:0 24px 80px rgba(0,0,0,.30)}
+.hero{padding-top:24px}.hero .avatar{width:112px;height:112px;border:3px solid var(--accent);background:#07120d;font-size:56px;box-shadow:0 0 28px rgba(156,255,24,.25)}.hero h1{font-size:34px;letter-spacing:.02em}.online{font-size:15px}.phone{font-size:16px}.sub{font-size:14px;color:#fff}
+.stat{min-height:76px;background:rgba(5,19,12,.45)}.stat small{color:#fff}.stat b{color:var(--accent)}
+.secure{min-height:78px;align-items:center;background:rgba(4,17,10,.45)}.secure .lock{font-size:32px}.secure p{font-size:14px;color:#fff}
+.actions button{min-height:58px;font-size:17px;background:rgba(9,30,18,.88)}.actions .open{background:linear-gradient(180deg,#8ce817,#56b100);box-shadow:0 8px 26px rgba(102,214,0,.20)}
+.notice{max-width:100%;min-height:72px;margin:14px 0 0;background:rgba(5,20,12,.62)}
+.featureGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:14px}.featureGrid>div{padding:16px;border:1px solid var(--line);border-radius:12px;background:rgba(4,18,10,.55)}.featureGrid b{display:block;color:var(--accent);font-size:13px}.featureGrid span{display:block;margin-top:7px;font-size:11px}
+.mobileNav{display:none}
+.friendBtn{margin-top:12px;padding:8px 15px;border:1px solid var(--accent);border-radius:20px;background:rgba(156,255,24,.08);color:var(--accent);font-weight:800}
+.friendBtn.sent{opacity:.65}
+
+@media(max-width:760px){
+ body{padding-bottom:70px}
+ .shell{display:block;min-height:calc(100dvh - 70px);border:0}
+ .side{display:none}
+ .topbar{height:76px;background:linear-gradient(135deg,#f6eedb,#e8d8b8);border-bottom:1px solid rgba(115,85,31,.34);box-shadow:0 4px 18px rgba(0,0,0,.16)}.head{display:block;flex:1;text-align:center;line-height:1}.head b{color:#213425;font-size:20px;letter-spacing:.06em}.head span{display:none}.back,.dots{color:#213425}.dots{margin-left:auto}
+ .content{padding:10px 10px 18px}
+ .inviteBox{flex-wrap:wrap}.inviteBox input{flex-basis:100%}.inviteBox button{flex:1}
+ .searchbox{display:flex}
+ body.hasSelectedUser .searchbox{display:none}
+ .profile{border:0;background:transparent;box-shadow:none}
+ #emptyState{display:block}
+ body.hasSelectedUser #emptyState{display:none!important}
+ .hero{padding:12px 10px 15px}.hero .avatar{width:90px;height:90px;font-size:44px}.hero h1{font-size:26px;margin-top:9px}
+ .stats{gap:7px;padding:0}.stat{min-height:72px;padding:11px 9px;font-size:12px}.stat small{font-size:10px}
+ .secure{margin:8px 0;padding:12px}.secure p{font-size:11px;line-height:1.45}
+ .actions{padding:0;gap:7px}.actions button{min-height:48px;padding:10px 5px;font-size:13px}.actions .open{grid-column:1/-1}
+ .notice{margin-top:9px;padding:11px 13px}
+ .featureGrid{display:none}
+ .mobileNav{position:fixed;z-index:50;left:0;right:0;bottom:0;height:70px;display:grid;grid-template-columns:repeat(4,1fr);padding-bottom:env(safe-area-inset-bottom);border-top:1px solid var(--line);background:rgba(5,18,11,.98);backdrop-filter:blur(16px)}
+ .mobileNav button{display:grid;place-items:center;align-content:center;gap:2px;border:0;background:transparent;color:var(--accent);font-size:20px}.mobileNav span{font-size:10px;color:#fff}
+ .mobileHistoryPanel{position:fixed;z-index:60;inset:0;display:none;align-items:flex-end;background:rgba(0,0,0,.62)}.mobileHistoryPanel.open{display:flex}.mobileHistorySheet{width:100%;max-height:76dvh;overflow:auto;border:1px solid var(--line);border-radius:22px 22px 0 0;background:#0a1c12;padding:18px 14px 92px}.mobileHistoryHeader{display:flex;justify-content:space-between;align-items:center;margin:0 4px 12px}.mobileHistoryHeader h2{margin:0;font-size:20px}.mobileHistoryHeader button{border:0;border-radius:9px;background:#183322;color:var(--accent);padding:8px 12px;font-weight:800}.mobileHistoryList .conversation{padding:13px 9px;border-bottom:1px solid rgba(156,255,24,.13)}
+}
+@media(min-width:761px){.mobileHistoryPanel{position:fixed;z-index:60;inset:0;display:none;align-items:center;justify-content:center;padding:24px;background:rgba(41,31,15,.34)}.mobileHistoryPanel.open{display:flex}.mobileHistorySheet{width:min(560px,100%);max-height:78dvh;overflow:auto;border:1px solid var(--line);border-radius:22px;background:#fff8e9;padding:20px;box-shadow:0 22px 70px rgba(55,39,17,.24)}.mobileHistoryHeader{display:flex;justify-content:space-between;align-items:center;margin:0 4px 12px}.mobileHistoryHeader h2{margin:0;font-size:20px}.mobileHistoryHeader button{border:0;border-radius:9px;background:#e4f0d8;color:#2f6927;padding:8px 12px;font-weight:800}.mobileHistoryList .conversation{padding:13px 9px;border-bottom:1px solid rgba(74,130,48,.18)}}
+/* Tema grafito: fondo más oscuro, tarjetas claras y verde Vobix. */
+:root{--bg:#30332f;--bg2:#222522;--panel:#f4eee2;--panel2:#ddd7ca;--text:#173624;--muted:#566057;--accent:#5cab32;--line:rgba(68,105,61,.42)}
+body{background:radial-gradient(circle at 62% 12%,rgba(116,173,76,.14),transparent 34%),linear-gradient(140deg,#373a36,#222522 68%)}
+.side{background:linear-gradient(180deg,#323531,#222522);border-right-color:rgba(234,238,229,.18)}.vlogo{background:#f4eee2;color:#3d7f25;border-color:#6cc043;box-shadow:0 0 18px rgba(104,194,66,.20)}.new{background:linear-gradient(180deg,#6fbd42,#4b9828);color:#fff}.nav button{color:#f6f3eb}.topbar{background:rgba(45,48,44,.96);border-bottom-color:rgba(235,239,229,.17)}.head b{color:#fffdf7}.head span{color:#cef0bd}.searchbox input,.inviteBox input{background:#f7f2e8;color:#253328;border-color:rgba(72,93,68,.34)}.searchbox button,.inviteBox .smsInvite{background:#5cab32;color:#fff}.inviteBox{background:rgba(236,232,222,.92);border-color:rgba(67,95,61,.32)}.inviteBox button{background:#dce9d5;color:#2f6927}.profile{background:radial-gradient(circle at 50% 10%,rgba(104,176,67,.13),transparent 34%),linear-gradient(180deg,#f5f0e5,#ded8cc);box-shadow:0 20px 55px rgba(16,18,16,.24)}.hero .avatar,.avatar{background:#f6f0e4;color:#4a9828;border-color:#5cab32}.secure,.featureGrid>div,.stat,.notice{background:rgba(244,239,230,.92);border-color:rgba(67,95,61,.30)}.stat small,.secure p{color:#566057}.actions button{background:#e4dfd3;color:#1d3b28}.actions .open{background:linear-gradient(180deg,#6fbd42,#4b9828);color:#fff}.mobileNav{background:rgba(35,38,35,.98);border-top-color:rgba(235,239,229,.15)}.mobileNav button{color:#9be66f}.mobileNav span{color:#fffdf7}.mobileHistorySheet,.settingsBox{background:#f4eee2;color:#173624}.settingsMenuButton{background:#dfd9cd;color:#173624}.settingsSelect{background:#f7f2e8;color:#173624}.settingsExit{color:#173624}.settings{background:rgba(20,22,20,.54)}
+/* APK móvil: una sola pantalla sólida, sin arrastre horizontal ni controles tapados. */
+@media(max-width:760px){html,body{width:100%;height:100%;max-width:100%;overflow:hidden;overscroll-behavior:none;touch-action:pan-y}body{position:fixed;inset:0}.shell{width:100%;max-width:100%;height:100%;min-height:0;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;padding-bottom:70px}.main,.content,.profile,.searchbox,.inviteBox,.notice{min-width:0;max-width:100%}.mobileNav{position:fixed;left:0;right:0;bottom:0;width:100%;height:70px;padding-bottom:0}.mobileHistoryPanel{overscroll-behavior:contain}}
+/* Inicio móvil: lista de conversaciones de lectura rápida, con identidad Vobix propia. */
+.chatHome{display:none}.chatHomeTop{display:flex;align-items:center;justify-content:space-between}.chatHomeTop h1{margin:0;font-size:26px}.chatHomeTop span{display:block;margin-top:3px;color:var(--muted);font-size:12px}.chatHomeTop button{border:0;border-radius:50%;width:44px;height:44px;background:#dce9d5;color:#286d28;font-size:28px;font-weight:900}.chatHomeList{margin-top:15px}.chatHomeRow{width:100%;min-height:76px;display:flex;align-items:center;gap:12px;border:0;border-bottom:1px solid rgba(74,130,48,.16);padding:10px 4px;background:transparent;color:#173624;text-align:left}.chatHomeRow:active{background:#e4eedf}.chatHomeAvatar{width:54px;height:54px;min-width:54px;border-radius:50%;display:grid;place-items:center;background:#dce9d5;background-position:center;background-size:cover;color:#348330;font-size:21px;font-weight:900;border:1px solid rgba(74,130,48,.30)}.chatHomeInfo{min-width:0;flex:1}.chatHomeInfo b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:16px}.chatHomeInfo span{display:block;margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#657066;font-size:13px}.chatHomeRow time{align-self:flex-start;padding-top:4px;color:#5c9e44;font-size:11px;white-space:nowrap}.chatHomeEmpty{min-height:190px;display:grid;place-content:center;gap:7px;text-align:center;color:#5f695f}.chatHomeEmpty span{font-size:13px}.newChatFloat{position:absolute;right:18px;bottom:90px;z-index:5;width:58px;height:58px;border:0;border-radius:18px;background:linear-gradient(180deg,#6fbd42,#4b9828);color:#fff;font-size:33px;font-weight:500;box-shadow:0 10px 24px rgba(45,106,36,.34)}
+@media(max-width:760px){.content{position:relative;padding:14px 14px 24px}.chatHome{display:block}.profile,.notice,#emptyState{display:none!important}body:not(.finding):not(.hasSelectedUser) .searchbox,body:not(.finding):not(.hasSelectedUser) .inviteBox{display:none}body.finding .chatHome{display:none}body.finding .searchbox,body.finding .inviteBox{display:flex}body.hasSelectedUser .chatHome{display:none}.topbar{height:70px!important}.head b{font-size:19px!important}.head:has(#topName){} .mobileNav{height:72px;grid-template-columns:repeat(4,minmax(0,1fr));padding:0 3px}.mobileNav button{min-width:0;font-size:18px}.mobileNav span{font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}.newChatFloat{position:fixed;right:18px;bottom:88px}.chatHomeRow{min-height:78px}.chatHomeAvatar{width:56px;height:56px;min-width:56px}.chatHomeInfo b{font-size:17px}}
+</style>
+</head>
+<body>
+<div class="shell">
+ <aside class="side">
+  <div class="brand"><div class="vlogo">V</div><span>VOBIXCHAT</span></div>
+  <button class="new" id="newBtn">＋ Nueva conversación</button>
+  <div class="nav">
+   <button id="vobixMenuNav"><i>◈</i>Centro Vobix</button>
+   <button id="historyNav"><i>◉</i>Historial</button>
+   <button id="callsNav"><i>☎</i>Llamadas</button>
+   <button id="contactsNav"><i>♙</i>Contactos</button>
+   <button id="settingsNav"><i>⚙</i>Ajustes</button>
+  </div>
+ </aside>
+
+ <main class="main">
+  <header class="topbar">
+   <button class="back" id="backBtn">‹</button>
+   <div class="head"><b id="topName">VOBIXCHAT</b><span id="topStatus">Selecciona un contacto</span></div>
+   <button class="dots" id="topSettings">⋮</button>
+  </header>
+
+  <div class="content">
+   <div class="searchbox" id="searchArea">
+    <input id="searchInput" type="search" placeholder="Buscar por nombre o teléfono" autocomplete="off">
+    <button id="searchBtn">Buscar</button>
+   </div>
+   <div class="inviteBox" id="inviteArea">
+    <input id="invitePhone" type="tel" inputmode="tel" placeholder="Número para invitar (+34...)" autocomplete="tel">
+    <button id="copyInviteButton" type="button">Copiar enlace</button>
+    <button id="smsInviteButton" class="smsInvite" type="button">Enviar SMS</button>
+   </div>
+   <div class="error" id="error"></div>
+   <div class="results" id="results"></div>
+
+   <section class="chatHome" id="chatHome" aria-label="Conversaciones">
+    <div class="chatHomeTop"><div><h1>Chats</h1><span id="chatHomeCount">Tus conversaciones privadas</span></div><button id="openChatFinder" type="button" aria-label="Buscar contacto">⌕</button></div>
+    <div class="chatHomeList" id="chatHomeList"></div>
+    <button class="newChatFloat" id="newChatFloat" type="button" aria-label="Nueva conversación">＋</button>
+   </section>
+
+   <section id="emptyState" style="border:1px solid var(--line);border-radius:18px;padding:54px 24px;text-align:center;background:rgba(255,255,255,.025);margin-top:14px">
+    <div class="avatar" style="margin:0 auto 14px">V</div>
+    <h1 style="margin:0 0 8px">VOBIXCHAT</h1>
+    <div style="color:var(--muted)">Selecciona un contacto</div>
+   </section>
+
+   <section class="profile">
+    <div class="hero">
+     <div class="avatar" id="avatar">V</div>
+     <h1 id="name">VOBIXCHAT</h1>
+     <div class="online" id="online">● VOBIXCHAT</div>
+     <div class="phone" id="phone">Selecciona una conversación o busca un usuario</div>
+     <div class="sub" id="userType">Usuario de VobixChat</div>
+     <button id="friendBtn" class="friendBtn" type="button">＋ Agregar amigo</button>
+    </div>
+
+    <div class="stats">
+     <div class="stat"><small>Miembro desde</small><b id="memberSince">—</b></div>
+     <div class="stat"><small>Conversaciones</small><b id="conversationCount">—</b></div>
+     <div class="stat"><small>Conversación</small><b style="color:var(--accent)">Segura</b></div>
+     <div class="stat"><small>Última conexión</small><b id="lastSeen">—</b></div>
+    </div>
+
+    <div class="secure"><div class="lock">♙</div><div><b>Conversación segura</b><p>Los mensajes de esta conversación son privados entre sus participantes.</p></div></div>
+
+    <div class="actions">
+     <button id="callBtn">☎ &nbsp; Llamar</button>
+     <button id="videoBtn">▣ &nbsp; Videollamada</button>
+     <button class="open" id="openBtn">▢ &nbsp; Abrir chat</button>
+    </div>
+   </section>
+
+   <div class="notice"><div><b>🔔 Silenciar notificaciones</b><div style="font-size:12px;color:var(--muted);margin-top:3px">Control de avisos para esta conversación</div></div><div class="switch" id="muteSwitch"></div></div>
+
+   <section class="featureGrid">
+    <div><b>♙ &nbsp; Control de privacidad</b><span>Tú decides con quién hablas</span></div>
+    <div><b>☎ &nbsp; Llamadas seguras</b><span>Audio y vídeo de alta calidad</span></div>
+    <div><b>ϟ &nbsp; Rápido y estable</b><span>Conexión optimizada 24/7</span></div>
+   </section>
+  </div>
+ </main>
+</div>
+
+<nav class="mobileNav">
+ <button id="mobileHistory">◴<span>Historial</span></button>
+ <button id="mobileCalls">☎<span>Llamadas</span></button>
+ <button id="mobileContacts">♙<span>Contactos</span></button>
+ <button id="mobileSettings">⚙<span>Ajustes</span></button>
+</nav>
+
+<div class="mobileHistoryPanel" id="mobileHistoryPanel">
+ <section class="mobileHistorySheet">
+  <div class="mobileHistoryHeader"><h2>Historial</h2><button id="closeMobileHistory" type="button">Cerrar</button></div>
+  <div class="mobileHistoryList" id="mobileHistoryList"></div>
+ </section>
+</div>
+
+<div class="settings" id="settings">
+ <div class="settingsBox">
+  <div id="settingsHome">
+   <h2>Configuración</h2>
+   <p style="color:var(--muted)">Controla tu experiencia en VOBIXCHAT.</p>
+   <button class="settingsMenuButton" id="openSoundSettings">🔔 Sonidos y timbres<small>Llamadas, mensajes enviados y recibidos</small></button>
+   <button class="settingsMenuButton" id="openAppearanceSettings">🎨 Apariencia<small>Colores y aspecto de la aplicación</small></button>
+   <button class="settingsMenuButton" id="openPrivacySettings">🔒 Privacidad<small>Estados, conexión y confirmaciones</small></button>
+   <button class="settingsMenuButton" id="openSecuritySettings">🛡️ Seguridad<small>PIN, huella, bloqueo y dispositivos</small></button>
+   <button class="save" id="openVobixMenu" style="margin-top:10px;background:#183522;color:var(--accent)">Centro Vobix</button>
+   <button class="settingsExit" type="button" data-close-settings>← Salir de configuración</button>
+  </div>
+  <div class="settingsView" id="soundSettingsView">
+   <h2>Sonidos y timbres</h2>
+   <div class="row"><label>Timbre de llamadas</label><select id="appCallTone" class="settingsSelect"><option value="classic">Clásico</option><option value="pulse">Pulse</option><option value="soft">Suave</option></select></div>
+   <div class="row"><label>Mensaje enviado</label><select id="sentMessageTone" class="settingsSelect"><option value="soft">Suave</option><option value="none">Sin sonido</option></select></div>
+   <div class="row"><label>Mensaje recibido</label><select id="receivedMessageTone" class="settingsSelect"><option value="strong">Fuerte</option><option value="pulse">Variable</option><option value="none">Sin sonido</option></select></div>
+   <button class="save" id="saveSoundSettings">Guardar sonidos</button>
+   <button class="settingsMenuButton" data-back-settings>‹ Volver</button>
+   <button class="settingsExit" type="button" data-close-settings>← Salir de configuración</button>
+  </div>
+  <div class="settingsView" id="appearanceSettingsView">
+   <h2>Apariencia</h2>
+   <p style="color:var(--muted)">Personaliza los colores de VOBIXCHAT.</p>
+   <div class="row"><label>Color del fondo</label><input type="color" id="bgColor" value="#1b2520"></div>
+   <div class="row"><label>Color de las letras</label><input type="color" id="textColor" value="#f5fff6"></div>
+   <div class="row"><label>Color principal</label><input type="color" id="accentColor" value="#7cff35"></div>
+   <button class="save" id="saveTheme">Guardar apariencia</button>
+   <button class="settingsMenuButton" data-back-settings>‹ Volver</button>
+   <button class="settingsExit" type="button" data-close-settings>← Salir de configuración</button>
+  </div>
+  <div class="settingsView" id="privacySettingsView">
+   <h2>Privacidad</h2>
+   <div class="row"><label>Foto de perfil</label><select id="profileVisibility" class="settingsSelect"><option value="everyone">Todos</option><option value="contacts">Mis contactos</option><option value="nobody">Nadie</option></select></div>
+   <div class="row"><label>Estados</label><select id="statusVisibility" class="settingsSelect"><option value="contacts">Mis contactos</option><option value="everyone">Todos</option><option value="nobody">Nadie</option></select></div>
+   <div class="row"><label>Última conexión</label><select id="lastSeenVisibility" class="settingsSelect"><option value="contacts">Mis contactos</option><option value="everyone">Todos</option><option value="nobody">Nadie</option></select></div>
+   <div class="row"><label>Confirmaciones de lectura</label><select id="readReceipts" class="settingsSelect"><option value="on">Activadas</option><option value="off">Desactivadas</option></select></div>
+   <div class="row"><label>Modo incógnito</label><select id="incognitoMode" class="settingsSelect"><option value="off">Desactivado</option><option value="on">Activado</option></select></div>
+   <button class="save" id="savePrivacySettings">Guardar privacidad</button>
+   <button class="settingsMenuButton" data-back-settings>‹ Volver</button>
+   <button class="settingsExit" type="button" data-close-settings>← Salir de configuración</button>
+  </div>
+  <div class="settingsView" id="securitySettingsView">
+   <h2>Seguridad de la aplicación</h2>
+   <div class="row"><label>PIN de bloqueo</label><input id="appPin" type="password" inputmode="numeric" maxlength="6" placeholder="6 dígitos"></div>
+   <div class="row"><label>Bloqueo automático</label><select id="autoLockMinutes" class="settingsSelect"><option value="1">1 minuto</option><option value="5">5 minutos</option><option value="15">15 minutos</option><option value="0">Nunca</option></select></div>
+   <div class="row"><label>Huella / rostro</label><select id="biometricUnlock" class="settingsSelect"><option value="on">Activar al crear APK</option><option value="off">Desactivado</option></select></div>
+   <div class="row"><label>Dispositivos vinculados</label><button id="manageDevices" class="settingsMenuButton" type="button">Ver dispositivos</button></div>
+   <button class="save" id="saveSecuritySettings">Guardar seguridad</button>
+   <button class="settingsMenuButton" data-back-settings>‹ Volver</button>
+   <button class="settingsExit" type="button" data-close-settings>← Salir de configuración</button>
+  </div>
+ </div>
+</div>
+
+<script>
+(()=>{
+'use strict';
+const $=id=>document.getElementById(id);
+// El lateral solo contiene marca, nueva conversación y navegación.
+// Se elimina cualquier bloque antiguo que haya quedado de versiones previas.
+document.querySelectorAll('.side .history,.side .me,.side [data-legacy-history],.side .legacyHistory').forEach(node=>node.remove());
+let selectedUser=null, selectedConversationId=null;
+
+function authHeaders(){
+ const h={'Content-Type':'application/json'};
+ const keys=['vobix_token','token','vobixToken','authToken','accessToken'];
+ let token=null;
+ for(const k of keys){token=localStorage.getItem(k)||sessionStorage.getItem(k);if(token)break}
+ if(token)h.Authorization='Bearer '+token;
+ return h;
+}
+
+// Obligatorio: sin sesión verificada no se permite usar el inbox.
+// Esto hace que quien instale la APK tenga que registrarse primero.
+async function requireRegisteredAccount(){
+ try{
+  const response=await fetch('/api/auth/session',{credentials:'include',headers:authHeaders()});
+  if(response.ok)return true;
+ }catch(_){ /* La red no debe permitir saltarse el registro. */ }
+ ['vobix_token','token','vobixToken','authToken','accessToken','vobix_user','user','vobixUser','currentUser'].forEach(key=>{
+   localStorage.removeItem(key);sessionStorage.removeItem(key);
+ });
+ location.replace('/?required=register');
+ return false;
+}
+async function api(url,opt={}){
+ const r=await fetch(url,{credentials:'include',...opt,headers:{...authHeaders(),...(opt.headers||{})}});
+ const d=await r.json().catch(()=>({}));
+ if(!r.ok)throw new Error(d.msg||d.message||`HTTP ${r.status}`);
+ return d;
+}
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const initial=u=>(u?.username||u?.name||'V').trim().charAt(0).toUpperCase();
+function err(m){$('error').textContent=m;$('error').style.display='block';setTimeout(()=>$('error').style.display='none',5000)}
+function other(c){
+  if(c?.otherUser) return c.otherUser;
+  if(c?.other_user) return c.other_user;
+  if(c?.user) return c.user;
+
+  // routes/chat.js devuelve el historial con los datos del otro
+  // participante aplanados (otherUserId, otherUsername, etc.).
+  const id=c?.otherUserId||c?.other_user_id;
+  if(!id) return {};
+
+  return {
+    id,
+    username:c.otherUsername||c.other_username||'',
+    vobix_id:c.otherVobixId||c.other_vobix_id||'',
+    phone:c.otherPhone||c.other_phone||'',
+    avatar_url:c.otherAvatarUrl||c.other_avatar_url||'',
+    online:Boolean(c.online),
+    last_seen:c.lastSeen||c.last_seen||null
+  };
+}
+
+function selectUser(u,cid=null,c=null){
+ selectedUser=u;selectedConversationId=cid;
+ document.body.classList.remove('finding');document.body.classList.add('hasSelectedUser');
+ $('emptyState').style.display='none';
+ document.querySelector('.profile').style.display='block';
+ document.querySelector('.notice').style.display='flex';
+ $('avatar').textContent=initial(u);$('name').textContent=u.username||u.name||'VOBIXCHAT';
+ $('topName').textContent=u.username||u.name||'VOBIXCHAT';
+ $('online').textContent=u.online?'● En línea':'● VOBIXCHAT';
+ $('topStatus').textContent=u.online?'● En línea':'VOBIXCHAT';
+ $('phone').textContent=u.phone||u.vobix_id||'';
+ $('memberSince').textContent=(u.created_at||u.createdAt||'—').toString().slice(0,10);
+ $('conversationCount').textContent=c?.conversationCount||c?.conversations||'1';
+ $('lastSeen').textContent=u.online?'Ahora':((u.last_seen||u.lastSeen||'—').toString().slice(0,16).replace('T',' '));
+ $('friendBtn').textContent='＋ Agregar amigo';$('friendBtn').classList.remove('sent');
+}
+
+async function openPrivateRoom(u,cid=null){
+ try{
+  selectedUser=u;selectedConversationId=cid;
+  const conversationId=await ensureConversation();
+  location.href=`/chat.html?conversationId=${encodeURIComponent(conversationId)}&userId=${encodeURIComponent(u.id)}`;
+ }catch(e){err(e.message)}
+}
+
+function renderHistory(items){
+ const mobileBox=$('mobileHistoryList'),homeBox=$('chatHomeList');mobileBox.innerHTML='';homeBox.innerHTML='';
+ $('chatHomeCount').textContent=items.length?`${items.length} conversación${items.length===1?'':'es'}`:'Empieza una conversación privada';
+ if(!items.length){const empty='<div class="chatHomeEmpty"><b>Aún no tienes conversaciones</b><span>Busca un contacto y abre tu primera sala privada.</span></div>';mobileBox.innerHTML='<div style="color:var(--muted);padding:8px">Todavía no hay conversaciones.</div>';homeBox.innerHTML=empty;return}
+ items.forEach(c=>{
+  const u=other(c);if(!u?.id)return;
+  const open=()=>{openPrivateRoom(u,c.conversationId||c.conversation_id||c.id);$('mobileHistoryPanel').classList.remove('open')};
+  let preview=String(c.lastMessage||c.last_message||u.phone||'');if(preview.startsWith('VOBIX-E2E-1:'))preview='🔒 Mensaje cifrado';
+  const when=c.updatedAt||c.updated_at||c.lastMessageAt||c.last_message_at||'';const time=when?new Date(when).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}):'';
+  const b=document.createElement('button');b.className='conversation';b.type='button';b.innerHTML=`<div class="avatar">${esc(initial(u))}</div><div><b>${esc(u.username||u.name||'VOBIXCHAT')}</b><span>${esc(preview)}</span></div>`;b.onclick=open;mobileBox.appendChild(b);
+  const row=document.createElement('button');row.className='chatHomeRow';row.type='button';const pic=document.createElement('div');pic.className='chatHomeAvatar';pic.textContent=initial(u);const avatarUrl=String(u.avatar_url||'');if(/^(https?:)?\/\//i.test(avatarUrl)||avatarUrl.startsWith('/')){pic.style.backgroundImage=`url("${avatarUrl.replace(/["()]/g,'')}")`;pic.textContent=''};row.innerHTML='<div class="chatHomeInfo"><b>'+esc(u.username||u.name||'VOBIXCHAT')+'</b><span>'+esc(preview)+'</span></div><time>'+esc(time)+'</time>';row.prepend(pic);row.onclick=open;homeBox.appendChild(row);
+ });
+}
+async function loadHistory(){
+ try{
+  let d;try{d=await api('/api/chat/conversations')}catch(_){d=await api('/api/chat/history')}
+  renderHistory(d.conversations||d.history||[])
+ }catch(e){$('mobileHistoryList').innerHTML='<div style="color:#ffb5b5;padding:8px">No se pudo cargar el historial.</div>';err(e.message)}
+}
+async function search(){
+ const q=$('searchInput').value.trim();if(q.length<2)return;
+ try{
+  let d;
+  const endpoints=['/api/chat/users/search?q=','/api/chat/search?q=','/api/users/search?q='];
+  let last;
+  for(const ep of endpoints){try{d=await api(ep+encodeURIComponent(q));break}catch(e){last=e}}
+  if(!d)throw last||new Error('No se pudo buscar');
+  const users=d.users||d.results||d.contacts||[];
+  const r=$('results');r.style.display='block';r.innerHTML='';
+  if(!users.length){r.innerHTML='<div style="padding:10px;color:var(--muted)">No se encontraron usuarios.</div>';return}
+  users.forEach(u=>{const b=document.createElement('button');b.className='result';b.type='button';b.innerHTML=`<div class="avatar">${esc(initial(u))}</div><div><b>${esc(u.username||u.name||'VOBIXCHAT')}</b><div style="color:var(--muted);font-size:12px">${esc(u.phone||u.vobix_id||'')}</div></div>`;b.onclick=()=>{r.style.display='none';openPrivateRoom(u)};r.appendChild(b)})
+ }catch(e){err(e.message)}
+}
+async function ensureConversation(){
+  if(selectedConversationId) return selectedConversationId;
+  if(!selectedUser?.id) throw new Error('Selecciona primero un usuario');
+
+  // Endpoint y cuerpo EXACTOS definidos en routes/chat.js.
+  const d=await api('/api/chat/conversations',{
+    method:'POST',
+    body:JSON.stringify({userId:selectedUser.id})
+  });
+
+  const cid=d?.conversation?.id||d?.conversationId||d?.conversation_id;
+  if(!cid) throw new Error('El servidor no devolvió el ID de la conversación');
+
+  selectedConversationId=cid;
+  return cid;
+}
+$('openBtn').onclick=async()=>{try{const cid=await ensureConversation();location.href=`/chat.html?conversationId=${encodeURIComponent(cid)}&userId=${encodeURIComponent(selectedUser.id)}`}catch(e){err(e.message)}};
+$('callBtn').onclick=async()=>{try{const cid=await ensureConversation();location.href=`/chat.html?conversationId=${encodeURIComponent(cid)}&userId=${encodeURIComponent(selectedUser.id)}&startCall=audio`}catch(e){err(e.message)}};
+$('videoBtn').onclick=async()=>{try{const cid=await ensureConversation();location.href=`/chat.html?conversationId=${encodeURIComponent(cid)}&userId=${encodeURIComponent(selectedUser.id)}&startCall=video`}catch(e){err(e.message)}};
+$('friendBtn').onclick=async()=>{try{
+ if(!selectedUser?.id)throw new Error('Selecciona primero un usuario');
+ const d=await api('/api/friends/request',{method:'POST',body:JSON.stringify({userId:selectedUser.id})});
+ $('friendBtn').textContent=d.alreadyExists?'✓ Ya está conectado':'✓ Solicitud enviada';
+ $('friendBtn').classList.add('sent');
+}catch(e){err(e.message)}};
+$('searchBtn').onclick=search;$('searchInput').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();search()}});
+$('newBtn').onclick=()=>{document.body.classList.remove('hasSelectedUser');document.body.classList.add('finding');$('searchInput').focus();$('searchArea').scrollIntoView({behavior:'smooth'})};
+$('openChatFinder').onclick=$('newChatFloat').onclick=()=>{$('newBtn').click()};
+
+const inviteLink=()=>location.origin+'/';
+$('copyInviteButton').onclick=async()=>{
+ try{
+  const text=`Únete a VOBIXCHAT: ${inviteLink()}`;
+  if(navigator.share){await navigator.share({title:'VOBIXCHAT',text,url:inviteLink()});}
+  else {await navigator.clipboard.writeText(text);err('Enlace copiado. Ya puedes enviarlo por WhatsApp.');}
+ }catch(e){if(e.name!=='AbortError')err('No se pudo copiar el enlace')}
+};
+$('smsInviteButton').onclick=async()=>{
+ const phone=$('invitePhone').value.trim();
+ if(!phone){err('Escribe el número con prefijo de país, por ejemplo +34');return}
+ try{const d=await api('/api/invitations/sms',{method:'POST',body:JSON.stringify({phone})});err(d.message||'Invitación enviada por SMS');$('invitePhone').value=''}catch(e){err(e.message)}
+};
+$('vobixMenuNav').onclick=() => location.href='/vobix-menu.html';
+$('historyNav').onclick=()=>{document.body.classList.remove('hasSelectedUser','finding');window.scrollTo({top:0,behavior:'smooth'})};
+$('contactsNav').onclick=()=>{$('newBtn').click()};
+$('callsNav').onclick=()=>{if(selectedUser)$('callBtn').click();else err('Selecciona primero un contacto')};
+$('backBtn').onclick=()=>{if(document.body.classList.contains('finding')||document.body.classList.contains('hasSelectedUser')){document.body.classList.remove('finding','hasSelectedUser');document.querySelector('.profile').style.display='none';$('emptyState').style.display='none';window.scrollTo({top:0,behavior:'smooth'});return}history.back()};
+$('muteSwitch').onclick=e=>{e.currentTarget.style.opacity=e.currentTarget.style.opacity==='0.35'?'1':'0.35'};
+
+const settings=$('settings');
+const showSettingsView=id=>{
+ ['settingsHome','soundSettingsView','appearanceSettingsView','privacySettingsView','securitySettingsView'].forEach(view=>$((view)).classList.toggle('open',view===id));
+ $('settingsHome').style.display=id==='settingsHome'?'block':'none';
+};
+const openSettings=()=>{settings.classList.add('open');showSettingsView('settingsHome')};
+$('openSoundSettings').onclick=()=>showSettingsView('soundSettingsView');
+$('openAppearanceSettings').onclick=()=>showSettingsView('appearanceSettingsView');
+$('openPrivacySettings').onclick=()=>showSettingsView('privacySettingsView');
+$('openSecuritySettings').onclick=()=>showSettingsView('securitySettingsView');
+document.querySelectorAll('[data-back-settings]').forEach(button=>button.onclick=()=>showSettingsView('settingsHome'));
+document.querySelectorAll('[data-close-settings]').forEach(button=>button.onclick=()=>settings.classList.remove('open'));
+$('mobileHistory').onclick=()=>{$('historyNav').click()};
+$('closeMobileHistory').onclick=()=>$('mobileHistoryPanel').classList.remove('open');
+$('mobileHistoryPanel').onclick=e=>{if(e.target===$('mobileHistoryPanel'))$('mobileHistoryPanel').classList.remove('open')};
+$('mobileCalls').onclick=()=>$('callsNav').click();
+$('mobileContacts').onclick=()=>{
+ selectedUser=null;selectedConversationId=null;document.body.classList.remove('hasSelectedUser');document.body.classList.add('finding');
+ document.querySelector('.profile').style.display='none';$('emptyState').style.display='block';
+ $('searchInput').focus();window.scrollTo({top:0,behavior:'smooth'});
+};
+$('mobileSettings').onclick=openSettings;
+$('openVobixMenu').onclick=() => location.href='/vobix-menu.html';
+$('settingsNav').onclick=openSettings;$('topSettings').onclick=openSettings;
+const theme=JSON.parse(localStorage.getItem('vobixchat_theme')||'{}');
+function apply(t){if(t.bg)document.documentElement.style.setProperty('--bg',t.bg);if(t.text)document.documentElement.style.setProperty('--text',t.text);if(t.accent)document.documentElement.style.setProperty('--accent',t.accent)}
+apply(theme);if(theme.bg)$('bgColor').value=theme.bg;if(theme.text)$('textColor').value=theme.text;if(theme.accent)$('accentColor').value=theme.accent;
+$('saveTheme').onclick=()=>{const t={bg:$('bgColor').value,text:$('textColor').value,accent:$('accentColor').value};localStorage.setItem('vobixchat_theme',JSON.stringify(t));apply(t);settings.classList.remove('open')};
+$('appCallTone').value=localStorage.getItem('vobix_call_tone')||'classic';
+$('sentMessageTone').value=localStorage.getItem('vobix_sent_message_tone')||'soft';
+$('receivedMessageTone').value=localStorage.getItem('vobix_received_message_tone')||'strong';
+$('saveSoundSettings').onclick=()=>{
+ localStorage.setItem('vobix_call_tone',$('appCallTone').value);
+ localStorage.setItem('vobix_sent_message_tone',$('sentMessageTone').value);
+ localStorage.setItem('vobix_received_message_tone',$('receivedMessageTone').value);
+ settings.classList.remove('open');
+};
+const privacyFields=['profileVisibility','statusVisibility','lastSeenVisibility','readReceipts','incognitoMode'];
+privacyFields.forEach(id=>{$(id).value=localStorage.getItem('vobix_privacy_'+id)||$(id).value});
+$('savePrivacySettings').onclick=()=>{privacyFields.forEach(id=>localStorage.setItem('vobix_privacy_'+id,$(id).value));settings.classList.remove('open')};
+$('autoLockMinutes').value=localStorage.getItem('vobix_auto_lock_minutes')||'5';
+$('biometricUnlock').value=localStorage.getItem('vobix_biometric_unlock')||'off';
+$('saveSecuritySettings').onclick=()=>{
+ const pin=$('appPin').value.trim();
+ if(pin && !/^\d{6}$/.test(pin)){err('El PIN debe tener exactamente 6 números');return}
+ // La clave no se muestra ni se reutiliza como contraseña de cuenta.
+ if(pin)localStorage.setItem('vobix_app_pin_pending',pin);
+ localStorage.setItem('vobix_auto_lock_minutes',$('autoLockMinutes').value);
+ localStorage.setItem('vobix_biometric_unlock',$('biometricUnlock').value);
+ settings.classList.remove('open');
+};
+$('manageDevices').onclick=()=>err('La gestión de dispositivos se activará con la seguridad de la cuenta.');
+settings.onclick=e=>{if(e.target===settings)settings.classList.remove('open')};
+(async()=>{if(await requireRegisteredAccount())loadHistory();})();
+})();
+</script>
+  <script src="/vobix-push.js"></script>
+</body>
+</html>
