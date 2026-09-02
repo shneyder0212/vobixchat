@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "849660784688",
+    "project_id": "vobixchat",
+    "storage_bucket": "vobixchat.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:849660784688:android:a1094a7b1ea7a05d033df5",
+        "android_client_info": {
+          "package_name": "com.vobixchat.mobile"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBQPdXbAbRd8arsENShJcnUfR66rHAUEYI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
