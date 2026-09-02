@@ -1,0 +1,53 @@
+VOBIXCHAT - BUILD 01 ESTABILIZACION DEL NUCLEO
+================================================
+
+OBJETIVO DE ESTE BUILD
+- Mantener intacta visualmente la interfaz sagrada de public/index.html.
+- Mantener la ante sala public/inbox.html.
+- Abrir chat privado 1x1 solo al seleccionar un usuario.
+- Unificar eventos principales de Socket.IO entre chat.html y server.js.
+- Guardar sesiones en PostgreSQL para que no se pierdan al reiniciar Render.
+- Mantener un solo Service Worker oficial: public/sw.js.
+- Registrar Web Push desde public/vobix-push.js.
+- Notificar en tiempo real mensajes y archivos.
+- Enviar Push de mensajes desde HTTP y Socket.IO.
+- Añadir compatibilidad inicial de llamadas WebRTC del chat actual.
+- Añadir last_read_at al schema.
+- Conservar PostgreSQL/Supabase como fuente principal.
+
+IMPORTANTE
+1. Sustituye los archivos de tu proyecto por los de este ZIP respetando carpetas.
+2. public/service-worker.js NO se usa en este build. El oficial es public/sw.js.
+3. En Render deben existir DATABASE_URL, VAPID_PUBLIC_KEY y VAPID_PRIVATE_KEY.
+4. VAPID_SUBJECT es opcional.
+5. TEST_PIN_MODE sigue activado para pruebas sin gastar SMS.
+6. Este build NO cambia el diseño visual de index.html.
+
+COMPROBACIONES REALIZADAS
+- server.js: sintaxis Node correcta.
+- routes/chat.js: sintaxis Node correcta.
+- database/schema.js: sintaxis Node correcta.
+- JavaScript interno de index.html: correcto.
+- JavaScript interno de inbox.html: correcto.
+- JavaScript interno de chat.html: correcto.
+
+SIGUIENTE BLOQUE
+- Pantalla real ACEPTAR / RECHAZAR llamada.
+- Llamadas multipersona desde interfaz.
+- Videollamada con cuadro local arrastrable e intercambio grande/pequeño.
+- ClearCall: audio adaptativo, cancelacion de eco/ruido y recuperacion de red.
+- Entregado/leido en tiempo real.
+- Seguridad de archivos/cuarentena para produccion.
+- Language Engine central sin alterar la interfaz sagrada.
+================================================
+ACTUALIZACIÓN FIREBASE / ANDROID
+---------------------------------
+
+Este paquete incluye la carpeta android para VobixChat Android.
+No contiene ninguna clave privada de Firebase.
+
+En Render debe existir la variable secreta:
+FIREBASE_SERVICE_ACCOUNT_JSON
+
+Su valor es el JSON completo de la cuenta de servicio de Firebase.
+No se pega dentro de estos archivos ni se sube al repositorio.
