@@ -158,7 +158,16 @@ app.use(
     path.join(
       __dirname,
       'public'
-    )
+    ),
+    {
+      // Las pantallas HTML cambian con frecuencia durante el desarrollo.
+      // Evita que el navegador siga mostrando una versión vieja de inbox.html.
+      setHeaders(res, filePath) {
+        if (path.extname(filePath).toLowerCase() === '.html') {
+          res.setHeader('Cache-Control', 'no-store, max-age=0');
+        }
+      }
+    }
   )
 );
 
