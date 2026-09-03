@@ -2897,6 +2897,37 @@
       <span class="chatOptionText">Conversaciones</span>
     </button>
 
+    <!-- CAPA 5.1 — Herramientas de esta sala privada. -->
+    <button id="chatInfoButton" class="chatOptionButton" type="button">
+      <span class="chatOptionIcon">ⓘ</span>
+      <span class="chatOptionText">Información del contacto</span>
+    </button>
+
+    <button id="searchInChatButton" class="chatOptionButton" type="button">
+      <span class="chatOptionIcon">⌕</span>
+      <span class="chatOptionText">Buscar en el chat</span>
+    </button>
+
+    <button id="favoriteContactButton" class="chatOptionButton" type="button">
+      <span class="chatOptionIcon">★</span>
+      <span class="chatOptionText">Añadir a favoritos</span>
+    </button>
+
+    <button id="temporaryMessagesButton" class="chatOptionButton" type="button">
+      <span class="chatOptionIcon">◷</span>
+      <span class="chatOptionText">Mensajes temporales</span>
+    </button>
+
+    <button id="chatMediaButton" class="chatOptionButton" type="button">
+      <span class="chatOptionIcon">▣</span>
+      <span class="chatOptionText">Fotos, vídeos y archivos</span>
+    </button>
+
+    <button id="blockContactButton" class="chatOptionButton chatOptionDanger" type="button">
+      <span class="chatOptionIcon">⊘</span>
+      <span class="chatOptionText">Bloquear contacto</span>
+    </button>
+
 
     <button
       id="openProfileButton"
@@ -12174,6 +12205,81 @@
   // La burbuja de escribir queda encima del teclado y de los controles del móvil.
   const appShell = $('vobixApp');
   const messages = $('messages');
+
+  // =====================================================
+  // CAPA 5.1 — MENÚ DEL CHAT: acciones de la sala privada
+  // =====================================================
+  const closeChatOptions = () => $('chatOptionsMenu')?.classList.remove('open');
+  const currentPeerId = () => peerId || sessionStorage.getItem('vobix_selected_peer_id') || '';
+
+  $('chatInfoButton')?.addEventListener('click', () => {
+    closeChatOptions();
+    alert(peerName ? `Contacto: ${peerName}\nSala privada 1×1.` : 'Sala privada 1×1.');
+  });
+
+  $('searchInChatButton')?.addEventListener('click', () => {
+    closeChatOptions();
+    const query = (prompt('Buscar texto en esta conversación:') || '').trim().toLocaleLowerCase();
+    if (!query || !messages) return;
+    const rows = Array.from(messages.querySelectorAll('.message, .messageBubble, [data-message-id]'));
+    const match = rows.find(row => (row.textContent || '').toLocaleLowerCase().includes(query));
+    if (!match) return alert('No se encontró ese texto en los mensajes cargados.');
+    match.scrollIntoView({behavior:'smooth', block:'center'});
+    match.classList.add('vobixSearchMatch');
+    setTimeout(() => match.classList.remove('vobixSearchMatch'), 2200);
+  });
+
+  $('favoriteContactButton')?.addEventListener('click', async () => {
+    closeChatOptions();
+    const userId = currentPeerId();
+    if (!userId) return alert('No se pudo identificar el contacto de esta sala.');
+    try {
+      const response = await fetch(`/api/chat/contacts/${encodeURIComponent(userId)}/favorite`, {
+        method:'PATCH', headers:authHeaders(), body:JSON.stringify({favorite:true})
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || data?.ok === false) throw new Error(data?.msg || 'No se pudo añadir a favoritos');
+      alert('Contacto añadido a favoritos.');
+    } catch (error) { alert(error.message || 'No se pudo añadir a favoritos.'); }
+  });
+
+  $('temporaryMessagesButton')?.addEventListener('click', async () => {
+    closeChatOptions();
+    if (!conversationId) return alert('Abre primero un chat privado.');
+    const selected = prompt('Elige duración: 0 = desactivados, 1 = 24 horas, 2 = 7 días, 3 = 30 días, 4 = 90 días', '0');
+    const durations = {'0':0, '1':86400, '2':604800, '3':2592000, '4':7776000};
+    if (!(selected in durations)) return;
+    try {
+      const response = await fetch(`/api/chat/conversations/${encodeURIComponent(conversationId)}/disappearing`, {
+        method:'POST', headers:authHeaders(), body:JSON.stringify({seconds:durations[selected]})
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || data?.ok === false) throw new Error(data?.msg || 'No se pudo actualizar');
+      alert(durations[selected] ? 'Mensajes temporales configurados.' : 'Mensajes temporales desactivados.');
+    } catch (error) { alert(error.message || 'No se pudo actualizar la configuración.'); }
+  });
+
+  $('chatMediaButton')?.addEventListener('click', () => {
+    closeChatOptions();
+    const attached = messages?.querySelectorAll('img, video, audio, a[href*="/uploads/"]').length || 0;
+    alert(`Hay ${attached} archivo${attached === 1 ? '' : 's'} visible${attached === 1 ? '' : 's'} en los mensajes cargados. La galería completa llegará en la siguiente capa.`);
+  });
+
+  $('blockContactButton')?.addEventListener('click', async () => {
+    closeChatOptions();
+    const userId = currentPeerId();
+    if (!userId) return alert('No se pudo identificar el contacto de esta sala.');
+    if (!confirm(`¿Bloquear a ${peerName || 'este contacto'}? No podrá enviarte nuevos mensajes.`)) return;
+    try {
+      const response = await fetch('/api/chat/blocks', {
+        method:'POST', headers:authHeaders(), body:JSON.stringify({blockedUserId:userId})
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || data?.ok === false) throw new Error(data?.msg || 'No se pudo bloquear el contacto');
+      alert('Contacto bloqueado.');
+      goBack();
+    } catch (error) { alert(error.message || 'No se pudo bloquear el contacto.'); }
+  });
 
   const fitMobileKeyboard = () => {
     if (!window.visualViewport || !appShell) return;
