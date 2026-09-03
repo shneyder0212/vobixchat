@@ -96,11 +96,40 @@ body{background:radial-gradient(circle at 62% 12%,rgba(116,173,76,.14),transpare
 @media(max-width:760px){html,body{width:100%;height:100%;max-width:100%;overflow:hidden;overscroll-behavior:none;touch-action:pan-y}body{position:fixed;inset:0}.shell{width:100%;max-width:100%;height:100%;min-height:0;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;padding-bottom:70px}.main,.content,.profile,.searchbox,.inviteBox,.notice{min-width:0;max-width:100%}.mobileNav{position:fixed;left:0;right:0;bottom:0;width:100%;height:70px;padding-bottom:0}.mobileHistoryPanel{overscroll-behavior:contain}}
 /* Inicio móvil: lista de conversaciones de lectura rápida, con identidad Vobix propia. */
 .chatHome{display:none}.chatHomeTop{display:flex;align-items:center;justify-content:space-between}.chatHomeTop h1{margin:0;font-size:26px}.chatHomeTop span{display:block;margin-top:3px;color:var(--muted);font-size:12px}.chatHomeTop button{border:0;border-radius:50%;width:44px;height:44px;background:#dce9d5;color:#286d28;font-size:28px;font-weight:900}.chatHomeList{margin-top:15px}.chatHomeRow{width:100%;min-height:76px;display:flex;align-items:center;gap:12px;border:0;border-bottom:1px solid rgba(74,130,48,.16);padding:10px 4px;background:transparent;color:#173624;text-align:left}.chatHomeRow:active{background:#e4eedf}.chatHomeAvatar{width:54px;height:54px;min-width:54px;border-radius:50%;display:grid;place-items:center;background:#dce9d5;background-position:center;background-size:cover;color:#348330;font-size:21px;font-weight:900;border:1px solid rgba(74,130,48,.30)}.chatHomeInfo{min-width:0;flex:1}.chatHomeInfo b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:16px}.chatHomeInfo span{display:block;margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#657066;font-size:13px}.chatHomeRow time{align-self:flex-start;padding-top:4px;color:#5c9e44;font-size:11px;white-space:nowrap}.chatHomeEmpty{min-height:190px;display:grid;place-content:center;gap:7px;text-align:center;color:#5f695f}.chatHomeEmpty span{font-size:13px}.newChatFloat{position:absolute;right:18px;bottom:90px;z-index:5;width:58px;height:58px;border:0;border-radius:18px;background:linear-gradient(180deg,#6fbd42,#4b9828);color:#fff;font-size:33px;font-weight:500;box-shadow:0 10px 24px rgba(45,106,36,.34)}
+.agendaPanel{display:none}.agendaPanel:not([hidden]){display:block}
 @media(max-width:760px){.content{position:relative;padding:14px 14px 24px}.chatHome{display:block}.profile,.notice,#emptyState{display:none!important}body:not(.finding):not(.hasSelectedUser) .searchbox,body:not(.finding):not(.hasSelectedUser) .inviteBox{display:none}body.finding .chatHome{display:none}body.finding .searchbox,body.finding .inviteBox{display:flex}body.hasSelectedUser .chatHome{display:none}.topbar{height:70px!important}.head b{font-size:19px!important}.head:has(#topName){} .mobileNav{height:72px;grid-template-columns:repeat(4,minmax(0,1fr));padding:0 3px}.mobileNav button{min-width:0;font-size:18px}.mobileNav span{font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}.newChatFloat{position:fixed;right:18px;bottom:88px}.chatHomeRow{min-height:78px}.chatHomeAvatar{width:56px;height:56px;min-width:56px}.chatHomeInfo b{font-size:17px}}
 /* Contraste en pantallas oscuras y fotos reales en el historial móvil. */
 .chatHomeTop h1,.chatHomeInfo b{color:#f7f4ed}.chatHomeTop span,.chatHomeInfo span{color:#c5cec4}.chatHomeRow{color:#f7f4ed;border-bottom-color:rgba(226,236,220,.18)}.chatHomeRow time{color:#a7e583}.chatHomeEmpty{color:#d1d9cf}.chatHomeAvatar{overflow:hidden;border-color:rgba(150,210,121,.55)}.chatHomeAvatar img{display:block;width:100%;height:100%;object-fit:cover}.settingsView h2,.settingsView label{color:#173624}
 /* Tipografía clara y parecida al diseño aprobado. */
 body,button,input{font-family:Roboto,Arial,sans-serif}.head b{color:#6fbd42!important;font-size:22px!important;font-weight:800;letter-spacing:.025em}.chatHomeInfo b{font-weight:700;letter-spacing:0;font-size:17px}.chatHomeInfo span{font-size:14px}.mobileNav span{font-weight:600;color:#f7f4ed!important}
+/* Reserva fija para los paneles del teléfono: no se superponen a Vobix. */
+@media(max-width:760px){.topbar{height:102px!important;padding-top:30px}.shell{padding-bottom:140px!important}.mobileNav{bottom:42px!important}.newChatFloat{bottom:164px!important}}
+/* Menú burbuja Vobix: compacto, accesible y con apertura suave hacia arriba. */
+.vobixBubbleShell{display:none}
+@media(max-width:760px){
+ .mobileNav,.newChatFloat{display:none!important}
+ .shell{padding-bottom:120px!important}
+ .vobixBubbleShell{position:fixed;z-index:80;right:16px;bottom:max(42px,calc(env(safe-area-inset-bottom) + 12px));display:flex;flex-direction:column;align-items:flex-end;gap:10px}
+ .vobixBubblePanel{display:grid;gap:9px;max-height:calc(100dvh - 142px);overflow-y:auto;padding:2px;opacity:0;pointer-events:none;transform:translateY(16px) scale(.94);transform-origin:bottom right;transition:opacity .22s ease,transform .24s cubic-bezier(.2,.9,.2,1)}
+ .vobixBubbleShell.open .vobixBubblePanel{opacity:1;pointer-events:auto;transform:translateY(0) scale(1)}
+ .vobixBubbleItem{min-height:46px;display:flex;align-items:center;gap:10px;padding:0 16px 0 12px;border:1px solid rgba(188,231,165,.38);border-radius:24px;background:rgba(47,52,47,.98);color:#fffdf7;font-weight:800;box-shadow:0 9px 22px rgba(0,0,0,.27);backdrop-filter:blur(14px)}
+ .vobixBubbleItem i{width:28px;height:28px;display:grid;place-items:center;border-radius:50%;background:#dcefd0;color:#327827;font-style:normal;font-size:16px}
+ .vobixBubbleTrigger{width:64px;height:64px;display:grid;place-items:center;border:0;border-radius:50%;background:linear-gradient(180deg,#6fbd42,#4b9828);color:#fff;font-size:27px;box-shadow:0 12px 28px rgba(54,118,39,.48);transition:transform .22s ease,background .22s ease}
+ .vobixBubbleTrigger:active{transform:scale(.94)}
+ .vobixBubbleShell.open .vobixBubbleTrigger{transform:rotate(45deg);background:#3b4a3a}
+}
+/* Diseño moderno Vobix: alto contraste y verde de marca, sin paneles crema. */
+:root{--bg:#101612;--bg2:#0a0f0c;--panel:#18211b;--panel2:#243026;--text:#f6faf4;--muted:#b8c4ba;--accent:#78df51;--line:rgba(213,246,204,.12)}
+body{background:radial-gradient(circle at 12% 7%,rgba(120,223,81,.13),transparent 29%),radial-gradient(circle at 89% 86%,rgba(56,123,78,.11),transparent 28%),#101612}
+.topbar{background:rgba(18,26,21,.96)!important}.head b{color:#9aec72!important}.head span{color:#b8c7ba!important}
+.searchbox input,.inviteBox input{background:#202a23!important;color:#f6faf4!important;border-color:rgba(222,244,216,.14)!important}.searchbox input::placeholder,.inviteBox input::placeholder{color:#aab8ac}
+.inviteBox{background:#18211b!important;border-color:rgba(222,244,216,.12)!important}.inviteBox button{background:#28362c!important;color:#a7ea7f!important}
+.chatHomeAvatar{background:#263229!important;color:#9aec72!important}.chatHomeRow:active{background:#1e2a21!important}.chatHomeTop button{background:#27352b!important;color:#9aec72!important}
+.mobileHistorySheet,.settingsBox{background:#18211b!important;color:#f6faf4!important}.settingsView h2,.settingsView label{color:#f6faf4!important}.settingsMenuButton{background:#243026!important;color:#f6faf4!important;border-color:rgba(222,244,216,.12)!important}.settingsSelect,.settingsExit{background:#202a23!important;color:#f6faf4!important;border-color:rgba(222,244,216,.14)!important}
+html[data-vobix-font="large"] .chatHomeInfo b{font-size:20px}html[data-vobix-font="large"] .chatHomeInfo span,html[data-vobix-font="large"] .mobileNav span{font-size:15px}html[data-vobix-font="large"] .head b{font-size:24px!important}
+html[data-vobix-font="xlarge"] .chatHomeInfo b{font-size:23px}html[data-vobix-font="xlarge"] .chatHomeInfo span{font-size:17px}html[data-vobix-font="xlarge"] .head b{font-size:26px!important}html[data-vobix-font="xlarge"] .chatHomeRow{min-height:92px}
+html[data-vobix-controls="large"] .vobixBubbleTrigger{width:72px;height:72px}html[data-vobix-controls="large"] .vobixBubbleItem{min-height:54px;font-size:17px}html[data-vobix-controls="large"] .chatHomeTop button{width:52px;height:52px}
+.qrSharePanel{position:fixed;z-index:160;inset:0;display:grid;place-items:center;padding:20px;background:rgba(0,0,0,.67)}.qrSharePanel[hidden]{display:none}.qrShareCard{position:relative;width:min(360px,100%);padding:26px;border:1px solid rgba(213,246,204,.20);border-radius:24px;background:#18211b;color:#f6faf4;text-align:center;box-shadow:0 24px 70px rgba(0,0,0,.45)}.qrShareCard h2{margin:0 0 8px;color:#9aec72}.qrShareCard p{margin:0 0 18px;color:#b8c7ba}.qrShareCard img{display:block;width:240px;height:240px;max-width:100%;margin:0 auto 18px;padding:10px;border-radius:14px;background:#fff}.qrShareCard>button:first-child{position:absolute;top:10px;right:12px;border:0;background:transparent;color:#fff;font-size:27px}
 </style>
 </head>
 <body>
@@ -141,6 +170,11 @@ body,button,input{font-family:Roboto,Arial,sans-serif}.head b{color:#6fbd42!impo
     <div class="chatHomeTop"><div><h1>Chats</h1><span id="chatHomeCount">Tus conversaciones privadas</span></div><button id="openChatFinder" type="button" aria-label="Buscar contacto">⌕</button></div>
     <div class="chatHomeList" id="chatHomeList"></div>
     <button class="newChatFloat" id="newChatFloat" type="button" aria-label="Nueva conversación">＋</button>
+   </section>
+
+   <section class="agendaPanel" id="agendaPanel" hidden aria-label="Agenda Vobix">
+    <div class="chatHomeTop"><div><h1>Agenda Vobix</h1><span>Contactos guardados en VOBIXCHAT</span></div><button id="closeAgenda" type="button" aria-label="Cerrar agenda">×</button></div>
+    <div class="chatHomeList" id="agendaContactList"></div>
    </section>
 
    <section id="emptyState" style="border:1px solid var(--line);border-radius:18px;padding:54px 24px;text-align:center;background:rgba(255,255,255,.025);margin-top:14px">
@@ -193,6 +227,32 @@ body,button,input{font-family:Roboto,Arial,sans-serif}.head b{color:#6fbd42!impo
  <button id="mobileSettings">⚙<span>Ajustes</span></button>
 </nav>
 
+<div class="vobixBubbleShell" id="vobixBubbleShell" aria-label="Menú principal">
+ <div class="vobixBubblePanel" id="vobixBubblePanel">
+  <button class="vobixBubbleItem" id="bubbleCentro" type="button"><i>◈</i>Centro Vobix</button>
+  <button class="vobixBubbleItem" id="bubbleSettings" type="button"><i>⚙</i>Ajustes</button>
+  <button class="vobixBubbleItem" id="bubbleAccessibility" type="button"><i>👁</i>Accesibilidad</button>
+  <button class="vobixBubbleItem" id="bubblePrivacy" type="button"><i>🔒</i>Privacidad</button>
+  <button class="vobixBubbleItem" id="bubbleInvite" type="button"><i>↗</i>Invitar persona</button>
+  <button class="vobixBubbleItem" id="bubbleQr" type="button"><i>▣</i>Mi código QR</button>
+  <button class="vobixBubbleItem" id="bubbleCalls" type="button"><i>☎</i>Llamadas</button>
+  <button class="vobixBubbleItem" id="bubbleContacts" type="button"><i>♙</i>Contactos</button>
+  <button class="vobixBubbleItem" id="bubbleChats" type="button"><i>＋</i>Nuevo chat</button>
+ </div>
+ <button class="vobixBubbleTrigger" id="vobixBubbleTrigger" type="button" aria-label="Abrir menú">☰</button>
+</div>
+
+<div class="qrSharePanel" id="qrSharePanel" hidden>
+ <section class="qrShareCard">
+  <button id="closeQrShare" type="button" aria-label="Cerrar">×</button>
+  <h2>Invita con QR</h2><p>Escanea para abrir VOBIXCHAT y registrarte.</p>
+  <img id="qrShareImage" alt="Código QR de VOBIXCHAT">
+  <button id="shareQrLink" class="save" type="button">Compartir enlace</button>
+  <button id="scanQrButton" class="settingsMenuButton" type="button">📷 Escanear QR de otra persona</button>
+  <input id="scanQrInput" type="file" accept="image/*" capture="environment" hidden>
+ </section>
+</div>
+
 <div class="mobileHistoryPanel" id="mobileHistoryPanel">
  <section class="mobileHistorySheet">
   <div class="mobileHistoryHeader"><h2>Historial</h2><button id="closeMobileHistory" type="button">Cerrar</button></div>
@@ -205,10 +265,14 @@ body,button,input{font-family:Roboto,Arial,sans-serif}.head b{color:#6fbd42!impo
   <div id="settingsHome">
    <h2>Configuración</h2>
    <p style="color:var(--muted)">Controla tu experiencia en VOBIXCHAT.</p>
-   <button class="settingsMenuButton" id="openSoundSettings">🔔 Sonidos y timbres<small>Llamadas, mensajes enviados y recibidos</small></button>
-   <button class="settingsMenuButton" id="openAppearanceSettings">🎨 Apariencia<small>Colores y aspecto de la aplicación</small></button>
-   <button class="settingsMenuButton" id="openPrivacySettings">🔒 Privacidad<small>Estados, conexión y confirmaciones</small></button>
-   <button class="settingsMenuButton" id="openSecuritySettings">🛡️ Seguridad<small>PIN, huella, bloqueo y dispositivos</small></button>
+   <button class="settingsMenuButton" id="openSoundSettings">🔔 Capa 2.1.3 · Sonidos y timbres<small>Llamadas, mensajes enviados y recibidos</small></button>
+   <button class="settingsMenuButton" id="openAppearanceSettings">🎨 Capa 1.2 · Apariencia<small>Colores y aspecto de la aplicación</small></button>
+   <button class="settingsMenuButton" id="openPrivacySettings">🔒 Capa 4.1 · Privacidad<small>Estados, conexión y confirmaciones</small></button>
+   <button class="settingsMenuButton" id="openSecuritySettings">🛡️ Capa 4.2 · Seguridad<small>PIN, huella, bloqueo y dispositivos</small></button>
+   <button class="settingsMenuButton" id="openAccessibilitySettings">👁️ Capa 1.3 · Accesibilidad<small>Letra grande, controles amplios y modo señas</small></button>
+   <button class="settingsMenuButton" id="openStorageSettings">💾 Capa 4.3 · Almacenamiento y datos<small>Descargas, Wi‑Fi, datos móviles y uso de red</small></button>
+   <button class="settingsMenuButton" id="openUpdatesSettings">⬆️ Capa 4.4 · Actualizaciones<small>Versión, novedades y actualizaciones por Wi‑Fi</small></button>
+   <button class="settingsMenuButton" id="openPremiumSettings">★ Capa 4.5 · Vobix Premium<small>Beneficios personales y para empresas</small></button>
    <button class="save" id="openVobixMenu" style="margin-top:10px;background:#183522;color:var(--accent)">Centro Vobix</button>
    <button class="settingsExit" type="button" data-close-settings>← Salir de configuración</button>
   </div>
@@ -238,6 +302,7 @@ body,button,input{font-family:Roboto,Arial,sans-serif}.head b{color:#6fbd42!impo
    <div class="row"><label>Última conexión</label><select id="lastSeenVisibility" class="settingsSelect"><option value="contacts">Mis contactos</option><option value="everyone">Todos</option><option value="nobody">Nadie</option></select></div>
    <div class="row"><label>Confirmaciones de lectura</label><select id="readReceipts" class="settingsSelect"><option value="on">Activadas</option><option value="off">Desactivadas</option></select></div>
    <div class="row"><label>Modo incógnito</label><select id="incognitoMode" class="settingsSelect"><option value="off">Desactivado</option><option value="on">Activado</option></select></div>
+   <p style="color:var(--muted);font-size:13px;margin:12px 0 0"><b>Capa 4.6 · Mensajes temporales</b> — preparada. Se activará solo después de comprobar la caducidad real de mensajes y archivos.</p>
    <button class="save" id="savePrivacySettings">Guardar privacidad</button>
    <button class="settingsMenuButton" data-back-settings>‹ Volver</button>
    <button class="settingsExit" type="button" data-close-settings>← Salir de configuración</button>
@@ -251,6 +316,33 @@ body,button,input{font-family:Roboto,Arial,sans-serif}.head b{color:#6fbd42!impo
    <button class="save" id="saveSecuritySettings">Guardar seguridad</button>
    <button class="settingsMenuButton" data-back-settings>‹ Volver</button>
    <button class="settingsExit" type="button" data-close-settings>← Salir de configuración</button>
+  </div>
+  <div class="settingsView" id="accessibilitySettingsView">
+   <h2>Accesibilidad</h2>
+   <p style="color:var(--muted)">Ajusta VOBIXCHAT para ver y tocar mejor.</p>
+   <div class="row"><label>Tamaño de letra</label><select id="accessFontSize" class="settingsSelect"><option value="normal">Normal</option><option value="large">Grande</option><option value="xlarge">Extra grande</option></select></div>
+   <div class="row"><label>Tamaño de controles</label><select id="accessControlSize" class="settingsSelect"><option value="normal">Normal</option><option value="large">Grande</option></select></div>
+   <div class="row"><label>Videollamada de señas</label><select id="signVideoMode" class="settingsSelect"><option value="off">Desactivado</option><option value="on">Activar modo señas</option></select></div>
+   <button class="save" id="saveAccessibilitySettings">Guardar accesibilidad</button>
+   <button class="settingsMenuButton" data-back-settings>‹ Volver</button>
+   <button class="settingsExit" type="button" data-close-settings>← Salir de configuración</button>
+  </div>
+  <div class="settingsView" id="storageSettingsView">
+   <h2>Almacenamiento y datos</h2>
+   <div class="row"><label>Descargar fotos</label><select id="downloadPhotos" class="settingsSelect"><option value="wifi">Solo Wi‑Fi</option><option value="always">Wi‑Fi y datos móviles</option><option value="never">Nunca automáticamente</option></select></div>
+   <div class="row"><label>Descargar vídeos</label><select id="downloadVideos" class="settingsSelect"><option value="wifi">Solo Wi‑Fi</option><option value="always">Wi‑Fi y datos móviles</option><option value="never">Nunca automáticamente</option></select></div>
+   <div class="row"><label>Ahorro de datos en llamadas</label><select id="callDataSaver" class="settingsSelect"><option value="on">Activado</option><option value="off">Desactivado</option></select></div>
+   <button class="save" id="saveStorageSettings">Guardar datos y descargas</button><button class="settingsMenuButton" data-back-settings>‹ Volver</button>
+  </div>
+  <div class="settingsView" id="updatesSettingsView">
+   <h2>Actualizaciones</h2><p style="color:var(--muted)">VOBIXCHAT recibe las mejoras web al abrirse. La APK se actualiza con una versión nueva firmada.</p>
+   <div class="row"><label>Actualizar solo con Wi‑Fi</label><select id="updatesWifiOnly" class="settingsSelect"><option value="on">Activado</option><option value="off">Desactivado</option></select></div>
+   <button class="save" id="saveUpdateSettings">Guardar</button><button class="settingsMenuButton" data-back-settings>‹ Volver</button>
+  </div>
+  <div class="settingsView" id="premiumSettingsView">
+   <h2>Vobix Premium</h2><p style="color:var(--muted)">Beneficios: más almacenamiento, vídeo avanzado, comunidades y herramientas profesionales.</p>
+   <button class="settingsMenuButton" type="button">Plan Gratis<small>Mensajes, llamadas y videollamadas básicas</small></button>
+   <button class="settingsMenuButton" type="button">Plan Premium<small>Se activará cuando configures el cobro seguro</small></button><button class="settingsMenuButton" data-back-settings>‹ Volver</button>
   </div>
  </div>
 </div>
@@ -295,6 +387,18 @@ async function api(url,opt={}){
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const initial=u=>(u?.username||u?.name||'V').trim().charAt(0).toUpperCase();
 function err(m){$('error').textContent=m;$('error').style.display='block';setTimeout(()=>$('error').style.display='none',5000)}
+async function showAgenda(){
+ const panel=$('agendaPanel'),list=$('agendaContactList');
+ document.body.classList.remove('finding','hasSelectedUser');
+ $('chatHome').style.display='none';panel.hidden=false;list.innerHTML='<div class="chatHomeEmpty"><span>Cargando agenda…</span></div>';
+ try{
+  const data=await api('/api/chat/contacts');const contacts=Array.isArray(data.contacts)?data.contacts:[];
+  if(!contacts.length){list.innerHTML='<div class="chatHomeEmpty"><b>Tu agenda está vacía</b><span>Busca una persona, ábrela y guárdala como contacto.</span></div>';return}
+  list.innerHTML='';contacts.forEach(contact=>{const wrap=document.createElement('div');wrap.style.cssText='display:flex;align-items:center;gap:7px';const row=document.createElement('button');row.className='chatHomeRow';row.type='button';row.style.flex='1';const name=contact.alias||contact.username||'Contacto';row.innerHTML='<div class="chatHomeAvatar">'+esc(name.charAt(0).toUpperCase())+'</div><div class="chatHomeInfo"><b>'+esc(name)+(contact.is_favorite?' ★':'')+'</b><span>'+esc(contact.phone||contact.vobix_id||'Contacto Vobix')+'</span></div>';row.onclick=()=>openPrivateRoom(contact);const favorite=document.createElement('button');favorite.type='button';favorite.setAttribute('aria-label',contact.is_favorite?'Quitar de favoritos':'Añadir a favoritos');favorite.textContent=contact.is_favorite?'★':'☆';favorite.style.cssText='border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:#28362c;color:var(--accent);font-size:21px;line-height:1';favorite.onclick=async()=>{try{await api('/api/chat/contacts/'+encodeURIComponent(contact.id)+'/favorite',{method:'PATCH',body:JSON.stringify({favorite:!contact.is_favorite})});showAgenda()}catch(error){err(error.message)}};wrap.append(row,favorite);list.appendChild(wrap)});
+ }catch(error){list.innerHTML='<div class="chatHomeEmpty"><b>No se pudo abrir la agenda</b><span>'+esc(error.message)+'</span></div>'}
+}
+function closeAgenda(){ $('agendaPanel').hidden=true;$('chatHome').style.display='block'; }
+$('closeAgenda').onclick=closeAgenda;
 function other(c){
   const normalize=u=>u?{...u,avatar_url:u.avatar_url||u.avatarUrl||u.avatar||u.photo_url||u.photoUrl||u.profile_photo_url||u.profilePhotoUrl||''}:null;
   if(c?.otherUser) return normalize(c.otherUser);
@@ -426,7 +530,7 @@ $('muteSwitch').onclick=e=>{e.currentTarget.style.opacity=e.currentTarget.style.
 
 const settings=$('settings');
 const showSettingsView=id=>{
- ['settingsHome','soundSettingsView','appearanceSettingsView','privacySettingsView','securitySettingsView'].forEach(view=>$((view)).classList.toggle('open',view===id));
+ ['settingsHome','soundSettingsView','appearanceSettingsView','privacySettingsView','securitySettingsView','accessibilitySettingsView','storageSettingsView','updatesSettingsView','premiumSettingsView'].forEach(view=>$((view)).classList.toggle('open',view===id));
  $('settingsHome').style.display=id==='settingsHome'?'block':'none';
 };
 const openSettings=()=>{settings.classList.add('open');showSettingsView('settingsHome')};
@@ -434,6 +538,10 @@ $('openSoundSettings').onclick=()=>showSettingsView('soundSettingsView');
 $('openAppearanceSettings').onclick=()=>showSettingsView('appearanceSettingsView');
 $('openPrivacySettings').onclick=()=>showSettingsView('privacySettingsView');
 $('openSecuritySettings').onclick=()=>showSettingsView('securitySettingsView');
+$('openAccessibilitySettings').onclick=()=>showSettingsView('accessibilitySettingsView');
+$('openStorageSettings').onclick=()=>showSettingsView('storageSettingsView');
+$('openUpdatesSettings').onclick=()=>showSettingsView('updatesSettingsView');
+$('openPremiumSettings').onclick=()=>showSettingsView('premiumSettingsView');
 document.querySelectorAll('[data-back-settings]').forEach(button=>button.onclick=()=>showSettingsView('settingsHome'));
 document.querySelectorAll('[data-close-settings]').forEach(button=>button.onclick=()=>settings.classList.remove('open'));
 $('mobileHistory').onclick=()=>{$('historyNav').click()};
@@ -441,13 +549,31 @@ $('closeMobileHistory').onclick=()=>$('mobileHistoryPanel').classList.remove('op
 $('mobileHistoryPanel').onclick=e=>{if(e.target===$('mobileHistoryPanel'))$('mobileHistoryPanel').classList.remove('open')};
 $('mobileCalls').onclick=()=>$('callsNav').click();
 $('mobileContacts').onclick=()=>{
- selectedUser=null;selectedConversationId=null;document.body.classList.remove('hasSelectedUser');document.body.classList.add('finding');
- document.querySelector('.profile').style.display='none';$('emptyState').style.display='block';
- $('searchInput').focus();window.scrollTo({top:0,behavior:'smooth'});
+ showAgenda();
 };
 $('mobileSettings').onclick=openSettings;
 $('openVobixMenu').onclick=() => location.href='/vobix-menu.html';
 $('settingsNav').onclick=openSettings;$('topSettings').onclick=openSettings;
+// Menú burbuja móvil: una sola mano, animación suave y nunca debajo
+// de la navegación del teléfono.
+const bubbleShell=$('vobixBubbleShell');
+const closeBubble=()=>bubbleShell?.classList.remove('open');
+$('vobixBubbleTrigger')?.addEventListener('click',()=>bubbleShell?.classList.toggle('open'));
+$('bubbleCentro')?.addEventListener('click',()=>location.href='/vobix-menu.html');
+$('bubbleSettings')?.addEventListener('click',()=>{closeBubble();openSettings()});
+$('bubbleAccessibility')?.addEventListener('click',()=>{closeBubble();openSettings();showSettingsView('accessibilitySettingsView')});
+$('bubblePrivacy')?.addEventListener('click',()=>{closeBubble();openSettings();showSettingsView('privacySettingsView')});
+$('bubbleInvite')?.addEventListener('click',()=>{closeBubble();document.body.classList.remove('hasSelectedUser');document.body.classList.add('finding');$('invitePhone').focus();window.scrollTo({top:0,behavior:'smooth'})});
+$('bubbleQr')?.addEventListener('click',()=>{
+ closeBubble();const link=location.origin+'/?from=qr';$('qrShareImage').src='https://api.qrserver.com/v1/create-qr-code/?size=300x300&data='+encodeURIComponent(link);$('qrSharePanel').hidden=false;
+});
+$('closeQrShare').onclick=()=>$('qrSharePanel').hidden=true;
+$('shareQrLink').onclick=async()=>{const link=location.origin+'/?from=qr';try{if(navigator.share)await navigator.share({title:'VOBIXCHAT',text:'Únete a VOBIXCHAT',url:link});else{await navigator.clipboard.writeText(link);err('Enlace copiado para compartir')}}catch(_){/* el usuario cerró el diálogo */}};
+$('scanQrButton').onclick=()=>$('scanQrInput').click();
+$('scanQrInput').onchange=async event=>{const file=event.target.files?.[0];if(!file)return;try{if(!('BarcodeDetector' in window))throw new Error('Este móvil no puede leer QR desde una foto todavía');const detector=new BarcodeDetector({formats:['qr_code']});const codes=await detector.detect(await createImageBitmap(file));const value=codes[0]?.rawValue;if(!value)throw new Error('No se encontró un QR válido');const scanned=new URL(value);const allowedHosts=new Set([location.hostname,'vobixchat.onrender.com']);if(scanned.protocol!=='https:'||!allowedHosts.has(scanned.hostname))throw new Error('Este QR no es de VOBIXCHAT');location.href=location.origin+'/?from=qr'}catch(error){err(error.message)}finally{event.target.value=''}};
+$('bubbleCalls')?.addEventListener('click',()=>{closeBubble();$('callsNav').click()});
+$('bubbleContacts')?.addEventListener('click',()=>{closeBubble();showAgenda()});
+$('bubbleChats')?.addEventListener('click',()=>{closeBubble();$('newBtn').click()});
 const theme=JSON.parse(localStorage.getItem('vobixchat_theme')||'{}');
 function apply(t){if(t.bg)document.documentElement.style.setProperty('--bg',t.bg);if(t.text)document.documentElement.style.setProperty('--text',t.text);if(t.accent)document.documentElement.style.setProperty('--accent',t.accent)}
 apply(theme);if(theme.bg)$('bgColor').value=theme.bg;if(theme.text)$('textColor').value=theme.text;if(theme.accent)$('accentColor').value=theme.accent;
@@ -474,6 +600,20 @@ $('saveSecuritySettings').onclick=()=>{
  localStorage.setItem('vobix_auto_lock_minutes',$('autoLockMinutes').value);
  localStorage.setItem('vobix_biometric_unlock',$('biometricUnlock').value);
  settings.classList.remove('open');
+};
+$('accessFontSize').value=localStorage.getItem('vobix_access_font_size')||'normal';
+$('accessControlSize').value=localStorage.getItem('vobix_access_control_size')||'normal';
+$('signVideoMode').value=localStorage.getItem('vobix_sign_video_mode')||'off';
+const applyAccessibility=()=>{
+ document.documentElement.dataset.vobixFont=localStorage.getItem('vobix_access_font_size')||'normal';
+ document.documentElement.dataset.vobixControls=localStorage.getItem('vobix_access_control_size')||'normal';
+};
+applyAccessibility();
+$('saveAccessibilitySettings').onclick=()=>{
+ localStorage.setItem('vobix_access_font_size',$('accessFontSize').value);
+ localStorage.setItem('vobix_access_control_size',$('accessControlSize').value);
+ localStorage.setItem('vobix_sign_video_mode',$('signVideoMode').value);
+ applyAccessibility();settings.classList.remove('open');
 };
 $('manageDevices').onclick=()=>err('La gestión de dispositivos se activará con la seguridad de la cuenta.');
 settings.onclick=e=>{if(e.target===settings)settings.classList.remove('open')};

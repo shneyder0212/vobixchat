@@ -52,6 +52,25 @@
 
       --topbar-height: 72px;
       --composer-height: 78px;
+
+      /* Se actualiza con VisualViewport al abrir el teclado móvil. */
+      --vobix-app-height: 100dvh;
+    }
+
+    if (elements.clearChatButton) {
+      elements.clearChatButton.addEventListener('click', async () => {
+        const id = conversationId(app.conversation);
+        if (!id) return;
+        if (!confirm('¿Vaciar este chat para ambos participantes? Esta acción no se puede deshacer.')) return;
+        try {
+          await api('/api/chat/conversations/' + encodeURIComponent(id) + '/messages', { method:'DELETE' });
+          if (elements.messages) elements.messages.innerHTML = '';
+          closeOptionsMenu();
+          notifyUser('Chat vaciado');
+        } catch (error) {
+          notifyUser(error.message || 'No se pudo vaciar el chat');
+        }
+      });
     }
 
 
@@ -155,6 +174,8 @@
       right: env(safe-area-inset-right);
       bottom: env(safe-area-inset-bottom);
       left: env(safe-area-inset-left);
+
+      height: var(--vobix-app-height);
 
       display: flex;
       flex-direction: column;
@@ -1933,6 +1954,10 @@
       transform: scale(1.03);
     }
 
+    /* CAPA 2.1.3 — La miniatura recibe gestos sin desplazar la página. */
+    .localVideo,
+    .callVideoArea.local-is-large .remoteVideo { touch-action:none; }
+
 
     .localVideo.dragging {
       cursor: grabbing;
@@ -1991,6 +2016,23 @@
     .callControl.end {
       background:
         #e94141;
+
+      width: 94px;
+      border-radius: 29px;
+      gap: 5px;
+      font-size: 15px;
+      font-weight: 800;
+    }
+
+    .callControl.end .callHangupIcon { font-size: 21px; line-height: 1; }
+
+    .callVideoArea.sign-mode .remoteVideo { object-fit: contain; background:#071009; }
+    .callVideoArea.sign-mode::after { content:'🖐 Modo señas activo'; position:absolute;z-index:55;top:max(18px,env(safe-area-inset-top));left:50%;transform:translateX(-50%);padding:9px 14px;border-radius:22px;background:rgba(10,20,13,.84);border:1px solid rgba(148,238,112,.42);color:#eaffdf;font-size:13px;font-weight:800;white-space:nowrap; }
+
+    @media(max-width:720px) {
+      .callControls { bottom: max(40px, calc(env(safe-area-inset-bottom) + 12px)); }
+      .callControl { width:52px; height:52px; font-size:20px; }
+      .callControl.end { width:90px; height:52px; }
     }
 
     .outgoingHangup {
@@ -2554,6 +2596,8 @@
       accent-color: #9cff18;
     }
 
+    .voiceSpeedButton{margin-top:7px;padding:5px 9px;border:1px solid rgba(145,231,119,.42);border-radius:10px;background:#2e3b31;color:#f7faf6;font-weight:900;font-size:12px}
+
     /* Tema crema Vobix para la sala privada. */
     :root{--green:#4f9d31;--green-dark:#386b28;--bg:#30332f;--panel:#f5f0e5;--panel-2:#e0dbcf;--panel-3:#d8d3c8;--text:#183724;--muted:rgba(31,58,39,.68);--line:rgba(74,130,48,.34);--line-strong:rgba(74,130,48,.52)}
     html,body{background:#222522;color:#183724}
@@ -2566,8 +2610,49 @@
     .messageBubble,.messageRow.theirs .messageBubble{background:#fffaf0;color:#183724;font-family:Roboto,Arial,sans-serif;font-size:17px;box-shadow:0 1px 2px rgba(80,61,31,.16)}
     .messageRow.mine .messageBubble{background:#dcefd0;color:#173624}.messageRow.mine .messageBubble::after{border-top-color:#dcefd0}.messageRow.theirs .messageBubble::before{border-top-color:#fffaf0}.messageTime{color:rgba(41,76,49,.62)}
     .vobixComposer{background:#303430;box-shadow:0 -7px 20px rgba(19,22,18,.30)}.vobixComposerPill{background:#f7f5ef;border-color:rgba(125,181,94,.42)}#messageInput{color:#183724}.composerMiniButton{color:#386b28}#voiceButton,#sendButton{background:#5cab32;color:#fff}
-    /* APK móvil: la sala privada no se desplaza lateralmente ni se corta. */
-    @media(max-width:720px){html,body{width:100%;height:100%;max-width:100%;overflow:hidden;overscroll-behavior:none;touch-action:pan-y}.vobixApp{top:0;right:0;bottom:0;left:0;width:100%;max-width:100%;overflow:hidden}.vobixTopbar,.vobixMain,.vobixComposer{min-width:0;max-width:100%}.vobixMain{overflow:hidden}.messages{overscroll-behavior:contain}.vobixComposer{padding:9px 10px 10px;background:#303430}.vobixComposerPill{min-height:52px;border-radius:28px;box-shadow:0 3px 12px rgba(0,0,0,.24)}#messageInput{min-height:46px;padding:12px 7px 9px}.messageBubble img{display:block;min-width:140px;min-height:90px;background:#e8e2d7}}
+    /* Sala 1×1: estructura estable en Android, iPhone, WebView y navegador. */
+    @media(max-width:720px){
+      html,body{width:100%;height:100%;max-width:100%;margin:0;overflow:hidden;overscroll-behavior:none;touch-action:pan-y}
+      .vobixApp{top:0;right:0;bottom:auto;left:0;width:100%;height:var(--vobix-app-height);max-width:100%;overflow:hidden}
+      .vobixTopbar,.vobixMain,.vobixComposer{min-width:0;max-width:100%}
+      .vobixTopbar{min-height:92px;gap:6px;padding:28px 8px 8px;flex-shrink:0}
+      .vobixTopbar .vobixIconButton{width:40px;height:40px;min-width:40px;font-size:18px}
+      .vobixTopbar .avatar{width:42px;height:42px;min-width:42px;font-size:20px}
+      .vobixIdentity{min-width:0}.vobixTopbar #topbarUserName{font-size:18px}.vobixIdentity span{font-size:11px}
+      .vobixMain{min-height:0;overflow:hidden}
+      .messages{min-height:0;overscroll-behavior:contain;padding:12px 10px 14px;scroll-padding-bottom:20px}
+      .vobixComposer{flex-shrink:0;gap:8px;padding:8px 10px max(28px, env(safe-area-inset-bottom));background:#303430}
+      .vobixComposerPill{min-height:52px;border-radius:28px;box-shadow:0 3px 12px rgba(0,0,0,.24)}
+      #messageInput{min-height:46px;padding:12px 7px 9px;font-size:16px}
+      .vobixActionSlot,.vobixComposerAction{width:52px;height:52px;min-width:52px}
+      .messageBubble img{display:block;min-width:140px;min-height:90px;background:#e8e2d7}
+    }
+
+    /* Diseño moderno Vobix: contraste alto, lectura clara y verde propio. */
+    :root{--green:#78df51;--bg:#101612;--panel:#161e19;--panel-2:#202a23;--text:#f6faf4;--muted:#b6c2b8}
+    html,body{background:#101612;color:#f6faf4}
+    body{background:radial-gradient(circle at 12% 8%,rgba(120,223,81,.12),transparent 30%),radial-gradient(circle at 88% 86%,rgba(62,135,93,.10),transparent 27%),#101612}
+    .vobixApp{background:#101612}
+    .vobixTopbar{background:rgba(18,26,21,.96);border-bottom-color:rgba(233,247,229,.10)}
+    .vobixTopbar #topbarUserName{color:#9aec72}
+    .vobixIdentity span{color:#b8c7ba}
+    .vobixMain{background:radial-gradient(circle at 14% 8%,rgba(120,223,81,.09),transparent 30%),#111813}
+    /* Capa 1.2 — Sala privada aprobada: alta lectura sin negro puro. */
+    .messageBubble,.messageRow.theirs .messageBubble{background:#f7f5ee;color:#111411;border:1px solid rgba(101,207,89,.72);box-shadow:0 4px 14px rgba(0,0,0,.18)}
+    .messageRow.mine .messageBubble{background:linear-gradient(145deg,#454c4a,#343a38);color:#f8faf8;border:1px solid rgba(93,208,93,.82);box-shadow:0 4px 14px rgba(0,0,0,.22)}
+    .messageRow.mine .messageBubble::after{border-top-color:#3a403e}.messageRow.theirs .messageBubble::before{border-top-color:#f7f5ee}
+    .messageRow.mine .messageTime{color:#d5dbd6}.messageRow.theirs .messageTime{color:#59605b}
+    .vobixComposer{background:rgba(18,26,21,.98);border-top-color:rgba(233,247,229,.10)}
+    .vobixComposerPill{background:linear-gradient(145deg,#505654,#3e4543);border-color:rgba(211,238,202,.30);box-shadow:0 5px 16px rgba(0,0,0,.28)}
+    #messageInput{color:#fff}#messageInput::placeholder{color:#d6dcd7}
+    .composerMiniButton{color:#f2f5f1}#voiceButton,#sendButton{background:linear-gradient(145deg,#78df51,#4bb53d);box-shadow:0 8px 20px rgba(76,181,61,.28)}
+    .vobixIconButton{background:#253128;border-color:rgba(223,247,216,.12)}
+    html[data-vobix-font="large"] .messageBubble{font-size:19px}html[data-vobix-font="large"] #messageInput{font-size:18px}html[data-vobix-font="large"] .vobixIdentity strong{font-size:22px}
+    html[data-vobix-font="xlarge"] .messageBubble{font-size:22px;line-height:1.45}html[data-vobix-font="xlarge"] #messageInput{font-size:20px;line-height:1.4}html[data-vobix-font="xlarge"] .vobixIdentity strong{font-size:24px}
+    html[data-vobix-controls="large"] .vobixComposerPill{min-height:60px}html[data-vobix-controls="large"] .vobixActionSlot,html[data-vobix-controls="large"] .vobixComposerAction{width:60px;height:60px;min-width:60px}html[data-vobix-controls="large"] .vobixIconButton{width:50px;height:50px;min-width:50px}
+    .locationMenu{position:fixed;z-index:240;right:14px;bottom:112px;display:grid;gap:8px;width:min(250px,calc(100vw - 28px));padding:10px;border:1px solid rgba(216,244,207,.16);border-radius:18px;background:rgba(24,33,27,.98);box-shadow:0 16px 38px rgba(0,0,0,.34)}.locationMenu[hidden]{display:none}.locationMenu button{padding:12px;border:0;border-radius:12px;background:#263329;color:#f6faf4;text-align:left;font-weight:800}.locationMenu button:active{background:#35513a}
+    /* Capa 2.2 — Encuestas privadas: hoja compacta, no invade el teclado. */
+    .vobixPollPanel{position:fixed;z-index:290;inset:0;display:grid;place-items:end center;padding:18px;background:rgba(0,0,0,.52)}.vobixPollPanel[hidden]{display:none}.vobixPollCard{width:min(520px,100%);max-height:76dvh;overflow:auto;border:1px solid rgba(190,237,177,.30);border-radius:24px;background:#1a221d;color:#f6faf4;padding:18px 16px calc(16px + env(safe-area-inset-bottom));box-shadow:0 22px 60px rgba(0,0,0,.48)}.vobixPollHead{display:flex;align-items:center;justify-content:space-between;gap:12px}.vobixPollHead h2{margin:0;color:#9aec72;font-size:20px}.vobixPollClose{border:0;border-radius:10px;background:#344038;color:#fff;padding:8px 12px;font-weight:800}.vobixPollCard input{width:100%;margin-top:11px;padding:13px;border:1px solid rgba(219,241,211,.22);border-radius:12px;background:#2a332d;color:#fff;font:inherit}.vobixPollOptions{display:grid;gap:8px;margin-top:10px}.vobixPollOptionRow{display:flex;gap:8px}.vobixPollOptionRow input{margin:0}.vobixPollCreate{width:100%;margin-top:14px;padding:13px;border:0;border-radius:12px;background:#78df51;color:#132313;font-weight:900;font-size:16px}.vobixPollMessage{min-height:20px;margin:9px 0 0;color:#c7d5c9;font-size:13px}.vobixPollMessage.error{color:#ffb3a7}.vobixPollCardView{margin:10px 3px;padding:12px;border:1px solid rgba(118,220,89,.38);border-radius:15px;background:#273029}.vobixPollCardView b{display:block;color:#f6faf4}.vobixPollCardView small{display:block;margin:5px 0 8px;color:#bcc8bd}.vobixPollVote{display:flex;align-items:center;gap:8px;width:100%;margin:6px 0;padding:10px;border:1px solid rgba(203,235,196,.22);border-radius:10px;background:#364139;color:#fff;text-align:left}.vobixPollVote:disabled{opacity:.74}.vobixPollBar{height:5px;margin-top:5px;border-radius:99px;background:linear-gradient(90deg,#78df51 var(--poll-pct),rgba(255,255,255,.12) var(--poll-pct))}
   </style>
 </head>
 
@@ -2721,6 +2806,9 @@
 
         <button id="cameraButton" class="composerMiniButton cameraMiniButton" type="button"
           aria-label="Cámara" title="Cámara">📷</button>
+
+        <button id="locationButton" class="composerMiniButton" type="button"
+          aria-label="Compartir ubicación" title="Compartir ubicación">📍</button>
       </div>
 
 
@@ -2768,6 +2856,12 @@
 
   </div>
 
+  <div id="locationMenu" class="locationMenu" hidden>
+    <button id="shareLocationNow" type="button">📍 Enviar ubicación</button>
+    <button id="shareLiveLocation" type="button">📡 Tiempo real · 15 min</button>
+    <button id="shareContactButton" type="button">👤 Enviar contacto</button>
+  </div>
+
 
   <!-- ===================================================
        INPUT PARA FOTOS DEL CHAT
@@ -2776,7 +2870,7 @@
   <input
     id="chatPhotoInput"
     type="file"
-    accept="image/*"
+    accept="image/*,video/*"
     capture="environment"
     hidden
   >
@@ -2848,6 +2942,24 @@
       </span>
     </button>
 
+    <button
+      id="openPollButton"
+      class="chatOptionButton"
+      type="button"
+    >
+      <span class="chatOptionIcon">📊</span>
+      <span class="chatOptionText">Crear encuesta</span>
+    </button>
+
+    <button
+      id="clearChatButton"
+      class="chatOptionButton chatOptionDanger"
+      type="button"
+    >
+      <span class="chatOptionIcon">🗑️</span>
+      <span class="chatOptionText">Vaciar chat</span>
+    </button>
+
 
     <button
       id="logoutButton"
@@ -2863,6 +2975,21 @@
       </span>
     </button>
 
+  </div>
+
+  <!-- Capa 2.2 — Solo aparece al crear una encuesta de este chat. -->
+  <div id="vobixPollPanel" class="vobixPollPanel" hidden>
+    <div class="vobixPollCard" role="dialog" aria-modal="true" aria-labelledby="vobixPollTitle">
+      <div class="vobixPollHead"><h2 id="vobixPollTitle">Nueva encuesta</h2><button id="closePollButton" class="vobixPollClose" type="button">Cerrar</button></div>
+      <input id="vobixPollQuestion" maxlength="280" placeholder="Escribe la pregunta" autocomplete="off">
+      <div id="vobixPollOptions" class="vobixPollOptions">
+        <div class="vobixPollOptionRow"><input maxlength="160" placeholder="Opción 1"></div>
+        <div class="vobixPollOptionRow"><input maxlength="160" placeholder="Opción 2"></div>
+      </div>
+      <button id="addPollOptionButton" class="vobixPollClose" type="button" style="margin-top:10px">＋ Añadir opción</button>
+      <button id="createPollButton" class="vobixPollCreate" type="button">Publicar encuesta</button>
+      <div id="vobixPollMessage" class="vobixPollMessage" aria-live="polite"></div>
+    </div>
   </div>
 
 
@@ -3068,6 +3195,18 @@
       </div>
 
       <div class="settingRow">
+        <div class="settingInfo">
+          <div class="settingName">Tono de mensaje recibido</div>
+          <div class="settingDescription">Aviso claro cuando entra un mensaje.</div>
+        </div>
+        <select id="receivedMessageToneSelect" class="vobixSelect" aria-label="Tono de mensaje recibido">
+          <option value="strong">Potente</option>
+          <option value="pulse">Pulse</option>
+          <option value="none">Silencio</option>
+        </select>
+      </div>
+
+      <div class="settingRow">
 
         <div class="settingInfo">
 
@@ -3076,7 +3215,7 @@
           </div>
 
           <div class="settingDescription">
-            Elige el tono de tus llamadas entrantes y salientes.
+            Elige un timbre potente para tus llamadas entrantes.
           </div>
 
         </div>
@@ -3087,6 +3226,19 @@
           <option value="soft">Suave</option>
         </select>
 
+      </div>
+
+      <div class="settingRow">
+        <div class="settingInfo">
+          <div class="settingName">Tono de llamada saliente</div>
+          <div class="settingDescription">El sonido que oyes mientras la otra persona responde.</div>
+        </div>
+        <select id="outgoingCallToneSelect" class="vobixSelect" aria-label="Tono de llamada saliente">
+          <option value="classic">Clásico</option>
+          <option value="pulse">Pulse</option>
+          <option value="soft">Suave</option>
+          <option value="none">Silencio</option>
+        </select>
       </div>
 
       <div class="settingRow">
@@ -3110,6 +3262,17 @@
           aria-label="Confirmación de enviado"
         ></button>
 
+      </div>
+
+      <div class="settingRow">
+        <div class="settingInfo">
+          <div class="settingName">Sonido al enviar</div>
+          <div class="settingDescription">Confirmación suave opcional al enviar un mensaje.</div>
+        </div>
+        <select id="sentMessageToneSelect" class="vobixSelect" aria-label="Sonido al enviar">
+          <option value="soft">Suave</option>
+          <option value="none">Silencio</option>
+        </select>
       </div>
 
       <div class="settingRow">
@@ -3257,14 +3420,35 @@
         🔄
       </button>
 
+      <button
+        id="toggleSignModeButton"
+        class="callControl"
+        type="button"
+        aria-label="Modo videollamada de señas"
+        title="Modo señas"
+      >
+        🖐
+      </button>
+
+      <button
+        id="cycleVideoFilterButton"
+        class="callControl"
+        type="button"
+        aria-label="Cambiar filtro de vídeo"
+        title="Filtros de vídeo"
+      >
+        ✨
+      </button>
+
 
       <button
         id="endCallButton"
         class="callControl end"
         type="button"
         aria-label="Colgar"
+        title="Colgar"
       >
-        ✕
+        <span class="callHangupIcon">✕</span><span>Colgar</span>
       </button>
 
     </div>
@@ -3348,6 +3532,9 @@
       ringtoneContext: null,
 
       ringtoneTimer: null,
+
+      // CAPA 2.3 — Nunca dejar una llamada timbrando sin límite.
+      callWatchdog: null,
 
       outgoingCallRinging: false,
 
@@ -3485,11 +3672,23 @@
       callToneSelect:
         $('callToneSelect'),
 
+      outgoingCallToneSelect:
+        $('outgoingCallToneSelect'),
+
+      receivedMessageToneSelect:
+        $('receivedMessageToneSelect'),
+
+      sentMessageToneSelect:
+        $('sentMessageToneSelect'),
+
       notificationSwitch:
         $('notificationSwitch'),
 
       refreshChatButton:
         $('refreshChatButton'),
+
+      clearChatButton:
+        $('clearChatButton'),
 
       logoutButton:
         $('logoutButton'),
@@ -3511,6 +3710,12 @@
 
       flipCallCameraButton:
         $('flipCallCameraButton'),
+
+      toggleSignModeButton:
+        $('toggleSignModeButton'),
+
+      cycleVideoFilterButton:
+        $('cycleVideoFilterButton'),
 
       endCallButton:
         $('endCallButton'),
@@ -5650,6 +5855,21 @@
       'classic';
 
 
+    app.outgoingCallTone =
+      localStorage.getItem('vobix_outgoing_call_tone') ||
+      'classic';
+
+
+    app.receivedMessageTone =
+      localStorage.getItem('vobix_received_message_tone') ||
+      'strong';
+
+
+    app.sentMessageTone =
+      localStorage.getItem('vobix_sent_message_tone') ||
+      'soft';
+
+
     function renderPreferenceSwitches() {
 
       if (
@@ -5691,6 +5911,18 @@
 
       if (elements.callToneSelect) {
         elements.callToneSelect.value = app.callTone;
+      }
+
+      if (elements.outgoingCallToneSelect) {
+        elements.outgoingCallToneSelect.value = app.outgoingCallTone;
+      }
+
+      if (elements.receivedMessageToneSelect) {
+        elements.receivedMessageToneSelect.value = app.receivedMessageTone;
+      }
+
+      if (elements.sentMessageToneSelect) {
+        elements.sentMessageToneSelect.value = app.sentMessageTone;
       }
 
     }
@@ -5891,6 +6123,30 @@
     }
 
 
+    if (elements.outgoingCallToneSelect) {
+      elements.outgoingCallToneSelect.addEventListener('change', () => {
+        app.outgoingCallTone = elements.outgoingCallToneSelect.value || 'classic';
+        try { localStorage.setItem('vobix_outgoing_call_tone', app.outgoingCallTone); } catch (_) {}
+      });
+    }
+
+
+    if (elements.receivedMessageToneSelect) {
+      elements.receivedMessageToneSelect.addEventListener('change', () => {
+        app.receivedMessageTone = elements.receivedMessageToneSelect.value || 'strong';
+        try { localStorage.setItem('vobix_received_message_tone', app.receivedMessageTone); } catch (_) {}
+      });
+    }
+
+
+    if (elements.sentMessageToneSelect) {
+      elements.sentMessageToneSelect.addEventListener('change', () => {
+        app.sentMessageTone = elements.sentMessageToneSelect.value || 'soft';
+        try { localStorage.setItem('vobix_sent_message_tone', app.sentMessageTone); } catch (_) {}
+      });
+    }
+
+
     function playMessageSound() {
 
       if (
@@ -5901,7 +6157,7 @@
 
       }
 
-      const receivedTone = localStorage.getItem('vobix_received_message_tone') || 'strong';
+      const receivedTone = app.receivedMessageTone || 'strong';
       if (receivedTone === 'none') return;
 
 
@@ -5997,7 +6253,7 @@
 
 
     function playSentMessageSound() {
-      const sentTone = localStorage.getItem('vobix_sent_message_tone') || 'soft';
+      const sentTone = app.sentMessageTone || 'soft';
       if (sentTone === 'none') return;
       const context = getAudioContext();
       if (!context) return;
@@ -6158,21 +6414,15 @@
             }
 
 
-            if (
-              !String(
-                file.type ||
-                ''
-              ).startsWith(
-                'image/'
-              )
-            ) {
-
-              notifyUser(
-                'Selecciona una foto'
-              );
-
+            const mediaType = String(file.type || '').toLowerCase();
+            if (!mediaType.startsWith('image/') && !mediaType.startsWith('video/')) {
+              notifyUser('Selecciona una foto o un vídeo');
               return;
+            }
 
+            if (file.size > 50 * 1024 * 1024) {
+              notifyUser('El archivo supera el máximo de 50 MB');
+              return;
             }
 
 
@@ -6199,6 +6449,8 @@
                 'file',
                 file
               );
+
+              form.append('type', mediaType.startsWith('video/') ? 'video' : 'image');
 
 
               const conversationId =
@@ -6232,9 +6484,7 @@
               }
 
 
-              notifyUser(
-                'Foto enviada'
-              );
+              notifyUser(mediaType.startsWith('video/') ? 'Vídeo enviado' : 'Foto enviada');
 
 
             } catch (error) {
@@ -6246,7 +6496,7 @@
 
 
               notifyUser(
-                'No se pudo enviar la foto'
+                mediaType.startsWith('video/') ? 'No se pudo enviar el vídeo' : 'No se pudo enviar la foto'
               );
 
             } finally {
@@ -6554,6 +6804,18 @@
       if (
         voiceUrl &&
         (
+          messageType === 'video' ||
+          String(message.mimeType || message.mime_type || message.file?.mimeType || message.file?.mime_type || '').startsWith('video/') ||
+          /\.(mp4|webm|mov)(\?|$)/i.test(voiceUrl)
+        )
+      ) {
+        renderVideoMessage(voiceUrl, messageIsMine(message), message.createdAt || message.created_at);
+        return;
+      }
+
+      if (
+        voiceUrl &&
+        (
           messageType === 'document' ||
           messageType === 'file' ||
           message.fileName || message.file_name || message.file?.name
@@ -6601,6 +6863,19 @@
 
       bubble.appendChild(audio);
 
+      const speed = document.createElement('button');
+      speed.type = 'button';
+      speed.className = 'voiceSpeedButton';
+      speed.textContent = '1×';
+      speed.setAttribute('aria-label', 'Cambiar velocidad de nota de voz');
+      const rates = [1, 1.5, 2];
+      speed.addEventListener('click', () => {
+        const next = rates[(rates.indexOf(audio.playbackRate) + 1) % rates.length];
+        audio.playbackRate = next;
+        speed.textContent = String(next).replace('.0', '') + '×';
+      });
+      bubble.appendChild(speed);
+
       if (createdAt) {
         const time = document.createElement('span');
         const date = new Date(createdAt);
@@ -6627,11 +6902,33 @@
       image.src = source;
       image.alt = 'Foto enviada';
       image.loading = 'lazy';
-      image.style.cssText = 'display:block;max-width:min(280px,72vw);max-height:340px;border-radius:12px;cursor:pointer;object-fit:cover';
+      image.style.cssText = 'display:block;width:min(268px,70vw);height:auto;max-height:250px;border-radius:12px;cursor:pointer;object-fit:cover';
       image.onclick = () => window.open(source, '_blank', 'noopener');
       bubble.appendChild(image);
       appendMediaTime(bubble, createdAt);
       row.appendChild(bubble); elements.messages.appendChild(row);
+      elements.messages.scrollTop = elements.messages.scrollHeight;
+    }
+
+    function renderVideoMessage(source, mine = false, createdAt = null) {
+      if (!elements.messages || !source) return;
+      elements.messages.querySelector('#vobixWelcome')?.remove();
+      const row = document.createElement('div');
+      row.className = 'messageRow ' + (mine ? 'mine' : 'theirs');
+      const bubble = document.createElement('div');
+      bubble.className = 'messageBubble mediaBubble';
+      const video = document.createElement('video');
+      video.src = source;
+      video.controls = true;
+      video.preload = 'metadata';
+      video.playsInline = true;
+      video.setAttribute('playsinline', '');
+      video.style.cssText = 'display:block;width:min(286px,72vw);height:auto;max-height:300px;border-radius:12px;background:#111;object-fit:contain';
+      video.addEventListener('error', () => { video.outerHTML = '<a href="' + source.replace(/&/g,'&amp;').replace(/"/g,'&quot;') + '" target="_blank" rel="noopener">🎬 Abrir vídeo</a>'; });
+      bubble.appendChild(video);
+      appendMediaTime(bubble, createdAt);
+      row.appendChild(bubble);
+      elements.messages.appendChild(row);
       elements.messages.scrollTop = elements.messages.scrollHeight;
     }
 
@@ -8969,6 +9266,19 @@
       );
 
 
+      // CAPA 2.2 — Las encuestas usan el mismo socket seguro del chat.
+      // El panel auxiliar escucha este evento sin crear otra conexión.
+      app.socket.on(
+        'poll:updated',
+        payload => window.dispatchEvent(
+          new CustomEvent(
+            'vobix:poll-updated',
+            { detail: payload || {} }
+          )
+        )
+      );
+
+
       app.socket.on(
         'message:new',
         onIncomingMessage
@@ -9615,6 +9925,8 @@
     function startCallRingtone(outgoing = false) {
       stopCallRingtone();
       app.outgoingCallRinging = outgoing;
+      const selectedTone = outgoing ? app.outgoingCallTone : app.callTone;
+      if (selectedTone === 'none') return;
       primeRingtone();
 
       const context = app.ringtoneContext;
@@ -9632,7 +9944,7 @@
           classic: { outgoing: 440, incomingA: 880, incomingB: 1046, wave: 'square' },
           pulse: { outgoing: 523, incomingA: 698, incomingB: 880, wave: 'sine' },
           soft: { outgoing: 392, incomingA: 659, incomingB: 784, wave: 'sine' }
-        }[app.callTone] || { outgoing: 440, incomingA: 880, incomingB: 1046, wave: 'square' };
+        }[selectedTone] || { outgoing: 440, incomingA: 880, incomingB: 1046, wave: 'square' };
 
         oscillator.type = app.outgoingCallRinging ? 'sine' : tone.wave;
         oscillator.frequency.setValueAtTime(app.outgoingCallRinging ? tone.outgoing : tone.incomingA, context.currentTime);
@@ -9854,6 +10166,16 @@
 
           if (
             state ===
+              'connected'
+          ) {
+
+            clearCallWatchdog();
+
+          }
+
+
+          if (
+            state ===
               'failed' ||
             state ===
               'closed'
@@ -10025,6 +10347,9 @@
           'open'
         );
 
+      const signMode = localStorage.getItem('vobix_sign_video_mode') === 'on';
+      elements.callVideoArea.classList.toggle('sign-mode', type === 'video' && signMode);
+
 
       /*
         PARA LLAMADA DE AUDIO
@@ -10085,6 +10410,7 @@
           );
 
         elements.callVideoArea.classList.remove('local-is-large');
+        elements.callVideoArea.classList.remove('sign-mode');
 
       }
 
@@ -10118,6 +10444,28 @@
 
       }
 
+    }
+
+
+    /* =====================================================
+       CAPA 2.3 — SALIDA SEGURA DE LLAMADA
+       ===================================================== */
+
+    function clearCallWatchdog() {
+      if (app.callWatchdog) {
+        clearTimeout(app.callWatchdog);
+        app.callWatchdog = null;
+      }
+    }
+
+    function startCallWatchdog() {
+      clearCallWatchdog();
+      const guardedCallId = app.callId;
+      app.callWatchdog = setTimeout(() => {
+        if (!guardedCallId || String(app.callId) !== String(guardedCallId)) return;
+        notifyUser('La llamada no conectó. Se ha cerrado para proteger cámara y micrófono.');
+        endLocalCall(true);
+      }, 45000);
     }
 
 
@@ -10242,6 +10590,8 @@
             ? 'Iniciando videollamada…'
             : 'Iniciando llamada…'
         );
+
+        startCallWatchdog();
 
 
       } catch (error) {
@@ -10523,6 +10873,8 @@
         notifyUser(
           'Llamada conectando…'
         );
+
+        startCallWatchdog();
 
 
       } catch (error) {
@@ -11078,6 +11430,9 @@
         app.callId;
 
 
+      clearCallWatchdog();
+
+
       if (
         notifyRemote &&
         app.socket &&
@@ -11261,6 +11616,37 @@
 
     }
 
+    if (elements.toggleSignModeButton) {
+      elements.toggleSignModeButton.addEventListener('click', () => {
+        if (app.callType !== 'video') {
+          notifyUser('El modo señas se usa en videollamadas');
+          return;
+        }
+        const active = elements.callVideoArea?.classList.toggle('sign-mode');
+        notifyUser(active ? 'Modo señas activado' : 'Modo señas desactivado');
+      });
+    }
+
+    if (elements.cycleVideoFilterButton) {
+      const filters = [
+        ['Natural', 'none'],
+        ['Suave', 'brightness(1.08) saturate(.9) contrast(.92)'],
+        ['Cálido', 'sepia(.16) saturate(1.15) brightness(1.04)'],
+        ['Blanco y negro', 'grayscale(1) contrast(1.08)']
+      ];
+      let filterIndex = 0;
+      elements.cycleVideoFilterButton.addEventListener('click', () => {
+        if (app.callType !== 'video') {
+          notifyUser('Los filtros se usan en videollamadas');
+          return;
+        }
+        filterIndex = (filterIndex + 1) % filters.length;
+        const [name, filter] = filters[filterIndex];
+        if (elements.localVideo) elements.localVideo.style.filter = filter;
+        notifyUser('Filtro: ' + name);
+      });
+    }
+
 
     /* =====================================================
        HACER VIDEO LOCAL ARRASTRABLE
@@ -11311,8 +11697,11 @@
         const dx = event.clientX - startX;
         const dy = event.clientY - startY;
         if (Math.abs(dx) > 7 || Math.abs(dy) > 7) moved = true;
-        const left = Math.max(0, Math.min(window.innerWidth - video.offsetWidth, originLeft + dx));
-        const top = Math.max(0, Math.min(window.innerHeight - video.offsetHeight, originTop + dy));
+        const areaRect = elements.callVideoArea?.getBoundingClientRect();
+        if (!areaRect) return;
+        const safeBottom = 94; // reserva para Colgar y controles.
+        const left = Math.max(0, Math.min(areaRect.width - video.offsetWidth, originLeft - areaRect.left + dx));
+        const top = Math.max(12, Math.min(areaRect.height - video.offsetHeight - safeBottom, originTop - areaRect.top + dy));
         video.style.left = left + 'px';
         video.style.top = top + 'px';
         video.style.right = 'auto';
@@ -11543,6 +11932,9 @@
 (function(){
   'use strict';
 
+  document.documentElement.dataset.vobixFont = localStorage.getItem('vobix_access_font_size') || 'normal';
+  document.documentElement.dataset.vobixControls = localStorage.getItem('vobix_access_control_size') || 'normal';
+
   const $ = id => document.getElementById(id);
   const params = new URLSearchParams(location.search);
   const conversationId = params.get('conversationId') ||
@@ -11590,6 +11982,161 @@
     });
   }
 
+  // =====================================================
+  // CAPA 2.2 — ENCUESTAS PRIVADAS
+  // =====================================================
+  const pollPanel = $('vobixPollPanel');
+  const pollQuestion = $('vobixPollQuestion');
+  const pollOptions = $('vobixPollOptions');
+  const pollMessage = $('vobixPollMessage');
+  const authHeaders = () => {
+    const token = localStorage.getItem('vobix_token') || localStorage.getItem('token') || '';
+    return token ? { 'Content-Type':'application/json', Authorization:`Bearer ${token}` } : { 'Content-Type':'application/json' };
+  };
+  const setPollMessage = (message='', error=false) => {
+    if (!pollMessage) return;
+    pollMessage.textContent = message;
+    pollMessage.classList.toggle('error', Boolean(error));
+  };
+  const closePollPanel = () => { if (pollPanel) pollPanel.hidden = true; };
+  const openPollPanel = () => {
+    if (!conversationId) return alert('Abre primero un chat privado.');
+    $('chatOptionsMenu')?.classList.remove('open');
+    if (pollPanel) pollPanel.hidden = false;
+    setPollMessage('');
+    setTimeout(() => pollQuestion?.focus(), 80);
+  };
+  $('openPollButton')?.addEventListener('click', openPollPanel);
+  $('closePollButton')?.addEventListener('click', closePollPanel);
+  pollPanel?.addEventListener('click', event => { if (event.target === pollPanel) closePollPanel(); });
+  $('addPollOptionButton')?.addEventListener('click', () => {
+    if (!pollOptions || pollOptions.children.length >= 8) return setPollMessage('Puedes poner un máximo de 8 opciones.', true);
+    const row = document.createElement('div');
+    row.className = 'vobixPollOptionRow';
+    const input = document.createElement('input');
+    input.maxLength = 160;
+    input.placeholder = `Opción ${pollOptions.children.length + 1}`;
+    row.appendChild(input);
+    pollOptions.appendChild(row);
+    input.focus();
+  });
+  $('createPollButton')?.addEventListener('click', async () => {
+    const question = String(pollQuestion?.value || '').trim();
+    const options = Array.from(pollOptions?.querySelectorAll('input') || []).map(input => input.value.trim()).filter(Boolean);
+    if (!question || options.length < 2) return setPollMessage('Escribe una pregunta y al menos 2 opciones.', true);
+    try {
+      setPollMessage('Publicando encuesta…');
+      const response = await fetch('/api/chat/polls', { method:'POST', headers:authHeaders(), body:JSON.stringify({ conversationId, question, options }) });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || !data?.ok) throw new Error(data?.msg || 'No se pudo crear la encuesta');
+      pollQuestion.value = '';
+      Array.from(pollOptions.querySelectorAll('input')).forEach((input, index) => { input.value = ''; if (index > 1) input.closest('.vobixPollOptionRow')?.remove(); });
+      closePollPanel();
+      renderPoll(data.poll);
+    } catch (error) {
+      setPollMessage(error.message || 'No se pudo crear la encuesta.', true);
+    }
+  });
+  const getMyUserId = async () => {
+    try {
+      const response = await fetch('/api/chat/me', { headers:authHeaders() });
+      const data = await response.json().catch(() => ({}));
+      const me = data?.user || data?.me || data?.data || data;
+      return me?.id || me?.userId || me?.user_id || '';
+    } catch (_) { return ''; }
+  };
+  let myPollUserId = '';
+
+  const renderPoll = poll => {
+    if (!poll || !messages) return;
+    let card = messages.querySelector(`[data-vobix-poll-id="${poll.id}"]`);
+    if (!card) {
+      card = document.createElement('section');
+      card.className = 'vobixPollCardView';
+      card.dataset.vobixPollId = poll.id;
+      messages.appendChild(card);
+    }
+    const total = Number(poll.totalVotes || 0);
+    card.replaceChildren();
+    const title = document.createElement('b'); title.textContent = '📊 ' + poll.question; card.appendChild(title);
+    const status = document.createElement('small'); status.textContent = poll.closed ? `Encuesta cerrada · ${total} voto${total === 1 ? '' : 's'}` : `${total} voto${total === 1 ? '' : 's'} · un voto por persona`; card.appendChild(status);
+    (poll.options || []).forEach(option => {
+      const votes = Number(option.votes || 0);
+      const pct = total ? Math.round((votes / total) * 100) : 0;
+      const button = document.createElement('button');
+      button.className = 'vobixPollVote';
+      button.type = 'button';
+      button.disabled = Boolean(poll.closed || poll.viewerOptionId);
+      const label = document.createElement('span');
+      label.textContent = String(option.label || '') + (String(poll.viewerOptionId) === String(option.id) ? ' ✓' : '');
+      const percentage = document.createElement('strong');
+      percentage.style.marginLeft = 'auto';
+      percentage.textContent = pct + '%';
+      button.append(label, percentage);
+      button.style.setProperty('--poll-pct', pct + '%');
+      button.title = `${votes} voto${votes === 1 ? '' : 's'}`;
+      button.addEventListener('click', async () => {
+        try {
+          const response = await fetch(`/api/chat/polls/${encodeURIComponent(poll.id)}/vote`, { method:'POST', headers:authHeaders(), body:JSON.stringify({ optionId:option.id }) });
+          const data = await response.json().catch(() => ({}));
+          if (!response.ok || !data?.ok) throw new Error(data?.msg || 'No se pudo registrar el voto');
+          renderPoll(data.poll);
+        } catch (error) { alert(error.message || 'No se pudo registrar el voto.'); }
+      });
+      card.appendChild(button);
+    });
+    if (!poll.closed && myPollUserId && String(poll.creatorUserId) === String(myPollUserId)) {
+      const close = document.createElement('button');
+      close.className = 'vobixPollClose';
+      close.type = 'button';
+      close.style.marginTop = '8px';
+      close.textContent = 'Cerrar encuesta';
+      close.addEventListener('click', async () => {
+        if (!confirm('¿Cerrar esta encuesta? Ya no se podrá votar.')) return;
+        try {
+          const response = await fetch(`/api/chat/polls/${encodeURIComponent(poll.id)}/close`, { method:'POST', headers:authHeaders() });
+          const data = await response.json().catch(() => ({}));
+          if (!response.ok || !data?.ok) throw new Error(data?.msg || 'No se pudo cerrar la encuesta');
+          renderPoll(data.poll);
+        } catch (error) { alert(error.message || 'No se pudo cerrar la encuesta.'); }
+      });
+      card.appendChild(close);
+    }
+  };
+  const loadPolls = async () => {
+    if (!conversationId) return;
+    try {
+      const response = await fetch(`/api/chat/conversations/${encodeURIComponent(conversationId)}/polls`, { headers:authHeaders() });
+      const data = await response.json().catch(() => ({}));
+      if (data?.ok) data.polls.forEach(renderPoll);
+    } catch (_) { /* La encuesta no debe bloquear el chat si la red falla. */ }
+  };
+  window.addEventListener('vobix:poll-updated', event => {
+    const changedConversation = event.detail?.conversationId || event.detail?.conversation_id;
+    if (!changedConversation || String(changedConversation) === String(conversationId)) loadPolls();
+  });
+  getMyUserId().then(id => { myPollUserId = id; loadPolls(); });
+  setTimeout(loadPolls, 1000);
+  setInterval(loadPolls, 12000);
+
+  // Ubicación puntual o compartida durante 15 minutos. Siempre requiere
+  // permiso explícito del propietario del móvil.
+  const locationMenu = $('locationMenu');
+  let liveLocationWatch = null;
+  let lastLiveLocationSent = 0;
+  const sendLocationText = (position, live=false) => {
+    const { latitude, longitude } = position.coords;
+    const link = 'https://maps.google.com/?q=' + latitude.toFixed(6) + ',' + longitude.toFixed(6);
+    messageInput.value = (live ? '📡 Ubicación en tiempo real: ' : '📍 Ubicación: ') + link;
+    messageInput.dispatchEvent(new Event('input', {bubbles:true}));
+    $('sendButton')?.click();
+  };
+  const locationError = () => alert('No se pudo obtener la ubicación. Activa el permiso de ubicación del móvil.');
+  $('locationButton')?.addEventListener('click',()=>{locationMenu.hidden=!locationMenu.hidden});
+  $('shareLocationNow')?.addEventListener('click',()=>{locationMenu.hidden=true;navigator.geolocation?.getCurrentPosition(p=>sendLocationText(p),locationError,{enableHighAccuracy:true,timeout:12000})||locationError()});
+  $('shareLiveLocation')?.addEventListener('click',()=>{locationMenu.hidden=true;if(!navigator.geolocation)return locationError();if(liveLocationWatch!==null)navigator.geolocation.clearWatch(liveLocationWatch);const until=Date.now()+15*60*1000;liveLocationWatch=navigator.geolocation.watchPosition(p=>{if(Date.now()>until){navigator.geolocation.clearWatch(liveLocationWatch);liveLocationWatch=null;return}if(Date.now()-lastLiveLocationSent>30000){lastLiveLocationSent=Date.now();sendLocationText(p,true)}},locationError,{enableHighAccuracy:true,maximumAge:10000,timeout:15000});alert('Ubicación en tiempo real compartida durante 15 minutos.');});
+  $('shareContactButton')?.addEventListener('click',async()=>{locationMenu.hidden=true;try{let name='',phone='';if(navigator.contacts?.select){const picked=await navigator.contacts.select(['name','tel'],{multiple:false});name=picked?.[0]?.name?.[0]||'';phone=picked?.[0]?.tel?.[0]||''}else{name=prompt('Nombre del contacto:')||'';phone=prompt('Teléfono del contacto:')||''}if(!name||!phone)return;messageInput.value='📇 Contacto: '+name+' · '+phone;messageInput.dispatchEvent(new Event('input',{bubbles:true}));$('sendButton')?.click()}catch(_){/* cancelado */}});
+
   async function uploadDocument(file){
     if (!file) return;
     const token = localStorage.getItem('vobix_token') || localStorage.getItem('token') || '';
@@ -11623,18 +12170,21 @@
     uploadDocument(e.target.files?.[0]);
   });
 
-  // Teclado móvil: conserva el compositor visible y mantiene el último mensaje.
+  // Teclado móvil: Android y iPhone reducen la sala al tamaño visible.
+  // La burbuja de escribir queda encima del teclado y de los controles del móvil.
   const appShell = $('vobixApp');
   const messages = $('messages');
 
   const fitMobileKeyboard = () => {
     if (!window.visualViewport || !appShell) return;
-    appShell.style.height = Math.round(window.visualViewport.height) + 'px';
+    const visibleHeight = Math.max(1, Math.round(window.visualViewport.height));
+    document.documentElement.style.setProperty('--vobix-app-height', visibleHeight + 'px');
+    appShell.style.height = visibleHeight + 'px';
 
     if (document.activeElement === messageInput) {
       requestAnimationFrame(() => {
         if (messages) messages.scrollTop = messages.scrollHeight;
-        messageInput.scrollIntoView({ block:'nearest', behavior:'smooth' });
+        messageInput.scrollIntoView({ block:'nearest', behavior:'auto' });
       });
     }
   };
@@ -11649,7 +12199,8 @@
   });
 
   messageInput?.addEventListener('blur', () => {
-    if (appShell) appShell.style.height = '';
+    setTimeout(fitMobileKeyboard, 80);
+    setTimeout(fitMobileKeyboard, 260);
   });
 
   fitMobileKeyboard();

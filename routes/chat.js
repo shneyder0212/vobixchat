@@ -558,6 +558,8 @@ router.get(
 
             c.alias,
 
+            c.is_favorite,
+
             c.created_at
               AS contact_created_at
 
@@ -572,6 +574,7 @@ router.get(
             c.owner_user_id = $1
 
           ORDER BY
+            c.is_favorite DESC,
             COALESCE(
               c.alias,
               u.username
@@ -608,6 +611,46 @@ router.get(
 
     }
 
+  }
+);
+
+
+/* ========================================================
+   CAPA 3.1 — MARCAR O QUITAR FAVORITO
+======================================================== */
+
+router.patch(
+  '/contacts/:userId/favorite',
+  async (req, res) => {
+    const ownerUserId = currentUserId(req);
+    const contactUserId = cleanId(req.params.userId);
+    const favorite = Boolean(req.body?.favorite);
+
+    if (!contactUserId) {
+      return res.status(400).json({ ok:false, msg:'Contacto no válido' });
+    }
+
+    try {
+      const result = await database.query(
+        `
+        UPDATE contacts
+        SET is_favorite = $3
+        WHERE owner_user_id = $1
+          AND contact_user_id = $2
+        RETURNING contact_user_id, is_favorite
+        `,
+        [ownerUserId, contactUserId, favorite]
+      );
+
+      if (!result.rows[0]) {
+        return res.status(404).json({ ok:false, msg:'Contacto no encontrado en tu agenda' });
+      }
+
+      return res.json({ ok:true, favorite:result.rows[0].is_favorite });
+    } catch (error) {
+      console.error('VOBIXCHAT FAVORITE CONTACT ERROR:', error);
+      return res.status(500).json({ ok:false, msg:'No se pudo guardar el favorito' });
+    }
   }
 );
 
@@ -2475,6 +2518,20 @@ async function getMessagesHandler(
 
   try {
 
+    // CAPA 4.6.2 — Al consultar la sala, ocultamos para ambos los mensajes
+    // cuya caducidad ya venció. No toca mensajes sin fecha de expiración.
+    await database.query(
+      `
+      UPDATE messages
+      SET deleted = TRUE, updated_at = NOW()
+      WHERE conversation_id = $1
+        AND expires_at IS NOT NULL
+        AND expires_at <= NOW()
+        AND COALESCE(deleted, FALSE) = FALSE
+      `,
+      [conversationId]
+    );
+
     /* ==================================================
        VALIDACIÓN PRIVADA 1X1
 
@@ -2702,6 +2759,81 @@ router.get(
 );
 
 
+// CAPA 4.6.1 — Solo afecta mensajes creados después de guardar el ajuste.
+router.post('/conversations/:conversationId/disappearing', async (req, res) => {
+  const userId = currentUserId(req);
+  const conversationId = cleanId(req.params.conversationId);
+  const seconds = Number(req.body?.seconds || 0);
+  const allowed = new Set([0, 86400, 604800, 2592000, 7776000]);
+  if (!conversationId || !allowed.has(seconds)) {
+    return res.status(400).json({ ok:false, msg:'Duración temporal no válida' });
+  }
+  try {
+    const room = await validatePrivateRoom(conversationId, userId);
+    if (!room.ok) return res.status(room.status).json({ ok:false, msg:room.msg });
+    await database.query(
+      'UPDATE conversations SET disappearing_seconds=$2, updated_at=NOW() WHERE id=$1',
+      [conversationId, seconds]
+    );
+    return res.json({ ok:true, seconds });
+  } catch (error) {
+    console.error('VOBIXCHAT DISAPPEARING SETTING ERROR:', error);
+    return res.status(500).json({ ok:false, msg:'No se pudo guardar la duración temporal' });
+  }
+});
+
+
+// CAPA 2.6.2 — El destinatario consume un archivo de una sola vista una vez.
+router.post('/messages/:messageId/consume-view-once', async (req, res) => {
+  const userId = currentUserId(req);
+  const messageId = cleanId(req.params.messageId);
+  if (!messageId) return res.status(400).json({ ok:false, msg:'Mensaje no válido' });
+  try {
+    const found = await database.query(
+      'SELECT id, conversation_id, sender_user_id, view_once, viewed_at, deleted FROM messages WHERE id=$1 LIMIT 1',
+      [messageId]
+    );
+    const message = found.rows[0];
+    if (!message) return res.status(404).json({ ok:false, msg:'Contenido no encontrado' });
+    const room = await validatePrivateRoom(message.conversation_id, userId);
+    if (!room.ok) return res.status(room.status).json({ ok:false, msg:room.msg });
+    if (!message.view_once || String(message.sender_user_id) === String(userId)) {
+      return res.status(403).json({ ok:false, msg:'Este contenido no se puede consumir así' });
+    }
+    const used = await database.query(
+      `UPDATE messages SET viewed_at=NOW(), deleted=TRUE, updated_at=NOW()
+       WHERE id=$1 AND viewed_at IS NULL AND COALESCE(deleted,FALSE)=FALSE
+       RETURNING id`,
+      [messageId]
+    );
+    if (!used.rows[0]) return res.status(410).json({ ok:false, msg:'Este contenido ya fue abierto' });
+    return res.json({ ok:true, consumed:true });
+  } catch (error) {
+    console.error('VOBIXCHAT VIEW ONCE ERROR:', error);
+    return res.status(500).json({ ok:false, msg:'No se pudo abrir el contenido' });
+  }
+});
+
+// Vacía una conversación para todos sus participantes. La interfaz pide
+// confirmación antes de llamar a esta ruta.
+router.delete('/conversations/:conversationId/messages', async (req, res) => {
+  const userId = currentUserId(req);
+  const conversationId = cleanId(req.params.conversationId);
+  try {
+    const room = await validatePrivateRoom(conversationId, userId);
+    if (!room.ok) return res.status(room.status).json({ ok:false, msg:room.msg });
+    const result = await database.query(
+      `UPDATE messages SET deleted=TRUE, updated_at=NOW() WHERE conversation_id=$1 AND COALESCE(deleted,FALSE)=FALSE`,
+      [conversationId]
+    );
+    return res.json({ ok:true, cleared:result.rowCount || 0 });
+  } catch (error) {
+    console.error('VOBIXCHAT CLEAR CHAT ERROR:', error);
+    return res.status(500).json({ ok:false, msg:'No se pudo vaciar el chat' });
+  }
+});
+
+
 /* ========================================================
    ENVIAR MENSAJE DE TEXTO
 
@@ -2853,7 +2985,8 @@ async function sendMessageHandler(
           created_at,
           updated_at,
           edited,
-          deleted
+          deleted,
+          expires_at
         )
 
         VALUES
@@ -2865,7 +2998,12 @@ async function sendMessageHandler(
           NOW(),
           NOW(),
           FALSE,
-          FALSE
+          FALSE,
+          CASE
+            WHEN COALESCE((SELECT disappearing_seconds FROM conversations WHERE id = $1), 0) > 0
+            THEN NOW() + (SELECT disappearing_seconds * INTERVAL '1 second' FROM conversations WHERE id = $1)
+            ELSE NULL
+          END
         )
 
         RETURNING
@@ -2880,7 +3018,8 @@ async function sendMessageHandler(
           created_at,
           updated_at,
           edited,
-          deleted
+          deleted,
+          expires_at
         `,
         [
           conversationId,
@@ -4339,6 +4478,10 @@ async function uploadChatFileHandler(
         req.body.type
       );
 
+    const viewOnce =
+      Boolean(req.body.viewOnce || req.body.view_once) &&
+      ['image', 'video', 'voice', 'audio'].includes(messageType);
+
 
     const fileUrl =
       chatFileUrl(
@@ -4389,7 +4532,9 @@ async function uploadChatFileHandler(
           created_at,
           updated_at,
           edited,
-          deleted
+          deleted,
+          expires_at,
+          view_once
         )
 
         VALUES
@@ -4404,7 +4549,13 @@ async function uploadChatFileHandler(
           NOW(),
           NOW(),
           FALSE,
-          FALSE
+          FALSE,
+          CASE
+            WHEN COALESCE((SELECT disappearing_seconds FROM conversations WHERE id = $1), 0) > 0
+            THEN NOW() + (SELECT disappearing_seconds * INTERVAL '1 second' FROM conversations WHERE id = $1)
+            ELSE NULL
+          END,
+          $7
         )
 
         RETURNING
@@ -4419,7 +4570,9 @@ async function uploadChatFileHandler(
           created_at,
           updated_at,
           edited,
-          deleted
+          deleted,
+          expires_at,
+          view_once
         `,
         [
           conversationId,
@@ -4427,7 +4580,8 @@ async function uploadChatFileHandler(
           messageType,
           fileUrl,
           originalFileName,
-          mimeType
+          mimeType,
+          viewOnce
         ]
       );
 
@@ -4759,6 +4913,185 @@ router.get('/e2e/key/:userId', async (req, res) => {
   } catch (error) {
     console.error('VOBIXCHAT E2E KEY READ ERROR:', error.message);
     return res.status(500).json({ ok:false, msg:'No se pudo preparar la seguridad' });
+  }
+});
+
+
+/* ========================================================
+   CAPA 2.2 — ENCUESTAS PRIVADAS
+
+   Reglas:
+   - Solo miembros del chat 1×1 pueden crear, leer y votar.
+   - Cada usuario vota una vez por encuesta (BD).
+   - Solo quien la creó puede cerrarla antes de tiempo.
+======================================================== */
+
+function cleanPollText(value, maxLength) {
+  return String(value || '').replace(/\s+/g, ' ').trim().slice(0, maxLength);
+}
+
+async function emitPollUpdate(req, conversationId, pollId) {
+  const io = req.app && req.app.get('io');
+  if (!io) return;
+  const payload = { conversationId, pollId };
+  io.to(`conversation:${conversationId}`).emit('poll:updated', payload);
+}
+
+async function getPollForViewer(pollId, conversationId, viewerUserId) {
+  const result = await database.query(`
+    SELECT
+      p.id, p.conversation_id, p.creator_user_id, p.question,
+      p.created_at, p.closes_at, p.closed_at,
+      COALESCE((
+        SELECT json_agg(json_build_object(
+          'id', o.id,
+          'label', o.label,
+          'position', o.position,
+          'votes', (SELECT COUNT(*)::int FROM chat_poll_votes v WHERE v.option_id = o.id)
+        ) ORDER BY o.position)
+        FROM chat_poll_options o WHERE o.poll_id = p.id
+      ), '[]'::json) AS options,
+      (SELECT COUNT(*)::int FROM chat_poll_votes v WHERE v.poll_id = p.id) AS total_votes,
+      (SELECT v.option_id::text FROM chat_poll_votes v WHERE v.poll_id = p.id AND v.voter_user_id = $3 LIMIT 1) AS viewer_option_id
+    FROM chat_polls p
+    WHERE p.id = $1 AND p.conversation_id = $2
+    LIMIT 1
+  `, [pollId, conversationId, viewerUserId]);
+
+  const poll = result.rows[0] || null;
+  if (!poll) return null;
+
+  const isExpired = poll.closes_at && new Date(poll.closes_at).getTime() <= Date.now();
+  return {
+    id: poll.id,
+    conversationId: poll.conversation_id,
+    creatorUserId: poll.creator_user_id,
+    question: poll.question,
+    options: poll.options,
+    totalVotes: poll.total_votes,
+    viewerOptionId: poll.viewer_option_id,
+    createdAt: poll.created_at,
+    closesAt: poll.closes_at,
+    closedAt: poll.closed_at,
+    closed: Boolean(poll.closed_at || isExpired)
+  };
+}
+
+router.post('/polls', async (req, res) => {
+  const userId = currentUserId(req);
+  const conversationId = cleanId(req.body?.conversationId);
+  const question = cleanPollText(req.body?.question, 280);
+  const options = Array.isArray(req.body?.options)
+    ? req.body.options.map(item => cleanPollText(item, 160)).filter(Boolean)
+    : [];
+  const closesInHours = Number(req.body?.closesInHours || 0);
+
+  if (!conversationId || !question || options.length < 2 || options.length > 8) {
+    return res.status(400).json({ ok:false, msg:'Escribe una pregunta y entre 2 y 8 opciones' });
+  }
+  if (new Set(options.map(item => item.toLocaleLowerCase('es'))).size !== options.length) {
+    return res.status(400).json({ ok:false, msg:'No repitas opciones en la encuesta' });
+  }
+
+  const room = await validatePrivateRoom(conversationId, userId);
+  if (!room.ok) return res.status(room.status).json({ ok:false, msg:room.msg });
+
+  const client = await database.pool.connect();
+  try {
+    await client.query('BEGIN');
+    const closesAt = Number.isFinite(closesInHours) && closesInHours > 0 && closesInHours <= 24 * 90
+      ? new Date(Date.now() + closesInHours * 60 * 60 * 1000)
+      : null;
+    const pollResult = await client.query(`
+      INSERT INTO chat_polls(conversation_id, creator_user_id, question, closes_at)
+      VALUES($1,$2,$3,$4) RETURNING id
+    `, [conversationId, userId, question, closesAt]);
+    const pollId = pollResult.rows[0].id;
+    for (const [position, label] of options.entries()) {
+      await client.query(`
+        INSERT INTO chat_poll_options(poll_id, label, position) VALUES($1,$2,$3)
+      `, [pollId, label, position]);
+    }
+    await client.query('COMMIT');
+    const poll = await getPollForViewer(pollId, conversationId, userId);
+    await emitPollUpdate(req, conversationId, pollId);
+    return res.status(201).json({ ok:true, poll });
+  } catch (error) {
+    await client.query('ROLLBACK');
+    console.error('VOBIXCHAT POLL CREATE ERROR:', error.message);
+    return res.status(500).json({ ok:false, msg:'No se pudo crear la encuesta' });
+  } finally {
+    client.release();
+  }
+});
+
+router.get('/conversations/:conversationId/polls', async (req, res) => {
+  const userId = currentUserId(req);
+  const conversationId = cleanId(req.params.conversationId);
+  const room = await validatePrivateRoom(conversationId, userId);
+  if (!room.ok) return res.status(room.status).json({ ok:false, msg:room.msg });
+  try {
+    const result = await database.query(`
+      SELECT id FROM chat_polls WHERE conversation_id=$1 ORDER BY created_at DESC LIMIT 50
+    `, [conversationId]);
+    const polls = [];
+    for (const row of result.rows) {
+      const poll = await getPollForViewer(row.id, conversationId, userId);
+      if (poll) polls.push(poll);
+    }
+    return res.json({ ok:true, polls });
+  } catch (error) {
+    console.error('VOBIXCHAT POLL LIST ERROR:', error.message);
+    return res.status(500).json({ ok:false, msg:'No se pudieron cargar las encuestas' });
+  }
+});
+
+router.post('/polls/:pollId/vote', async (req, res) => {
+  const userId = currentUserId(req);
+  const pollId = cleanId(req.params.pollId);
+  const optionId = cleanId(req.body?.optionId);
+  if (!pollId || !optionId) return res.status(400).json({ ok:false, msg:'Selecciona una opción' });
+  try {
+    const pollResult = await database.query(`SELECT conversation_id, closed_at, closes_at FROM chat_polls WHERE id=$1 LIMIT 1`, [pollId]);
+    const rawPoll = pollResult.rows[0];
+    if (!rawPoll) return res.status(404).json({ ok:false, msg:'Encuesta no encontrada' });
+    const room = await validatePrivateRoom(rawPoll.conversation_id, userId);
+    if (!room.ok) return res.status(room.status).json({ ok:false, msg:room.msg });
+    if (rawPoll.closed_at || (rawPoll.closes_at && new Date(rawPoll.closes_at).getTime() <= Date.now())) {
+      return res.status(409).json({ ok:false, msg:'La encuesta está cerrada' });
+    }
+    const option = await database.query(`SELECT 1 FROM chat_poll_options WHERE id=$1 AND poll_id=$2`, [optionId, pollId]);
+    if (!option.rows[0]) return res.status(400).json({ ok:false, msg:'La opción no pertenece a esta encuesta' });
+    await database.query(`INSERT INTO chat_poll_votes(poll_id, option_id, voter_user_id) VALUES($1,$2,$3)`, [pollId, optionId, userId]);
+    const poll = await getPollForViewer(pollId, rawPoll.conversation_id, userId);
+    await emitPollUpdate(req, rawPoll.conversation_id, pollId);
+    return res.json({ ok:true, poll });
+  } catch (error) {
+    if (error?.code === '23505') return res.status(409).json({ ok:false, msg:'Ya votaste en esta encuesta' });
+    console.error('VOBIXCHAT POLL VOTE ERROR:', error.message);
+    return res.status(500).json({ ok:false, msg:'No se pudo registrar tu voto' });
+  }
+});
+
+router.post('/polls/:pollId/close', async (req, res) => {
+  const userId = currentUserId(req);
+  const pollId = cleanId(req.params.pollId);
+  try {
+    const result = await database.query(`
+      SELECT conversation_id, creator_user_id FROM chat_polls WHERE id=$1 LIMIT 1
+    `, [pollId]);
+    const rawPoll = result.rows[0];
+    if (!rawPoll) return res.status(404).json({ ok:false, msg:'Encuesta no encontrada' });
+    const room = await validatePrivateRoom(rawPoll.conversation_id, userId);
+    if (!room.ok) return res.status(room.status).json({ ok:false, msg:room.msg });
+    if (String(rawPoll.creator_user_id) !== String(userId)) return res.status(403).json({ ok:false, msg:'Solo quien creó la encuesta puede cerrarla' });
+    await database.query(`UPDATE chat_polls SET closed_at=COALESCE(closed_at,NOW()) WHERE id=$1`, [pollId]);
+    const poll = await getPollForViewer(pollId, rawPoll.conversation_id, userId);
+    await emitPollUpdate(req, rawPoll.conversation_id, pollId);
+    return res.json({ ok:true, poll });
+  } catch (error) {
+    console.error('VOBIXCHAT POLL CLOSE ERROR:', error.message);
+    return res.status(500).json({ ok:false, msg:'No se pudo cerrar la encuesta' });
   }
 });
 

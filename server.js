@@ -35,6 +35,11 @@ const http =
 const crypto =
   require('crypto');
 
+// Capa 2.1.1 — el secreto del SFU nunca se envía al móvil.
+// Solo se usa aquí para generar permisos temporales de sala.
+const jwt =
+  require('jsonwebtoken');
+
 const path =
   require('path');
 
@@ -61,6 +66,10 @@ const {
 
 const chatRoutes =
   require('./routes/chat');
+
+const {
+  getVobixLayers
+} = require('./core/vobix-layers');
 
 
 // ======================================================
@@ -242,6 +251,47 @@ app.use(
 const pins = {};
 
 const pendingUsers = {};
+
+// Capa 3.3 — defensa prudente de registro.
+// Se activa únicamente por variable de entorno al tener SMS real probado.
+// Los contadores protegen contra abuso, no clasifican ni rechazan VoIP.
+const registrationGuard = {
+  sendsByPhone: new Map(),
+  sendsByIp: new Map()
+};
+
+function getClientIp(req) {
+  const forwarded = String(req.headers['x-forwarded-for'] || '').split(',')[0].trim();
+  return forwarded || req.ip || req.socket?.remoteAddress || 'unknown';
+}
+
+function takeRegistrationSlot(store, key, limit, windowMs) {
+  const now = Date.now();
+  const previous = store.get(key) || [];
+  const recent = previous.filter((time) => now - time < windowMs);
+
+  if (recent.length >= limit) {
+    store.set(key, recent);
+    return false;
+  }
+
+  recent.push(now);
+  store.set(key, recent);
+  return true;
+}
+
+function registrationGuardAllows(req, phone) {
+  if (!config.REGISTRATION_GUARD_ENABLED) return true;
+
+  const windowMs = Math.max(60 * 1000, Number(config.REGISTRATION_GUARD_WINDOW_MS) || 0);
+  const phoneLimit = Math.max(1, Number(config.REGISTRATION_SENDS_PER_PHONE) || 0);
+  const ipLimit = Math.max(1, Number(config.REGISTRATION_SENDS_PER_IP) || 0);
+
+  const phoneAllowed = takeRegistrationSlot(registrationGuard.sendsByPhone, phone, phoneLimit, windowMs);
+  const ipAllowed = takeRegistrationSlot(registrationGuard.sendsByIp, getClientIp(req), ipLimit, windowMs);
+
+  return phoneAllowed && ipAllowed;
+}
 
 // Las sesiones reales se guardan en PostgreSQL.
 // El navegador conserva el token bruto; la base guarda únicamente SHA-256.
@@ -565,6 +615,14 @@ function sendPin(
 
   }
 
+  if (!registrationGuardAllows(req, phone)) {
+    return res.status(429).json({
+      ok: false,
+      msg: 'Demasiadas solicitudes. Espera unos minutos e inténtalo de nuevo.',
+      retryable: true
+    });
+  }
+
 
   if (
     !config.TEST_PIN_MODE
@@ -581,6 +639,13 @@ function sendPin(
 
       });
 
+  }
+
+  if (!config.TEST_PIN) {
+    return res.status(503).json({
+      ok: false,
+      msg: 'El PIN privado de pruebas no está configurado'
+    });
   }
 
 
@@ -1865,6 +1930,18 @@ const onlineUsers =
 
 const activeCalls =
   new Map();
+
+
+// ======================================================
+// CAPA 2.1 — SALA PRIVADA AMPLIABLE
+//
+// Una llamada nace desde un chat 1×1, pero puede invitar
+// usuarios verificados hasta un máximo de seis personas
+// en total. El límite se aplica en servidor: nunca se
+// confía en un botón del navegador para controlar aforo.
+// ======================================================
+
+const MAX_CALL_PARTICIPANTS = 12;
 
 
 // ======================================================
@@ -3558,6 +3635,27 @@ io.on(
           }
 
 
+          // La sala privada ampliable admite como máximo seis
+          // participantes activos. Se comprueba otra vez al aceptar
+          // para evitar carreras entre varias invitaciones simultáneas.
+          if (
+            !call.participants.has(String(userId)) &&
+            call.participants.size >= MAX_CALL_PARTICIPANTS
+          ) {
+
+            call.invited.delete(String(userId));
+
+            if (typeof callback === 'function') {
+              callback({
+                ok: false,
+                msg: `La sala ya alcanzó el máximo de ${MAX_CALL_PARTICIPANTS} personas`
+              });
+            }
+
+            return;
+          }
+
+
           call.participants.add(
             String(userId)
           );
@@ -3940,6 +4038,26 @@ io.on(
 
             return;
 
+          }
+
+
+          // Contamos participantes e invitaciones pendientes. Así no
+          // se puede enviar una séptima invitación mientras otras seis
+          // personas están aceptando la misma sala.
+          const reservedSeats =
+            call.participants.size +
+            call.invited.size;
+
+          if (reservedSeats >= MAX_CALL_PARTICIPANTS) {
+
+            if (typeof callback === 'function') {
+              callback({
+                ok: false,
+                msg: `La sala admite un máximo de ${MAX_CALL_PARTICIPANTS} personas`
+              });
+            }
+
+            return;
           }
 
 
@@ -5957,6 +6075,16 @@ app.post('/api/friends/:id/reject', requireAuth, async (req, res) => {
 // CONFIGURACIÓN WEBRTC / TURN
 // ======================================================
 
+// ======================================================
+// CAPA 5 — DIAGNÓSTICO CENTRAL DE ESTRUCTURA
+// El cliente solo recibe nombres, alcance y estado; nunca
+// secretos, configuración de Render ni datos de usuarios.
+// ======================================================
+
+app.get('/api/vobix/layers', requireAuth, (req, res) => {
+  res.json({ ok:true, layers:getVobixLayers() });
+});
+
 app.get('/api/rtc-config', requireAuth, (req, res) => {
   const iceServers = [
     { urls: ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302'] }
@@ -5980,6 +6108,93 @@ app.get('/api/rtc-config', requireAuth, (req, res) => {
   }
 
   res.json({ ok:true, iceServers });
+});
+
+
+// ======================================================
+// CAPA 2.1.1 — SFU DE VÍDEO (LIVEKIT)
+//
+// Esta ruta no inicia una videollamada por sí sola. Entrega
+// un permiso temporal a un participante ya validado de una
+// llamada activa. De esta forma el navegador nunca conoce
+// LIVEKIT_API_SECRET y una URL copiada no permite entrar.
+// ======================================================
+
+function getSfuConfiguration() {
+  return {
+    url: String(process.env.LIVEKIT_URL || '').trim().replace(/\/$/, ''),
+    apiKey: String(process.env.LIVEKIT_API_KEY || '').trim(),
+    apiSecret: String(process.env.LIVEKIT_API_SECRET || '').trim()
+  };
+}
+
+app.get('/api/sfu/status', requireAuth, (req, res) => {
+  const sfu = getSfuConfiguration();
+
+  res.json({
+    ok: true,
+    // Solo se muestra el estado. Ni la clave ni el secreto salen del servidor.
+    enabled: Boolean(sfu.url && sfu.apiKey && sfu.apiSecret),
+    provider: 'livekit',
+    maxParticipants: MAX_CALL_PARTICIPANTS
+  });
+});
+
+app.post('/api/sfu/token', requireAuth, (req, res) => {
+  const callId = String(req.body?.callId || '').trim();
+  const call = activeCalls.get(callId);
+  const userId = String(req.vobixUser?.id || '').trim();
+  const sfu = getSfuConfiguration();
+
+  if (!callId || !call) {
+    return res.status(404).json({ ok:false, msg:'La sala de vídeo ya no está disponible' });
+  }
+
+  if (!call.participants.has(userId)) {
+    return res.status(403).json({ ok:false, msg:'No perteneces a esta sala privada' });
+  }
+
+  if (!sfu.url || !sfu.apiKey || !sfu.apiSecret) {
+    return res.status(503).json({
+      ok:false,
+      msg:'El servidor SFU aún no está configurado',
+      code:'SFU_NOT_CONFIGURED'
+    });
+  }
+
+  const room = `vobix-call-${callId}`;
+  const identity = `vobix-${userId}`;
+
+  const token = jwt.sign({
+    video: {
+      roomJoin: true,
+      room,
+      canPublish: true,
+      canSubscribe: true,
+      canPublishData: true,
+      roomAdmin: false
+    },
+    metadata: JSON.stringify({
+      userId,
+      callId,
+      username: String(req.vobixUser?.username || 'VOBIXCHAT').slice(0, 80)
+    })
+  }, sfu.apiSecret, {
+    algorithm: 'HS256',
+    issuer: sfu.apiKey,
+    subject: identity,
+    expiresIn: '10m'
+  });
+
+  return res.json({
+    ok:true,
+    provider:'livekit',
+    url:sfu.url,
+    room,
+    token,
+    expiresInSeconds:600,
+    maxParticipants:MAX_CALL_PARTICIPANTS
+  });
 });
 
 

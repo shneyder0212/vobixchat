@@ -467,6 +467,17 @@ async function initializeDatabase() {
       ON contacts(owner_user_id);
     `);
 
+    // CAPA 3.1 — Favoritos por usuario, sin alterar el contacto ni el chat.
+    await database.query(`
+      ALTER TABLE contacts
+      ADD COLUMN IF NOT EXISTS is_favorite BOOLEAN NOT NULL DEFAULT FALSE;
+    `);
+
+    await database.query(`
+      CREATE INDEX IF NOT EXISTS contacts_owner_favorite_idx
+      ON contacts(owner_user_id, is_favorite DESC, created_at DESC);
+    `);
+
 
     // ====================================================
     // BLOCKS
@@ -565,6 +576,12 @@ async function initializeDatabase() {
       ALTER TABLE conversations
       ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ
       DEFAULT NOW();
+    `);
+
+    // CAPA 4.6.1 — Duración para mensajes nuevos; cero significa desactivado.
+    await database.query(`
+      ALTER TABLE conversations
+      ADD COLUMN IF NOT EXISTS disappearing_seconds INTEGER NOT NULL DEFAULT 0;
     `);
 
 
@@ -782,10 +799,32 @@ async function initializeDatabase() {
       ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ
       DEFAULT NOW();
     `);
-      await database.query(`
+    await database.query(`
       ALTER TABLE messages
       ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ
       DEFAULT NOW();
+    `);
+
+    await database.query(`
+      ALTER TABLE messages
+      ADD COLUMN IF NOT EXISTS expires_at TIMESTAMPTZ;
+    `);
+
+    await database.query(`
+      CREATE INDEX IF NOT EXISTS messages_expires_at_idx
+      ON messages(expires_at)
+      WHERE expires_at IS NOT NULL AND deleted = FALSE;
+    `);
+
+    // CAPA 2.6.1 — Los adjuntos normales mantienen FALSE y no cambian.
+    await database.query(`
+      ALTER TABLE messages
+      ADD COLUMN IF NOT EXISTS view_once BOOLEAN NOT NULL DEFAULT FALSE;
+    `);
+
+    await database.query(`
+      ALTER TABLE messages
+      ADD COLUMN IF NOT EXISTS viewed_at TIMESTAMPTZ;
     `);
 
 
@@ -1014,6 +1053,58 @@ async function initializeDatabase() {
         conversation_id,
         created_at DESC
       );
+    `);
+
+
+    // ====================================================
+    // CAPA 2.2 — ENCUESTAS PRIVADAS
+    //
+    // Las encuestas no se guardan en el navegador. Quedan
+    // ligadas al chat y el voto único se impone mediante una
+    // restricción de PostgreSQL, no mediante un botón.
+    // ====================================================
+
+    await database.query(`
+      CREATE TABLE IF NOT EXISTS chat_polls (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        conversation_id UUID NOT NULL REFERENCES conversations(id) ON DELETE CASCADE,
+        creator_user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        question VARCHAR(280) NOT NULL,
+        closed_at TIMESTAMPTZ,
+        closes_at TIMESTAMPTZ,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+    `);
+
+    await database.query(`
+      CREATE TABLE IF NOT EXISTS chat_poll_options (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        poll_id UUID NOT NULL REFERENCES chat_polls(id) ON DELETE CASCADE,
+        label VARCHAR(160) NOT NULL,
+        position SMALLINT NOT NULL,
+        UNIQUE(poll_id, position)
+      );
+    `);
+
+    await database.query(`
+      CREATE TABLE IF NOT EXISTS chat_poll_votes (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        poll_id UUID NOT NULL REFERENCES chat_polls(id) ON DELETE CASCADE,
+        option_id UUID NOT NULL REFERENCES chat_poll_options(id) ON DELETE CASCADE,
+        voter_user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        UNIQUE(poll_id, voter_user_id)
+      );
+    `);
+
+    await database.query(`
+      CREATE INDEX IF NOT EXISTS chat_polls_conversation_created_idx
+      ON chat_polls(conversation_id, created_at DESC);
+    `);
+
+    await database.query(`
+      CREATE INDEX IF NOT EXISTS chat_poll_votes_poll_idx
+      ON chat_poll_votes(poll_id);
     `);
 
 
@@ -1268,4 +1359,4 @@ async function initializeDatabase() {
 
 module.exports = {
   initializeDatabase
-}; 
+};
