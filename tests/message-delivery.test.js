@@ -46,3 +46,17 @@ test('fallo temporal reintenta con espera exponencial limitada', () => {
   assert.match(html, /scheduleOutboxRetry\(payload\.attempts\)/);
   assert.match(html, /vobix:network-quality-change/);
 });
+
+test('cola protege almacenamiento sin borrar silenciosamente mensajes antiguos', () => {
+  assert.match(html, /const MAX_OUTBOX_MESSAGES = 100/);
+  assert.match(html, /const MAX_OUTBOX_BYTES = 1500000/);
+  assert.match(html, /messages\.length > MAX_OUTBOX_MESSAGES/);
+  assert.match(html, /new Blob\(\[serialized\]\)\.size > MAX_OUTBOX_BYTES/);
+  assert.match(html, /outbox\.length >= MAX_OUTBOX_MESSAGES/);
+  assert.doesNotMatch(html, /messages\.slice\(-100\)/);
+});
+
+test('cola ignora registros locales incompletos o manipulados', () => {
+  assert.match(html, /function validOutboxItem/);
+  assert.match(html, /stored\.filter\(validOutboxItem\)/);
+});

@@ -11547,10 +11547,25 @@
       return `vobixchat_outbox_${owner}`;
     }
 
+    const MAX_OUTBOX_MESSAGES = 100;
+    const MAX_OUTBOX_BYTES = 1500000;
+
+    function validOutboxItem(item) {
+      return !!(
+        item &&
+        typeof item === 'object' &&
+        String(item.clientMessageId || '').length >= 8 &&
+        String(item.conversationId || item.conversation_id || '').trim() &&
+        String(item.text || '').trim()
+      );
+    }
+
     function readMessageOutbox() {
       try {
         const stored = JSON.parse(localStorage.getItem(messageOutboxKey()) || '[]');
-        return Array.isArray(stored) ? stored : [];
+        return Array.isArray(stored)
+          ? stored.filter(validOutboxItem).slice(0, MAX_OUTBOX_MESSAGES)
+          : [];
       } catch (_) {
         return [];
       }
@@ -11558,7 +11573,14 @@
 
     function writeMessageOutbox(messages) {
       try {
-        localStorage.setItem(messageOutboxKey(), JSON.stringify(messages.slice(-100)));
+        if (!Array.isArray(messages) || messages.length > MAX_OUTBOX_MESSAGES) {
+          return false;
+        }
+        const serialized = JSON.stringify(messages);
+        if (new Blob([serialized]).size > MAX_OUTBOX_BYTES) {
+          return false;
+        }
+        localStorage.setItem(messageOutboxKey(), serialized);
         return true;
       } catch (error) {
         console.warn('[VOBIXCHAT OUTBOX SAVE]', error);
@@ -11571,6 +11593,9 @@
       const clientMessageId = String(payload?.clientMessageId || '');
       if (clientMessageId && outbox.some(item => String(item.clientMessageId) === clientMessageId)) {
         return true;
+      }
+      if (outbox.length >= MAX_OUTBOX_MESSAGES) {
+        return false;
       }
       return writeMessageOutbox([
         ...outbox,
