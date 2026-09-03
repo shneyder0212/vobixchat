@@ -6,7 +6,9 @@
   "private": true,
   "scripts": {
     "start": "node server.js",
-    "check": "node --check server.js && node --check routes/chat.js && node --check database/schema.js"
+    "check": "node --check server.js && node --check routes/chat.js && node --check database/schema.js",
+    "test:senior": "node --test tests/senior-mode.test.js",
+    "preflight": "node scripts/preflight.js"
   },
   "engines": { "node": ">=20.0.0" },
   "dependencies": {

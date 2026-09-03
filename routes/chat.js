@@ -21,6 +21,7 @@ const express = require('express');
 const database = require('../database/db');
 
 const router = express.Router();
+const seniorAssistantRate = new Map();
 
 
 /* ========================================================
@@ -85,6 +86,126 @@ router.use((req, res, next) => {
 
   next();
 
+});
+
+
+/* ========================================================
+   CAPA 86 — TRADUCCIÓN SEGURA BAJO DEMANDA
+======================================================== */
+
+router.post('/translate', async (req, res) => {
+  const text = String(req.body?.text || '').trim().slice(0, 2000);
+  const sourceLanguage = String(req.body?.sourceLanguage || 'auto').trim().toLowerCase().slice(0, 20);
+  const targetLanguage = String(req.body?.targetLanguage || 'es').trim().toLowerCase().slice(0, 20);
+  const providerUrl = String(process.env.TRANSLATION_API_URL || '').trim();
+  const providerKey = String(process.env.TRANSLATION_API_KEY || '').trim();
+
+  if (!text || !/^[a-z]{2,3}(?:-[a-z0-9]{2,8})?$|^auto$/i.test(sourceLanguage) || !/^[a-z]{2,3}(?:-[a-z0-9]{2,8})?$/i.test(targetLanguage)) {
+    return res.status(400).json({ ok: false, msg: 'Solicitud de traducción no válida' });
+  }
+  if (!providerUrl) {
+    return res.status(503).json({ ok: false, msg: 'El traductor del servidor todavía no está configurado' });
+  }
+
+  try {
+    const providerResponse = await fetch(providerUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        q: text,
+        source: sourceLanguage,
+        target: targetLanguage,
+        format: 'text',
+        ...(providerKey ? { api_key: providerKey } : {})
+      }),
+      signal: AbortSignal.timeout(12000)
+    });
+    const data = await providerResponse.json().catch(() => null);
+    const translatedText = String(data?.translatedText || data?.translation || '').trim();
+    if (!providerResponse.ok || !translatedText) throw new Error('TRANSLATION_PROVIDER_FAILED');
+    return res.json({
+      ok: true,
+      translatedText,
+      sourceLanguage: String(data?.detectedLanguage?.language || data?.detectedLanguage || sourceLanguage),
+      targetLanguage
+    });
+  } catch (error) {
+    console.error('VOBIXCHAT TRANSLATION ERROR:', error.message);
+    return res.status(502).json({ ok: false, msg: 'No se pudo completar la traducción' });
+  }
+});
+
+
+/* ========================================================
+   CAPA 101 — ASISTENTE SENIOR SEGURO Y OPCIONAL
+======================================================== */
+
+router.post('/assistant', async (req, res) => {
+  const userId = currentUserId(req);
+  const question = String(req.body?.question || '').trim().slice(0, 800);
+  const language = String(req.body?.language || 'es-ES').trim().slice(0, 20);
+  const providerUrl = String(process.env.VOBIX_AI_API_URL || '').trim();
+  const providerKey = String(process.env.VOBIX_AI_API_KEY || '').trim();
+  const providerModel = String(process.env.VOBIX_AI_MODEL || '').trim();
+
+  if (!question) return res.status(400).json({ ok:false, msg:'Escriba una pregunta' });
+  const exposesSecret = /\b(?:\d[ -]?){6,}\b/.test(question) ||
+    /\b(?:mi|la|el)\s+(?:password|contrase(?:ñ|n)a|pin|otp|c[oó]digo)\s*(?:es|:)/i.test(question);
+  if (exposesSecret) {
+    return res.status(400).json({ ok:false, msg:'No incluya contraseñas, PIN, códigos ni datos bancarios' });
+  }
+
+  const now = Date.now();
+  const attempts = (seniorAssistantRate.get(userId) || []).filter(at => now - at < 60000);
+  if (attempts.length >= 20) return res.status(429).json({ ok:false, msg:'Espere un momento antes de volver a preguntar' });
+  attempts.push(now);
+  seniorAssistantRate.set(userId, attempts);
+
+  if (!providerUrl || !providerKey || !providerModel) {
+    return res.status(503).json({ ok:false, msg:'El motor IA todavía no está configurado' });
+  }
+
+  const systemInstruction = [
+    'Eres el ayudante de accesibilidad de VobixChat para personas mayores.',
+    'Responde en lenguaje sencillo, respetuoso y en un máximo de 120 palabras.',
+    'Explica únicamente cómo usar VobixChat y su seguridad.',
+    'Nunca solicites contraseñas, PIN, códigos, datos bancarios, documentos ni ubicación.',
+    'No tomes decisiones sobre bloqueos, reclamaciones, pagos, denuncias ni asuntos legales; indica que requieren revisión humana.',
+    'En una emergencia real, indica que use Ayuda / Emergencia y confirme la llamada al 112.',
+    `Idioma preferido: ${language}.`
+  ].join(' ');
+
+  try {
+    const providerResponse = await fetch(providerUrl, {
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json',
+        'Authorization':`Bearer ${providerKey}`
+      },
+      body:JSON.stringify({
+        model:providerModel,
+        messages:[
+          { role:'system', content:systemInstruction },
+          { role:'user', content:question }
+        ],
+        temperature:0.2,
+        max_tokens:220
+      }),
+      signal:AbortSignal.timeout(15000)
+    });
+    const data = await providerResponse.json().catch(() => null);
+    const answer = String(
+      data?.choices?.[0]?.message?.content ||
+      data?.output_text ||
+      data?.output?.[0]?.content?.[0]?.text ||
+      ''
+    ).trim().slice(0, 1800);
+    if (!providerResponse.ok || !answer) throw new Error('AI_PROVIDER_FAILED');
+    return res.json({ ok:true, answer });
+  } catch (error) {
+    console.error('VOBIXCHAT SENIOR ASSISTANT ERROR:', error.message);
+    return res.status(502).json({ ok:false, msg:'El ayudante conectado no está disponible' });
+  }
 });
 
 
@@ -3703,6 +3824,7 @@ router.post(
 
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 const multer = require('multer');
 const r2Storage = require('../core/r2-storage');
 
@@ -3718,6 +3840,13 @@ const chatUploadDirectory =
     'chat'
   );
 
+const resumableUploadDirectory =
+  path.join(chatUploadDirectory, '.resumable');
+
+const resumableUploads = new Map();
+const RESUMABLE_CHUNK_SIZE = 1024 * 1024;
+const RESUMABLE_UPLOAD_TTL = 2 * 60 * 60 * 1000;
+
 
 try {
 
@@ -3726,6 +3855,11 @@ try {
     {
       recursive: true
     }
+  );
+
+  fs.mkdirSync(
+    resumableUploadDirectory,
+    { recursive: true }
   );
 
 } catch (error) {
@@ -4339,6 +4473,191 @@ function receiveChatFile(
   );
 
 }
+
+
+/* ========================================================
+   CAPA 85 — SUBIDAS REANUDABLES POR FRAGMENTOS
+======================================================== */
+
+function resumableSessionFor(req) {
+  const session = resumableUploads.get(cleanId(req.params.uploadId));
+  if (!session || session.userId !== currentUserId(req)) return null;
+  session.updatedAt = Date.now();
+  return session;
+}
+
+
+function resumableFileAllowed(name, mimeType) {
+  return new Promise(resolve => {
+    chatFileFilter(
+      {},
+      { originalname: name, mimetype: mimeType },
+      (error, accepted) => resolve(!error && accepted === true)
+    );
+  });
+}
+
+
+async function removeResumableSession(uploadId) {
+  const session = resumableUploads.get(uploadId);
+  resumableUploads.delete(uploadId);
+  if (!session) return;
+  await fs.promises.rm(session.directory, { recursive: true, force: true }).catch(() => {});
+}
+
+
+router.post('/files/resumable/start', async (req, res) => {
+  const userId = currentUserId(req);
+  const conversationId = cleanId(req.body?.conversationId || req.body?.conversation_id);
+  const originalName = safeFileName(req.body?.fileName || 'archivo');
+  const mimeType = String(req.body?.mimeType || 'application/octet-stream').trim().slice(0, 150);
+  const totalSize = Number(req.body?.totalSize || 0);
+  const requestedType = normalizeMessageType(req.body?.type);
+  const clientUploadId = cleanId(req.body?.clientUploadId).replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 100);
+
+  if (!conversationId || !clientUploadId || !Number.isSafeInteger(totalSize) || totalSize < 1 || totalSize > 50 * 1024 * 1024) {
+    return res.status(400).json({ ok: false, msg: 'Datos de subida no válidos' });
+  }
+  if (!(await resumableFileAllowed(originalName, mimeType))) {
+    return res.status(415).json({ ok: false, msg: 'Este tipo de archivo no está permitido' });
+  }
+
+  const room = await validatePrivateRoom(conversationId, userId);
+  if (!room.ok) return res.status(room.status).json({ ok: false, msg: room.msg });
+  if (await usersAreBlocked(userId, room.otherUser.id)) {
+    return res.status(403).json({ ok: false, msg: 'No se puede enviar el archivo' });
+  }
+
+  const existing = [...resumableUploads.values()].find(item =>
+    item.userId === userId && item.clientUploadId === clientUploadId
+  );
+  if (existing) {
+    return res.json({
+      ok: true,
+      uploadId: existing.uploadId,
+      chunkSize: RESUMABLE_CHUNK_SIZE,
+      received: [...existing.received].sort((a, b) => a - b)
+    });
+  }
+
+  const uploadId = crypto.randomUUID();
+  const directory = path.join(resumableUploadDirectory, uploadId);
+  await fs.promises.mkdir(directory, { recursive: true });
+  resumableUploads.set(uploadId, {
+    uploadId,
+    clientUploadId,
+    userId,
+    conversationId,
+    originalName,
+    mimeType,
+    totalSize,
+    totalChunks: Math.ceil(totalSize / RESUMABLE_CHUNK_SIZE),
+    requestedType,
+    viewOnce: Boolean(req.body?.viewOnce),
+    directory,
+    received: new Set(),
+    updatedAt: Date.now()
+  });
+
+  return res.status(201).json({ ok: true, uploadId, chunkSize: RESUMABLE_CHUNK_SIZE, received: [] });
+});
+
+
+router.get('/files/resumable/:uploadId', (req, res) => {
+  const session = resumableSessionFor(req);
+  if (!session) return res.status(404).json({ ok: false, msg: 'Subida no encontrada' });
+  return res.json({
+    ok: true,
+    uploadId: session.uploadId,
+    chunkSize: RESUMABLE_CHUNK_SIZE,
+    totalChunks: session.totalChunks,
+    received: [...session.received].sort((a, b) => a - b)
+  });
+});
+
+
+router.put(
+  '/files/resumable/:uploadId/:index',
+  express.raw({ type: 'application/octet-stream', limit: RESUMABLE_CHUNK_SIZE + 1024 }),
+  async (req, res) => {
+    const session = resumableSessionFor(req);
+    const index = Number(req.params.index);
+    if (!session) return res.status(404).json({ ok: false, msg: 'Subida no encontrada' });
+    if (!Number.isInteger(index) || index < 0 || index >= session.totalChunks || !Buffer.isBuffer(req.body)) {
+      return res.status(400).json({ ok: false, msg: 'Fragmento no válido' });
+    }
+    const expectedSize = index === session.totalChunks - 1
+      ? session.totalSize - index * RESUMABLE_CHUNK_SIZE
+      : RESUMABLE_CHUNK_SIZE;
+    if (req.body.length !== expectedSize) {
+      return res.status(400).json({ ok: false, msg: 'Tamaño de fragmento incorrecto' });
+    }
+    await fs.promises.writeFile(path.join(session.directory, `${index}.part`), req.body, { flag: 'w' });
+    session.received.add(index);
+    return res.json({ ok: true, index, receivedCount: session.received.size });
+  }
+);
+
+
+router.post('/files/resumable/:uploadId/complete', async (req, res) => {
+  const session = resumableSessionFor(req);
+  if (!session) return res.status(404).json({ ok: false, msg: 'Subida no encontrada' });
+  if (session.received.size !== session.totalChunks) {
+    return res.status(409).json({
+      ok: false,
+      msg: 'Faltan fragmentos',
+      received: [...session.received].sort((a, b) => a - b)
+    });
+  }
+
+  const extension = path.extname(session.originalName).toLowerCase();
+  const finalName = `${Date.now()}-${crypto.randomBytes(4).toString('hex')}-${path.basename(session.originalName, extension).slice(0, 100) || 'archivo'}${extension}`;
+  const finalPath = path.join(chatUploadDirectory, finalName);
+  await fs.promises.writeFile(finalPath, Buffer.alloc(0));
+  for (let index = 0; index < session.totalChunks; index += 1) {
+    const chunk = await fs.promises.readFile(path.join(session.directory, `${index}.part`));
+    await fs.promises.appendFile(finalPath, chunk);
+  }
+  const assembled = await fs.promises.stat(finalPath);
+  if (assembled.size !== session.totalSize) {
+    await fs.promises.unlink(finalPath).catch(() => {});
+    return res.status(409).json({ ok: false, msg: 'El archivo reconstruido no coincide' });
+  }
+
+  req.file = {
+    fieldname: 'file',
+    originalname: session.originalName,
+    encoding: '7bit',
+    mimetype: session.mimeType,
+    destination: chatUploadDirectory,
+    filename: finalName,
+    path: finalPath,
+    size: assembled.size
+  };
+  req.body = {
+    conversationId: session.conversationId,
+    type: session.requestedType,
+    viewOnce: session.viewOnce
+  };
+  await removeResumableSession(session.uploadId);
+  return uploadChatFileHandler(req, res);
+});
+
+
+router.delete('/files/resumable/:uploadId', async (req, res) => {
+  const session = resumableSessionFor(req);
+  if (!session) return res.status(404).json({ ok: false, msg: 'Subida no encontrada' });
+  await removeResumableSession(session.uploadId);
+  return res.json({ ok: true });
+});
+
+
+setInterval(() => {
+  const expiredBefore = Date.now() - RESUMABLE_UPLOAD_TTL;
+  for (const session of resumableUploads.values()) {
+    if (session.updatedAt < expiredBefore) removeResumableSession(session.uploadId);
+  }
+}, 15 * 60 * 1000).unref();
 
 
 /* ========================================================

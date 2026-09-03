@@ -4658,6 +4658,16 @@ io.on(
           return;
         }
 
+        const currentUserKey = String(userId);
+        if (!call.participants.has(currentUserKey) && !call.invited.has(currentUserKey)) {
+          if (typeof callback === 'function') callback({ ok:false, msg:'No estás invitado a esta llamada' });
+          return;
+        }
+
+        call.participants.add(currentUserKey);
+        call.invited.delete(currentUserKey);
+        await socket.join(callRoom(callId));
+
         const targetUserId = String(call.callerId) === String(userId)
           ? Array.from(call.participants).find(id => String(id) !== String(userId))
           : String(call.callerId);
@@ -4757,6 +4767,46 @@ io.on(
         }
       } catch (error) {
         console.error('VOBIXCHAT CALL RESUME ERROR:', error);
+        if (typeof callback === 'function') callback({ ok:false });
+      }
+    });
+
+    socket.on('call:captions-consent', async (payload = {}, callback) => {
+      try {
+        const callId = String(payload.callId || payload.call_id || '').trim();
+        const call = activeCalls.get(callId);
+        const currentUserKey = String(userId);
+
+        if (!call || !call.participants.has(currentUserKey)) {
+          if (typeof callback === 'function') {
+            callback({ ok:false, msg:'No participas en esta llamada' });
+          }
+          return;
+        }
+
+        call.captionConsents = call.captionConsents || new Set();
+        if (payload.accepted === true) {
+          call.captionConsents.add(currentUserKey);
+        } else {
+          call.captionConsents.delete(currentUserKey);
+        }
+
+        const allConsented =
+          call.participants.size >= 2 &&
+          Array.from(call.participants).every(id => call.captionConsents.has(String(id)));
+
+        const consentState = {
+          callId,
+          conversationId:call.conversationId,
+          userId,
+          accepted:payload.accepted === true,
+          allConsented
+        };
+
+        io.to(callRoom(callId)).emit('call:captions-consent', consentState);
+        if (typeof callback === 'function') callback({ ok:true, allConsented });
+      } catch (error) {
+        console.error('VOBIXCHAT CAPTIONS CONSENT ERROR:', error);
         if (typeof callback === 'function') callback({ ok:false });
       }
     });
