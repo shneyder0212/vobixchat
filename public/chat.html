@@ -4362,8 +4362,16 @@
         effectiveType: '',
         downlink: null,
         rtt: null,
+        source: 'browser',
         saveData: false,
         measuredAt: 0
+      },
+
+      networkProbe: {
+        rtt: null,
+        failures: 0,
+        timer: null,
+        running: false
       },
 
       dataMode: 'full',
@@ -5081,10 +5089,14 @@
         navigator.mozConnection ||
         navigator.webkitConnection ||
         null;
-      const online = navigator.onLine !== false;
+      const online = navigator.onLine !== false && app.networkProbe.failures < 2;
       const effectiveType = String(connection?.effectiveType || '').toLowerCase();
       const downlink = Number(connection?.downlink);
-      const rtt = Number(connection?.rtt);
+      const browserRtt = Number(connection?.rtt);
+      const probeRtt = Number(app.networkProbe.rtt);
+      const rtt = Number.isFinite(browserRtt) && browserRtt > 0
+        ? browserRtt
+        : probeRtt;
       const saveData = connection?.saveData === true;
 
       let level = 'good';
@@ -5112,6 +5124,7 @@
         effectiveType,
         downlink: Number.isFinite(downlink) ? downlink : null,
         rtt: Number.isFinite(rtt) ? rtt : null,
+        source: Number.isFinite(browserRtt) && browserRtt > 0 ? 'browser' : 'probe',
         saveData,
         measuredAt: Date.now()
       };
@@ -5177,6 +5190,44 @@
       return nextMode;
     }
 
+    function scheduleNetworkProbe(delay) {
+      if (app.networkProbe.timer) clearTimeout(app.networkProbe.timer);
+      app.networkProbe.timer = setTimeout(runNetworkProbe, delay);
+    }
+
+    async function runNetworkProbe() {
+      if (app.networkProbe.running) return;
+      if (navigator.onLine === false) {
+        app.networkProbe.failures = 2;
+        updateNetworkProfile();
+        scheduleNetworkProbe(document.hidden ? 120000 : 15000);
+        return;
+      }
+
+      app.networkProbe.running = true;
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 5000);
+      const startedAt = performance.now();
+
+      try {
+        const response = await fetch('/api/network-probe', {
+          cache: 'no-store',
+          credentials: 'same-origin',
+          signal: controller.signal
+        });
+        if (!response.ok) throw new Error(`probe-${response.status}`);
+        app.networkProbe.rtt = Math.max(1, Math.round(performance.now() - startedAt));
+        app.networkProbe.failures = 0;
+      } catch (error) {
+        app.networkProbe.failures = Math.min(3, app.networkProbe.failures + 1);
+      } finally {
+        clearTimeout(timeout);
+        app.networkProbe.running = false;
+        updateNetworkProfile();
+        scheduleNetworkProbe(document.hidden ? 120000 : 30000);
+      }
+    }
+
     const networkConnection =
       navigator.connection ||
       navigator.mozConnection ||
@@ -5184,9 +5235,13 @@
     networkConnection?.addEventListener?.('change', updateNetworkProfile);
     window.addEventListener('online', updateNetworkProfile);
     window.addEventListener('offline', updateNetworkProfile);
+    document.addEventListener('visibilitychange', () => {
+      scheduleNetworkProbe(document.hidden ? 120000 : 1000);
+    });
     updateNetworkProfile();
     window.addEventListener('vobix:network-quality-change', applyAutomaticDataMode);
     applyAutomaticDataMode();
+    scheduleNetworkProbe(1500);
 
 
     /* =====================================================

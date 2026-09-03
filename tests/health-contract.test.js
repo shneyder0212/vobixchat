@@ -26,3 +26,11 @@ test('health impide respuestas antiguas almacenadas en caché', () => {
   assert.match(server, /['"]Cache-Control['"]\s*,\s*['"]no-store, max-age=0['"]/);
   assert.match(server, /uptimeSeconds:\s*Math\.floor\(process\.uptime\(\)\)/);
 });
+
+test('sonda de red es pública, mínima y no consulta la base de datos', () => {
+  const probe = server.match(/app\.get\(['"]\/api\/network-probe['"][\s\S]*?\n\}\);/);
+  assert.ok(probe, 'falta /api/network-probe');
+  assert.match(probe[0], /status\(204\)\.end\(\)/);
+  assert.match(probe[0], /no-store, max-age=0/);
+  assert.doesNotMatch(probe[0], /database\.query|requireAuth/);
+});

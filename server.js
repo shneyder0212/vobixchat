@@ -1692,6 +1692,15 @@ app.put('/api/learn/room/:courseKey', requireAuth, async (req,res)=>{
 // HEALTH CHECK
 // ======================================================
 
+// Capa 108 — sonda mínima para navegadores que no ofrecen Network
+// Information API (especialmente Safari/iOS). No consulta la base de
+// datos, no crea sesión y no devuelve información del usuario.
+app.get('/api/network-probe', (req, res) => {
+  res.setHeader('Cache-Control', 'no-store, max-age=0');
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  return res.status(204).end();
+});
+
 app.get(
   '/api/health',
   async (req, res) => {
