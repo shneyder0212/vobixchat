@@ -10210,11 +10210,10 @@
       };
 
       try {
-        if (app.socket?.connected) {
-          app.socket.emit('chat:message', payload);
-        } else {
-          await api('/api/chat/messages', { method: 'POST', body: JSON.stringify(payload) });
-        }
+        await api('/api/chat/messages', {
+          method: 'POST',
+          body: JSON.stringify(payload)
+        });
         message.status = 'sent';
         message.failed = false;
         row.classList.remove('failed');
@@ -11735,43 +11734,14 @@
 
 
       /* ===================================================
-         PRIMERO SOCKET
+         ENTREGA CONFIRMADA POR HTTP.
+
+         Socket.IO continúa recibiendo el mensaje en tiempo real,
+         pero no se marca como enviado hasta que el servidor confirma
+         que quedó guardado. clientMessageId hace seguro el reintento.
          =================================================== */
 
-      if (
-        app.socket &&
-        app.socket.connected
-      ) {
-
-        try {
-
-          app.socket.emit(
-            'chat:message',
-            payload
-          );
-
-
-          sent =
-            true;
-
-        } catch (error) {
-
-          console.warn(
-            '[VOBIXCHAT SOCKET SEND]',
-            error
-          );
-
-        }
-
-      }
-
-
-      /* ===================================================
-         SI SOCKET NO ESTÁ DISPONIBLE,
-         INTENTAR HTTP.
-         =================================================== */
-
-      if (!sent) {
+      {
 
         try {
 

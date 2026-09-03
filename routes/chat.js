@@ -2550,6 +2550,12 @@ function normalizeMessage(
     message_type:
       row.message_type || 'text',
 
+    clientMessageId:
+      row.client_message_id || null,
+
+    client_message_id:
+      row.client_message_id || null,
+
     fileUrl:
       row.file_url || null,
 
@@ -2725,6 +2731,7 @@ async function getMessagesHandler(
             m.sender_user_id,
             m.content,
             m.message_type,
+            m.client_message_id,
             m.file_url,
             m.file_name,
             m.mime_type,
@@ -2771,6 +2778,7 @@ async function getMessagesHandler(
             m.sender_user_id,
             m.content,
             m.message_type,
+            m.client_message_id,
             m.file_url,
             m.file_name,
             m.mime_type,
@@ -3003,6 +3011,16 @@ async function sendMessageHandler(
       req.body.text
     );
 
+  const rawClientMessageId = String(
+    req.body.clientMessageId ||
+    req.body.client_message_id ||
+    ''
+  ).trim();
+
+  const clientMessageId = /^[A-Za-z0-9_-]{8,100}$/.test(rawClientMessageId)
+    ? rawClientMessageId
+    : null;
+
 
   /* ======================================================
      VALIDACIONES BÁSICAS
@@ -3103,11 +3121,13 @@ async function sendMessageHandler(
           sender_user_id,
           content,
           message_type,
+          client_message_id,
           created_at,
           updated_at,
           edited,
           deleted,
-          expires_at
+          expires_at,
+          (xmax = 0) AS inserted
         )
 
         VALUES
@@ -3116,6 +3136,7 @@ async function sendMessageHandler(
           $2,
           $3,
           $4,
+          $5,
           NOW(),
           NOW(),
           FALSE,
@@ -3127,12 +3148,17 @@ async function sendMessageHandler(
           END
         )
 
+        ON CONFLICT (sender_user_id, client_message_id)
+        WHERE client_message_id IS NOT NULL
+        DO UPDATE SET client_message_id = EXCLUDED.client_message_id
+
         RETURNING
           id,
           conversation_id,
           sender_user_id,
           content,
           message_type,
+          client_message_id,
           file_url,
           file_name,
           mime_type,
@@ -3146,7 +3172,8 @@ async function sendMessageHandler(
           conversationId,
           userId,
           content,
-          messageType
+          messageType,
+          clientMessageId
         ]
       );
 
@@ -3158,31 +3185,37 @@ async function sendMessageHandler(
       );
 
 
-    await notifyPrivateConversation(
-      req,
-      room,
-      message
-    );
+    const inserted = result.rows[0].inserted !== false;
+
+    if (inserted) {
+      await notifyPrivateConversation(
+        req,
+        room,
+        message
+      );
+    }
 
 
     /* ==================================================
        ACTUALIZAR ACTIVIDAD DE LA CONVERSACIÓN
     ================================================== */
 
-    await database.query(
-      `
-      UPDATE conversations
+    if (inserted) {
+      await database.query(
+        `
+        UPDATE conversations
 
-      SET
-        updated_at = NOW()
+        SET
+          updated_at = NOW()
 
-      WHERE
-        id = $1
-      `,
-      [
-        conversationId
-      ]
-    );
+        WHERE
+          id = $1
+        `,
+        [
+          conversationId
+        ]
+      );
+    }
 
 
     return res
@@ -3190,6 +3223,9 @@ async function sendMessageHandler(
       .json({
 
         ok: true,
+
+        duplicate:
+          !inserted,
 
         message,
 

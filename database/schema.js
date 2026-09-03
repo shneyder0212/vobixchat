@@ -810,6 +810,20 @@ async function initializeDatabase() {
       ADD COLUMN IF NOT EXISTS expires_at TIMESTAMPTZ;
     `);
 
+    // Capa 109 — identificador generado por el dispositivo. La combinación
+    // remitente + identificador evita duplicados cuando una petición se
+    // reintenta después de perder cobertura durante la confirmación.
+    await database.query(`
+      ALTER TABLE messages
+      ADD COLUMN IF NOT EXISTS client_message_id VARCHAR(100);
+    `);
+
+    await database.query(`
+      CREATE UNIQUE INDEX IF NOT EXISTS messages_sender_client_id_unique
+      ON messages(sender_user_id, client_message_id)
+      WHERE client_message_id IS NOT NULL;
+    `);
+
     await database.query(`
       CREATE INDEX IF NOT EXISTS messages_expires_at_idx
       ON messages(expires_at)
