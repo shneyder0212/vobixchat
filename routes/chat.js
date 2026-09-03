@@ -3704,6 +3704,7 @@ router.post(
 const fs = require('fs');
 const path = require('path');
 const multer = require('multer');
+const r2Storage = require('../core/r2-storage');
 
 
 /* ========================================================
@@ -4488,6 +4489,23 @@ async function uploadChatFileHandler(
         req.file
       );
 
+    /* ==================================================
+       CAPA 4.1 — COPIA PERMANENTE EN R2
+       Se completa ANTES de crear el mensaje. Si R2 falla,
+       no se publica un mensaje con un archivo roto.
+    ================================================== */
+
+    const permanentObjectKey =
+      'chat/' +
+      req.file.filename;
+
+    await r2Storage.putChatFile({
+      key: permanentObjectKey,
+      filePath: req.file.path,
+      contentType: req.file.mimetype,
+      originalName: req.file.originalname
+    });
+
 
     const originalFileName =
       String(
@@ -4667,6 +4685,12 @@ async function uploadChatFileHandler(
 
 
   } catch (error) {
+
+    if (req.file && req.file.filename) {
+      r2Storage
+        .deleteChatFile('chat/' + req.file.filename)
+        .catch(() => {});
+    }
 
     removeUploadedFile(
       req.file

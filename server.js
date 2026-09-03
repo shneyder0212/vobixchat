@@ -71,6 +71,8 @@ const {
   getVobixLayers
 } = require('./core/vobix-layers');
 
+const r2Storage = require('./core/r2-storage');
+
 
 // ======================================================
 // WEB PUSH
@@ -233,8 +235,32 @@ app.use(
   )
 );
 
-// Archivos enviados en salas privadas: notas de voz, fotos y documentos.
-// Sin esta ruta el mensaje llega, pero el otro móvil recibe un 404 al reproducirlo.
+// CAPA 4.1 — Los nuevos medios viven en R2 privado. Mantenemos exactamente
+// la misma URL /uploads/chat/... para no romper mensajes ya enviados.
+app.get('/uploads/chat/:filename', async (req, res, next) => {
+  if (!r2Storage.isConfigured()) return next();
+
+  try {
+    const name = String(req.params.filename || '');
+    if (!name || name.includes('/') || name.includes('..')) return res.sendStatus(400);
+
+    const object = await r2Storage.getChatFile(`chat/${name}`);
+    const stream = r2Storage.toNodeStream(object.Body);
+    if (!stream) return res.sendStatus(404);
+
+    if (object.ContentType) res.type(object.ContentType);
+    res.setHeader('Cache-Control', 'private, max-age=3600');
+    stream.on('error', next);
+    stream.pipe(res);
+  } catch (error) {
+    const code = error?.$metadata?.httpStatusCode;
+    if (code === 404 || error?.name === 'NoSuchKey') return next();
+    console.error('VOBIXCHAT R2 READ ERROR:', error.message);
+    return res.sendStatus(503);
+  }
+});
+
+// Archivos antiguos y la fase de transición se conservan localmente.
 app.use(
   '/uploads',
   express.static(
