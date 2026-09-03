@@ -6,7 +6,8 @@
   "private": true,
   "scripts": {
     "start": "node server.js",
-    "check": "node --check server.js && node --check routes/chat.js && node --check database/schema.js",
+    "check": "node --check server.js && node --check routes/chat.js && node --check database/schema.js && node --test tests/health-contract.test.js tests/senior-mode.test.js",
+    "test:health": "node --test tests/health-contract.test.js",
     "test:senior": "node --test tests/senior-mode.test.js",
     "preflight": "node scripts/preflight.js"
   },

@@ -35,6 +35,9 @@ const http =
 const crypto =
   require('crypto');
 
+const packageMetadata =
+  require('./package.json');
+
 // Capa 2.1.1 — el secreto del SFU nunca se envía al móvil.
 // Solo se usa aquí para generar permisos temporales de sala.
 const jwt =
@@ -1693,6 +1696,11 @@ app.get(
   '/api/health',
   async (req, res) => {
 
+    res.setHeader(
+      'Cache-Control',
+      'no-store, max-age=0'
+    );
+
     try {
 
       const result =
@@ -1717,6 +1725,23 @@ app.get(
 
         socket:
           true,
+
+        release: {
+          version:
+            packageMetadata.version,
+
+          commit:
+            String(process.env.RENDER_GIT_COMMIT || 'local')
+              .slice(0, 12),
+
+          environment:
+            process.env.RENDER
+              ? 'render'
+              : 'local'
+        },
+
+        uptimeSeconds:
+          Math.floor(process.uptime()),
 
         serverTime:
           result.rows[0]
@@ -1743,7 +1768,21 @@ app.get(
             'VobixChat',
 
           database:
-            'disconnected'
+            'disconnected',
+
+          release: {
+            version:
+              packageMetadata.version,
+
+            commit:
+              String(process.env.RENDER_GIT_COMMIT || 'local')
+                .slice(0, 12),
+
+            environment:
+              process.env.RENDER
+                ? 'render'
+                : 'local'
+          }
 
         });
 
