@@ -4396,6 +4396,8 @@
 
       outboxFlushing: false,
 
+      outboxRetryTimer: null,
+
       replyToMessage: null,
 
       editingMessage: null,
@@ -11576,6 +11578,49 @@
       ]);
     }
 
+    function queuedMessagesForConversation(conversationIdValue) {
+      const targetId = String(conversationIdValue || '');
+      return readMessageOutbox().filter(item =>
+        String(item?.conversationId || item?.conversation_id || '') === targetId
+      );
+    }
+
+    function reconcileAndRenderQueuedMessages(conversationIdValue, serverMessages = []) {
+      const deliveredClientIds = new Set(
+        serverMessages
+          .map(message => String(message?.clientMessageId || message?.client_message_id || ''))
+          .filter(Boolean)
+      );
+
+      if (deliveredClientIds.size) {
+        const reconciled = readMessageOutbox().filter(item =>
+          !deliveredClientIds.has(String(item?.clientMessageId || ''))
+        );
+        writeMessageOutbox(reconciled);
+      }
+
+      const queued = queuedMessagesForConversation(conversationIdValue);
+      if (!queued.length) return;
+
+      elements.messages?.querySelector('.vobixStatusMessage')?.remove();
+      queued.forEach(payload => {
+        renderTextMessage({
+          ...payload,
+          status: 'queued',
+          createdAt: payload.queuedAt || new Date().toISOString()
+        }, true);
+      });
+    }
+
+    function scheduleOutboxRetry(attempts = 0) {
+      if (app.outboxRetryTimer) clearTimeout(app.outboxRetryTimer);
+      const delay = Math.min(60000, 2000 * (2 ** Math.min(Number(attempts) || 0, 5)));
+      app.outboxRetryTimer = setTimeout(() => {
+        app.outboxRetryTimer = null;
+        flushQueuedMessages();
+      }, delay);
+    }
+
     async function flushQueuedMessages() {
       if (app.outboxFlushing || navigator.onLine === false) return;
       const outbox = readMessageOutbox();
@@ -11600,6 +11645,7 @@
           console.warn('[VOBIXCHAT OUTBOX FLUSH]', error);
           payload.attempts = Number(payload.attempts || 0) + 1;
           writeMessageOutbox(remaining);
+          scheduleOutboxRetry(payload.attempts);
           break;
         }
       }
@@ -11609,6 +11655,9 @@
     }
 
     window.addEventListener('online', flushQueuedMessages);
+    window.addEventListener('vobix:network-quality-change', event => {
+      if (event.detail?.online !== false) flushQueuedMessages();
+    });
 
     async function sendCurrentMessage() {
 
@@ -13836,6 +13885,8 @@
 
         }
 
+        reconcileAndRenderQueuedMessages(id, messages);
+
 
         return;
 
@@ -13869,6 +13920,8 @@
 
         }
       );
+
+      reconcileAndRenderQueuedMessages(id, messages);
 
     }
 

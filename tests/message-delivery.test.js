@@ -32,3 +32,17 @@ test('servidor aplica idempotencia por remitente y dispositivo', () => {
   assert.match(routes, /\(xmax = 0\) AS inserted/);
   assert.match(routes, /if \(inserted\) \{\s*await notifyPrivateConversation/);
 });
+
+test('cola se restaura tras recargar y reconcilia confirmaciones perdidas', () => {
+  assert.match(html, /function reconcileAndRenderQueuedMessages/);
+  assert.match(html, /deliveredClientIds\.has/);
+  assert.match(html, /status:\s*['"]queued['"]/);
+  assert.match(html, /reconcileAndRenderQueuedMessages\(id, messages\)/);
+});
+
+test('fallo temporal reintenta con espera exponencial limitada', () => {
+  assert.match(html, /function scheduleOutboxRetry/);
+  assert.match(html, /Math\.min\(60000, 2000 \* \(2 \*\*/);
+  assert.match(html, /scheduleOutboxRetry\(payload\.attempts\)/);
+  assert.match(html, /vobix:network-quality-change/);
+});
