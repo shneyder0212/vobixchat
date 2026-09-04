@@ -4529,7 +4529,7 @@ function detectUploadedMessageType(
     requested === 'voice'
   ) {
 
-    return 'voice';
+    return null;
 
   }
 
@@ -5037,6 +5037,11 @@ async function uploadChatFileHandler(
         req.body.message_type ||
         req.body.type
       );
+
+    if (!messageType) {
+      removeUploadedFile(req.file);
+      return res.status(400).json({ ok:false, code:'voice_audio_required', msg:'La nota de voz debe ser un archivo de audio' });
+    }
 
     const viewOnce =
       Boolean(req.body.viewOnce || req.body.view_once) &&

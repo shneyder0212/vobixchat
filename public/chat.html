@@ -4351,6 +4351,10 @@
 
       recordingCancelled: false,
 
+      voiceUploadPending: null,
+
+      voiceUploadInFlight: false,
+
       recordingDataMode: 'full',
 
       recordingAudioBitsPerSecond: 32000,
@@ -12421,6 +12425,23 @@
     }
 
 
+    function resetVoiceRecorderState() {
+      app.mediaRecorder = null;
+      app.recordingChunks = [];
+      app.recordingCancelled = false;
+      stopRecordingTracks();
+      stopRecordingTimer();
+      elements.voiceButton?.classList.remove('isRecording');
+      elements.voiceButton?.setAttribute('aria-label', 'Nota de voz');
+      if (elements.voiceButton) elements.voiceButton.textContent = '🎙️';
+    }
+
+
+    function voiceUploadCanRetry(error) {
+      return !error || error.name === 'TypeError' || error.code === 'VOBIX_TIMEOUT' || Number(error.status) >= 500;
+    }
+
+
     function formatRecordingTime(totalSeconds) {
       const minutes = Math.floor(totalSeconds / 60);
       const seconds = totalSeconds % 60;
@@ -12459,6 +12480,11 @@
 
 
     async function startVoiceRecording() {
+
+      if (app.mediaRecorder?.state === 'recording' || app.voiceUploadInFlight) {
+        notifyUser('La nota de voz anterior todavía está en curso');
+        return;
+      }
 
       if (navigator.onLine === false) {
         notifyUser('Sin conexión: espera antes de grabar la nota de voz');
@@ -12538,7 +12564,7 @@
           return typeof MediaRecorder.isTypeSupported !== 'function' || MediaRecorder.isTypeSupported(type);
         });
 
-        app.mediaRecorder = new MediaRecorder(
+        const recorder = new MediaRecorder(
           app.recordingStream,
           {
             ...(supportedVoiceType ? { mimeType: supportedVoiceType } : {}),
@@ -12546,8 +12572,10 @@
           }
         );
 
+        app.mediaRecorder = recorder;
 
-        app.mediaRecorder
+
+        recorder
           .addEventListener(
             'dataavailable',
             event => {
@@ -12570,7 +12598,7 @@
           );
 
 
-        app.mediaRecorder
+        recorder
           .addEventListener(
             'start',
             () => {
@@ -12613,10 +12641,15 @@
           );
 
 
-        app.mediaRecorder
+        recorder
           .addEventListener(
             'stop',
             async () => {
+
+              const chunks = app.recordingChunks.slice();
+              const wasCancelled = app.recordingCancelled;
+              const mimeType = recorder.mimeType || 'audio/webm';
+              resetVoiceRecorderState();
 
               elements
                 .voiceButton
@@ -12646,15 +12679,9 @@
               }
 
 
-              const mimeType =
-                app.mediaRecorder
-                  ?.mimeType ||
-                'audio/webm';
-
-
               const blob =
                 new Blob(
-                  app.recordingChunks,
+                  chunks,
                   {
                     type:
                       mimeType
@@ -12662,12 +12689,7 @@
                 );
 
 
-              stopRecordingTracks();
-
-              stopRecordingTimer();
-
-              if (app.recordingCancelled) {
-                app.recordingChunks = [];
+              if (wasCancelled) {
                 notifyUser('Nota de voz cancelada');
                 return;
               }
@@ -12692,7 +12714,7 @@
           );
 
 
-        app.mediaRecorder
+        recorder
           .addEventListener(
             'error',
             error => {
@@ -12703,9 +12725,7 @@
               );
 
 
-              stopRecordingTracks();
-
-              stopRecordingTimer();
+              resetVoiceRecorderState();
 
 
               elements
@@ -12736,8 +12756,7 @@
           );
 
 
-        app.mediaRecorder
-          .start(1000);
+        recorder.start(1000);
 
 
       } catch (error) {
@@ -12749,6 +12768,9 @@
 
 
         stopRecordingTracks();
+        app.mediaRecorder = null;
+        app.recordingChunks = [];
+        stopRecordingTimer();
 
 
         notifyUser(
@@ -12838,11 +12860,13 @@
        ===================================================== */
 
     async function sendVoiceBlob(
-      blob
+      blob,
+      clientMessageId = createCallId(),
+      pendingViewOnce = app.viewOnceMode,
+      pendingConversationId = app.conversation?.id || app.conversation?._id
     ) {
-
       if (
-        !app.conversation
+        !pendingConversationId
       ) {
 
         return;
@@ -12851,8 +12875,7 @@
 
 
       const conversationId =
-        app.conversation.id ||
-        app.conversation._id;
+        pendingConversationId;
 
 
       const extension =
@@ -12900,28 +12923,34 @@
       );
 
       form.append('clientMessageId', createCallId());
+      form.set('clientMessageId', clientMessageId);
 
       form.append('dataMode', app.recordingDataMode || app.dataMode || 'full');
       form.append('audioBitsPerSecond', String(app.recordingAudioBitsPerSecond || 32000));
       form.append('originSource', 'vobix-recorder');
 
-      const viewOnce = app.viewOnceMode;
+      const viewOnce = pendingViewOnce === true;
       if (viewOnce) form.append('viewOnce', 'true');
+
+      app.voiceUploadPending = { blob, clientMessageId, viewOnce, conversationId };
+      app.voiceUploadInFlight = true;
 
 
       try {
 
-        const uploaded =
-          await api(
-            '/api/chat/files',
-            {
-              method:
-                'POST',
-
-              body:
-                form
-            }
-          );
+        let uploaded;
+        let lastError;
+        for (let attempt = 0; attempt < 3; attempt += 1) {
+          try {
+            uploaded = await api('/api/chat/files', { method: 'POST', body: form });
+            break;
+          } catch (error) {
+            lastError = error;
+            if (!voiceUploadCanRetry(error) || attempt === 2) throw error;
+            await new Promise(resolve => window.setTimeout(resolve, 500 * (attempt + 1)));
+          }
+        }
+        if (!uploaded && lastError) throw lastError;
 
 
         if (uploaded?.message) {
@@ -12937,6 +12966,7 @@
         );
 
         if (viewOnce) setViewOnceMode(false);
+        app.voiceUploadPending = null;
 
 
       } catch (error) {
@@ -12947,12 +12977,22 @@
         );
 
 
-        notifyUser(
-          'No se pudo enviar la nota de voz'
-        );
+        notifyUser(error?.status === 413
+          ? 'La nota de voz es demasiado grande'
+          : 'No se pudo enviar la nota de voz; puedes reintentarlo');
+
+      } finally {
+        app.voiceUploadInFlight = false;
 
       }
 
+    }
+
+
+    function retryPendingVoiceUpload() {
+      const pending = app.voiceUploadPending;
+      if (!pending || app.voiceUploadInFlight || navigator.onLine === false) return;
+      sendVoiceBlob(pending.blob, pending.clientMessageId, pending.viewOnce, pending.conversationId);
     }
 
 
@@ -13034,6 +13074,14 @@
         URL.createObjectURL(
           blob
         );
+
+      const temporaryUrl = audio.src;
+      const releaseTemporaryUrl = () => {
+        if (!temporaryUrl) return;
+        URL.revokeObjectURL(temporaryUrl);
+      };
+      audio.addEventListener('ended', releaseTemporaryUrl, { once: true });
+      audio.addEventListener('error', releaseTemporaryUrl, { once: true });
 
 
       bubble.appendChild(
@@ -14681,6 +14729,8 @@
           publishPresence();
 
           flushQueuedMessages();
+
+          retryPendingVoiceUpload();
 
           attachCallSocketEvents();
 
