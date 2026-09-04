@@ -3388,20 +3388,22 @@ io.on(
           // ACTUALIZAR HISTORIAL
           // ==============================================
 
-          await database.query(
-            `
-            UPDATE conversations
+          if (inserted) {
+            await database.query(
+              `
+              UPDATE conversations
 
-            SET
-              updated_at = NOW()
+              SET
+                updated_at = NOW()
 
-            WHERE
-              id = $1
-            `,
-            [
-              conversationId
-            ]
-          );
+              WHERE
+                id = $1
+              `,
+              [
+                conversationId
+              ]
+            );
+          }
 
 
           // ==============================================
