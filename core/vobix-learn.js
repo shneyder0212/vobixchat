@@ -99,6 +99,14 @@ function buildLesson(courseKey, levelNumber, lessonNumber) {
     activities:['recall','vocabulary','grammar','verbs','listen','speak','write','review'],
     motivation:{xp:20 + level.number, streakEligible:true, mistakeReview:true, celebration:true},
     assessments:ASSESSMENT_TYPES.map(item=>({...item})),
+    finalExam:{
+      id:'final-exam',
+      title:'Final lesson exam',
+      language:'en',
+      questionCount:20,
+      passingScore:PASSING_SCORE,
+      requiredToUnlockNext:true
+    },
     passingScore:PASSING_SCORE
   };
 }

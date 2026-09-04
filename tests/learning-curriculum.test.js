@@ -27,6 +27,24 @@ test('cada lección exige dos prácticas escritas y dos habladas', () => {
   assert.equal(lesson.assessments.filter(item=>item.mode==='written').length, 2);
   assert.equal(lesson.assessments.filter(item=>item.mode==='spoken').length, 2);
   assert.equal(lesson.passingScore, 80);
+  assert.equal(lesson.finalExam.questionCount, 20);
+  assert.equal(lesson.finalExam.language, 'en');
+  assert.equal(lesson.finalExam.requiredToUnlockNext, true);
+});
+
+test('la estructura completa y el examen final se aplican a todos los idiomas', () => {
+  for (const course of learn.COURSES) {
+    for (const levelNumber of [1, 10, 20]) {
+      const level = learn.buildLevel(course.key, levelNumber);
+      assert.equal(level.lessons.length, 20);
+      for (const lesson of level.lessons) {
+        assert.equal(lesson.assessments.length, 4);
+        assert.equal(lesson.finalExam.requiredToUnlockNext, true);
+        assert.equal(lesson.finalExam.language, 'en');
+        assert.ok(lesson.estimatedMinutes >= 25 && lesson.estimatedMinutes <= 30);
+      }
+    }
+  }
 });
 
 test('cada lección dura entre 25 y 30 minutos y enseña contenido completo', () => {

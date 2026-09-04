@@ -1405,6 +1405,24 @@ async function initializeDatabase() {
     `);
 
     await database.query(`
+      CREATE TABLE IF NOT EXISTS learning_lesson_mastery (
+        user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        course_key VARCHAR(60) NOT NULL,
+        lesson_key VARCHAR(80) NOT NULL,
+        written_1_passed BOOLEAN NOT NULL DEFAULT FALSE,
+        spoken_1_passed BOOLEAN NOT NULL DEFAULT FALSE,
+        written_2_passed BOOLEAN NOT NULL DEFAULT FALSE,
+        spoken_2_passed BOOLEAN NOT NULL DEFAULT FALSE,
+        final_score INTEGER CHECK (final_score IS NULL OR final_score BETWEEN 0 AND 100),
+        final_passed BOOLEAN NOT NULL DEFAULT FALSE,
+        last_segment VARCHAR(40) NOT NULL DEFAULT 'warm-up',
+        session_state JSONB NOT NULL DEFAULT '{}'::jsonb,
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        PRIMARY KEY (user_id, course_key, lesson_key)
+      );
+    `);
+
+    await database.query(`
       CREATE TABLE IF NOT EXISTS learning_practice_rooms (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         owner_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,

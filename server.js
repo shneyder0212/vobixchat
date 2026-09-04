@@ -1774,6 +1774,92 @@ app.get('/api/learn/v2/profile/:courseKey', requireAuth, async (req, res) => {
   }
 });
 
+app.get('/api/learn/v2/resume/:courseKey', requireAuth, async (req, res) => {
+  res.setHeader('Cache-Control', 'no-store');
+  const course = vobixLearn.getCourse(req.params.courseKey);
+  if (!course) return res.status(404).json({ ok:false, code:'learning_course_not_found' });
+  try {
+    await database.query(
+      `INSERT INTO learning_profiles (user_id, course_key)
+       VALUES ($1,$2) ON CONFLICT (user_id,course_key) DO NOTHING`,
+      [req.vobixUser.id, course.key]
+    );
+    const result = await database.query(
+      `SELECT p.current_level, p.current_lesson, p.xp, p.streak_days,
+              p.last_activity_on, p.review_queue,
+              m.lesson_key, m.last_segment, m.session_state,
+              m.written_1_passed, m.spoken_1_passed,
+              m.written_2_passed, m.spoken_2_passed,
+              m.final_score, m.final_passed, m.updated_at
+       FROM learning_profiles p
+       LEFT JOIN learning_lesson_mastery m
+         ON m.user_id=p.user_id AND m.course_key=p.course_key
+        AND m.lesson_key=('n' || LPAD(p.current_level::text,2,'0') || '-l' || LPAD(p.current_lesson::text,2,'0'))
+       WHERE p.user_id=$1 AND p.course_key=$2 LIMIT 1`,
+      [req.vobixUser.id, course.key]
+    );
+    return res.json({ ok:true, courseKey:course.key, resume:result.rows[0] });
+  } catch (error) {
+    console.error('VOBIX APRENDE | No se pudo recuperar el avance:', error.message);
+    return res.status(500).json({ ok:false, code:'learning_resume_unavailable' });
+  }
+});
+
+app.put('/api/learn/v2/position', requireAuth, async (req, res) => {
+  const course = vobixLearn.getCourse(req.body?.courseKey);
+  const levelNumber = Number.parseInt(req.body?.levelNumber, 10);
+  const lessonNumber = Number.parseInt(req.body?.lessonNumber, 10);
+  const segment = String(req.body?.segment || 'warm-up').trim().slice(0, 40);
+  const validLesson = course && vobixLearn.buildLesson(course.key, levelNumber, lessonNumber);
+  if (!validLesson || !['warm-up','vocabulary','grammar','verbs','listening','speaking','writing','review','final-exam'].includes(segment)) {
+    return res.status(400).json({ ok:false, code:'invalid_learning_position' });
+  }
+
+  const ordinal = ((levelNumber - 1) * vobixLearn.LESSONS_PER_LEVEL) + lessonNumber;
+  if (ordinal > 1) {
+    const previousOrdinal = ordinal - 1;
+    const previousLevel = Math.ceil(previousOrdinal / vobixLearn.LESSONS_PER_LEVEL);
+    const previousLesson = ((previousOrdinal - 1) % vobixLearn.LESSONS_PER_LEVEL) + 1;
+    const previousKey = vobixLearn.lessonKey(previousLevel, previousLesson);
+    const gate = await database.query(
+      `SELECT final_passed FROM learning_lesson_mastery
+       WHERE user_id=$1 AND course_key=$2 AND lesson_key=$3 LIMIT 1`,
+      [req.vobixUser.id, course.key, previousKey]
+    );
+    if (!gate.rows[0]?.final_passed) {
+      return res.status(403).json({ ok:false, code:'previous_final_exam_required', previousLessonKey:previousKey });
+    }
+  }
+
+  let client;
+  try {
+    client = await database.pool.connect();
+    await client.query('BEGIN');
+    await client.query(
+      `INSERT INTO learning_profiles (user_id,course_key,current_level,current_lesson,last_activity_on,updated_at)
+       VALUES ($1,$2,$3,$4,CURRENT_DATE,NOW())
+       ON CONFLICT (user_id,course_key) DO UPDATE SET
+         current_level=EXCLUDED.current_level, current_lesson=EXCLUDED.current_lesson,
+         last_activity_on=CURRENT_DATE, updated_at=NOW()`,
+      [req.vobixUser.id, course.key, levelNumber, lessonNumber]
+    );
+    await client.query(
+      `INSERT INTO learning_lesson_mastery (user_id,course_key,lesson_key,last_segment,session_state,updated_at)
+       VALUES ($1,$2,$3,$4,$5,NOW())
+       ON CONFLICT (user_id,course_key,lesson_key) DO UPDATE SET
+         last_segment=EXCLUDED.last_segment, session_state=EXCLUDED.session_state, updated_at=NOW()`,
+      [req.vobixUser.id, course.key, validLesson.key, segment, JSON.stringify({savedAt:new Date().toISOString()})]
+    );
+    await client.query('COMMIT');
+    return res.json({ ok:true, saved:true, courseKey:course.key, levelNumber, lessonNumber, segment });
+  } catch (error) {
+    if (client) await client.query('ROLLBACK').catch(()=>{});
+    return res.status(500).json({ ok:false, code:'learning_position_save_failed' });
+  } finally {
+    if (client) client.release();
+  }
+});
+
 app.post('/api/learn/v2/tutor', requireAuth, async (req, res) => {
   res.setHeader('Cache-Control', 'no-store');
   const course = vobixLearn.getCourse(req.body?.courseKey);
