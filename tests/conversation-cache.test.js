@@ -24,10 +24,18 @@ test('la caché nueva registra versión y fecha', () => {
 test('la caché caduca después de siete días', () => {
   assert.match(html, /7 \* 24 \* 60 \* 60 \* 1000/);
   assert.match(html, /if \(cacheExpired\)/);
-  assert.match(html, /localStorage\.removeItem\(['"]vobixchat_conversation_cache['"]\)/);
+  assert.match(html, /localStorage\.removeItem\(cacheKey\)/);
 });
 
 test('mantiene compatibilidad con la caché anterior y descarta registros inválidos', () => {
   assert.match(html, /const legacyConversations = Array\.isArray\(value\) \? value : null/);
   assert.match(html, /typeof item === ['"]object['"] && conversationId\(item\)/);
+});
+
+test('la caché queda aislada por usuario y no usa datos globales heredados', () => {
+  assert.match(html, /function conversationCacheKey\(\)/);
+  assert.match(html, /const owner = userId\(app\.me\)/);
+  assert.match(html, /`vobixchat_conversation_cache_\$\{owner\}`/);
+  assert.match(html, /if \(!cacheKey\) return \[\]/);
+  assert.match(html, /removeLegacyConversationCache\(\)/);
 });

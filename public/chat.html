@@ -13475,8 +13475,22 @@
        GET /api/chat/conversations
        ===================================================== */
 
+    const LEGACY_CONVERSATION_CACHE_KEY = 'vobixchat_conversation_cache';
+
+    function conversationCacheKey() {
+      const owner = userId(app.me);
+      return owner ? `vobixchat_conversation_cache_${owner}` : '';
+    }
+
+    function removeLegacyConversationCache() {
+      try { localStorage.removeItem(LEGACY_CONVERSATION_CACHE_KEY); } catch (_) {}
+    }
+
     function saveConversationCache(conversations) {
       try {
+        const cacheKey = conversationCacheKey();
+        if (!cacheKey) return false;
+        removeLegacyConversationCache();
         const safeConversations = Array.isArray(conversations)
           ? conversations
               .filter(item => item && typeof item === 'object' && conversationId(item))
@@ -13491,7 +13505,7 @@
           console.warn('[VOBIXCHAT CONVERSATION CACHE] límite alcanzado');
           return false;
         }
-        localStorage.setItem('vobixchat_conversation_cache', serialized);
+        localStorage.setItem(cacheKey, serialized);
         return true;
       } catch (error) {
         console.warn('[VOBIXCHAT CONVERSATION CACHE SAVE]', error);
@@ -13501,12 +13515,15 @@
 
     function readConversationCache() {
       try {
-        const value = JSON.parse(localStorage.getItem('vobixchat_conversation_cache') || 'null');
+        const cacheKey = conversationCacheKey();
+        removeLegacyConversationCache();
+        if (!cacheKey) return [];
+        const value = JSON.parse(localStorage.getItem(cacheKey) || 'null');
         const legacyConversations = Array.isArray(value) ? value : null;
         const savedAt = Number(value?.savedAt || 0);
         const cacheExpired = savedAt > 0 && Date.now() - savedAt > 7 * 24 * 60 * 60 * 1000;
         if (cacheExpired) {
-          localStorage.removeItem('vobixchat_conversation_cache');
+          localStorage.removeItem(cacheKey);
           return [];
         }
         const conversations = legacyConversations || value?.conversations;
@@ -13516,7 +13533,10 @@
               .slice(0, 100)
           : [];
       } catch (error) {
-        try { localStorage.removeItem('vobixchat_conversation_cache'); } catch (_) {}
+        try {
+          const cacheKey = conversationCacheKey();
+          if (cacheKey) localStorage.removeItem(cacheKey);
+        } catch (_) {}
         return [];
       }
     }
