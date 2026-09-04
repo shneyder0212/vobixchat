@@ -2534,6 +2534,14 @@ function normalizeMessage(
     view_once:
       Boolean(row.view_once),
 
+    originSeal: row.origin_sha256 ? {
+      algorithm: 'SHA-256',
+      sha256: row.origin_sha256,
+      source: row.origin_source || 'vobix-upload',
+      sealedAt: row.origin_sealed_at || null,
+      verified: true
+    } : null,
+
     deliveredAt:
       row.delivered_at || null,
 
@@ -2711,6 +2719,9 @@ async function getMessagesHandler(
             m.file_url,
             m.file_name,
             m.mime_type,
+            m.origin_sha256,
+            m.origin_source,
+            m.origin_sealed_at,
             m.created_at,
             m.updated_at,
             m.edited,
@@ -2762,6 +2773,9 @@ async function getMessagesHandler(
             m.file_url,
             m.file_name,
             m.mime_type,
+            m.origin_sha256,
+            m.origin_source,
+            m.origin_sealed_at,
             m.created_at,
             m.updated_at,
             m.edited,
@@ -4295,6 +4309,59 @@ function removeUploadedFile(
 }
 
 
+function sha256File(filePath) {
+  return new Promise((resolve, reject) => {
+    const hash = crypto.createHash('sha256');
+    const stream = fs.createReadStream(filePath);
+    stream.on('error', reject);
+    stream.on('data', chunk => hash.update(chunk));
+    stream.on('end', () => resolve(hash.digest('hex')));
+  });
+}
+
+
+function sha256Stream(stream) {
+  return new Promise((resolve, reject) => {
+    const hash = crypto.createHash('sha256');
+    stream.on('error', reject);
+    stream.on('data', chunk => hash.update(chunk));
+    stream.on('end', () => resolve(hash.digest('hex')));
+  });
+}
+
+
+function uploadedFileName(fileUrl) {
+  const prefix = '/uploads/chat/';
+  const value = String(fileUrl || '');
+  if (!value.startsWith(prefix)) return '';
+  const name = path.basename(decodeURIComponent(value.slice(prefix.length)));
+  return name && !name.includes('..') ? name : '';
+}
+
+
+async function currentStoredFileSha256(fileUrl) {
+  const fileName = uploadedFileName(fileUrl);
+  if (!fileName) return null;
+  const localPath = path.join(chatUploadDirectory, fileName);
+  try {
+    return await sha256File(localPath);
+  } catch (error) {
+    if (error?.code !== 'ENOENT') throw error;
+  }
+  const stored = await r2Storage.getChatFile(`chat/${fileName}`);
+  const stream = r2Storage.toNodeStream(stored?.Body);
+  return stream ? sha256Stream(stream) : null;
+}
+
+
+function normalizeOriginSource(value, messageType) {
+  const source = String(value || '').trim().toLowerCase();
+  if (messageType === 'voice' && source === 'vobix-recorder') return source;
+  if (['image', 'video'].includes(messageType) && source === 'vobix-camera') return source;
+  return 'vobix-upload';
+}
+
+
 /* ========================================================
    URL DEL ARCHIVO
 ======================================================== */
@@ -4569,6 +4636,7 @@ router.post('/files/resumable/start', async (req, res) => {
     totalSize,
     totalChunks: Math.ceil(totalSize / RESUMABLE_CHUNK_SIZE),
     requestedType,
+    originSource: String(req.body?.originSource || '').trim().slice(0, 30),
     viewOnce: Boolean(req.body?.viewOnce),
     directory,
     received: new Set(),
@@ -4653,6 +4721,7 @@ router.post('/files/resumable/:uploadId/complete', async (req, res) => {
   req.body = {
     conversationId: session.conversationId,
     type: session.requestedType,
+    originSource: session.originSource,
     viewOnce: session.viewOnce
   };
   await removeResumableSession(session.uploadId);
@@ -4865,6 +4934,12 @@ async function uploadChatFileHandler(
           150
         );
 
+    // CAPA 102 — La huella se calcula desde los bytes recibidos, antes de
+    // publicar el mensaje. El origen describe cómo entró el archivo en Vobix;
+    // no afirma quién lo creó fuera de la aplicación.
+    const originSha256 = await sha256File(req.file.path);
+    const originSource = normalizeOriginSource(req.body.originSource, messageType);
+
 
     /* ==================================================
        GUARDAR COMO MENSAJE
@@ -4887,7 +4962,10 @@ async function uploadChatFileHandler(
           edited,
           deleted,
           expires_at,
-          view_once
+          view_once,
+          origin_sha256,
+          origin_source,
+          origin_sealed_at
         )
 
         VALUES
@@ -4908,7 +4986,10 @@ async function uploadChatFileHandler(
             THEN NOW() + (SELECT disappearing_seconds * INTERVAL '1 second' FROM conversations WHERE id = $1)
             ELSE NULL
           END,
-          $7
+          $7,
+          $8,
+          $9,
+          NOW()
         )
 
         RETURNING
@@ -4925,7 +5006,10 @@ async function uploadChatFileHandler(
           edited,
           deleted,
           expires_at,
-          view_once
+          view_once,
+          origin_sha256,
+          origin_source,
+          origin_sealed_at
         `,
         [
           conversationId,
@@ -4934,7 +5018,9 @@ async function uploadChatFileHandler(
           fileUrl,
           originalFileName,
           mimeType,
-          viewOnce
+          viewOnce,
+          originSha256,
+          originSource
         ]
       );
 
@@ -5012,7 +5098,10 @@ async function uploadChatFileHandler(
             messageType,
 
           message_type:
-            messageType
+            messageType,
+
+          originSeal:
+            message.originSeal
 
         }
 
@@ -5071,6 +5160,63 @@ router.post(
   receiveChatFile,
   uploadChatFileHandler
 );
+
+
+/* ========================================================
+   CAPA 102 — VERIFICAR SELLO ORIGINAL
+
+   Recalcula SHA-256 desde el archivo almacenado. Solo los participantes
+   pueden consultar el resultado y nunca se confunde "sellado por Vobix"
+   con identidad o autoría legal.
+======================================================== */
+
+router.get('/messages/:messageId/origin-seal', async (req, res) => {
+  const userId = currentUserId(req);
+  const messageId = cleanId(req.params.messageId);
+  if (!messageId) return res.status(400).json({ ok: false, msg: 'Mensaje no válido' });
+
+  try {
+    const found = await database.query(
+      `SELECT id, conversation_id, file_url, origin_sha256, origin_source, origin_sealed_at,
+              deleted, expires_at
+       FROM messages WHERE id=$1 LIMIT 1`,
+      [messageId]
+    );
+    const message = found.rows[0];
+    if (!message) return res.status(404).json({ ok: false, msg: 'Sello no encontrado' });
+    const room = await validatePrivateRoom(message.conversation_id, userId);
+    if (!room.ok) return res.status(room.status).json({ ok: false, msg: room.msg });
+    if (message.deleted || (message.expires_at && new Date(message.expires_at) <= new Date())) {
+      return res.status(410).json({ ok: false, msg: 'El archivo ya no está disponible' });
+    }
+    if (!message.origin_sha256 || !message.file_url) {
+      return res.status(404).json({ ok: false, msg: 'Este archivo no tiene Sello Original' });
+    }
+
+    const actualSha256 = await currentStoredFileSha256(message.file_url);
+    if (!actualSha256) {
+      return res.status(503).json({ ok: false, msg: 'No se pudo acceder al archivo para verificarlo' });
+    }
+    const intact = crypto.timingSafeEqual(
+      Buffer.from(actualSha256, 'hex'),
+      Buffer.from(message.origin_sha256, 'hex')
+    );
+    return res.json({
+      ok: true,
+      seal: {
+        algorithm: 'SHA-256',
+        sha256: message.origin_sha256,
+        source: message.origin_source || 'vobix-upload',
+        sealedAt: message.origin_sealed_at,
+        status: intact ? 'intact' : 'modified',
+        intact
+      }
+    });
+  } catch (error) {
+    console.error('VOBIXCHAT ORIGIN SEAL VERIFY ERROR:', error);
+    return res.status(500).json({ ok: false, msg: 'No se pudo verificar el Sello Original' });
+  }
+});
 
 
 /* ========================================================

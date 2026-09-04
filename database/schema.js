@@ -920,6 +920,28 @@ async function initializeDatabase() {
       ADD COLUMN IF NOT EXISTS file_size BIGINT;
     `);
 
+    // CAPA 102 — VOBIX SELLO ORIGINAL
+    await database.query(`
+      ALTER TABLE messages
+      ADD COLUMN IF NOT EXISTS origin_sha256 CHAR(64);
+    `);
+
+    await database.query(`
+      ALTER TABLE messages
+      ADD COLUMN IF NOT EXISTS origin_source VARCHAR(30);
+    `);
+
+    await database.query(`
+      ALTER TABLE messages
+      ADD COLUMN IF NOT EXISTS origin_sealed_at TIMESTAMPTZ;
+    `);
+
+    await database.query(`
+      CREATE UNIQUE INDEX IF NOT EXISTS messages_origin_sha256_id_idx
+      ON messages(origin_sha256, id)
+      WHERE origin_sha256 IS NOT NULL;
+    `);
+
     await database.query(`
       ALTER TABLE messages
       ADD COLUMN IF NOT EXISTS file_resource_type VARCHAR(40);
