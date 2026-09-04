@@ -39,3 +39,12 @@ test('la caché queda aislada por usuario y no usa datos globales heredados', ()
   assert.match(html, /if \(!cacheKey\) return \[\]/);
   assert.match(html, /removeLegacyConversationCache\(\)/);
 });
+
+test('la caché guarda solo el resumen mínimo de cada conversación', () => {
+  assert.match(html, /function conversationCacheSnapshot\(conversation\)/);
+  assert.match(html, /\.map\(conversationCacheSnapshot\)/);
+  assert.match(html, /lastMessage: \{ text: lastText, createdAt: updatedAt \}/);
+  assert.match(html, /peer: \{ id: peerId, name: peerName, avatarUrl \}/);
+  assert.match(html, /\.slice\(0, 500\)/);
+  assert.match(html, /\.slice\(0, 2048\)/);
+});

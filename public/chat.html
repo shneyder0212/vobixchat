@@ -13486,6 +13486,36 @@
       try { localStorage.removeItem(LEGACY_CONVERSATION_CACHE_KEY); } catch (_) {}
     }
 
+    function conversationCacheSnapshot(conversation) {
+      const id = String(conversationId(conversation) || '').slice(0, 200);
+      if (!id) return null;
+      const peer = getConversationPeer(conversation);
+      const peerId = String(userId(peer) || '').slice(0, 200);
+      const peerName = String(userName(peer) || 'VOBIXCHAT').slice(0, 120);
+      const avatarUrl = String(
+        peer?.avatarUrl || peer?.avatar_url || peer?.photoUrl || peer?.photo_url || ''
+      ).slice(0, 2048);
+      const rawLastMessage = conversation.lastMessage || conversation.last_message;
+      const lastText = String(
+        rawLastMessage?.text || (typeof rawLastMessage === 'string' ? rawLastMessage : '')
+      ).slice(0, 500);
+      const updatedAt = String(
+        conversation.updatedAt || conversation.updated_at || rawLastMessage?.createdAt ||
+        rawLastMessage?.created_at || ''
+      ).slice(0, 80);
+      const unreadCount = Math.max(0, Math.min(99, Number(
+        conversation.unreadCount || conversation.unread_count || 0
+      ) || 0));
+
+      return {
+        id,
+        updatedAt,
+        unreadCount,
+        lastMessage: { text: lastText, createdAt: updatedAt },
+        peer: { id: peerId, name: peerName, avatarUrl }
+      };
+    }
+
     function saveConversationCache(conversations) {
       try {
         const cacheKey = conversationCacheKey();
@@ -13493,7 +13523,8 @@
         removeLegacyConversationCache();
         const safeConversations = Array.isArray(conversations)
           ? conversations
-              .filter(item => item && typeof item === 'object' && conversationId(item))
+              .map(conversationCacheSnapshot)
+              .filter(Boolean)
               .slice(0, 100)
           : [];
         const serialized = JSON.stringify({
