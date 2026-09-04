@@ -131,7 +131,7 @@ async function initializeDatabase() {
     await database.query(`
       ALTER TABLE users
       ADD COLUMN IF NOT EXISTS discover_by_phone BOOLEAN
-      DEFAULT TRUE;
+      DEFAULT FALSE;
     `);
 
     await database.query(`
@@ -1268,6 +1268,49 @@ async function initializeDatabase() {
       ON audit_events(
         created_at DESC
       );
+    `);
+
+    // ====================================================
+    // CAPA 166 — VOBIX GUARDIÁN FAMILIAR
+    // ====================================================
+    await database.query(`
+      CREATE TABLE IF NOT EXISTS guardian_relationships (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        protected_user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        guardian_user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        status VARCHAR(20) NOT NULL DEFAULT 'invited'
+          CHECK (status IN ('invited','active','rejected','revoked')),
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        CHECK (protected_user_id <> guardian_user_id),
+        UNIQUE (protected_user_id, guardian_user_id)
+      );
+    `);
+
+    await database.query(`
+      CREATE INDEX IF NOT EXISTS guardian_relationships_user_status_idx
+      ON guardian_relationships(protected_user_id, status);
+    `);
+
+    await database.query(`
+      CREATE TABLE IF NOT EXISTS guardian_review_requests (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        relationship_id UUID NOT NULL REFERENCES guardian_relationships(id) ON DELETE CASCADE,
+        protected_user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        guardian_user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        category VARCHAR(20) NOT NULL CHECK (category IN ('money','document','code')),
+        summary VARCHAR(240) NOT NULL,
+        status VARCHAR(20) NOT NULL DEFAULT 'pending'
+          CHECK (status IN ('pending','approved','rejected','cancelled','expired')),
+        expires_at TIMESTAMPTZ NOT NULL,
+        decided_at TIMESTAMPTZ,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+    `);
+
+    await database.query(`
+      CREATE INDEX IF NOT EXISTS guardian_review_pending_idx
+      ON guardian_review_requests(guardian_user_id, status, expires_at);
     `);
 
     // ====================================================

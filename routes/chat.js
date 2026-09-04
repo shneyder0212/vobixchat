@@ -336,7 +336,6 @@ async function getOtherParticipant(
         u.id,
         u.username,
         u.vobix_id,
-        u.phone,
         u.avatar_url,
         u.bio,
         u.verified,
@@ -522,13 +521,6 @@ async function searchUsersHandler(
 
   try {
 
-    const phoneDigits =
-      search.replace(
-        /\D/g,
-        ''
-      );
-
-
     const result =
       await database.query(
         `
@@ -536,7 +528,6 @@ async function searchUsersHandler(
           id,
           username,
           vobix_id,
-          phone,
           avatar_url,
           bio,
           verified,
@@ -564,29 +555,13 @@ async function searchUsersHandler(
               LOWER(vobix_id)
                 LIKE LOWER($2)
             )
-
-            OR
-
-            (
-              discover_by_phone = TRUE
-              AND
-              phone IS NOT NULL
-              AND
-              REGEXP_REPLACE(
-                phone,
-                '[^0-9]',
-                '',
-                'g'
-              )
-              LIKE $3
-            )
           )
 
         ORDER BY
           CASE
             WHEN
               LOWER(username) =
-              LOWER($4)
+              LOWER($3)
             THEN 0
             ELSE 1
           END,
@@ -598,7 +573,6 @@ async function searchUsersHandler(
         [
           userId,
           `%${search}%`,
-          `%${phoneDigits}%`,
           search
         ]
       );
@@ -670,7 +644,6 @@ router.get(
             u.id,
             u.username,
             u.vobix_id,
-            u.phone,
             u.avatar_url,
             u.bio,
             u.verified,
@@ -846,7 +819,6 @@ router.post(
             id,
             username,
             vobix_id,
-            phone,
             avatar_url,
             online,
             last_seen
@@ -1125,7 +1097,6 @@ async function getChatUser(
         id,
         username,
         vobix_id,
-        phone,
         avatar_url,
         bio,
         verified,
@@ -1214,16 +1185,6 @@ function normalizeConversation(
     other_vobix_id:
       otherUser
         ? otherUser.vobix_id
-        : null,
-
-    otherPhone:
-      otherUser
-        ? otherUser.phone
-        : null,
-
-    other_phone:
-      otherUser
-        ? otherUser.phone
         : null,
 
     otherAvatarUrl:
@@ -1799,9 +1760,6 @@ router.get(
             other_user.vobix_id
               AS other_vobix_id,
 
-            other_user.phone
-              AS other_phone,
-
             other_user.avatar_url
               AS other_avatar_url,
 
@@ -1871,7 +1829,6 @@ router.get(
               u.id,
               u.username,
               u.vobix_id,
-              u.phone,
               u.avatar_url,
               u.online,
               u.last_seen
@@ -1996,12 +1953,6 @@ router.get(
 
               other_vobix_id:
                 row.other_vobix_id,
-
-              otherPhone:
-                row.other_phone,
-
-              other_phone:
-                row.other_phone,
 
               otherAvatarUrl:
                 row.other_avatar_url,
@@ -5180,7 +5131,6 @@ router.get(
             u.id,
             u.username,
             u.vobix_id,
-            u.phone,
             u.avatar_url,
             u.bio,
             u.verified,

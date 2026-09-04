@@ -35,6 +35,8 @@ const http =
 const crypto =
   require('crypto');
 
+const vobixGuardian = require('./core/vobix-guardian');
+
 const packageMetadata =
   require('./package.json');
 
@@ -6206,7 +6208,7 @@ app.get('/api/friends', requireAuth, async (req, res) => {
     const result = await database.query(
       `
       SELECT f.id AS friendship_id, f.status, f.requester_id, f.addressee_id,
-             u.id, u.username, u.phone, u.vobix_id, u.avatar_url, u.online, u.last_seen
+             u.id, u.username, u.vobix_id, u.avatar_url, u.online, u.last_seen
       FROM friendships f
       JOIN users u ON u.id = CASE
         WHEN f.requester_id = $1 THEN f.addressee_id
@@ -6295,6 +6297,158 @@ app.post('/api/friends/:id/reject', requireAuth, async (req, res) => {
     res.json({ ok:true });
   } catch (error) {
     res.status(500).json({ ok:false, msg:'No se pudo rechazar la solicitud' });
+  }
+});
+
+// ======================================================
+// CAPA 166 — VOBIX GUARDIÁN FAMILIAR
+// ======================================================
+
+app.get('/api/guardian', requireAuth, async (req, res) => {
+  try {
+    const result = await database.query(
+      `SELECT g.id, g.status, g.created_at, g.updated_at,
+              CASE WHEN g.protected_user_id=$1 THEN 'protected' ELSE 'guardian' END AS role,
+              u.id AS other_user_id, u.username AS other_username,
+              u.vobix_id AS other_vobix_id, u.avatar_url AS other_avatar_url
+       FROM guardian_relationships g
+       JOIN users u ON u.id=CASE WHEN g.protected_user_id=$1 THEN g.guardian_user_id ELSE g.protected_user_id END
+       WHERE g.protected_user_id=$1 OR g.guardian_user_id=$1
+       ORDER BY g.updated_at DESC`,
+      [req.vobixUser.id]
+    );
+    return res.json({ ok:true, relationships:result.rows });
+  } catch (error) {
+    console.error('VOBIX GUARDIAN LIST ERROR:', error);
+    return res.status(500).json({ ok:false, msg:'No se pudieron cargar los guardianes' });
+  }
+});
+
+app.post('/api/guardian/invite', requireAuth, async (req, res) => {
+  const protectedUserId = String(req.vobixUser.id);
+  const guardianUserId = String(req.body?.guardianUserId || '').trim();
+  if (!/^[0-9a-f-]{36}$/i.test(guardianUserId) || guardianUserId === protectedUserId) {
+    return res.status(400).json({ ok:false, msg:'Familiar no válido' });
+  }
+  try {
+    const friendship = await database.query(
+      `SELECT 1 FROM friendships WHERE status='accepted'
+       AND ((requester_id=$1 AND addressee_id=$2) OR (requester_id=$2 AND addressee_id=$1)) LIMIT 1`,
+      [protectedUserId, guardianUserId]
+    );
+    if (!friendship.rows.length) {
+      return res.status(403).json({ ok:false, msg:'El guardián debe ser primero un contacto aceptado' });
+    }
+    const result = await database.query(
+      `INSERT INTO guardian_relationships(protected_user_id,guardian_user_id,status,updated_at)
+       VALUES($1,$2,'invited',NOW())
+       ON CONFLICT(protected_user_id,guardian_user_id) DO UPDATE SET status='invited',updated_at=NOW()
+       RETURNING id,status,created_at,updated_at`,
+      [protectedUserId, guardianUserId]
+    );
+    await sendPushToUser(guardianUserId, {
+      type:'guardian-invite', title:'Vobix Guardián Familiar',
+      body:`${req.vobixUser.username} quiere añadirte como familiar de confianza.`,
+      url:'/chat.html?guardian=1'
+    });
+    return res.status(201).json({ ok:true, relationship:result.rows[0] });
+  } catch (error) {
+    console.error('VOBIX GUARDIAN INVITE ERROR:', error);
+    return res.status(500).json({ ok:false, msg:'No se pudo invitar al familiar' });
+  }
+});
+
+app.post('/api/guardian/:relationshipId/respond', requireAuth, async (req, res) => {
+  const accept = req.body?.accept === true;
+  try {
+    const result = await database.query(
+      `UPDATE guardian_relationships SET status=$1,updated_at=NOW()
+       WHERE id=$2 AND guardian_user_id=$3 AND status='invited'
+       RETURNING id,status,protected_user_id`,
+      [accept ? 'active' : 'rejected', req.params.relationshipId, req.vobixUser.id]
+    );
+    if (!result.rows.length) return res.status(404).json({ ok:false, msg:'Invitación no disponible' });
+    return res.json({ ok:true, relationship:result.rows[0] });
+  } catch (error) {
+    return res.status(500).json({ ok:false, msg:'No se pudo responder' });
+  }
+});
+
+app.post('/api/guardian/reviews', requireAuth, async (req, res) => {
+  const category = vobixGuardian.normalizeCategory(req.body?.category);
+  const summary = vobixGuardian.safeSummary(category, req.body?.summary);
+  const relationshipId = String(req.body?.relationshipId || '').trim();
+  if (!category || !summary || !/^[0-9a-f-]{36}$/i.test(relationshipId)) {
+    return res.status(400).json({ ok:false, msg:'Solicitud de consulta no válida' });
+  }
+  try {
+    const relationship = await database.query(
+      `SELECT id,guardian_user_id FROM guardian_relationships
+       WHERE id=$1 AND protected_user_id=$2 AND status='active' LIMIT 1`,
+      [relationshipId, req.vobixUser.id]
+    );
+    if (!relationship.rows.length) return res.status(403).json({ ok:false, msg:'Guardián no autorizado' });
+    const guardianUserId = relationship.rows[0].guardian_user_id;
+    const result = await database.query(
+      `INSERT INTO guardian_review_requests
+       (relationship_id,protected_user_id,guardian_user_id,category,summary,expires_at)
+       VALUES($1,$2,$3,$4,$5,NOW()+INTERVAL '30 minutes')
+       RETURNING id,category,summary,status,expires_at,created_at`,
+      [relationshipId, req.vobixUser.id, guardianUserId, category, summary]
+    );
+    await sendPushToUser(guardianUserId, {
+      type:'guardian-review', title:'Consulta de seguridad Vobix',
+      body:`${req.vobixUser.username} solicita tu orientación antes de continuar.`,
+      url:'/chat.html?guardian=1'
+    });
+    return res.status(201).json({ ok:true, review:result.rows[0] });
+  } catch (error) {
+    console.error('VOBIX GUARDIAN REVIEW ERROR:', error);
+    return res.status(500).json({ ok:false, msg:'No se pudo enviar la consulta' });
+  }
+});
+
+app.get('/api/guardian/reviews', requireAuth, async (req, res) => {
+  try {
+    await database.query(
+      `UPDATE guardian_review_requests SET status='expired'
+       WHERE status='pending' AND expires_at<=NOW()
+       AND (protected_user_id=$1 OR guardian_user_id=$1)`,
+      [req.vobixUser.id]
+    );
+    const result = await database.query(
+      `SELECT r.id,r.category,r.summary,r.status,r.expires_at,r.decided_at,r.created_at,
+              r.protected_user_id,r.guardian_user_id,u.username AS protected_username,u.vobix_id AS protected_vobix_id
+       FROM guardian_review_requests r JOIN users u ON u.id=r.protected_user_id
+       WHERE r.protected_user_id=$1 OR r.guardian_user_id=$1
+       ORDER BY r.created_at DESC LIMIT 100`,
+      [req.vobixUser.id]
+    );
+    return res.json({ ok:true, reviews:result.rows });
+  } catch (error) {
+    return res.status(500).json({ ok:false, msg:'No se pudieron cargar las consultas' });
+  }
+});
+
+app.post('/api/guardian/reviews/:reviewId/decision', requireAuth, async (req, res) => {
+  const decision = vobixGuardian.normalizeDecision(req.body?.decision);
+  if (!decision) return res.status(400).json({ ok:false, msg:'Decisión no válida' });
+  try {
+    const result = await database.query(
+      `UPDATE guardian_review_requests SET status=$1,decided_at=NOW()
+       WHERE id=$2 AND guardian_user_id=$3 AND status='pending' AND expires_at>NOW()
+       RETURNING id,status,protected_user_id,category`,
+      [decision, req.params.reviewId, req.vobixUser.id]
+    );
+    if (!result.rows.length) return res.status(404).json({ ok:false, msg:'La consulta ya no está disponible' });
+    await sendPushToUser(result.rows[0].protected_user_id, {
+      type:'guardian-decision', title:'Respuesta de tu Guardián Vobix',
+      body:decision === 'approved' ? 'Tu familiar considera que puedes continuar.' : 'Tu familiar recomienda detenerte y revisar.',
+      url:'/chat.html?guardian=1'
+    });
+    return res.json({ ok:true, review:result.rows[0] });
+  } catch (error) {
+    return res.status(500).json({ ok:false, msg:'No se pudo guardar la decisión' });
   }
 });
 

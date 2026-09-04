@@ -3632,8 +3632,27 @@
       <button id="callSeniorTrustedContactButton" class="profileAction" type="button">☎ Llamar a mi contacto</button>
       <button id="sendSeniorHelpMessageButton" class="profileAction" type="button">🆘 Pedir ayuda por mensaje</button>
       <button id="sendSeniorSafeMessageButton" class="profileAction" type="button">✓ Avisar “Llegué bien”</button>
+      <button id="openGuardianPanelButton" class="profileAction primary" type="button">🛡 Vobix Guardián Familiar</button>
       <button id="seniorHelpContactsButton" class="profileAction primary" type="button">👨‍👩‍👧 Buscar a mi familia</button>
       <button id="closeSeniorHelpButton" class="profileAction profileClose" type="button">Volver</button>
+    </div>
+  </div>
+
+  <div id="guardianPanel" class="notificationPanel seniorHelpPanel" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="guardianTitle">
+    <div class="notificationCard">
+      <div id="guardianTitle" class="notificationTitle">🛡 Vobix Guardián Familiar</div>
+      <div class="notificationDescription">Consulta a un familiar de confianza antes de enviar dinero, documentos o códigos. Vobix nunca comparte el dato sensible con el familiar.</div>
+      <button id="inviteCurrentGuardianButton" class="profileAction primary" type="button">Añadir el contacto del chat como guardián</button>
+      <div id="guardianRelationships" class="seniorAssistantLog" role="status" aria-live="polite">Cargando familiares…</div>
+      <label class="settingName" for="guardianReviewSummary">¿Qué quieres consultar? No escribas números, códigos ni datos bancarios.</label>
+      <textarea id="guardianReviewSummary" class="profileField" maxlength="240" rows="3" placeholder="Ejemplo: Me han pedido que envíe un documento"></textarea>
+      <div class="seniorTutorialActions">
+        <button class="profileAction" type="button" data-guardian-category="money">💶 Dinero</button>
+        <button class="profileAction" type="button" data-guardian-category="document">📄 Documento</button>
+        <button class="profileAction" type="button" data-guardian-category="code">🔢 Código</button>
+      </div>
+      <div id="guardianReviews" class="seniorAssistantLog" role="log" aria-live="polite">No hay consultas pendientes.</div>
+      <button id="closeGuardianPanelButton" class="profileAction profileClose" type="button">Guardar y volver</button>
     </div>
   </div>
 
@@ -4835,6 +4854,27 @@
 
       seniorTrustedPhone:
         $('seniorTrustedPhone'),
+
+      guardianPanel:
+        $('guardianPanel'),
+
+      openGuardianPanelButton:
+        $('openGuardianPanelButton'),
+
+      closeGuardianPanelButton:
+        $('closeGuardianPanelButton'),
+
+      inviteCurrentGuardianButton:
+        $('inviteCurrentGuardianButton'),
+
+      guardianRelationships:
+        $('guardianRelationships'),
+
+      guardianReviews:
+        $('guardianReviews'),
+
+      guardianReviewSummary:
+        $('guardianReviewSummary'),
 
       saveSeniorTrustedContactButton:
         $('saveSeniorTrustedContactButton'),
@@ -6286,17 +6326,6 @@
             parts.push(
               user.vobix_id ||
               user.vobixId
-            );
-
-          }
-
-
-          if (
-            userPhone(user)
-          ) {
-
-            parts.push(
-              userPhone(user)
             );
 
           }
@@ -9676,6 +9705,80 @@
       window.location.href = `sms:${contact.phone}${separator}body=${encodeURIComponent(message)}`;
     }
 
+    async function loadGuardianPanel() {
+      if (elements.guardianRelationships) elements.guardianRelationships.textContent = 'Cargando familiares…';
+      try {
+        const [relationshipData, reviewData] = await Promise.all([
+          api('/api/guardian'),
+          api('/api/guardian/reviews')
+        ]);
+        app.guardianRelationships = Array.isArray(relationshipData.relationships) ? relationshipData.relationships : [];
+        const active = app.guardianRelationships.filter(item => item.role === 'protected' && item.status === 'active');
+        if (elements.guardianRelationships) {
+          elements.guardianRelationships.replaceChildren();
+          if (!app.guardianRelationships.length) elements.guardianRelationships.textContent = 'Todavía no has añadido un familiar guardián.';
+          app.guardianRelationships.forEach(item => {
+            const row = document.createElement('div');
+            const status = item.status === 'active' ? 'Activo' : item.status === 'invited' ? 'Esperando aceptación' : 'No activo';
+            row.textContent = `${item.other_username || item.other_vobix_id || 'Familiar'} · ${status}`;
+            if (item.role === 'guardian' && item.status === 'invited') {
+              const accept = document.createElement('button');
+              accept.type = 'button'; accept.className = 'profileAction primary'; accept.textContent = 'Aceptar ser guardián';
+              accept.onclick = async () => { await api(`/api/guardian/${item.id}/respond`, { method:'POST', body:JSON.stringify({accept:true}) }); await loadGuardianPanel(); };
+              row.appendChild(accept);
+            }
+            elements.guardianRelationships.appendChild(row);
+          });
+        }
+        if (elements.guardianReviews) {
+          elements.guardianReviews.replaceChildren();
+          const reviews = Array.isArray(reviewData.reviews) ? reviewData.reviews : [];
+          if (!reviews.length) elements.guardianReviews.textContent = 'No hay consultas.';
+          reviews.forEach(review => {
+            const row = document.createElement('div');
+            row.textContent = `${review.category} · ${review.summary} · ${review.status}`;
+            if (review.guardian_user_id === userId(app.me) && review.status === 'pending') {
+              ['approved','rejected'].forEach(decision => {
+                const button = document.createElement('button');
+                button.type = 'button'; button.className = `profileAction${decision === 'approved' ? ' primary' : ''}`;
+                button.textContent = decision === 'approved' ? 'Considero seguro continuar' : 'Recomiendo detenerse';
+                button.onclick = async () => { await api(`/api/guardian/reviews/${review.id}/decision`, {method:'POST',body:JSON.stringify({decision})}); await loadGuardianPanel(); };
+                row.appendChild(button);
+              });
+            }
+            elements.guardianReviews.appendChild(row);
+          });
+        }
+        document.querySelectorAll('[data-guardian-category]').forEach(button => { button.disabled = active.length === 0; });
+      } catch (error) {
+        if (elements.guardianRelationships) elements.guardianRelationships.textContent = error.message || 'No se pudo cargar Vobix Guardián';
+      }
+    }
+
+    async function inviteCurrentGuardian() {
+      const peer = getConversationPeer(app.conversation);
+      const guardianUserId = userId(peer);
+      if (!guardianUserId) return notifyUser('Abre primero el chat del familiar que quieres elegir');
+      try {
+        await api('/api/guardian/invite', { method:'POST', body:JSON.stringify({guardianUserId}) });
+        notifyUser('Invitación de guardián enviada');
+        await loadGuardianPanel();
+      } catch (error) { notifyUser(error.message); }
+    }
+
+    async function requestGuardianReview(category) {
+      const relationship = (app.guardianRelationships || []).find(item => item.role === 'protected' && item.status === 'active');
+      if (!relationship) return notifyUser('Necesitas un familiar guardián activo');
+      const summary = String(elements.guardianReviewSummary?.value || '').trim();
+      if (!summary && category !== 'code') return notifyUser('Explica brevemente qué quieres consultar');
+      try {
+        await api('/api/guardian/reviews', { method:'POST', body:JSON.stringify({relationshipId:relationship.id,category,summary}) });
+        if (elements.guardianReviewSummary) elements.guardianReviewSummary.value = '';
+        notifyUser('Consulta enviada de forma segura a tu familiar');
+        await loadGuardianPanel();
+      } catch (error) { notifyUser(error.message); }
+    }
+
     function applySeniorMode(enabled, persist = true) {
       const active = enabled === true;
       if (!active) stopSeniorDictation();
@@ -9854,6 +9957,14 @@
       renderSeniorTrustedContact();
       setPanel(elements.seniorHelpPanel, true);
     });
+    elements.openGuardianPanelButton?.addEventListener('click', () => {
+      setPanel(elements.seniorHelpPanel, false);
+      setPanel(elements.guardianPanel, true);
+      loadGuardianPanel();
+    });
+    elements.closeGuardianPanelButton?.addEventListener('click', () => setPanel(elements.guardianPanel, false));
+    elements.inviteCurrentGuardianButton?.addEventListener('click', inviteCurrentGuardian);
+    document.querySelectorAll('[data-guardian-category]').forEach(button => button.addEventListener('click', () => requestGuardianReview(button.dataset.guardianCategory)));
     elements.closeSeniorHelpButton?.addEventListener('click', () => setPanel(elements.seniorHelpPanel, false));
     elements.seniorHelpContactsButton?.addEventListener('click', () => {
       setPanel(elements.seniorHelpPanel, false);
