@@ -22,7 +22,8 @@ test('la confirmación distingue inserción y reintento en RETURNING',()=>{
   assert.ok(returning);
   assert.match(returning[1],/\(xmax\s*=\s*0\)\s+AS\s+inserted/i);
   assert.match(handler,/ON CONFLICT \(sender_user_id, client_message_id\)/);
-  assert.match(handler,/const inserted = result\.rows\[0\]\.inserted !== false/);
+  assert.match(handler,/const persistedRow = result\.rows\[0\]/);
+  assert.match(handler,/const inserted = persistedRow\.inserted !== false/);
 });
 
 test('la Capa 109 queda registrada',()=>{

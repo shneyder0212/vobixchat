@@ -21,6 +21,7 @@ const express = require('express');
 const database = require('../database/db');
 const originAttestation = require('../core/vobix-origin-attestation');
 const childProtection = require('../core/vobix-child-protection');
+const { matchesPersistedMessage } = require('../core/message-intent');
 
 const router = express.Router();
 const seniorAssistantRate = new Map();
@@ -3214,14 +3215,28 @@ async function sendMessageHandler(
       );
 
 
+    const persistedRow = result.rows[0];
+
+    if (!matchesPersistedMessage(persistedRow, {
+      conversationId,
+      content,
+      messageType
+    })) {
+      return res.status(409).json({
+        ok:false,
+        code:'client_message_id_conflict',
+        msg:'El identificador ya pertenece a otro mensaje'
+      });
+    }
+
     const message =
       normalizeMessage(
-        result.rows[0],
+        persistedRow,
         userId
       );
 
 
-    const inserted = result.rows[0].inserted !== false;
+    const inserted = persistedRow.inserted !== false;
 
     if (inserted) {
       await notifyPrivateConversation(

@@ -42,6 +42,7 @@ const vobixChildProtection = require('./core/vobix-child-protection');
 const vobixSignSupport = require('./core/vobix-sign-support');
 const vobixProtectedRoute = require('./core/vobix-protected-route');
 const vobixFamilyRecovery = require('./core/vobix-family-recovery');
+const { matchesPersistedMessage } = require('./core/message-intent');
 
 const packageMetadata =
   require('./package.json');
@@ -3380,6 +3381,24 @@ io.on(
 
           const row =
             result.rows[0];
+
+          if (!matchesPersistedMessage(row, {
+            conversationId,
+            content:text,
+            messageType:'text'
+          })) {
+
+            if (typeof callback === 'function') {
+              callback({
+                ok:false,
+                code:'client_message_id_conflict',
+                msg:'El identificador ya pertenece a otro mensaje'
+              });
+            }
+
+            return;
+
+          }
 
           const inserted = row.inserted !== false;
 
