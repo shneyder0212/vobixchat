@@ -3136,6 +3136,61 @@ io.on(
     // MENSAJE LEÍDO
     // ==================================================
 
+    // Capa 113 — recibos por mensaje. Se valida que el usuario pertenece
+    // a la conversación y que el mensaje fue enviado por la otra persona.
+    async function saveMessageReceipt(payload = {}, receiptType = 'delivered') {
+      const conversationId = String(payload.conversationId || payload.conversation_id || '').trim();
+      const messageId = String(payload.messageId || payload.message_id || payload.id || '').trim();
+
+      if (!conversationId || !messageId) return;
+      if (!(await socketCanAccessConversation(conversationId, userId))) return;
+
+      const messageResult = await database.query(
+        `SELECT sender_user_id
+         FROM messages
+         WHERE id=$1 AND conversation_id=$2 AND sender_user_id<>$3
+         LIMIT 1`,
+        [messageId, conversationId, userId]
+      );
+      const senderUserId = messageResult.rows[0]?.sender_user_id;
+      if (!senderUserId) return;
+
+      const isRead = receiptType === 'read';
+      const receiptResult = await database.query(
+        `INSERT INTO message_receipts(message_id,user_id,delivered_at,read_at,created_at)
+         VALUES($1,$2,NOW(),CASE WHEN $3 THEN NOW() ELSE NULL END,NOW())
+         ON CONFLICT(message_id,user_id) DO UPDATE SET
+           delivered_at=COALESCE(message_receipts.delivered_at,NOW()),
+           read_at=CASE WHEN $3 THEN COALESCE(message_receipts.read_at,NOW()) ELSE message_receipts.read_at END
+         RETURNING delivered_at,read_at`,
+        [messageId, userId, isRead]
+      );
+
+      const receipt = receiptResult.rows[0] || {};
+      const eventPayload = {
+        conversationId,
+        messageId,
+        userId,
+        deliveredAt: receipt.delivered_at || null,
+        readAt: receipt.read_at || null
+      };
+
+      io.to(`user:${String(senderUserId)}`).emit(`chat:${receiptType}`, eventPayload);
+      io.to(`user:${String(senderUserId)}`).emit(`message:${receiptType}`, eventPayload);
+    }
+
+    socket.on('chat:delivered', payload => {
+      saveMessageReceipt(payload, 'delivered').catch(error =>
+        console.error('VOBIXCHAT DELIVERED RECEIPT ERROR:', error.message)
+      );
+    });
+
+    socket.on('chat:read', payload => {
+      saveMessageReceipt(payload, 'read').catch(error =>
+        console.error('VOBIXCHAT READ RECEIPT ERROR:', error.message)
+      );
+    });
+
     socket.on(
       'conversation:read',
       async (

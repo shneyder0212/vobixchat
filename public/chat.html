@@ -11646,6 +11646,15 @@
       }, delay);
     }
 
+    function bindConfirmedMessageId(clientMessageId, message) {
+      const serverMessageId = String(message?.id || message?._id || '');
+      const clientId = String(clientMessageId || '');
+      if (!serverMessageId || !clientId || !elements.messages) return;
+      const row = [...elements.messages.querySelectorAll('[data-message-id]')]
+        .find(item => item.dataset.messageId === clientId);
+      if (row) row.dataset.messageId = serverMessageId;
+    }
+
     async function flushQueuedMessages() {
       if (app.outboxFlushing || navigator.onLine === false) return;
       const outbox = readMessageOutbox();
@@ -11658,10 +11667,11 @@
       while (remaining.length && navigator.onLine !== false) {
         const payload = remaining[0];
         try {
-          await api('/api/chat/messages', {
+          const result = await api('/api/chat/messages', {
             method: 'POST',
             body: JSON.stringify(payload)
           });
+          bindConfirmedMessageId(payload.clientMessageId, result?.message);
           remaining.shift();
           sentCount += 1;
           updateMessageStatus({ clientMessageId: payload.clientMessageId }, 'sent');
@@ -11806,6 +11816,9 @@
       let sent =
         false;
 
+      let confirmedMessage =
+        null;
+
 
       /* ===================================================
          ENTREGA CONFIRMADA POR HTTP.
@@ -11819,7 +11832,7 @@
 
         try {
 
-          await api(
+          const result = await api(
             '/api/chat/messages',
             {
               method:
@@ -11831,6 +11844,8 @@
                 )
             }
           );
+
+          confirmedMessage = result?.message || null;
 
 
           sent =
@@ -11885,6 +11900,7 @@
 
         renderTextMessage(
           {
+            ...(confirmedMessage || {}),
             text,
             clientMessageId: payload.clientMessageId,
             reply: payload.reply,
@@ -13936,6 +13952,12 @@
           );
 
           const receivedMessageId = message.id || message._id || message.messageId || message.message_id;
+          if (!messageIsMine(message) && receivedMessageId && app.socket?.connected) {
+            app.socket.emit('chat:delivered', {
+              conversationId: id,
+              messageId: receivedMessageId
+            });
+          }
           if (app.readReceipts && !messageIsMine(message) && receivedMessageId && app.socket?.connected) {
             app.socket.emit('chat:read', {
               conversationId: id,
@@ -14256,6 +14278,12 @@
 
 
           const receivedMessageId = message.id || message._id || message.messageId || message.message_id;
+          if (receivedMessageId && app.socket?.connected) {
+            app.socket.emit('chat:delivered', {
+              conversationId: incomingId || activeId,
+              messageId: receivedMessageId
+            });
+          }
           if (app.readReceipts && receivedMessageId && app.socket?.connected) {
             app.socket.emit('chat:read', {
               conversationId: incomingId || activeId,

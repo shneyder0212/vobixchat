@@ -2574,6 +2574,18 @@ function normalizeMessage(
     mime_type:
       row.mime_type || null,
 
+    deliveredAt:
+      row.delivered_at || null,
+
+    delivered_at:
+      row.delivered_at || null,
+
+    readAt:
+      row.read_at || null,
+
+    read_at:
+      row.read_at || null,
+
     createdAt:
       row.created_at,
 
@@ -2732,6 +2744,10 @@ async function getMessagesHandler(
             m.content,
             m.message_type,
             m.client_message_id,
+            (SELECT mr.delivered_at FROM message_receipts mr
+             WHERE mr.message_id=m.id AND mr.user_id<>m.sender_user_id LIMIT 1) AS delivered_at,
+            (SELECT mr.read_at FROM message_receipts mr
+             WHERE mr.message_id=m.id AND mr.user_id<>m.sender_user_id LIMIT 1) AS read_at,
             m.file_url,
             m.file_name,
             m.mime_type,
@@ -2779,6 +2795,10 @@ async function getMessagesHandler(
             m.content,
             m.message_type,
             m.client_message_id,
+            (SELECT mr.delivered_at FROM message_receipts mr
+             WHERE mr.message_id=m.id AND mr.user_id<>m.sender_user_id LIMIT 1) AS delivered_at,
+            (SELECT mr.read_at FROM message_receipts mr
+             WHERE mr.message_id=m.id AND mr.user_id<>m.sender_user_id LIMIT 1) AS read_at,
             m.file_url,
             m.file_name,
             m.mime_type,
