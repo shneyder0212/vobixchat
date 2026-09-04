@@ -35,3 +35,16 @@ test('confirmación HTTP enlaza el identificador local con el del servidor', () 
   assert.match(html, /row\.dataset\.messageId = serverMessageId/);
   assert.match(html, /confirmedMessage = result\?\.message/);
 });
+
+test('reconexión sincroniza recibos pendientes sin modificar el historial', () => {
+  assert.match(html, /async function syncConversationReceipts/);
+  assert.match(html, /messages\?limit=100/);
+  assert.match(html, /syncConversationReceipts\(id\)/);
+  assert.match(html, /receiptSyncing/);
+});
+
+test('volver a la aplicación sincroniza lectura del dispositivo activo', () => {
+  assert.match(html, /visibilitychange/);
+  assert.match(html, /!document\.hidden && app\.socket\?\.connected/);
+  assert.match(html, /syncConversationReceipts\(conversationId\(app\.conversation\)\)/);
+});

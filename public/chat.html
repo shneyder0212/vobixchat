@@ -4398,6 +4398,8 @@
 
       outboxRetryTimer: null,
 
+      receiptSyncing: false,
+
       replyToMessage: null,
 
       editingMessage: null,
@@ -11279,6 +11281,31 @@
       }
     }
 
+    async function syncConversationReceipts(conversationIdValue) {
+      const id = String(conversationIdValue || '');
+      if (!id || !app.socket?.connected || app.receiptSyncing) return;
+      app.receiptSyncing = true;
+
+      try {
+        const data = await api(
+          `/api/chat/conversations/${encodeURIComponent(id)}/messages?limit=100`
+        );
+        extractMessages(data).forEach(message => {
+          if (messageIsMine(message)) return;
+          const messageId = message.id || message._id || message.messageId || message.message_id;
+          if (!messageId) return;
+          app.socket.emit('chat:delivered', { conversationId: id, messageId });
+          if (app.readReceipts && !document.hidden) {
+            app.socket.emit('chat:read', { conversationId: id, messageId });
+          }
+        });
+      } catch (error) {
+        console.warn('[VOBIXCHAT RECEIPT SYNC]', error);
+      } finally {
+        app.receiptSyncing = false;
+      }
+    }
+
 
     function draftStorageKey(conversation = app.conversation) {
       const id = conversationId(conversation);
@@ -14107,6 +14134,8 @@
               id
             );
 
+            syncConversationReceipts(id);
+
           }
 
           publishPresence();
@@ -14359,6 +14388,12 @@
       app.socket.on('typing', handleRemoteTyping);
       app.socket.on('presence:update', handlePresenceUpdate);
       app.socket.on('user:presence', handlePresenceUpdate);
+
+      document.addEventListener('visibilitychange', () => {
+        if (!document.hidden && app.socket?.connected) {
+          syncConversationReceipts(conversationId(app.conversation));
+        }
+      });
 
 
       /* ===================================================
