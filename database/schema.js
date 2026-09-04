@@ -236,6 +236,16 @@ async function initializeDatabase() {
       ON sessions(user_id);
     `);
 
+    await database.query(`
+      ALTER TABLE sessions
+      ADD COLUMN IF NOT EXISTS recognized_at TIMESTAMPTZ;
+    `);
+
+    await database.query(`
+      UPDATE sessions SET recognized_at=created_at
+      WHERE recognized_at IS NULL AND revoked=FALSE;
+    `);
+
 
     // ====================================================
     // PUSH SUBSCRIPTIONS
@@ -934,6 +944,16 @@ async function initializeDatabase() {
     await database.query(`
       ALTER TABLE messages
       ADD COLUMN IF NOT EXISTS origin_sealed_at TIMESTAMPTZ;
+    `);
+
+    await database.query(`
+      ALTER TABLE messages
+      ADD COLUMN IF NOT EXISTS origin_user_verified BOOLEAN,
+      ADD COLUMN IF NOT EXISTS origin_device_recognized BOOLEAN,
+      ADD COLUMN IF NOT EXISTS origin_location_shared BOOLEAN NOT NULL DEFAULT FALSE,
+      ADD COLUMN IF NOT EXISTS origin_capture_at TIMESTAMPTZ,
+      ADD COLUMN IF NOT EXISTS origin_session_id UUID REFERENCES sessions(id) ON DELETE SET NULL,
+      ADD COLUMN IF NOT EXISTS origin_attestation_hmac CHAR(64);
     `);
 
     await database.query(`

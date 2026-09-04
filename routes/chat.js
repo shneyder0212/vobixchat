@@ -19,6 +19,7 @@
 
 const express = require('express');
 const database = require('../database/db');
+const originAttestation = require('../core/vobix-origin-attestation');
 
 const router = express.Router();
 const seniorAssistantRate = new Map();
@@ -2539,7 +2540,12 @@ function normalizeMessage(
       sha256: row.origin_sha256,
       source: row.origin_source || 'vobix-upload',
       sealedAt: row.origin_sealed_at || null,
-      verified: true
+      verified: true,
+      userVerified: row.origin_user_verified === true,
+      deviceRecognized: row.origin_device_recognized === true,
+      locationShared: row.origin_location_shared === true,
+      capturedAt: row.origin_capture_at || null,
+      attested: Boolean(row.origin_attestation_hmac)
     } : null,
 
     deliveredAt:
@@ -2722,6 +2728,11 @@ async function getMessagesHandler(
             m.origin_sha256,
             m.origin_source,
             m.origin_sealed_at,
+            m.origin_user_verified,
+            m.origin_device_recognized,
+            m.origin_location_shared,
+            m.origin_capture_at,
+            m.origin_attestation_hmac,
             m.created_at,
             m.updated_at,
             m.edited,
@@ -2776,6 +2787,11 @@ async function getMessagesHandler(
             m.origin_sha256,
             m.origin_source,
             m.origin_sealed_at,
+            m.origin_user_verified,
+            m.origin_device_recognized,
+            m.origin_location_shared,
+            m.origin_capture_at,
+            m.origin_attestation_hmac,
             m.created_at,
             m.updated_at,
             m.edited,
@@ -4939,6 +4955,10 @@ async function uploadChatFileHandler(
     // no afirma quién lo creó fuera de la aplicación.
     const originSha256 = await sha256File(req.file.path);
     const originSource = normalizeOriginSource(req.body.originSource, messageType);
+    const capturedInsideVobix = ['vobix-camera', 'vobix-recorder'].includes(originSource);
+    const originCapturedAt = capturedInsideVobix ? new Date().toISOString() : null;
+    const originUserVerified = capturedInsideVobix ? req.vobixUser?.verified === true : null;
+    const originDeviceRecognized = capturedInsideVobix ? Boolean(req.vobixSession?.recognizedAt) : null;
 
 
     /* ==================================================
@@ -4965,7 +4985,12 @@ async function uploadChatFileHandler(
           view_once,
           origin_sha256,
           origin_source,
-          origin_sealed_at
+          origin_sealed_at,
+          origin_user_verified,
+          origin_device_recognized,
+          origin_location_shared,
+          origin_capture_at,
+          origin_session_id
         )
 
         VALUES
@@ -4989,7 +5014,12 @@ async function uploadChatFileHandler(
           $7,
           $8,
           $9,
-          NOW()
+          NOW(),
+          $10,
+          $11,
+          FALSE,
+          $12,
+          $13
         )
 
         RETURNING
@@ -5009,7 +5039,13 @@ async function uploadChatFileHandler(
           view_once,
           origin_sha256,
           origin_source,
-          origin_sealed_at
+          origin_sealed_at,
+          origin_user_verified,
+          origin_device_recognized,
+          origin_location_shared,
+          origin_capture_at,
+          origin_session_id,
+          origin_attestation_hmac
         `,
         [
           conversationId,
@@ -5020,9 +5056,39 @@ async function uploadChatFileHandler(
           mimeType,
           viewOnce,
           originSha256,
-          originSource
+          originSource,
+          originUserVerified,
+          originDeviceRecognized,
+          originCapturedAt,
+          capturedInsideVobix ? req.vobixSession?.id : null
         ]
       );
+
+    let persistedRow = result.rows[0];
+    if (capturedInsideVobix) {
+      const payload = {
+        messageId:persistedRow.id,
+        sha256:originSha256,
+        userId,
+        sessionId:req.vobixSession?.id,
+        userVerified:originUserVerified,
+        deviceRecognized:originDeviceRecognized,
+        locationShared:false,
+        capturedAt:originCapturedAt
+      };
+      const signature = originAttestation.sign(payload, process.env.ORIGIN_ATTESTATION_SECRET);
+      if (signature) {
+        const attested = await database.query(
+          `UPDATE messages SET origin_attestation_hmac=$1 WHERE id=$2
+           RETURNING id,conversation_id,sender_user_id,content,message_type,file_url,file_name,mime_type,
+           created_at,updated_at,edited,deleted,expires_at,view_once,origin_sha256,origin_source,
+           origin_sealed_at,origin_user_verified,origin_device_recognized,origin_location_shared,
+           origin_capture_at,origin_session_id,origin_attestation_hmac`,
+          [signature, persistedRow.id]
+        );
+        persistedRow = attested.rows[0];
+      }
+    }
 
 
     await database.query(
@@ -5043,7 +5109,7 @@ async function uploadChatFileHandler(
 
     const message =
       normalizeMessage(
-        result.rows[0],
+        persistedRow,
         userId
       );
 
@@ -5177,7 +5243,9 @@ router.get('/messages/:messageId/origin-seal', async (req, res) => {
 
   try {
     const found = await database.query(
-      `SELECT id, conversation_id, file_url, origin_sha256, origin_source, origin_sealed_at,
+      `SELECT id, conversation_id, sender_user_id, file_url, origin_sha256, origin_source, origin_sealed_at,
+              origin_user_verified,origin_device_recognized,origin_location_shared,origin_capture_at,
+              origin_session_id,origin_attestation_hmac,
               deleted, expires_at
        FROM messages WHERE id=$1 LIMIT 1`,
       [messageId]
@@ -5201,6 +5269,21 @@ router.get('/messages/:messageId/origin-seal', async (req, res) => {
       Buffer.from(actualSha256, 'hex'),
       Buffer.from(message.origin_sha256, 'hex')
     );
+    const attestationPayload = {
+      messageId:message.id,
+      sha256:message.origin_sha256,
+      userId:message.sender_user_id,
+      sessionId:message.origin_session_id,
+      userVerified:message.origin_user_verified === true,
+      deviceRecognized:message.origin_device_recognized === true,
+      locationShared:message.origin_location_shared === true,
+      capturedAt:message.origin_capture_at ? new Date(message.origin_capture_at).toISOString() : ''
+    };
+    const attestationValid = Boolean(message.origin_attestation_hmac) && originAttestation.verify(
+      attestationPayload,
+      message.origin_attestation_hmac,
+      process.env.ORIGIN_ATTESTATION_SECRET
+    );
     return res.json({
       ok: true,
       seal: {
@@ -5209,7 +5292,15 @@ router.get('/messages/:messageId/origin-seal', async (req, res) => {
         source: message.origin_source || 'vobix-upload',
         sealedAt: message.origin_sealed_at,
         status: intact ? 'intact' : 'modified',
-        intact
+        intact,
+        attestation: {
+          signed: Boolean(message.origin_attestation_hmac),
+          valid: attestationValid,
+          userVerified: message.origin_user_verified === true,
+          deviceRecognized: message.origin_device_recognized === true,
+          locationShared: message.origin_location_shared === true,
+          capturedAt: message.origin_capture_at || null
+        }
       }
     });
   } catch (error) {

@@ -86,6 +86,7 @@ const VOBIX_LAYERS = Object.freeze([
   ,{ id:'102', name:'Vobix Sello Original', status:'en_validacion', scope:'Huella SHA-256 vinculada al mensaje para comprobar si una foto, vídeo, audio o documento cambió después de entrar en Vobix.' }
   ,{ id:'103', name:'Vobix Ruta Protegida', status:'en_validacion', scope:'Trayecto temporal compartido con familiares autorizados, aviso de parada prolongada o retraso y confirmación de llegada.' }
   ,{ id:'104', name:'Vobix Consentimiento de Seguridad', status:'en_validacion', scope:'Funciones de emergencia desactivadas por defecto, aceptación informada versionada y revocable; no sustituye al 112 ni elimina responsabilidades legales.' }
+  ,{ id:'105', name:'Vobix Atestación de Origen', status:'requiere_configuracion', scope:'Firma del servidor que vincula contenido capturado en Vobix con cuenta verificada, sesión reconocida, integridad y decisión de ubicación; requiere secreto exclusivo en Render.' }
 ]);
 
 function getVobixLayers() {

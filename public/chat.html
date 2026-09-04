@@ -755,6 +755,7 @@
     }
     .messageOriginSeal.isModified { border-color: #ff7777; color: #ff9a9a; background: rgba(255,90,90,.1); }
     .messageOriginSeal:disabled { opacity: .65; cursor: wait; }
+    .messageOriginDetails { margin-top:6px; font-size:10px; line-height:1.55; color:rgba(255,255,255,.76); white-space:pre-line; }
 
     .messageTranslationAction {
       display: inline-flex;
@@ -11199,6 +11200,19 @@
           if (!data?.seal) throw new Error(data?.msg || 'No se pudo verificar');
           button.textContent = data.seal.intact ? '✓ Original intacto' : '⚠ Archivo modificado';
           button.classList.toggle('isModified', !data.seal.intact);
+          let details = bubble.querySelector('.messageOriginDetails');
+          if (!details) {
+            details = document.createElement('div');
+            details.className = 'messageOriginDetails';
+            bubble.appendChild(details);
+          }
+          const attestation = data.seal.attestation || {};
+          details.textContent = [
+            `${attestation.userVerified ? '✅' : '⚠️'} Usuario ${attestation.userVerified ? 'verificado' : 'no atestado'}`,
+            `${attestation.deviceRecognized ? '✅' : '⚠️'} Dispositivo ${attestation.deviceRecognized ? 'reconocido' : 'no atestado'}`,
+            `${data.seal.intact && attestation.valid ? '✅' : '⚠️'} Archivo ${data.seal.intact && attestation.valid ? 'sin modificaciones y firma válida' : 'sin atestación válida'}`,
+            `${attestation.locationShared ? '✅ Ubicación compartida con permiso' : '⚠️ Ubicación no compartida'}`
+          ].join('\n');
         } catch (error) {
           button.textContent = 'Sello no verificable';
           notifyUser(error.message || 'No se pudo verificar el archivo');

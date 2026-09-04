@@ -413,8 +413,8 @@ async function saveSession(userId, token, req = null) {
   await database.query(
     `
       INSERT INTO sessions
-      (user_id, token_hash, device_name, platform, created_at, last_used_at, expires_at, revoked)
-      VALUES ($1, $2, $3, $4, NOW(), NOW(), $5, FALSE)
+      (user_id, token_hash, device_name, platform, created_at, last_used_at, expires_at, revoked, recognized_at)
+      VALUES ($1, $2, $3, $4, NOW(), NOW(), $5, FALSE, NOW())
     `,
     [userId, tokenHash, userAgent || null, null, expiresAt]
   );
@@ -440,7 +440,7 @@ async function getSessionByToken(token) {
   const tokenHash = hashSessionToken(token);
   const result = await database.query(
     `
-      SELECT id, user_id, created_at, expires_at
+      SELECT id, user_id, created_at, expires_at, recognized_at
       FROM sessions
       WHERE token_hash = $1
         AND revoked = FALSE
@@ -463,6 +463,7 @@ async function getSessionByToken(token) {
     userId: row.user_id,
     createdAt: row.created_at ? new Date(row.created_at).getTime() : Date.now(),
     expiresAt: row.expires_at
+    ,recognizedAt: row.recognized_at
   };
 }
 
