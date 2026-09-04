@@ -85,6 +85,7 @@ const {
 const { containsSensitiveData, localPremiumHelp } = require('./core/premium-help');
 
 const vobixLearn = require('./core/vobix-learn');
+const { localTutorReply, tutorSystemPrompt } = require('./core/learning-tutor');
 
 const {
   createMeetingCode,
@@ -97,6 +98,7 @@ const r2Storage = require('./core/r2-storage');
 
 const premiumHelpRate = new Map();
 const meetJoinRate = new Map();
+const learningTutorRate = new Map();
 
 
 // ======================================================
@@ -1769,6 +1771,58 @@ app.get('/api/learn/v2/profile/:courseKey', requireAuth, async (req, res) => {
   } catch (error) {
     console.error('VOBIX APRENDE | No se pudo cargar el perfil:', error.message);
     return res.status(500).json({ ok:false, code:'learning_profile_unavailable' });
+  }
+});
+
+app.post('/api/learn/v2/tutor', requireAuth, async (req, res) => {
+  res.setHeader('Cache-Control', 'no-store');
+  const course = vobixLearn.getCourse(req.body?.courseKey);
+  const lesson = vobixLearn.buildLesson(req.body?.courseKey, req.body?.levelNumber, req.body?.lessonNumber);
+  const question = String(req.body?.question || '').trim().slice(0, 800);
+  if (!course || !lesson || !question) {
+    return res.status(400).json({ ok:false, code:'invalid_tutor_request' });
+  }
+  if (containsSensitiveData(question)) {
+    return res.status(400).json({ ok:false, code:'sensitive_data_rejected', msg:'No compartas contraseñas, códigos ni datos bancarios con el tutor' });
+  }
+
+  const userId = String(req.vobixUser.id);
+  const now = Date.now();
+  const attempts = (learningTutorRate.get(userId) || []).filter(at => now - at < 60000);
+  if (attempts.length >= 30) return res.status(429).json({ ok:false, code:'tutor_rate_limited' });
+  attempts.push(now);
+  learningTutorRate.set(userId, attempts);
+
+  const fallback = localTutorReply({course, lesson, question});
+  const providerUrl = String(process.env.VOBIX_LEARN_AI_URL || process.env.VOBIX_AI_API_URL || '').trim();
+  const providerKey = String(process.env.VOBIX_LEARN_AI_KEY || process.env.VOBIX_AI_API_KEY || '').trim();
+  const providerModel = String(process.env.VOBIX_LEARN_AI_MODEL || process.env.VOBIX_AI_MODEL || '').trim();
+  if (!providerUrl || !providerKey || !providerModel) {
+    return res.json({ ok:true, answer:fallback, source:'local-tutor', level:lesson.cefr });
+  }
+
+  try {
+    const response = await fetch(providerUrl, {
+      method:'POST',
+      headers:{'Content-Type':'application/json', Authorization:`Bearer ${providerKey}`},
+      body:JSON.stringify({
+        model:providerModel,
+        temperature:0.2,
+        max_tokens:320,
+        messages:[
+          {role:'system', content:tutorSystemPrompt(course, lesson)},
+          {role:'user', content:question}
+        ]
+      }),
+      signal:AbortSignal.timeout(9000)
+    });
+    if (!response.ok) throw new Error(`provider_${response.status}`);
+    const data = await response.json();
+    const answer = String(data?.choices?.[0]?.message?.content || '').trim().slice(0, 1600);
+    return res.json({ ok:true, answer:answer || fallback, source:answer ? 'ai-tutor' : 'local-tutor', level:lesson.cefr });
+  } catch (error) {
+    console.warn('VOBIX APRENDE | Tutor externo no disponible:', error.message);
+    return res.json({ ok:true, answer:fallback, source:'local-tutor', level:lesson.cefr });
   }
 });
 
