@@ -1155,6 +1155,45 @@ async function initializeDatabase() {
       );
     `);
 
+    // Capa 116 — CREATE TABLE IF NOT EXISTS no repara instalaciones
+    // antiguas incompletas. Estas migraciones son aditivas e idempotentes.
+    await database.query(`
+      ALTER TABLE message_receipts
+      ADD COLUMN IF NOT EXISTS message_id UUID REFERENCES messages(id) ON DELETE CASCADE;
+    `);
+
+    await database.query(`
+      ALTER TABLE message_receipts
+      ADD COLUMN IF NOT EXISTS user_id UUID REFERENCES users(id) ON DELETE CASCADE;
+    `);
+
+    await database.query(`
+      ALTER TABLE message_receipts
+      ADD COLUMN IF NOT EXISTS delivered_at TIMESTAMPTZ;
+    `);
+
+    await database.query(`
+      ALTER TABLE message_receipts
+      ADD COLUMN IF NOT EXISTS read_at TIMESTAMPTZ;
+    `);
+
+    await database.query(`
+      ALTER TABLE message_receipts
+      ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT NOW();
+    `);
+
+    await database.query(`
+      CREATE UNIQUE INDEX IF NOT EXISTS message_receipts_message_user_unique
+      ON message_receipts(message_id,user_id);
+    `);
+
+    await database.query(`
+      CREATE INDEX IF NOT EXISTS message_receipts_user_idx
+      ON message_receipts(user_id);
+    `);
+
+    console.log('VOBIXCHAT DATABASE: recibos de mensajes verificados');
+
 
     // ====================================================
     // TRUST SIGNALS
