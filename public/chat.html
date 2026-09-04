@@ -16319,6 +16319,7 @@
         );
 
 
+        const outgoingCallId = app.callId;
         app.socket.emit(
           'call:offer',
           {
@@ -16336,6 +16337,11 @@
             offer:
               pc.localDescription
 
+          },
+          response => {
+            if (response?.ok || String(app.callId || '') !== String(outgoingCallId || '')) return;
+            notifyUser(response?.msg || 'No se pudo iniciar la llamada');
+            endLocalCall(false);
           }
         );
 
@@ -16522,10 +16528,15 @@
         const answer = await pc.createAnswer();
         await pc.setLocalDescription(answer);
 
+        const acceptedCallId = app.callId;
         app.socket?.emit('call:answer', {
           callId: app.callId,
           conversationId: payload.conversationId || payload.conversation_id || conversationId(app.conversation),
           answer: pc.localDescription
+        }, response => {
+          if (response?.ok || String(app.callId || '') !== String(acceptedCallId || '')) return;
+          notifyUser(response?.msg || 'La llamada ya no está disponible');
+          endLocalCall(false);
         });
 
         enterCallConnectingState(app.callId);
@@ -16920,6 +16931,13 @@
 
       app.socket.on(
         'call:end',
+        handleRemoteCallEnd
+      );
+
+      // El servidor moderno utiliza call:ended. Conservamos call:end para
+      // clientes antiguos y evitamos dejar timbres o medios activos.
+      app.socket.on(
+        'call:ended',
         handleRemoteCallEnd
       );
 

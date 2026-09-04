@@ -26,3 +26,14 @@ test('los otros dispositivos paran timbre, panel y temporizador', () => {
   assert.match(handler, /hideIncomingCallPanel\(\)/);
   assert.match(html, /'call:accepted-device',[\s\S]{0,100}handleCallAcceptedOnDevice/);
 });
+
+test('el cliente escucha el evento real de finalización emitido por servidor', () => {
+  assert.match(server, /\.emit\(\s*'call:ended'/);
+  assert.match(html, /'call:ended',[\s\S]{0,100}handleRemoteCallEnd/);
+  assert.match(html, /'call:end',[\s\S]{0,100}handleRemoteCallEnd/);
+});
+
+test('oferta y respuesta procesan rechazo del servidor sin timbrar hasta expirar', () => {
+  assert.match(html, /'call:offer',[\s\S]{0,900}response =>[\s\S]{0,220}endLocalCall\(false\)/);
+  assert.match(html, /'call:answer',[\s\S]{0,500}response =>[\s\S]{0,220}endLocalCall\(false\)/);
+});
