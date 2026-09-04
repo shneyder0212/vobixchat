@@ -4394,6 +4394,8 @@
 
       messageSending: false,
 
+      lastMessageSendIntent: null,
+
       outboxFlushing: false,
 
       outboxRetryTimer: null,
@@ -11903,6 +11905,20 @@
         return;
 
       }
+
+
+      const sendIntentKey = `${String(conversationId)}:${text}`;
+      const sendIntentNow = Date.now();
+      if (
+        app.lastMessageSendIntent?.key === sendIntentKey &&
+        sendIntentNow - app.lastMessageSendIntent.at < 900
+      ) {
+        return;
+      }
+      app.lastMessageSendIntent = {
+        key: sendIntentKey,
+        at: sendIntentNow
+      };
 
 
       const payload = {
