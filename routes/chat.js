@@ -2501,6 +2501,9 @@ function normalizeMessage(
     message_type:
       row.message_type || 'text',
 
+    type:
+      row.message_type || 'text',
+
     clientMessageId:
       row.client_message_id || null,
 
@@ -2524,6 +2527,12 @@ function normalizeMessage(
 
     mime_type:
       row.mime_type || null,
+
+    viewOnce:
+      Boolean(row.view_once),
+
+    view_once:
+      Boolean(row.view_once),
 
     deliveredAt:
       row.delivered_at || null,

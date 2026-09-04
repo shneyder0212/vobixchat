@@ -8656,15 +8656,11 @@
               signal: uploadController.signal
             });
 
-        const payload = {
-          conversationId: cid,
-          type: kind,
-          file: data?.file || data,
-          viewOnce
-        };
-
-        if (app.socket?.connected) {
-          app.socket.emit('chat:file', payload);
+        if (data?.message) {
+          // El mensaje solo aparece como enviado después de la confirmación HTTP.
+          // Registramos su ID para descartar el eco Socket.IO del servidor.
+          isDuplicateIncomingMessage(data.message);
+          renderIncomingMessage(data.message);
         }
 
         notifyUser(
@@ -8908,31 +8904,9 @@
                 );
 
 
-              const payload = {
-
-                conversationId,
-
-                file:
-                  data?.file ||
-                  data,
-
-                type: 'image',
-
-                viewOnce
-
-              };
-
-
-              if (
-                app.socket &&
-                app.socket.connected
-              ) {
-
-                app.socket.emit(
-                  'chat:file',
-                  payload
-                );
-
+              if (data?.message) {
+                isDuplicateIncomingMessage(data.message);
+                renderIncomingMessage(data.message);
               }
 
 
@@ -10914,7 +10888,7 @@
       const keepAtBottom = messagesAreNearBottom();
       const previousScrollTop = elements.messages?.scrollTop || 0;
       const mine = messageIsMine(message);
-      const type = String(message.type || message.kind || '').toLowerCase();
+      const type = String(message.type || message.kind || message.messageType || message.message_type || '').toLowerCase();
       const file = message.file || message.attachment || {};
       const mime = String(file.mimeType || file.mime_type || message.mimeType || '').toLowerCase();
 
@@ -10924,7 +10898,7 @@
         renderAttachmentMessage(message, mine, 'image');
       } else if (type === 'video' || mime.startsWith('video/')) {
         renderAttachmentMessage(message, mine, 'video');
-      } else if (type === 'document' || type === 'file' || file.url || file.file_url) {
+      } else if (type === 'document' || type === 'file' || file.url || file.file_url || message.fileUrl || message.file_url) {
         renderAttachmentMessage(message, mine, 'document');
       } else {
         renderTextMessage(message, mine);
@@ -12841,39 +12815,12 @@
           );
 
 
-        const payload = {
-
-          conversationId,
-
-          file:
-            uploaded?.file ||
-            uploaded,
-
-          type:
-            'voice',
-
-          viewOnce
-
-        };
-
-
-        if (
-          app.socket &&
-          app.socket.connected
-        ) {
-
-          app.socket.emit(
-            'chat:voice',
-            payload
-          );
-
+        if (uploaded?.message) {
+          // Utiliza la URL y el ID confirmados por el servidor; evita una nota
+          // temporal que desaparezca o quede duplicada al llegar el evento real.
+          isDuplicateIncomingMessage(uploaded.message);
+          renderIncomingMessage(uploaded.message);
         }
-
-
-        renderLocalVoiceMessage(
-          blob,
-          viewOnce
-        );
 
 
         notifyUser(
