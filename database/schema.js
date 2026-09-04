@@ -1370,6 +1370,12 @@ async function initializeDatabase() {
     `);
 
     await database.query(`
+      ALTER TABLE emergency_settings
+      ADD COLUMN IF NOT EXISTS consent_version VARCHAR(30),
+      ADD COLUMN IF NOT EXISTS limitations_accepted_at TIMESTAMPTZ;
+    `);
+
+    await database.query(`
       CREATE INDEX IF NOT EXISTS emergency_alerts_guardian_status_idx
       ON emergency_alerts(guardian_user_id, status, expires_at);
     `);
@@ -1414,6 +1420,12 @@ async function initializeDatabase() {
     await database.query(`
       CREATE INDEX IF NOT EXISTS protected_routes_monitor_idx
       ON protected_routes(status, expected_at, last_location_at);
+    `);
+
+    await database.query(`
+      ALTER TABLE protected_routes
+      ADD COLUMN IF NOT EXISTS consent_version VARCHAR(30),
+      ADD COLUMN IF NOT EXISTS limitations_accepted_at TIMESTAMPTZ;
     `);
 
     await database.query(`

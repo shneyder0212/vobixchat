@@ -104,6 +104,7 @@ const premiumHelpRate = new Map();
 const meetJoinRate = new Map();
 const emergencyTriggerRate = new Map();
 const learningTutorRate = new Map();
+const SAFETY_CONSENT_VERSION = '2026-09-04.1';
 
 
 // ======================================================
@@ -6899,7 +6900,8 @@ app.put('/api/emergency/settings', requireAuth, async (req, res) => {
   const phraseHash = vobixEmergency.validPhraseHash(req.body?.phraseHash);
   const enabled = req.body?.enabled === true;
   const consent = req.body?.consent === true;
-  if (!/^[0-9a-f-]{36}$/i.test(relationshipId) || !phraseHash || !consent) {
+  const limitationsAccepted = req.body?.limitationsAccepted === true;
+  if (!/^[0-9a-f-]{36}$/i.test(relationshipId) || !phraseHash || !consent || !limitationsAccepted) {
     return res.status(400).json({ ok:false, msg:'Configuración o consentimiento no válidos' });
   }
   try {
@@ -6910,11 +6912,12 @@ app.put('/api/emergency/settings', requireAuth, async (req, res) => {
     );
     if (!guardian.rows.length) return res.status(403).json({ ok:false, msg:'El familiar debe aceptar primero ser tu Guardián Vobix' });
     await database.query(
-      `INSERT INTO emergency_settings(user_id,relationship_id,phrase_hash,enabled,consented_at,updated_at)
-       VALUES($1,$2,$3,$4,NOW(),NOW())
+      `INSERT INTO emergency_settings(user_id,relationship_id,phrase_hash,enabled,consented_at,updated_at,consent_version,limitations_accepted_at)
+       VALUES($1,$2,$3,$4,NOW(),NOW(),$5,NOW())
        ON CONFLICT(user_id) DO UPDATE SET relationship_id=EXCLUDED.relationship_id,
-       phrase_hash=EXCLUDED.phrase_hash,enabled=EXCLUDED.enabled,consented_at=NOW(),updated_at=NOW()`,
-      [req.vobixUser.id, relationshipId, phraseHash, enabled]
+       phrase_hash=EXCLUDED.phrase_hash,enabled=EXCLUDED.enabled,consented_at=NOW(),updated_at=NOW(),
+       consent_version=EXCLUDED.consent_version,limitations_accepted_at=NOW()`,
+      [req.vobixUser.id, relationshipId, phraseHash, enabled, SAFETY_CONSENT_VERSION]
     );
     return res.json({ ok:true, settings:{ enabled, hasPhrase:true, relationshipId } });
   } catch (error) {
@@ -7039,7 +7042,8 @@ app.post('/api/protected-routes', requireAuth, async (req, res) => {
   const destinationLabel = vobixProtectedRoute.safeDestinationLabel(req.body?.destinationLabel);
   const relationshipIds = [...new Set(Array.isArray(req.body?.relationshipIds) ? req.body.relationshipIds : [])]
     .map(value => String(value || '').trim()).filter(value => /^[0-9a-f-]{36}$/i.test(value)).slice(0, 5);
-  if (!destination || !current || !expectedAt || !destinationLabel || !relationshipIds.length || req.body?.consent !== true) {
+  if (!destination || !current || !expectedAt || !destinationLabel || !relationshipIds.length ||
+      req.body?.consent !== true || req.body?.limitationsAccepted !== true) {
     return res.status(400).json({ ok:false, msg:'Destino, ubicación, familiares o consentimiento no válidos' });
   }
 
@@ -7058,11 +7062,11 @@ app.post('/api/protected-routes', requireAuth, async (req, res) => {
     const route = await client.query(
       `INSERT INTO protected_routes
        (user_id,destination_label,destination_latitude,destination_longitude,current_latitude,current_longitude,
-        accuracy_m,expected_at,consented_at,last_location_at,last_movement_at)
-       VALUES($1,$2,$3,$4,$5,$6,$7,$8,NOW(),NOW(),NOW())
+        accuracy_m,expected_at,consented_at,last_location_at,last_movement_at,consent_version,limitations_accepted_at)
+       VALUES($1,$2,$3,$4,$5,$6,$7,$8,NOW(),NOW(),NOW(),$9,NOW())
        RETURNING id,status,expected_at,created_at`,
       [req.vobixUser.id, destinationLabel, destination.latitude, destination.longitude,
-       current.latitude, current.longitude, current.accuracy, expectedAt]
+       current.latitude, current.longitude, current.accuracy, expectedAt, SAFETY_CONSENT_VERSION]
     );
     for (const guardian of guardians.rows) {
       await client.query(

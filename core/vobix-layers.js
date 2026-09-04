@@ -85,6 +85,7 @@ const VOBIX_LAYERS = Object.freeze([
   ,{ id:'101', name:'Vobix Red de Rescate', status:'requiere_apk_nativa', scope:'Cola SOS con confirmación de entrega; Bluetooth, Wi‑Fi Direct y satélite requieren APK, permisos y hardware compatibles.' }
   ,{ id:'102', name:'Vobix Sello Original', status:'en_validacion', scope:'Huella SHA-256 vinculada al mensaje para comprobar si una foto, vídeo, audio o documento cambió después de entrar en Vobix.' }
   ,{ id:'103', name:'Vobix Ruta Protegida', status:'en_validacion', scope:'Trayecto temporal compartido con familiares autorizados, aviso de parada prolongada o retraso y confirmación de llegada.' }
+  ,{ id:'104', name:'Vobix Consentimiento de Seguridad', status:'en_validacion', scope:'Funciones de emergencia desactivadas por defecto, aceptación informada versionada y revocable; no sustituye al 112 ni elimina responsabilidades legales.' }
 ]);
 
 function getVobixLayers() {

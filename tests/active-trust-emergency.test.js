@@ -58,7 +58,7 @@ test('la detección solo se arma durante una llamada y con permiso local', () =>
 
 test('la configuración exige consentimiento explícito y familiar elegido', () => {
   assert.match(page, /id="consent"/);
-  assert.match(page, /Debes confirmar la autorización previa/);
+  assert.match(page, /Debes confirmar la autorización y comprender los límites del servicio/);
   assert.match(page, /role==='protected'&&item\.status==='active'/);
   assert.match(server, /req\.body\?\.consent === true/);
 });
