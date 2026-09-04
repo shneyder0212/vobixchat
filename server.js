@@ -6486,24 +6486,47 @@ app.get('/api/vobix/layers', requireAuth, (req, res) => {
   res.json({ ok:true, layers:getVobixLayers() });
 });
 
+async function getUserPremiumSubscription(userId) {
+  await database.query(
+    `INSERT INTO premium_subscriptions (user_id, plan, status)
+     VALUES ($1, 'free', 'active')
+     ON CONFLICT (user_id) DO NOTHING`,
+    [userId]
+  );
+
+  const result = await database.query(
+    `SELECT plan, status, current_period_end
+     FROM premium_subscriptions
+     WHERE user_id = $1
+     LIMIT 1`,
+    [userId]
+  );
+  const row = result.rows[0] || { plan: 'free', status: 'active' };
+  const plan = row.status === 'active' || row.status === 'trialing' ? row.plan : 'free';
+  return {
+    plan,
+    status: row.status,
+    currentPeriodEnd: row.current_period_end || null,
+    billingEnabled: false
+  };
+}
+
 // Capa 145 — contrato Premium autenticado. Los planes y permisos son reales,
 // pero los cobros permanecen desactivados hasta integrar una pasarela segura.
-app.get('/api/premium/catalog', requireAuth, (req, res) => {
+app.get('/api/premium/catalog', requireAuth, async (req, res) => {
   res.setHeader('Cache-Control', 'no-store');
-  return res.json({ ok: true, ...getPremiumCatalog('free') });
+  const subscription = await getUserPremiumSubscription(req.vobixUser.id);
+  return res.json({ ok: true, ...getPremiumCatalog(subscription.plan) });
 });
 
-app.get('/api/premium/me', requireAuth, (req, res) => {
+app.get('/api/premium/me', requireAuth, async (req, res) => {
   res.setHeader('Cache-Control', 'no-store');
+  const subscription = await getUserPremiumSubscription(req.vobixUser.id);
   return res.json({
     ok: true,
     userId: req.vobixUser.id,
-    subscription: {
-      plan: 'free',
-      status: 'active',
-      billingEnabled: false
-    },
-    ...getPremiumCatalog('free')
+    subscription,
+    ...getPremiumCatalog(subscription.plan)
   });
 });
 

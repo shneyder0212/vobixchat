@@ -1382,6 +1382,32 @@ async function initializeDatabase() {
 
 
     // ====================================================
+    // VOBIX PREMIUM — SUSCRIPCIONES
+    // ====================================================
+
+    await database.query(`
+      CREATE TABLE IF NOT EXISTS premium_subscriptions (
+        user_id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+        plan VARCHAR(20) NOT NULL DEFAULT 'free',
+        status VARCHAR(20) NOT NULL DEFAULT 'active',
+        provider VARCHAR(40),
+        provider_customer_id VARCHAR(200),
+        provider_subscription_id VARCHAR(200),
+        current_period_end TIMESTAMPTZ,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        CHECK (plan IN ('free', 'premium', 'business')),
+        CHECK (status IN ('active', 'trialing', 'past_due', 'cancelled', 'expired'))
+      );
+    `);
+
+    await database.query(`
+      CREATE UNIQUE INDEX IF NOT EXISTS premium_provider_subscription_unique
+      ON premium_subscriptions(provider, provider_subscription_id)
+      WHERE provider IS NOT NULL AND provider_subscription_id IS NOT NULL;
+    `);
+
+    // ====================================================
     // FINAL
     // ====================================================
 
@@ -1415,6 +1441,10 @@ async function initializeDatabase() {
 
     console.log(
       'VOBIXCHAT DATABASE: push_subscriptions verificada'
+    );
+
+    console.log(
+      'VOBIXCHAT DATABASE: premium_subscriptions verificada'
     );
 
     console.log(
