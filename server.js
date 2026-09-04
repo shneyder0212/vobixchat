@@ -76,6 +76,10 @@ const {
   getVobixLayers
 } = require('./core/vobix-layers');
 
+const {
+  getPremiumCatalog
+} = require('./core/vobix-premium');
+
 const r2Storage = require('./core/r2-storage');
 
 
@@ -6480,6 +6484,27 @@ app.post('/api/guardian/reviews/:reviewId/decision', requireAuth, async (req, re
 
 app.get('/api/vobix/layers', requireAuth, (req, res) => {
   res.json({ ok:true, layers:getVobixLayers() });
+});
+
+// Capa 145 — contrato Premium autenticado. Los planes y permisos son reales,
+// pero los cobros permanecen desactivados hasta integrar una pasarela segura.
+app.get('/api/premium/catalog', requireAuth, (req, res) => {
+  res.setHeader('Cache-Control', 'no-store');
+  return res.json({ ok: true, ...getPremiumCatalog('free') });
+});
+
+app.get('/api/premium/me', requireAuth, (req, res) => {
+  res.setHeader('Cache-Control', 'no-store');
+  return res.json({
+    ok: true,
+    userId: req.vobixUser.id,
+    subscription: {
+      plan: 'free',
+      status: 'active',
+      billingEnabled: false
+    },
+    ...getPremiumCatalog('free')
+  });
 });
 
 app.get('/api/rtc-config', requireAuth, (req, res) => {
