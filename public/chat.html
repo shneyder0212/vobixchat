@@ -4404,6 +4404,8 @@
 
       recentIncomingMessages: new Map(),
 
+      messagesLoadSequence: 0,
+
       replyToMessage: null,
 
       editingMessage: null,
@@ -13940,6 +13942,13 @@
       }
 
 
+      const loadSequence = ++app.messagesLoadSequence;
+
+      const loadIsCurrent = () =>
+        loadSequence === app.messagesLoadSequence &&
+        String(conversationId(app.conversation) || '') === String(id);
+
+
       let data =
         null;
 
@@ -13957,6 +13966,8 @@
 
 
       } catch (firstError) {
+
+        if (!loadIsCurrent()) return;
 
         console.warn(
           '[VOBIXCHAT MESSAGE ROUTE 1]',
@@ -13976,6 +13987,8 @@
 
 
         } catch (secondError) {
+
+          if (!loadIsCurrent()) return;
 
           console.error(
             '[VOBIXCHAT LOAD MESSAGES]',
@@ -14005,6 +14018,9 @@
         }
 
       }
+
+
+      if (!loadIsCurrent()) return;
 
 
       const messages =
