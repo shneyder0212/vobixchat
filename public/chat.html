@@ -4189,6 +4189,11 @@
       autoplay
       playsinline
     ></video>
+    <audio
+      id="remoteAudio"
+      autoplay
+      playsinline
+    ></audio>
 
     <div id="remoteVideoWaiting" class="remoteVideoWaiting">
       <div>
@@ -4355,6 +4360,8 @@
       peerConnection: null,
 
       callType: null,
+
+      localMediaType: null,
 
       callId: null,
 
@@ -5058,6 +5065,8 @@
 
       remoteVideo:
         $('remoteVideo'),
+      remoteAudio:
+        $('remoteAudio'),
 
       remoteVideoWaiting:
         $('remoteVideoWaiting'),
@@ -15477,6 +15486,51 @@
     }
 
 
+    function isCurrentCallMedia(callId, connection) {
+      return Boolean(
+        callId &&
+        String(app.callId || '') === String(callId) &&
+        (!connection || app.peerConnection === connection) &&
+        !hasEndedCallId(callId)
+      );
+    }
+
+
+    function attachLocalCallStream(stream, type) {
+      if (!elements.localVideo || !stream || type !== 'video') return;
+      elements.localVideo.autoplay = true;
+      elements.localVideo.playsInline = true;
+      elements.localVideo.muted = true;
+      elements.localVideo.srcObject = stream;
+      elements.localVideo.style.display = 'block';
+      elements.localVideo.onloadedmetadata = () => {
+        ensureLocalVideoPlayback();
+      };
+      ensureLocalVideoPlayback();
+    }
+
+
+    function attachRemoteCallStream(stream, callId) {
+      const mediaElement = app.callType === 'audio' ? elements.remoteAudio : elements.remoteVideo;
+      if (!stream || !isCurrentCallMedia(callId, app.peerConnection) || !mediaElement) return false;
+
+      app.remoteStream = stream;
+      mediaElement.autoplay = true;
+      mediaElement.playsInline = true;
+      mediaElement.muted = false;
+      mediaElement.volume = 1;
+      mediaElement.srcObject = stream;
+      mediaElement.onloadedmetadata = () => {
+        if (!isCurrentCallMedia(callId, app.peerConnection)) return;
+        ensureRemoteAudioPlayback();
+        if (app.callType === 'video') scheduleRemoteVideoPlaybackCheck();
+      };
+      ensureRemoteAudioPlayback();
+      if (app.callType === 'video') scheduleRemoteVideoPlaybackCheck();
+      return true;
+    }
+
+
     /* =====================================================
        CREAR PEER CONNECTION
        ===================================================== */
@@ -15515,6 +15569,8 @@
       app.peerConnection =
         pc;
 
+      const connectionCallId = String(app.callId || '');
+
 
       /* ===================================================
          ENVIAR ICE CANDIDATE
@@ -15526,7 +15582,8 @@
           if (
             !event.candidate ||
             !app.socket ||
-            !app.socket.connected
+            !app.socket.connected ||
+            !isCurrentCallMedia(connectionCallId, pc)
           ) {
 
             return;
@@ -15562,6 +15619,8 @@
       pc.ontrack =
         event => {
 
+          if (!isCurrentCallMedia(connectionCallId, pc)) return;
+
           if (
             !elements.remoteVideo
           ) {
@@ -15592,15 +15651,7 @@
 
           if (stream) {
 
-            elements
-              .remoteVideo
-              .srcObject =
-              stream;
-
-            elements.remoteVideo.muted = false;
-            elements.remoteVideo.volume = 1;
-
-            ensureRemoteAudioPlayback();
+            attachRemoteCallStream(stream, connectionCallId);
 
             if (event.track?.kind === 'video') {
               if (app.remoteVideoWaitTimer) {
@@ -15738,9 +15789,12 @@
          AGREGAR TRACKS LOCALES
          =================================================== */
 
-      if (
-        app.localStream
-      ) {
+      if (app.localStream && app.localMediaType === type) {
+        attachLocalCallStream(app.localStream, type);
+        return app.localStream;
+      }
+
+      if (app.localStream) {
 
         app
           .localStream
@@ -15808,6 +15862,8 @@
         app.localStream =
           null;
 
+        app.localMediaType = null;
+
       }
 
 
@@ -15842,18 +15898,21 @@
 
       try {
         app.localStream = await navigator.mediaDevices.getUserMedia(enhancedConstraints);
+        app.localMediaType = type;
       } catch (error) {
         if (error?.name !== 'OverconstrainedError') throw error;
         app.localStream = await navigator.mediaDevices.getUserMedia({
           audio: true,
           video: type === 'video'
         });
+        app.localMediaType = type;
       }
 
       const microphoneTrack = app.localStream.getAudioTracks()[0];
       if (!microphoneTrack) {
         stopMediaStream(app.localStream);
         app.localStream = null;
+        app.localMediaType = null;
         const microphoneError = new Error('No se recibió una pista de micrófono');
         microphoneError.name = 'NotFoundError';
         throw microphoneError;
@@ -15868,6 +15927,7 @@
         if (!cameraTrack) {
           stopMediaStream(app.localStream);
           app.localStream = null;
+          app.localMediaType = null;
           const cameraError = new Error('No se recibió una pista de cámara');
           cameraError.name = 'NotFoundError';
           throw cameraError;
@@ -15881,6 +15941,8 @@
       if (
         elements.localVideo
       ) {
+
+        attachLocalCallStream(app.localStream, type);
 
         elements
           .localVideo
@@ -16367,6 +16429,8 @@
         elements.remoteVideo
       ) {
 
+        elements.remoteVideo.onloadedmetadata = null;
+
         elements
           .remoteVideo
           .srcObject =
@@ -16374,10 +16438,17 @@
 
       }
 
+      if (elements.remoteAudio) {
+        elements.remoteAudio.onloadedmetadata = null;
+        elements.remoteAudio.srcObject = null;
+      }
+
 
       if (
         elements.localVideo
       ) {
+
+        elements.localVideo.onloadedmetadata = null;
 
         elements
           .localVideo
@@ -17167,15 +17238,16 @@
 
     if (elements.toggleRemoteAudioButton) {
       elements.toggleRemoteAudioButton.addEventListener('click', async () => {
-        if (!elements.remoteVideo) return;
+        const mediaElement = app.callType === 'audio' ? elements.remoteAudio : elements.remoteVideo;
+        if (!mediaElement) return;
 
         if (app.remotePlaybackPending) {
           await ensureRemoteAudioPlayback(true);
           return;
         }
 
-        const shouldMute = !elements.remoteVideo.muted;
-        elements.remoteVideo.muted = shouldMute;
+        const shouldMute = !mediaElement.muted;
+        mediaElement.muted = shouldMute;
         elements.toggleRemoteAudioButton.textContent = shouldMute ? '🔇' : '🔊';
         elements.toggleRemoteAudioButton.setAttribute(
           'aria-label',
@@ -17183,7 +17255,7 @@
         );
 
         if (!shouldMute) {
-          elements.remoteVideo.volume = 1;
+          mediaElement.volume = 1;
           await ensureRemoteAudioPlayback(true);
         } else {
           app.remotePlaybackPending = false;
@@ -17193,11 +17265,12 @@
     }
 
     async function ensureRemoteAudioPlayback(showSuccess = false) {
-      if (!elements.remoteVideo?.srcObject) return false;
-      elements.remoteVideo.muted = false;
-      elements.remoteVideo.volume = 1;
+      const mediaElement = app.callType === 'audio' ? elements.remoteAudio : elements.remoteVideo;
+      if (!mediaElement?.srcObject) return false;
+      mediaElement.muted = false;
+      mediaElement.volume = 1;
       try {
-        await elements.remoteVideo.play();
+        await mediaElement.play();
         app.remotePlaybackPending = false;
         if (elements.toggleRemoteAudioButton) {
           elements.toggleRemoteAudioButton.textContent = '🔊';
@@ -17209,6 +17282,7 @@
         console.warn('[VOBIXCHAT REMOTE PLAYBACK]', error);
         const firstFailure = !app.remotePlaybackPending;
         app.remotePlaybackPending = true;
+        if (elements.callStatus) elements.callStatus.textContent = 'Audio recibido en espera: toca para activar';
         if (elements.toggleRemoteAudioButton) {
           elements.toggleRemoteAudioButton.textContent = '🔈';
           elements.toggleRemoteAudioButton.setAttribute('aria-label', 'Tocar para activar audio recibido');
@@ -17231,6 +17305,7 @@
         console.warn('[VOBIXCHAT LOCAL VIDEO PLAYBACK]', error);
         const firstFailure = !app.localPlaybackPending;
         app.localPlaybackPending = true;
+        if (elements.callStatus) elements.callStatus.textContent = 'Vídeo local en espera: toca tu imagen para activar';
         if (firstFailure) notifyUser('Toca tu imagen para activar la cámara');
         return false;
       }
@@ -17708,6 +17783,9 @@
 
 
       app.callType =
+        null;
+
+      app.localMediaType =
         null;
 
       app.pendingIceCandidates = [];

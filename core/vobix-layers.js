@@ -108,6 +108,7 @@ const VOBIX_LAYERS = Object.freeze([
   ,{ id:'128', name:'Canal ICE Autorizado y Acotado', status:'en_validacion', scope:'Solo participantes o invitados de la llamada pueden enviar candidatos ICE y cada candidato tiene un tamaño máximo antes de almacenarse o retransmitirse.' }
   ,{ id:'129', name:'Un Solo Dispositivo Atiende', status:'en_validacion', scope:'El primer dispositivo de una cuenta que contesta una llamada queda registrado atómicamente; respuestas duplicadas, simultáneas o de reconexiones se rechazan y los demás dispositivos limpian sus señales.' }
   ,{ id:'130', name:'Finalización Sincronizada de Llamadas', status:'en_validacion', scope:'Cualquier rechazo, cancelación, cuelgue, desconexión o expiración finaliza la llamada en todos los dispositivos; detiene tonos, temporizadores y media, cierra WebRTC y rechaza señalización tardía.' }
+  ,{ id:'131', name:'Audio y Vídeo Activos al Contestar', status:'en_validacion', scope:'Al contestar, solicita la media necesaria, conecta audio o vídeo remoto al elemento adecuado, reproduce de forma compatible con móvil y libera recursos si falla o termina la llamada.' }
 ]);
 
 function getVobixLayers() {
