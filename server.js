@@ -4818,9 +4818,24 @@ io.on(
           return;
         }
 
+        // Capa 167 — una sola respuesta gana en todos los dispositivos del
+        // destinatario. Los demás móviles/ordenadores deben dejar de timbrar.
+        if (call.answeredBy && String(call.answeredBy) !== currentUserKey) {
+          if (typeof callback === 'function') callback({ ok:false, msg:'La llamada ya fue atendida' });
+          return;
+        }
+        call.answeredBy = currentUserKey;
+        call.acceptedAt = call.acceptedAt || Date.now();
+
         call.participants.add(currentUserKey);
         call.invited.delete(currentUserKey);
         await socket.join(callRoom(callId));
+
+        io.to(userRoom(userId)).emit('call:accepted-device', {
+          callId,
+          conversationId:call.conversationId,
+          answeredSocketId:socket.id
+        });
 
         const targetUserId = String(call.callerId) === String(userId)
           ? Array.from(call.participants).find(id => String(id) !== String(userId))

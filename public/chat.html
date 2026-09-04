@@ -16730,6 +16730,19 @@
 
     }
 
+    function handleCallAcceptedOnDevice(payload = {}) {
+      const acceptedCallId = String(payload.callId || payload.call_id || '');
+      const pendingCallId = String(app.pendingCallOffer?.callId || app.pendingCallOffer?.call_id || '');
+      if (!acceptedCallId || acceptedCallId !== pendingCallId) return;
+      if (payload.answeredSocketId && payload.answeredSocketId === app.socket?.id) return;
+      stopAllCallSignals();
+      clearCallTimeout();
+      hideIncomingCallPanel();
+      app.pendingCallOffer = null;
+      app.pendingIceCandidates = [];
+      notifyUser('Llamada atendida en otro dispositivo');
+    }
+
 
     /* =====================================================
        RECIBIR ICE
@@ -16885,6 +16898,11 @@
       app.socket.on(
         'call:answer',
         handleCallAnswer
+      );
+
+      app.socket.on(
+        'call:accepted-device',
+        handleCallAcceptedOnDevice
       );
 
 
