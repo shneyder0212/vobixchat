@@ -105,6 +105,7 @@ const VOBIX_LAYERS = Object.freeze([
   ,{ id:'121', name:'Reconstrucción Verificada de Archivos', status:'en_validacion', scope:'Antes de unir cada fragmento, el servidor recalcula su SHA-256 y detiene la subida si los bytes ya no coinciden con la huella aceptada.' }
   ,{ id:'122', name:'Cierre Atómico de Sesión de Subida', status:'en_validacion', scope:'Desde que comienza el ensamblado, la sesión rechaza nuevos fragmentos y cancelaciones para impedir carreras, borrados intermedios o resultados incompletos.' }
   ,{ id:'127', name:'Identidad de Llamada Vinculada', status:'en_validacion', scope:'Cada llamada exige un identificador seguro ligado al creador, conversación y tipo; reutilizarlo para otra llamada se rechaza antes de emitir ofertas.' }
+  ,{ id:'128', name:'Canal ICE Autorizado y Acotado', status:'en_validacion', scope:'Solo participantes o invitados de la llamada pueden enviar candidatos ICE y cada candidato tiene un tamaño máximo antes de almacenarse o retransmitirse.' }
 ]);
 
 function getVobixLayers() {

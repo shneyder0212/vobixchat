@@ -5411,11 +5411,20 @@ io.on(
 
     socket.on('call:ice', async (payload = {}, callback) => {
       try {
-        const callId = String(payload.callId || '').trim();
+        const callId = normalizeCallId(payload.callId);
         const candidate = payload.candidate || null;
-        const call = activeCalls.get(callId);
+        const call = callId ? activeCalls.get(callId) : null;
         if (!call || !candidate) {
           if (typeof callback === 'function') callback({ ok:false });
+          return;
+        }
+
+        const currentUserKey = String(userId);
+        const allowed = call.participants.has(currentUserKey) || call.invited.has(currentUserKey);
+        let candidateSize = Infinity;
+        try { candidateSize = Buffer.byteLength(JSON.stringify(candidate), 'utf8'); } catch (_) {}
+        if (!allowed || candidateSize > 8192) {
+          if (typeof callback === 'function') callback({ ok:false, code:allowed ? 'ice_candidate_too_large' : 'call_access_denied' });
           return;
         }
 
