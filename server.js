@@ -43,6 +43,7 @@ const vobixSignSupport = require('./core/vobix-sign-support');
 const vobixProtectedRoute = require('./core/vobix-protected-route');
 const vobixFamilyRecovery = require('./core/vobix-family-recovery');
 const { matchesPersistedMessage } = require('./core/message-intent');
+const { normalizeCallId, matchesCallIntent } = require('./core/call-intent');
 
 const packageMetadata =
   require('./package.json');
@@ -5260,11 +5261,11 @@ io.on(
     socket.on('call:offer', async (payload = {}, callback) => {
       try {
         const conversationId = String(payload.conversationId || payload.conversation_id || '').trim();
-        const callId = String(payload.callId || crypto.randomBytes(18).toString('hex')).trim();
+        const callId = normalizeCallId(payload.callId || crypto.randomBytes(18).toString('hex'));
         const type = String(payload.type || 'audio').toLowerCase() === 'video' ? 'video' : 'audio';
         const offer = payload.offer || null;
 
-        if (!conversationId || !offer) {
+        if (!conversationId || !callId || !offer) {
           if (typeof callback === 'function') callback({ ok:false, msg:'Oferta de llamada incompleta' });
           return;
         }
@@ -5290,7 +5291,13 @@ io.on(
           return;
         }
 
-        const call = activeCalls.get(callId) || {
+        const existingCall = activeCalls.get(callId);
+        if (existingCall && !matchesCallIntent(existingCall, { callerId:userId, conversationId, type })) {
+          if (typeof callback === 'function') callback({ ok:false, code:'call_id_conflict', msg:'El identificador pertenece a otra llamada' });
+          return;
+        }
+
+        const call = existingCall || {
           id: callId,
           callId,
           conversationId,

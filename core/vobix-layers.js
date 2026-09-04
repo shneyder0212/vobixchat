@@ -104,6 +104,7 @@ const VOBIX_LAYERS = Object.freeze([
   ,{ id:'120', name:'Finalización Única de Subidas', status:'en_validacion', scope:'Una sesión reanudable solo puede entrar una vez en finalización; solicitudes simultáneas reciben un conflicto controlado y no crean mensajes duplicados.' }
   ,{ id:'121', name:'Reconstrucción Verificada de Archivos', status:'en_validacion', scope:'Antes de unir cada fragmento, el servidor recalcula su SHA-256 y detiene la subida si los bytes ya no coinciden con la huella aceptada.' }
   ,{ id:'122', name:'Cierre Atómico de Sesión de Subida', status:'en_validacion', scope:'Desde que comienza el ensamblado, la sesión rechaza nuevos fragmentos y cancelaciones para impedir carreras, borrados intermedios o resultados incompletos.' }
+  ,{ id:'127', name:'Identidad de Llamada Vinculada', status:'en_validacion', scope:'Cada llamada exige un identificador seguro ligado al creador, conversación y tipo; reutilizarlo para otra llamada se rechaza antes de emitir ofertas.' }
 ]);
 
 function getVobixLayers() {
