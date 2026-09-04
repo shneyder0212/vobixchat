@@ -4400,6 +4400,8 @@
 
       receiptSyncing: false,
 
+      receiptRetryTimer: null,
+
       replyToMessage: null,
 
       editingMessage: null,
@@ -11299,6 +11301,21 @@
       }
     }
 
+    function scheduleReceiptRetry() {
+      if (app.receiptRetryTimer) return;
+      app.receiptRetryTimer = setTimeout(() => {
+        app.receiptRetryTimer = null;
+        syncConversationReceipts(conversationId(app.conversation));
+      }, 5000);
+    }
+
+    function emitMessageReceipt(type, payload) {
+      if (!app.socket?.connected || !['delivered', 'read'].includes(type)) return;
+      app.socket.timeout(5000).emit(`chat:${type}`, payload, (error, response) => {
+        if (error || !response?.ok) scheduleReceiptRetry();
+      });
+    }
+
     async function syncConversationReceipts(conversationIdValue) {
       const id = String(conversationIdValue || '');
       if (!id || !app.socket?.connected || app.receiptSyncing) return;
@@ -11312,9 +11329,9 @@
           if (messageIsMine(message)) return;
           const messageId = message.id || message._id || message.messageId || message.message_id;
           if (!messageId) return;
-          app.socket.emit('chat:delivered', { conversationId: id, messageId });
+          emitMessageReceipt('delivered', { conversationId: id, messageId });
           if (app.readReceipts && !document.hidden) {
-            app.socket.emit('chat:read', { conversationId: id, messageId });
+            emitMessageReceipt('read', { conversationId: id, messageId });
           }
         });
       } catch (error) {
@@ -13998,13 +14015,13 @@
 
           const receivedMessageId = message.id || message._id || message.messageId || message.message_id;
           if (!messageIsMine(message) && receivedMessageId && app.socket?.connected) {
-            app.socket.emit('chat:delivered', {
+            emitMessageReceipt('delivered', {
               conversationId: id,
               messageId: receivedMessageId
             });
           }
           if (app.readReceipts && !messageIsMine(message) && receivedMessageId && app.socket?.connected) {
-            app.socket.emit('chat:read', {
+            emitMessageReceipt('read', {
               conversationId: id,
               messageId: receivedMessageId
             });
@@ -14326,13 +14343,13 @@
 
           const receivedMessageId = message.id || message._id || message.messageId || message.message_id;
           if (receivedMessageId && app.socket?.connected) {
-            app.socket.emit('chat:delivered', {
+            emitMessageReceipt('delivered', {
               conversationId: incomingId || activeId,
               messageId: receivedMessageId
             });
           }
           if (app.readReceipts && receivedMessageId && app.socket?.connected) {
-            app.socket.emit('chat:read', {
+            emitMessageReceipt('read', {
               conversationId: incomingId || activeId,
               messageId: receivedMessageId
             });

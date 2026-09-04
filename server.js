@@ -3180,10 +3180,10 @@ io.on(
       }
       receiptRate.count += 1;
 
-      if (receiptRate.count > 240) return;
-      if (!receiptUuidPattern.test(conversationId) || !receiptUuidPattern.test(messageId)) return;
-      if (!['delivered', 'read'].includes(receiptType)) return;
-      if (!(await socketCanAccessConversation(conversationId, userId))) return;
+      if (receiptRate.count > 240) return false;
+      if (!receiptUuidPattern.test(conversationId) || !receiptUuidPattern.test(messageId)) return false;
+      if (!['delivered', 'read'].includes(receiptType)) return false;
+      if (!(await socketCanAccessConversation(conversationId, userId))) return false;
 
       const messageResult = await database.query(
         `SELECT sender_user_id
@@ -3193,7 +3193,7 @@ io.on(
         [messageId, conversationId, userId]
       );
       const senderUserId = messageResult.rows[0]?.sender_user_id;
-      if (!senderUserId) return;
+      if (!senderUserId) return false;
 
       const isRead = receiptType === 'read';
       const receiptResult = await database.query(
@@ -3217,18 +3217,27 @@ io.on(
 
       io.to(`user:${String(senderUserId)}`).emit(`chat:${receiptType}`, eventPayload);
       io.to(`user:${String(senderUserId)}`).emit(`message:${receiptType}`, eventPayload);
+      return true;
     }
 
-    socket.on('chat:delivered', payload => {
-      saveMessageReceipt(payload, 'delivered').catch(error =>
-        console.error('VOBIXCHAT DELIVERED RECEIPT ERROR:', error.message)
-      );
+    socket.on('chat:delivered', async (payload, callback) => {
+      try {
+        const saved = await saveMessageReceipt(payload, 'delivered');
+        if (typeof callback === 'function') callback({ ok:true, saved });
+      } catch (error) {
+        console.error('VOBIXCHAT DELIVERED RECEIPT ERROR:', error.message);
+        if (typeof callback === 'function') callback({ ok:false });
+      }
     });
 
-    socket.on('chat:read', payload => {
-      saveMessageReceipt(payload, 'read').catch(error =>
-        console.error('VOBIXCHAT READ RECEIPT ERROR:', error.message)
-      );
+    socket.on('chat:read', async (payload, callback) => {
+      try {
+        const saved = await saveMessageReceipt(payload, 'read');
+        if (typeof callback === 'function') callback({ ok:true, saved });
+      } catch (error) {
+        console.error('VOBIXCHAT READ RECEIPT ERROR:', error.message);
+        if (typeof callback === 'function') callback({ ok:false });
+      }
     });
 
     socket.on(

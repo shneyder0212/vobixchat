@@ -24,8 +24,8 @@ test('recibos se guardan de forma idempotente y solo para mensajes ajenos', () =
 });
 
 test('cliente confirma entrega y conserva lectura opcional', () => {
-  assert.match(html, /socket\.emit\(['"]chat:delivered['"]/);
-  assert.match(html, /socket\.emit\(['"]chat:read['"]/);
+  assert.match(html, /emitMessageReceipt\(['"]delivered['"]/);
+  assert.match(html, /emitMessageReceipt\(['"]read['"]/);
   assert.match(routes, /deliveredAt:\s*row\.delivered_at/);
   assert.match(routes, /readAt:\s*row\.read_at/);
 });
@@ -55,4 +55,17 @@ test('recibos manipulados o excesivos se descartan antes de consultar', () => {
   assert.match(server, /now - receiptRate\.startedAt >= 60000/);
   assert.match(server, /!\['delivered', 'read'\]\.includes\(receiptType\)/);
   assert.match(server, /!receiptUuidPattern\.test\(conversationId\)/);
+});
+
+test('servidor confirma recibos mediante acuse sin exponer errores internos', () => {
+  assert.match(server, /socket\.on\(['"]chat:delivered['"], async \(payload, callback\)/);
+  assert.match(server, /callback\(\{ ok:true, saved \}\)/);
+  assert.match(server, /callback\(\{ ok:false \}\)/);
+});
+
+test('cliente reintenta silenciosamente si falta el acuse del servidor', () => {
+  assert.match(html, /function emitMessageReceipt/);
+  assert.match(html, /socket\.timeout\(5000\)\.emit/);
+  assert.match(html, /function scheduleReceiptRetry/);
+  assert.match(html, /syncConversationReceipts\(conversationId\(app\.conversation\)\)/);
 });
