@@ -3088,6 +3088,21 @@ async function sendMessageHandler(
   }
 
 
+  if (!clientMessageId) {
+
+    return res
+      .status(400)
+      .json({
+        ok: false,
+        code:
+          'client_message_id_required',
+        msg:
+          'El mensaje necesita un identificador seguro'
+      });
+
+  }
+
+
   try {
 
     /* ==================================================

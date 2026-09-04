@@ -97,6 +97,7 @@ const VOBIX_LAYERS = Object.freeze([
   ,{ id:'113', name:'Mensajería en Tiempo Real Idempotente', status:'en_validacion', scope:'Cada envío Socket exige un identificador seguro; los reintentos recuperan el mensaje confirmado sin guardarlo, emitirlo ni notificarlo dos veces.' }
   ,{ id:'114', name:'Reintentos sin Alterar Historial', status:'en_validacion', scope:'Un reintento ya confirmado no cambia la actividad de la conversación ni la reordena artificialmente en la bandeja.' }
   ,{ id:'115', name:'Identidad de Mensaje Vinculada', status:'en_validacion', scope:'Un identificador de envío queda ligado a su conversación, tipo y contenido originales; reutilizarlo con otra intención se rechaza.' }
+  ,{ id:'116', name:'Confirmación Obligatoria de Envío', status:'en_validacion', scope:'Todo mensaje nuevo por HTTP o Socket exige un identificador de cliente válido para que la deduplicación nunca quede desactivada.' }
 ]);
 
 function getVobixLayers() {
