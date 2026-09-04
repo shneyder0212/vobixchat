@@ -1430,15 +1430,25 @@ async function initializeDatabase() {
         access_code_hash TEXT NOT NULL UNIQUE,
         waiting_room BOOLEAN NOT NULL DEFAULT TRUE,
         allow_guests BOOLEAN NOT NULL DEFAULT FALSE,
-        max_participants INTEGER NOT NULL DEFAULT 25,
+        max_participants INTEGER NOT NULL DEFAULT 1000,
         scheduled_for TIMESTAMPTZ,
         expires_at TIMESTAMPTZ NOT NULL,
         status VARCHAR(20) NOT NULL DEFAULT 'scheduled',
         created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
         updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-        CHECK (max_participants BETWEEN 2 AND 100),
+        CHECK (max_participants BETWEEN 2 AND 1000),
         CHECK (status IN ('scheduled', 'active', 'ended', 'cancelled'))
       );
+    `);
+
+    await database.query(`
+      ALTER TABLE meet_rooms
+      ALTER COLUMN max_participants SET DEFAULT 1000;
+      ALTER TABLE meet_rooms
+      DROP CONSTRAINT IF EXISTS meet_rooms_max_participants_check;
+      ALTER TABLE meet_rooms
+      ADD CONSTRAINT meet_rooms_max_participants_check
+      CHECK (max_participants BETWEEN 2 AND 1000);
     `);
 
     await database.query(`

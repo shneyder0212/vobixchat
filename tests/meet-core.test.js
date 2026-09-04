@@ -15,11 +15,23 @@ test('Meet genera códigos temporales aleatorios y guarda únicamente su hash', 
   assert.match(schema, /access_code_hash TEXT NOT NULL UNIQUE/);
 });
 
+test('Meet normaliza códigos y rechaza formatos manipulados', () => {
+  assert.equal(meet.normalizeMeetingCode(' abcd_1234 '), 'ABCD_1234');
+  assert.equal(meet.normalizeMeetingCode('corto'), '');
+  assert.equal(meet.normalizeMeetingCode('CODIGO CON ESPACIO'), '');
+});
+
 test('Meet limita duración, participantes y longitud del título', () => {
-  const options = meet.normalizeMeetingOptions({title:' x '.repeat(200), maxParticipants:999, durationMinutes:999});
+  const options = meet.normalizeMeetingOptions({title:' x '.repeat(200), maxParticipants:9999, durationMinutes:999});
   assert.equal(options.title.length <= 120, true);
-  assert.equal(options.maxParticipants, 100);
+  assert.equal(options.maxParticipants, 1000);
   assert.equal(options.durationMinutes, 240);
+});
+
+test('Vobix Meet acepta un cupo de 1000 usuarios simultáneos por sala', () => {
+  assert.equal(meet.MAX_PARTICIPANTS, 1000);
+  assert.equal(meet.normalizeMeetingOptions({}).maxParticipants, 1000);
+  assert.match(schema, /CHECK \(max_participants BETWEEN 2 AND 1000\)/);
 });
 
 test('las salas tienen propietario, espera y participantes con roles controlados', () => {

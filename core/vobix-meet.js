@@ -3,7 +3,7 @@
 const crypto = require('crypto');
 
 const MAX_MEETING_MINUTES = 240;
-const MAX_PARTICIPANTS = 100;
+const MAX_PARTICIPANTS = 1000;
 
 function cleanMeetingTitle(value) {
   return String(value || '').trim().replace(/\s+/g, ' ').slice(0, 120);
@@ -11,6 +11,11 @@ function cleanMeetingTitle(value) {
 
 function createMeetingCode() {
   return crypto.randomBytes(6).toString('base64url').toUpperCase();
+}
+
+function normalizeMeetingCode(value) {
+  const code = String(value || '').trim().toUpperCase();
+  return /^[A-Z0-9_-]{8,16}$/.test(code) ? code : '';
 }
 
 function hashMeetingCode(code) {
@@ -22,7 +27,7 @@ function normalizeMeetingOptions(input = {}) {
     title: cleanMeetingTitle(input.title) || 'Reunión Vobix',
     waitingRoom: input.waitingRoom !== false,
     allowGuests: input.allowGuests === true,
-    maxParticipants: Math.max(2, Math.min(MAX_PARTICIPANTS, Number.parseInt(input.maxParticipants, 10) || 25)),
+    maxParticipants: Math.max(2, Math.min(MAX_PARTICIPANTS, Number.parseInt(input.maxParticipants, 10) || MAX_PARTICIPANTS)),
     durationMinutes: Math.max(15, Math.min(MAX_MEETING_MINUTES, Number.parseInt(input.durationMinutes, 10) || 60))
   };
 }
@@ -33,5 +38,6 @@ module.exports = {
   cleanMeetingTitle,
   createMeetingCode,
   hashMeetingCode,
+  normalizeMeetingCode,
   normalizeMeetingOptions
 };

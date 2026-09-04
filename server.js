@@ -87,12 +87,14 @@ const { containsSensitiveData, localPremiumHelp } = require('./core/premium-help
 const {
   createMeetingCode,
   hashMeetingCode,
+  normalizeMeetingCode,
   normalizeMeetingOptions
 } = require('./core/vobix-meet');
 
 const r2Storage = require('./core/r2-storage');
 
 const premiumHelpRate = new Map();
+const meetJoinRate = new Map();
 
 
 // ======================================================
@@ -6712,6 +6714,88 @@ app.post('/api/meet/rooms', requireAuth, requirePremiumCapability('meet'), async
     if (client) await client.query('ROLLBACK').catch(() => {});
     console.error('VOBIX MEET | No se pudo crear la sala:', error.message);
     return res.status(500).json({ ok:false, code:'meet_room_create_failed' });
+  } finally {
+    if (client) client.release();
+  }
+});
+
+// Ingreso seguro para hasta 1.000 usuarios simultáneos por sala. El bloqueo
+// transaccional evita que dos ingresos paralelos excedan el cupo disponible.
+app.post('/api/meet/join', requireAuth, async (req, res) => {
+  res.setHeader('Cache-Control', 'no-store');
+  const userId = String(req.vobixUser.id);
+  const now = Date.now();
+  const attempts = (meetJoinRate.get(userId) || []).filter(at => now - at < 60000);
+  if (attempts.length >= 12) {
+    return res.status(429).json({ ok:false, code:'meet_join_rate_limited' });
+  }
+  attempts.push(now);
+  meetJoinRate.set(userId, attempts);
+
+  const accessCode = normalizeMeetingCode(req.body?.accessCode);
+  if (!accessCode) return res.status(400).json({ ok:false, code:'invalid_meeting_code' });
+
+  let client;
+  try {
+    client = await database.pool.connect();
+    await client.query('BEGIN');
+    const roomResult = await client.query(
+      `SELECT id, owner_id, title, waiting_room, max_participants,
+              scheduled_for, expires_at, status
+       FROM meet_rooms
+       WHERE access_code_hash = $1
+         AND status IN ('scheduled', 'active')
+         AND expires_at > NOW()
+       LIMIT 1
+       FOR UPDATE`,
+      [hashMeetingCode(accessCode)]
+    );
+    const room = roomResult.rows[0];
+    if (!room) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ ok:false, code:'meeting_not_available' });
+    }
+
+    const existingResult = await client.query(
+      `SELECT role, state FROM meet_participants WHERE room_id=$1 AND user_id=$2 LIMIT 1`,
+      [room.id, userId]
+    );
+    const existing = existingResult.rows[0];
+    if (!existing || existing.state === 'left' || existing.state === 'removed') {
+      const countResult = await client.query(
+        `SELECT COUNT(*)::int AS total FROM meet_participants
+         WHERE room_id=$1 AND state IN ('waiting', 'admitted')`,
+        [room.id]
+      );
+      if (countResult.rows[0].total >= room.max_participants) {
+        await client.query('ROLLBACK');
+        return res.status(409).json({ ok:false, code:'meeting_full' });
+      }
+    }
+
+    const state = room.owner_id === userId || !room.waiting_room ? 'admitted' : 'waiting';
+    const participantResult = await client.query(
+      `INSERT INTO meet_participants (room_id, user_id, role, state, joined_at)
+       VALUES ($1, $2, 'participant', $3, NOW())
+       ON CONFLICT (room_id, user_id) DO UPDATE SET
+         state = CASE
+           WHEN meet_participants.role = 'owner' THEN 'admitted'
+           ELSE EXCLUDED.state
+         END,
+         joined_at = NOW(), left_at = NULL
+       RETURNING role, state, joined_at`,
+      [room.id, userId, state]
+    );
+    await client.query('COMMIT');
+    return res.json({
+      ok:true,
+      room:{ id:room.id, title:room.title, scheduledFor:room.scheduled_for, expiresAt:room.expires_at },
+      participant:participantResult.rows[0]
+    });
+  } catch (error) {
+    if (client) await client.query('ROLLBACK').catch(() => {});
+    console.error('VOBIX MEET | No se pudo ingresar a la sala:', error.message);
+    return res.status(500).json({ ok:false, code:'meet_join_failed' });
   } finally {
     if (client) client.release();
   }

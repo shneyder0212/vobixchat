@@ -30,3 +30,17 @@ test('la agenda Meet limita fechas inválidas o demasiado lejanas', () => {
   assert.match(server, /code:'invalid_schedule'/);
   assert.match(server, /code:'schedule_too_far'/);
 });
+
+test('el ingreso Meet limita intentos, bloquea la sala y respeta el cupo de 1000', () => {
+  assert.match(server, /app\.post\('\/api\/meet\/join', requireAuth/);
+  assert.match(server, /meetJoinRate/);
+  assert.match(server, /meet_join_rate_limited/);
+  assert.match(server, /FOR UPDATE/);
+  assert.match(server, /meeting_full/);
+});
+
+test('la sala de espera admite automáticamente solo cuando corresponde', () => {
+  assert.match(server, /room\.owner_id === userId \|\| !room\.waiting_room \? 'admitted' : 'waiting'/);
+  assert.match(server, /ON CONFLICT \(room_id, user_id\) DO UPDATE/);
+  assert.match(server, /WHEN meet_participants\.role = 'owner' THEN 'admitted'/);
+});
