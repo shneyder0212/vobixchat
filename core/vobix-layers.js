@@ -88,6 +88,7 @@ const VOBIX_LAYERS = Object.freeze([
   ,{ id:'104', name:'Vobix Consentimiento de Seguridad', status:'en_validacion', scope:'Funciones de emergencia desactivadas por defecto, aceptación informada versionada y revocable; no sustituye al 112 ni elimina responsabilidades legales.' }
   ,{ id:'105', name:'Vobix Atestación de Origen', status:'requiere_configuracion', scope:'Firma del servidor que vincula contenido capturado en Vobix con cuenta verificada, sesión reconocida, integridad y decisión de ubicación; requiere secreto exclusivo en Render.' }
   ,{ id:'106', name:'Vobix Protección Infantil', status:'en_validacion', scope:'Activación de doble aceptación con tutor verificado, contactos autorizados, bloqueo de desconocidos y horario; emergencias permanecen accesibles y no permite vigilancia secreta.' }
+  ,{ id:'107', name:'Vobix Lengua de Signos', status:'en_validacion', scope:'Subtítulos locales, preferencias LSE/ASL/BSL y apoyo visual básico; avatar y reconocimiento gestual siguen en investigación y no sustituyen a intérpretes profesionales.' }
 ]);
 
 function getVobixLayers() {

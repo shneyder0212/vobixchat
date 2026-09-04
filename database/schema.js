@@ -1451,6 +1451,20 @@ async function initializeDatabase() {
       );
     `);
 
+    // Capa 107 — solo preferencias; las transcripciones no se almacenan.
+    await database.query(`
+      CREATE TABLE IF NOT EXISTS sign_support_preferences (
+        user_id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+        sign_system VARCHAR(10) NOT NULL DEFAULT 'LSE',
+        spoken_locale VARCHAR(12) NOT NULL DEFAULT 'es-ES',
+        text_size SMALLINT NOT NULL DEFAULT 28,
+        high_contrast BOOLEAN NOT NULL DEFAULT FALSE,
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        CHECK(sign_system IN ('LSE','ASL','BSL')),
+        CHECK(text_size BETWEEN 18 AND 48)
+      );
+    `);
+
     // ====================================================
     // CAPA 103 — VOBIX RUTA PROTEGIDA
     // Ubicación temporal y solo para guardianes aceptados.

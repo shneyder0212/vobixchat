@@ -39,6 +39,7 @@ const vobixGuardian = require('./core/vobix-guardian');
 const vobixEmergency = require('./core/vobix-emergency');
 const vobixRescue = require('./core/vobix-rescue');
 const vobixChildProtection = require('./core/vobix-child-protection');
+const vobixSignSupport = require('./core/vobix-sign-support');
 const vobixProtectedRoute = require('./core/vobix-protected-route');
 
 const packageMetadata =
@@ -7196,6 +7197,22 @@ app.post('/api/child-protection/disable',requireAuth,async(req,res)=>{
     WHERE (child_user_id=$1 OR guardian_user_id=$1) AND status IN ('active','pending_guardian') RETURNING child_user_id`,[req.vobixUser.id]);
     return res.json({ok:true,disabled:result.rowCount});
   }catch(error){return res.status(500).json({ok:false,msg:'No se pudo desactivar'});}
+});
+
+// CAPA 107 — preferencias de accesibilidad. Nunca recibe ni almacena la transcripción.
+app.get('/api/sign-support/preferences',requireAuth,async(req,res)=>{
+  try{const result=await database.query(`SELECT sign_system,spoken_locale,text_size,high_contrast,updated_at FROM sign_support_preferences WHERE user_id=$1`,[req.vobixUser.id]);
+    return res.json({ok:true,preferences:result.rows[0]||vobixSignSupport.safePreferences()});
+  }catch(error){return res.status(500).json({ok:false,msg:'No se pudieron cargar las preferencias'});}
+});
+app.put('/api/sign-support/preferences',requireAuth,async(req,res)=>{
+  const preferences=vobixSignSupport.safePreferences(req.body);
+  try{const result=await database.query(`INSERT INTO sign_support_preferences(user_id,sign_system,spoken_locale,text_size,high_contrast)
+    VALUES($1,$2,$3,$4,$5) ON CONFLICT(user_id) DO UPDATE SET sign_system=EXCLUDED.sign_system,
+    spoken_locale=EXCLUDED.spoken_locale,text_size=EXCLUDED.text_size,high_contrast=EXCLUDED.high_contrast,updated_at=NOW()
+    RETURNING sign_system,spoken_locale,text_size,high_contrast,updated_at`,[req.vobixUser.id,preferences.signSystem,preferences.spokenLocale,preferences.textSize,preferences.highContrast]);
+    return res.json({ok:true,preferences:result.rows[0]});
+  }catch(error){return res.status(500).json({ok:false,msg:'No se pudieron guardar las preferencias'});}
 });
 
 
