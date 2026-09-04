@@ -11865,6 +11865,14 @@
       if (row) row.dataset.messageId = serverMessageId;
     }
 
+    function isRetryableChatError(error) {
+      const status = Number(error?.status || 0);
+      if (!status) return true;
+      if (error?.code === 'VOBIX_TIMEOUT') return true;
+      if ([401, 408, 425, 429].includes(status)) return true;
+      return status >= 500 && status <= 599;
+    }
+
     async function flushQueuedMessages() {
       if (app.outboxFlushing || navigator.onLine === false) return;
       const outbox = readMessageOutbox();
@@ -11873,6 +11881,7 @@
       app.outboxFlushing = true;
       const remaining = [...outbox];
       let sentCount = 0;
+      let rejectedCount = 0;
 
       while (remaining.length && navigator.onLine !== false) {
         const payload = remaining[0];
@@ -11888,6 +11897,13 @@
           writeMessageOutbox(remaining);
         } catch (error) {
           console.warn('[VOBIXCHAT OUTBOX FLUSH]', error);
+          if (!isRetryableChatError(error)) {
+            remaining.shift();
+            rejectedCount += 1;
+            updateMessageStatus({ clientMessageId: payload.clientMessageId }, 'failed');
+            writeMessageOutbox(remaining);
+            continue;
+          }
           payload.attempts = Number(payload.attempts || 0) + 1;
           writeMessageOutbox(remaining);
           scheduleOutboxRetry(payload.attempts);
@@ -11897,6 +11913,7 @@
 
       app.outboxFlushing = false;
       if (sentCount) notifyUser(`${sentCount} mensaje${sentCount === 1 ? '' : 's'} pendiente${sentCount === 1 ? '' : 's'} enviado${sentCount === 1 ? '' : 's'}`);
+      if (rejectedCount) notifyUser(`${rejectedCount} mensaje${rejectedCount === 1 ? '' : 's'} rechazado${rejectedCount === 1 ? '' : 's'}; revisa el contenido antes de reintentar`);
     }
 
     window.addEventListener('online', flushQueuedMessages);
@@ -12083,7 +12100,7 @@
           );
 
 
-          const queued = queueOutgoingMessage(payload);
+          const queued = isRetryableChatError(error) && queueOutgoingMessage(payload);
 
           notifyUser(
             queued
