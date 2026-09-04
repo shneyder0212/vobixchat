@@ -14031,6 +14031,15 @@
 
     }
 
+    function isValidMessagesPayload(data) {
+      return !!(
+        Array.isArray(data) ||
+        Array.isArray(data?.messages) ||
+        Array.isArray(data?.results) ||
+        Array.isArray(data?.data)
+      );
+    }
+
 
     function messageDate(message) {
       const raw = message?.created_at || message?.createdAt || message?.timestamp || message?.date;
@@ -14160,6 +14169,15 @@
 
 
       if (!loadIsCurrent()) return;
+
+
+      if (!isValidMessagesPayload(data)) {
+
+        console.warn('[VOBIXCHAT LOAD MESSAGES] respuesta incompleta');
+        notifyUser('No se pudo actualizar el historial. Se conserva la conversación visible.');
+        return;
+
+      }
 
 
       const messages =
