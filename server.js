@@ -87,6 +87,7 @@ const { containsSensitiveData, localPremiumHelp } = require('./core/premium-help
 const vobixLearn = require('./core/vobix-learn');
 const { localTutorReply, tutorSystemPrompt } = require('./core/learning-tutor');
 const { buildLessonMaterial } = require('./core/learning-content');
+const { normalizeLearningPreferences } = require('./core/learning-preferences');
 
 const {
   createMeetingCode,
@@ -1781,6 +1782,49 @@ app.get('/api/learn/v2/profile/:courseKey', requireAuth, async (req, res) => {
   } catch (error) {
     console.error('VOBIX APRENDE | No se pudo cargar el perfil:', error.message);
     return res.status(500).json({ ok:false, code:'learning_profile_unavailable' });
+  }
+});
+
+app.get('/api/learn/v2/preferences', requireAuth, async (req, res) => {
+  res.setHeader('Cache-Control', 'no-store');
+  try {
+    await database.query(
+      `INSERT INTO learning_preferences (user_id) VALUES ($1)
+       ON CONFLICT (user_id) DO NOTHING`,
+      [req.vobixUser.id]
+    );
+    const result = await database.query(
+      `SELECT theme, dark_mode AS "darkMode", high_contrast AS "highContrast",
+              tutor_voice AS "tutorVoice", accent, voice_speed AS "voiceSpeed"
+       FROM learning_preferences WHERE user_id=$1 LIMIT 1`,
+      [req.vobixUser.id]
+    );
+    return res.json({ ok:true, preferences:result.rows[0] });
+  } catch (error) {
+    return res.status(500).json({ ok:false, code:'learning_preferences_unavailable' });
+  }
+});
+
+app.put('/api/learn/v2/preferences', requireAuth, async (req, res) => {
+  res.setHeader('Cache-Control', 'no-store');
+  const preferences = normalizeLearningPreferences(req.body);
+  try {
+    const result = await database.query(
+      `INSERT INTO learning_preferences
+         (user_id,theme,dark_mode,high_contrast,tutor_voice,accent,voice_speed,updated_at)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,NOW())
+       ON CONFLICT (user_id) DO UPDATE SET
+         theme=EXCLUDED.theme, dark_mode=EXCLUDED.dark_mode,
+         high_contrast=EXCLUDED.high_contrast, tutor_voice=EXCLUDED.tutor_voice,
+         accent=EXCLUDED.accent, voice_speed=EXCLUDED.voice_speed, updated_at=NOW()
+       RETURNING theme, dark_mode AS "darkMode", high_contrast AS "highContrast",
+                 tutor_voice AS "tutorVoice", accent, voice_speed AS "voiceSpeed"`,
+      [req.vobixUser.id, preferences.theme, preferences.darkMode, preferences.highContrast,
+        preferences.tutorVoice, preferences.accent, preferences.voiceSpeed]
+    );
+    return res.json({ ok:true, saved:true, preferences:result.rows[0] });
+  } catch (error) {
+    return res.status(500).json({ ok:false, code:'learning_preferences_save_failed' });
   }
 });
 

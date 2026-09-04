@@ -1385,6 +1385,22 @@ async function initializeDatabase() {
     `);
 
     await database.query(`
+      CREATE TABLE IF NOT EXISTS learning_preferences (
+        user_id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+        theme VARCHAR(24) NOT NULL DEFAULT 'vobix-green'
+          CHECK (theme IN ('vobix-green','ocean-blue','purple','warm')),
+        dark_mode BOOLEAN NOT NULL DEFAULT FALSE,
+        high_contrast BOOLEAN NOT NULL DEFAULT FALSE,
+        tutor_voice VARCHAR(16) NOT NULL DEFAULT 'female'
+          CHECK (tutor_voice IN ('female','male','neutral')),
+        accent VARCHAR(16) NOT NULL DEFAULT 'auto',
+        voice_speed VARCHAR(12) NOT NULL DEFAULT 'normal'
+          CHECK (voice_speed IN ('slow','normal','fast')),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+    `);
+
+    await database.query(`
       CREATE TABLE IF NOT EXISTS learning_activity_attempts (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
