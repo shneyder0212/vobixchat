@@ -1404,6 +1404,36 @@ async function initializeDatabase() {
       ON learning_activity_attempts(user_id, course_key, lesson_key, created_at DESC);
     `);
 
+    await database.query(`
+      CREATE TABLE IF NOT EXISTS learning_practice_rooms (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        owner_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        course_key VARCHAR(60) NOT NULL,
+        title VARCHAR(100) NOT NULL,
+        max_participants INTEGER NOT NULL DEFAULT 6 CHECK (max_participants BETWEEN 2 AND 12),
+        status VARCHAR(20) NOT NULL DEFAULT 'active' CHECK (status IN ('active','closed')),
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+    `);
+
+    await database.query(`
+      CREATE TABLE IF NOT EXISTS learning_room_members (
+        room_id UUID NOT NULL REFERENCES learning_practice_rooms(id) ON DELETE CASCADE,
+        user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        role VARCHAR(20) NOT NULL DEFAULT 'learner' CHECK (role IN ('owner','learner')),
+        state VARCHAR(20) NOT NULL DEFAULT 'invited' CHECK (state IN ('invited','active','declined','left','removed')),
+        invited_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        joined_at TIMESTAMPTZ,
+        PRIMARY KEY (room_id, user_id)
+      );
+    `);
+
+    await database.query(`
+      CREATE INDEX IF NOT EXISTS learning_room_members_user_state_idx
+      ON learning_room_members(user_id, state);
+    `);
+
     // Claves públicas para cifrado E2E de los chats privados.
     // La clave privada nunca se guarda en el servidor.
     await database.query(`

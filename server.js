@@ -1826,6 +1826,125 @@ app.post('/api/learn/v2/tutor', requireAuth, async (req, res) => {
   }
 });
 
+app.get('/api/learn/v2/rooms', requireAuth, async (req, res) => {
+  res.setHeader('Cache-Control', 'no-store');
+  try {
+    const result = await database.query(
+      `SELECT r.id, r.course_key, r.title, r.max_participants, r.status,
+              m.role, m.state, r.created_at
+       FROM learning_room_members m
+       JOIN learning_practice_rooms r ON r.id=m.room_id
+       WHERE m.user_id=$1 AND m.state IN ('invited','active')
+       ORDER BY r.updated_at DESC LIMIT 50`,
+      [req.vobixUser.id]
+    );
+    return res.json({ ok:true, rooms:result.rows });
+  } catch (error) {
+    return res.status(500).json({ ok:false, code:'learning_rooms_unavailable' });
+  }
+});
+
+app.post('/api/learn/v2/rooms', requireAuth, async (req, res) => {
+  const course = vobixLearn.getCourse(req.body?.courseKey);
+  const title = String(req.body?.title || 'Sala de práctica').trim().replace(/\s+/g, ' ').slice(0, 100);
+  const maxParticipants = Math.max(2, Math.min(12, Number.parseInt(req.body?.maxParticipants, 10) || 6));
+  if (!course || !title) return res.status(400).json({ ok:false, code:'invalid_learning_room' });
+  let client;
+  try {
+    client = await database.pool.connect();
+    await client.query('BEGIN');
+    const roomResult = await client.query(
+      `INSERT INTO learning_practice_rooms (owner_id, course_key, title, max_participants)
+       VALUES ($1,$2,$3,$4)
+       RETURNING id, course_key, title, max_participants, status, created_at`,
+      [req.vobixUser.id, course.key, title, maxParticipants]
+    );
+    await client.query(
+      `INSERT INTO learning_room_members (room_id,user_id,role,state,joined_at)
+       VALUES ($1,$2,'owner','active',NOW())`,
+      [roomResult.rows[0].id, req.vobixUser.id]
+    );
+    await client.query('COMMIT');
+    return res.status(201).json({ ok:true, room:roomResult.rows[0] });
+  } catch (error) {
+    if (client) await client.query('ROLLBACK').catch(()=>{});
+    return res.status(500).json({ ok:false, code:'learning_room_create_failed' });
+  } finally {
+    if (client) client.release();
+  }
+});
+
+app.post('/api/learn/v2/rooms/:roomId/invite', requireAuth, async (req, res) => {
+  const roomId = String(req.params.roomId || '');
+  const inviteeId = String(req.body?.userId || '');
+  if (!/^[0-9a-f-]{36}$/i.test(roomId) || !/^[0-9a-f-]{36}$/i.test(inviteeId) || inviteeId === String(req.vobixUser.id)) {
+    return res.status(400).json({ ok:false, code:'invalid_learning_invite' });
+  }
+  let client;
+  try {
+    client = await database.pool.connect();
+    await client.query('BEGIN');
+    const roomResult = await client.query(
+      `SELECT id, course_key, max_participants FROM learning_practice_rooms
+       WHERE id=$1 AND owner_id=$2 AND status='active' FOR UPDATE`,
+      [roomId, req.vobixUser.id]
+    );
+    const room = roomResult.rows[0];
+    if (!room) {
+      await client.query('ROLLBACK');
+      return res.status(403).json({ ok:false, code:'learning_room_owner_required' });
+    }
+    const eligible = await client.query(
+      `SELECT 1 FROM learning_profiles WHERE user_id=$1 AND course_key=$2 LIMIT 1`,
+      [inviteeId, room.course_key]
+    );
+    if (!eligible.rows[0]) {
+      await client.query('ROLLBACK');
+      return res.status(409).json({ ok:false, code:'learner_not_in_course' });
+    }
+    const count = await client.query(
+      `SELECT COUNT(*)::int AS total FROM learning_room_members
+       WHERE room_id=$1 AND state IN ('invited','active')`,
+      [roomId]
+    );
+    if (count.rows[0].total >= room.max_participants) {
+      await client.query('ROLLBACK');
+      return res.status(409).json({ ok:false, code:'learning_room_full' });
+    }
+    await client.query(
+      `INSERT INTO learning_room_members (room_id,user_id,role,state)
+       VALUES ($1,$2,'learner','invited')
+       ON CONFLICT (room_id,user_id) DO UPDATE SET state='invited', invited_at=NOW(), joined_at=NULL`,
+      [roomId, inviteeId]
+    );
+    await client.query('COMMIT');
+    return res.status(201).json({ ok:true, invited:true });
+  } catch (error) {
+    if (client) await client.query('ROLLBACK').catch(()=>{});
+    return res.status(500).json({ ok:false, code:'learning_invite_failed' });
+  } finally {
+    if (client) client.release();
+  }
+});
+
+app.post('/api/learn/v2/rooms/:roomId/respond', requireAuth, async (req, res) => {
+  const roomId = String(req.params.roomId || '');
+  if (!/^[0-9a-f-]{36}$/i.test(roomId)) return res.status(400).json({ ok:false, code:'invalid_learning_room' });
+  const state = req.body?.accept === true ? 'active' : 'declined';
+  try {
+    const result = await database.query(
+      `UPDATE learning_room_members SET state=$3, joined_at=CASE WHEN $3='active' THEN NOW() ELSE NULL END
+       WHERE room_id=$1 AND user_id=$2 AND state='invited'
+       RETURNING room_id, role, state, joined_at`,
+      [roomId, req.vobixUser.id, state]
+    );
+    if (!result.rows[0]) return res.status(404).json({ ok:false, code:'learning_invite_not_found' });
+    return res.json({ ok:true, membership:result.rows[0] });
+  } catch (error) {
+    return res.status(500).json({ ok:false, code:'learning_invite_response_failed' });
+  }
+});
+
 
 // ======================================================
 // HEALTH CHECK

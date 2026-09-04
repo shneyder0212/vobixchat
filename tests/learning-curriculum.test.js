@@ -29,6 +29,17 @@ test('cada lección exige dos prácticas escritas y dos habladas', () => {
   assert.equal(lesson.passingScore, 80);
 });
 
+test('cada lección dura entre 25 y 30 minutos y enseña contenido completo', () => {
+  for (const level of [1,10,20]) {
+    const lesson = learn.buildLesson('english-uk', level, 1);
+    assert.ok(lesson.estimatedMinutes >= 25 && lesson.estimatedMinutes <= 30);
+    for (const activity of ['vocabulary','grammar','verbs','listen','speak','write','review']) {
+      assert.equal(lesson.segments.some(segment=>segment.activity===activity), true);
+    }
+    assert.equal(lesson.motivation.mistakeReview, true);
+  }
+});
+
 test('los exámenes están en inglés y la ayuda inicial puede explicarse en español', () => {
   assert.equal(learn.buildLesson('french', 1, 1).assessmentLanguage, 'en');
   assert.equal(learn.buildLesson('german', 1, 1).instructionsLanguage, 'es');

@@ -41,10 +41,10 @@ const LEVELS = Object.freeze([
 ].map((item,index)=>Object.freeze({number:index+1,cefr:item[0],name:item[1],outcome:item[2]})));
 
 const THEMES = Object.freeze([
-  'Core vocabulary','Listening discrimination','Pronunciation','Useful sentences','Questions and answers',
-  'Numbers and time','People','Places','Daily actions','Food and services','Reading','Guided writing',
-  'Guided speaking','Grammar in context','Problem solving','Real dialogue','Culture and register',
-  'Review and correction','Practical mission','Level challenge'
+  'Essential vocabulary','Sounds and pronunciation','Grammar foundations','High-frequency verbs','Useful sentences',
+  'Questions and answers','Numbers, dates and time','People and descriptions','Places and directions','Daily actions',
+  'Food, shopping and services','Listening laboratory','Guided reading','Guided writing','Speaking workshop',
+  'Grammar and verb challenge','Real-life problem solving','Interactive dialogue','Error review and memory','Level mission'
 ]);
 
 const ASSESSMENT_TYPES = Object.freeze([
@@ -74,6 +74,7 @@ function buildLesson(courseKey, levelNumber, lessonNumber) {
   if (!course || !level || number < 1 || number > LESSONS_PER_LEVEL) return null;
   const theme = THEMES[number - 1];
   const beginner = level.number <= 5;
+  const estimatedMinutes = beginner ? 25 : level.number < 14 ? 28 : 30;
   return {
     key:lessonKey(level.number, number),
     number,
@@ -84,8 +85,19 @@ function buildLesson(courseKey, levelNumber, lessonNumber) {
     instructionsLanguage:beginner ? 'es' : 'en',
     assessmentLanguage:'en',
     speechLocale:course.locale,
-    estimatedMinutes:beginner ? 12 : level.number < 14 ? 16 : 20,
-    activities:['learn','listen','repeat','write','speak','review'],
+    estimatedMinutes,
+    segments:[
+      {id:'warm-up', title:'Quick warm-up', minutes:3, activity:'recall'},
+      {id:'vocabulary', title:'Vocabulary in context', minutes:5, activity:'vocabulary'},
+      {id:'grammar', title:'Grammar made simple', minutes:5, activity:'grammar'},
+      {id:'verbs', title:'Verb laboratory', minutes:4, activity:'verbs'},
+      {id:'listening', title:'Listen and understand', minutes:4, activity:'listen'},
+      {id:'speaking', title:'Speak with confidence', minutes:4, activity:'speak'},
+      {id:'writing', title:'Write it yourself', minutes:3, activity:'write'},
+      {id:'review', title:'Smart review', minutes:2, activity:'review'}
+    ],
+    activities:['recall','vocabulary','grammar','verbs','listen','speak','write','review'],
+    motivation:{xp:20 + level.number, streakEligible:true, mistakeReview:true, celebration:true},
     assessments:ASSESSMENT_TYPES.map(item=>({...item})),
     passingScore:PASSING_SCORE
   };
