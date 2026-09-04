@@ -1375,6 +1375,53 @@ async function initializeDatabase() {
     `);
 
     // ====================================================
+    // CAPA 103 — VOBIX RUTA PROTEGIDA
+    // Ubicación temporal y solo para guardianes aceptados.
+    // ====================================================
+    await database.query(`
+      CREATE TABLE IF NOT EXISTS protected_routes (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        destination_label VARCHAR(100) NOT NULL,
+        destination_latitude NUMERIC(8,5) NOT NULL,
+        destination_longitude NUMERIC(8,5) NOT NULL,
+        current_latitude NUMERIC(8,5),
+        current_longitude NUMERIC(8,5),
+        accuracy_m INTEGER,
+        expected_at TIMESTAMPTZ NOT NULL,
+        status VARCHAR(20) NOT NULL DEFAULT 'active'
+          CHECK (status IN ('active','arrived','cancelled','late','stalled','expired')),
+        consented_at TIMESTAMPTZ NOT NULL,
+        last_location_at TIMESTAMPTZ,
+        last_movement_at TIMESTAMPTZ,
+        alert_sent_at TIMESTAMPTZ,
+        finished_at TIMESTAMPTZ,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+    `);
+
+    await database.query(`
+      CREATE TABLE IF NOT EXISTS protected_route_guardians (
+        route_id UUID NOT NULL REFERENCES protected_routes(id) ON DELETE CASCADE,
+        relationship_id UUID NOT NULL REFERENCES guardian_relationships(id) ON DELETE CASCADE,
+        guardian_user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        acknowledged_at TIMESTAMPTZ,
+        PRIMARY KEY(route_id, guardian_user_id)
+      );
+    `);
+
+    await database.query(`
+      CREATE INDEX IF NOT EXISTS protected_routes_monitor_idx
+      ON protected_routes(status, expected_at, last_location_at);
+    `);
+
+    await database.query(`
+      CREATE INDEX IF NOT EXISTS protected_route_guardians_user_idx
+      ON protected_route_guardians(guardian_user_id, route_id);
+    `);
+
+    // ====================================================
     // VOBIX TE ENSEÑA
     // ====================================================
     await database.query(`

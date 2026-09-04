@@ -84,6 +84,7 @@ const VOBIX_LAYERS = Object.freeze([
   { id:'100', name:'Vobix Prueba de Vida y Confianza Activa', status:'en_validacion', scope:'Verificación humana y red de apoyo transversal para mensajes, llamadas y videollamadas; integra Guardián Familiar, alerta silenciosa y ubicación temporal con autorización previa.' }
   ,{ id:'101', name:'Vobix Red de Rescate', status:'requiere_apk_nativa', scope:'Cola SOS con confirmación de entrega; Bluetooth, Wi‑Fi Direct y satélite requieren APK, permisos y hardware compatibles.' }
   ,{ id:'102', name:'Vobix Sello Original', status:'en_validacion', scope:'Huella SHA-256 vinculada al mensaje para comprobar si una foto, vídeo, audio o documento cambió después de entrar en Vobix.' }
+  ,{ id:'103', name:'Vobix Ruta Protegida', status:'en_validacion', scope:'Trayecto temporal compartido con familiares autorizados, aviso de parada prolongada o retraso y confirmación de llegada.' }
 ]);
 
 function getVobixLayers() {

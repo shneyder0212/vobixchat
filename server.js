@@ -37,6 +37,7 @@ const crypto =
 
 const vobixGuardian = require('./core/vobix-guardian');
 const vobixEmergency = require('./core/vobix-emergency');
+const vobixProtectedRoute = require('./core/vobix-protected-route');
 
 const packageMetadata =
   require('./package.json');
@@ -7020,6 +7021,195 @@ app.post('/api/emergency/alerts/:alertId/cancel', requireAuth, async (req, res) 
     return res.status(500).json({ ok:false, msg:'No se pudo cancelar la alerta' });
   }
 });
+
+
+// ======================================================
+// CAPA 103 — VOBIX RUTA PROTEGIDA
+// Seguimiento temporal con consentimiento y guardianes aceptados.
+// ======================================================
+
+app.post('/api/protected-routes', requireAuth, async (req, res) => {
+  const destination = vobixProtectedRoute.safeCoordinate(
+    req.body?.destinationLatitude, req.body?.destinationLongitude, null
+  );
+  const current = vobixProtectedRoute.safeCoordinate(
+    req.body?.latitude, req.body?.longitude, req.body?.accuracy
+  );
+  const expectedAt = vobixProtectedRoute.safeExpectedAt(req.body?.expectedAt);
+  const destinationLabel = vobixProtectedRoute.safeDestinationLabel(req.body?.destinationLabel);
+  const relationshipIds = [...new Set(Array.isArray(req.body?.relationshipIds) ? req.body.relationshipIds : [])]
+    .map(value => String(value || '').trim()).filter(value => /^[0-9a-f-]{36}$/i.test(value)).slice(0, 5);
+  if (!destination || !current || !expectedAt || !destinationLabel || !relationshipIds.length || req.body?.consent !== true) {
+    return res.status(400).json({ ok:false, msg:'Destino, ubicación, familiares o consentimiento no válidos' });
+  }
+
+  const client = await database.pool.connect();
+  try {
+    await client.query('BEGIN');
+    const guardians = await client.query(
+      `SELECT id,guardian_user_id FROM guardian_relationships
+       WHERE protected_user_id=$1 AND status='active' AND id=ANY($2::uuid[])`,
+      [req.vobixUser.id, relationshipIds]
+    );
+    if (guardians.rows.length !== relationshipIds.length) {
+      await client.query('ROLLBACK');
+      return res.status(403).json({ ok:false, msg:'Todos los familiares deben aceptar primero ser Guardianes Vobix' });
+    }
+    const route = await client.query(
+      `INSERT INTO protected_routes
+       (user_id,destination_label,destination_latitude,destination_longitude,current_latitude,current_longitude,
+        accuracy_m,expected_at,consented_at,last_location_at,last_movement_at)
+       VALUES($1,$2,$3,$4,$5,$6,$7,$8,NOW(),NOW(),NOW())
+       RETURNING id,status,expected_at,created_at`,
+      [req.vobixUser.id, destinationLabel, destination.latitude, destination.longitude,
+       current.latitude, current.longitude, current.accuracy, expectedAt]
+    );
+    for (const guardian of guardians.rows) {
+      await client.query(
+        `INSERT INTO protected_route_guardians(route_id,relationship_id,guardian_user_id) VALUES($1,$2,$3)`,
+        [route.rows[0].id, guardian.id, guardian.guardian_user_id]
+      );
+    }
+    await client.query('COMMIT');
+    await Promise.all(guardians.rows.map(guardian => sendPushToUser(guardian.guardian_user_id, {
+      type:'protected-route-started', title:'Vobix Ruta Protegida',
+      body:`${req.vobixUser.username} inició un trayecto protegido hacia ${destinationLabel}.`,
+      url:'/protected-route.html?watch=1'
+    })));
+    return res.status(201).json({ ok:true, route:route.rows[0] });
+  } catch (error) {
+    await client.query('ROLLBACK').catch(() => {});
+    console.error('VOBIX PROTECTED ROUTE START ERROR:', error);
+    return res.status(500).json({ ok:false, msg:'No se pudo iniciar la Ruta Protegida' });
+  } finally {
+    client.release();
+  }
+});
+
+app.post('/api/protected-routes/:routeId/location', requireAuth, async (req, res) => {
+  const location = vobixProtectedRoute.safeCoordinate(req.body?.latitude, req.body?.longitude, req.body?.accuracy);
+  if (!location) return res.status(400).json({ ok:false, msg:'Ubicación no válida' });
+  try {
+    const found = await database.query(
+      `SELECT id,user_id,status,current_latitude,current_longitude,destination_latitude,destination_longitude
+       FROM protected_routes WHERE id=$1 AND user_id=$2 LIMIT 1`,
+      [req.params.routeId, req.vobixUser.id]
+    );
+    const route = found.rows[0];
+    if (!route || !['active','late','stalled'].includes(route.status)) {
+      return res.status(404).json({ ok:false, msg:'La Ruta Protegida no está activa' });
+    }
+    const previous = route.current_latitude == null ? null : {
+      latitude:Number(route.current_latitude), longitude:Number(route.current_longitude)
+    };
+    const moved = vobixProtectedRoute.distanceMetres(previous, location) >= 40;
+    const distanceToDestination = vobixProtectedRoute.distanceMetres(location, {
+      latitude:Number(route.destination_latitude), longitude:Number(route.destination_longitude)
+    });
+    const arrived = distanceToDestination <= Math.max(100, location.accuracy || 0);
+    const updated = await database.query(
+      `UPDATE protected_routes SET current_latitude=$1,current_longitude=$2,accuracy_m=$3,
+       last_location_at=NOW(),last_movement_at=CASE WHEN $4 THEN NOW() ELSE last_movement_at END,
+       status=CASE WHEN $5 THEN 'arrived' ELSE 'active' END,
+       finished_at=CASE WHEN $5 THEN NOW() ELSE finished_at END,updated_at=NOW()
+       WHERE id=$6 RETURNING id,status,expected_at,last_location_at,finished_at`,
+      [location.latitude, location.longitude, location.accuracy, moved, arrived, route.id]
+    );
+    if (arrived) {
+      const guardians = await database.query('SELECT guardian_user_id FROM protected_route_guardians WHERE route_id=$1', [route.id]);
+      await Promise.all(guardians.rows.map(item => sendPushToUser(item.guardian_user_id, {
+        type:'protected-route-arrived', title:'Llegada confirmada',
+        body:`${req.vobixUser.username} llegó al destino de su Ruta Protegida.`, url:'/protected-route.html?watch=1'
+      })));
+    }
+    return res.json({ ok:true, route:updated.rows[0], distanceToDestination });
+  } catch (error) {
+    return res.status(500).json({ ok:false, msg:'No se pudo actualizar la Ruta Protegida' });
+  }
+});
+
+app.get('/api/protected-routes', requireAuth, async (req, res) => {
+  try {
+    const result = await database.query(
+      `SELECT DISTINCT r.id,r.user_id,r.destination_label,r.destination_latitude,r.destination_longitude,
+       r.current_latitude,r.current_longitude,r.accuracy_m,r.expected_at,r.status,r.last_location_at,
+       r.last_movement_at,r.finished_at,r.created_at,u.username,
+       CASE WHEN r.user_id=$1 THEN 'owner' ELSE 'guardian' END AS role
+       FROM protected_routes r JOIN users u ON u.id=r.user_id
+       LEFT JOIN protected_route_guardians rg ON rg.route_id=r.id
+       WHERE r.user_id=$1 OR rg.guardian_user_id=$1
+       ORDER BY r.created_at DESC LIMIT 50`,
+      [req.vobixUser.id]
+    );
+    return res.json({ ok:true, routes:result.rows });
+  } catch (error) {
+    return res.status(500).json({ ok:false, msg:'No se pudieron cargar las Rutas Protegidas' });
+  }
+});
+
+app.post('/api/protected-routes/:routeId/acknowledge', requireAuth, async (req, res) => {
+  try {
+    const result = await database.query(
+      `UPDATE protected_route_guardians SET acknowledged_at=NOW()
+       WHERE route_id=$1 AND guardian_user_id=$2 RETURNING route_id,acknowledged_at`,
+      [req.params.routeId, req.vobixUser.id]
+    );
+    if (!result.rows.length) return res.status(404).json({ ok:false, msg:'Ruta no disponible' });
+    return res.json({ ok:true, acknowledgment:result.rows[0] });
+  } catch (error) {
+    return res.status(500).json({ ok:false, msg:'No se pudo confirmar la recepción' });
+  }
+});
+
+app.post('/api/protected-routes/:routeId/finish', requireAuth, async (req, res) => {
+  const status = req.body?.status === 'arrived' ? 'arrived' : 'cancelled';
+  try {
+    const result = await database.query(
+      `UPDATE protected_routes SET status=$1,finished_at=NOW(),updated_at=NOW()
+       WHERE id=$2 AND user_id=$3 AND status IN ('active','late','stalled')
+       RETURNING id,status,destination_label`,
+      [status, req.params.routeId, req.vobixUser.id]
+    );
+    if (!result.rows.length) return res.status(404).json({ ok:false, msg:'Ruta no disponible' });
+    const guardians = await database.query('SELECT guardian_user_id FROM protected_route_guardians WHERE route_id=$1', [req.params.routeId]);
+    await Promise.all(guardians.rows.map(item => sendPushToUser(item.guardian_user_id, {
+      type:`protected-route-${status}`, title:'Actualización de Ruta Protegida',
+      body:status === 'arrived' ? `${req.vobixUser.username} confirmó su llegada.` : `${req.vobixUser.username} canceló el seguimiento.`,
+      url:'/protected-route.html?watch=1'
+    })));
+    return res.json({ ok:true, route:result.rows[0] });
+  } catch (error) {
+    return res.status(500).json({ ok:false, msg:'No se pudo cerrar la Ruta Protegida' });
+  }
+});
+
+async function monitorProtectedRoutes() {
+  try {
+    const result = await database.query(
+      `UPDATE protected_routes SET
+       status=CASE WHEN expected_at<NOW() THEN 'late' ELSE 'stalled' END,
+       alert_sent_at=NOW(),updated_at=NOW()
+       WHERE status='active' AND alert_sent_at IS NULL
+       AND (expected_at<NOW() OR COALESCE(last_location_at,created_at)<NOW()-INTERVAL '10 minutes')
+       RETURNING id,user_id,status,destination_label`
+    );
+    for (const route of result.rows) {
+      const guardians = await database.query('SELECT guardian_user_id FROM protected_route_guardians WHERE route_id=$1', [route.id]);
+      for (const guardian of guardians.rows) {
+        await sendPushToUser(guardian.guardian_user_id, {
+          type:'protected-route-alert', title:'Revisa esta Ruta Protegida',
+          body:route.status === 'late' ? 'La hora prevista de llegada ya pasó.' : 'Vobix lleva más de 10 minutos sin recibir una ubicación.',
+          url:'/protected-route.html?watch=1'
+        });
+      }
+    }
+  } catch (error) {
+    if (process.env.NODE_ENV !== 'test') console.error('VOBIX PROTECTED ROUTE MONITOR ERROR:', error.message);
+  }
+}
+
+const protectedRouteMonitor = setInterval(monitorProtectedRoutes, 60 * 1000);
+protectedRouteMonitor.unref?.();
 
 
 // ======================================================
