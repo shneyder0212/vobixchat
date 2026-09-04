@@ -11883,35 +11883,38 @@
       let sentCount = 0;
       let rejectedCount = 0;
 
-      while (remaining.length && navigator.onLine !== false) {
-        const payload = remaining[0];
-        try {
-          const result = await api('/api/chat/messages', {
-            method: 'POST',
-            body: JSON.stringify(payload)
-          });
-          bindConfirmedMessageId(payload.clientMessageId, result?.message);
-          remaining.shift();
-          sentCount += 1;
-          updateMessageStatus({ clientMessageId: payload.clientMessageId }, 'sent');
-          writeMessageOutbox(remaining);
-        } catch (error) {
-          console.warn('[VOBIXCHAT OUTBOX FLUSH]', error);
-          if (!isRetryableChatError(error)) {
+      try {
+        while (remaining.length && navigator.onLine !== false) {
+          const payload = remaining[0];
+          try {
+            const result = await api('/api/chat/messages', {
+              method: 'POST',
+              body: JSON.stringify(payload)
+            });
+            bindConfirmedMessageId(payload.clientMessageId, result?.message);
             remaining.shift();
-            rejectedCount += 1;
-            updateMessageStatus({ clientMessageId: payload.clientMessageId }, 'failed');
+            sentCount += 1;
+            updateMessageStatus({ clientMessageId: payload.clientMessageId }, 'sent');
             writeMessageOutbox(remaining);
-            continue;
+          } catch (error) {
+            console.warn('[VOBIXCHAT OUTBOX FLUSH]', error);
+            if (!isRetryableChatError(error)) {
+              remaining.shift();
+              rejectedCount += 1;
+              updateMessageStatus({ clientMessageId: payload.clientMessageId }, 'failed');
+              writeMessageOutbox(remaining);
+              continue;
+            }
+            payload.attempts = Number(payload.attempts || 0) + 1;
+            writeMessageOutbox(remaining);
+            scheduleOutboxRetry(payload.attempts);
+            break;
           }
-          payload.attempts = Number(payload.attempts || 0) + 1;
-          writeMessageOutbox(remaining);
-          scheduleOutboxRetry(payload.attempts);
-          break;
         }
+      } finally {
+        app.outboxFlushing = false;
       }
 
-      app.outboxFlushing = false;
       if (sentCount) notifyUser(`${sentCount} mensaje${sentCount === 1 ? '' : 's'} pendiente${sentCount === 1 ? '' : 's'} enviado${sentCount === 1 ? '' : 's'}`);
       if (rejectedCount) notifyUser(`${rejectedCount} mensaje${rejectedCount === 1 ? '' : 's'} rechazado${rejectedCount === 1 ? '' : 's'}; revisa el contenido antes de reintentar`);
     }
@@ -12054,6 +12057,8 @@
       };
 
 
+      try {
+
       let sent =
         false;
 
@@ -12124,8 +12129,6 @@
           resizeMessageInput();
           syncComposerAction();
 
-          finishMessageSend();
-
           return;
 
         }
@@ -12165,6 +12168,10 @@
         syncComposerAction();
 
         input.focus();
+
+      }
+
+      } finally {
 
         finishMessageSend();
 
