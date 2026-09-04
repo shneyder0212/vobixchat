@@ -1336,6 +1336,27 @@ router.post(
       }
 
 
+      const childPolicy =
+        await childProtection.communicationDecision(
+          database,
+          userId,
+          otherUserId
+        );
+
+
+      if (!childPolicy.allowed) {
+
+        return res
+          .status(403)
+          .json({
+            ok: false,
+            msg:
+              'Contacto no autorizado por la protección familiar'
+          });
+
+      }
+
+
       /* ==================================================
          BUSCAR SALA EXISTENTE
 
@@ -4887,6 +4908,32 @@ async function uploadChatFileHandler(
           ok: false,
           msg:
             'No se puede enviar el archivo'
+        });
+
+    }
+
+
+    const childPolicy =
+      await childProtection.communicationDecision(
+        database,
+        userId,
+        room.otherUser.id
+      );
+
+
+    if (!childPolicy.allowed) {
+
+      removeUploadedFile(
+        req.file
+      );
+
+
+      return res
+        .status(403)
+        .json({
+          ok: false,
+          msg:
+            'Archivo no autorizado por la protección familiar'
         });
 
     }

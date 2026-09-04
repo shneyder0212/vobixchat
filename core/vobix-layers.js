@@ -91,6 +91,7 @@ const VOBIX_LAYERS = Object.freeze([
   ,{ id:'107', name:'Vobix Lengua de Signos', status:'en_validacion', scope:'Subtítulos locales, preferencias LSE/ASL/BSL y apoyo visual básico; avatar y reconocimiento gestual siguen en investigación y no sustituyen a intérpretes profesionales.' }
   ,{ id:'108', name:'Vobix Recuperación Familiar', status:'en_validacion', scope:'Recuperación voluntaria mediante 2 a 5 guardianes verificados, umbral configurable, espera de seguridad, alertas y cancelación; nunca permite leer contraseñas ni conversaciones.' }
   ,{ id:'109', name:'Persistencia de Mensajes de Acero', status:'en_validacion', scope:'Inserción SQL válida e idempotente para confirmar mensajes nuevos y reintentos sin duplicarlos.' }
+  ,{ id:'110', name:'Vobix Escudo Infantil Integral', status:'en_validacion', scope:'La política familiar se aplica al abrir conversaciones, aceptar contactos, enviar texto, archivos y llamadas; no inspecciona el contenido privado.' }
 ]);
 
 function getVobixLayers() {

@@ -3244,6 +3244,42 @@ io.on(
           }
 
 
+          const participants =
+            await getConversationParticipants(
+              conversationId
+            );
+
+
+          for (const participant of participants) {
+
+            if (String(participant.user_id) === String(userId)) {
+              continue;
+            }
+
+            const childPolicy =
+              await vobixChildProtection.communicationDecision(
+                database,
+                userId,
+                participant.user_id
+              );
+
+            if (!childPolicy.allowed) {
+
+              if (typeof callback === 'function') {
+                callback({
+                  ok: false,
+                  msg:
+                    'Mensaje no autorizado por la protección familiar'
+                });
+              }
+
+              return;
+
+            }
+
+          }
+
+
           // ==============================================
           // GUARDAR MENSAJE
           // ==============================================
@@ -6701,6 +6737,32 @@ app.post('/api/friends/request', requireAuth, async (req, res) => {
 
 app.post('/api/friends/:id/accept', requireAuth, async (req, res) => {
   try {
+    const pending = await database.query(
+      `SELECT id,requester_id,addressee_id,status
+       FROM friendships
+       WHERE id=$1 AND addressee_id=$2 AND status='pending'
+       LIMIT 1`,
+      [req.params.id, req.vobixUser.id]
+    );
+
+    if (!pending.rows.length) {
+      return res.status(404).json({ ok:false, msg:'Solicitud no encontrada' });
+    }
+
+    const friendship = pending.rows[0];
+    const childPolicy = await vobixChildProtection.communicationDecision(
+      database,
+      friendship.requester_id,
+      friendship.addressee_id
+    );
+
+    if (!childPolicy.allowed) {
+      return res.status(403).json({
+        ok:false,
+        msg:'Contacto no autorizado por la protección familiar'
+      });
+    }
+
     const result = await database.query(
       `
       UPDATE friendships
