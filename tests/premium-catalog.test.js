@@ -31,8 +31,16 @@ test('un módulo preparado nunca se presenta como operativo', () => {
   assert.equal(chat.available, true);
 });
 
+test('la consulta por capacidad rechaza identificadores desconocidos', () => {
+  assert.equal(premium.getCapabilityAccess('meet', 'premium').entitled, true);
+  assert.equal(premium.getCapabilityAccess('inventado', 'business'), null);
+});
+
 test('las rutas Premium requieren autenticación y evitan caché', () => {
   assert.match(serverSource, /app\.get\(['"]\/api\/premium\/catalog['"], requireAuth/);
   assert.match(serverSource, /app\.get\(['"]\/api\/premium\/me['"], requireAuth/);
   assert.match(serverSource, /Cache-Control['"], ['"]no-store/);
+  assert.match(serverSource, /function requirePremiumCapability\(capabilityId\)/);
+  assert.match(serverSource, /code:'premium_plan_required'/);
+  assert.match(serverSource, /code:'service_not_operational'/);
 });

@@ -77,6 +77,7 @@ const {
 } = require('./core/vobix-layers');
 
 const {
+  getCapabilityAccess,
   getPremiumCatalog
 } = require('./core/vobix-premium');
 
@@ -6529,6 +6530,32 @@ app.get('/api/premium/me', requireAuth, async (req, res) => {
     ...getPremiumCatalog(subscription.plan)
   });
 });
+
+app.get('/api/premium/access/:capabilityId', requireAuth, async (req, res) => {
+  res.setHeader('Cache-Control', 'no-store');
+  const subscription = await getUserPremiumSubscription(req.vobixUser.id);
+  const access = getCapabilityAccess(req.params.capabilityId, subscription.plan);
+  if (!access) {
+    return res.status(404).json({ ok: false, code: 'unknown_capability', msg: 'Servicio no reconocido' });
+  }
+  return res.json({ ok: true, access });
+});
+
+function requirePremiumCapability(capabilityId) {
+  return async (req, res, next) => {
+    const subscription = await getUserPremiumSubscription(req.vobixUser.id);
+    const access = getCapabilityAccess(capabilityId, subscription.plan);
+    if (!access) return res.status(404).json({ ok:false, code:'unknown_capability' });
+    if (!access.entitled) {
+      return res.status(403).json({ ok:false, code:'premium_plan_required', minimumPlan:access.minimumPlan });
+    }
+    if (!access.operational) {
+      return res.status(409).json({ ok:false, code:'service_not_operational', status:access.status });
+    }
+    req.vobixPremiumAccess = access;
+    return next();
+  };
+}
 
 app.get('/api/rtc-config', requireAuth, (req, res) => {
   const iceServers = [

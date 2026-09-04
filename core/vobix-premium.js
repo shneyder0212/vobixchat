@@ -57,6 +57,12 @@ function capabilityAccess(capability, plan = 'free') {
   };
 }
 
+function getCapabilityAccess(capabilityId, plan = 'free') {
+  const id = String(capabilityId || '').trim().toLowerCase();
+  const capability = CAPABILITIES.find(item => item.id === id);
+  return capability ? capabilityAccess(capability, plan) : null;
+}
+
 function getPremiumCatalog(plan = 'free') {
   const normalizedPlan = normalizePlan(plan);
   return {
@@ -71,6 +77,7 @@ module.exports = {
   CAPABILITIES,
   PLANS,
   capabilityAccess,
+  getCapabilityAccess,
   getPremiumCatalog,
   normalizePlan,
   planAllows
