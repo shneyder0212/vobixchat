@@ -22,6 +22,7 @@ const database = require('../database/db');
 const originAttestation = require('../core/vobix-origin-attestation');
 const childProtection = require('../core/vobix-child-protection');
 const { matchesPersistedMessage } = require('../core/message-intent');
+const { matchesUploadIntent, normalizeUploadId } = require('../core/upload-intent');
 
 const router = express.Router();
 const seniorAssistantRate = new Map();
@@ -4668,7 +4669,9 @@ router.post('/files/resumable/start', async (req, res) => {
   const mimeType = String(req.body?.mimeType || 'application/octet-stream').trim().slice(0, 150);
   const totalSize = Number(req.body?.totalSize || 0);
   const requestedType = normalizeMessageType(req.body?.type);
-  const clientUploadId = cleanId(req.body?.clientUploadId).replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 100);
+  const clientUploadId = normalizeUploadId(req.body?.clientUploadId);
+  const originSource = String(req.body?.originSource || '').trim().slice(0, 30);
+  const viewOnce = req.body?.viewOnce === true;
 
   if (!conversationId || !clientUploadId || !Number.isSafeInteger(totalSize) || totalSize < 1 || totalSize > 50 * 1024 * 1024) {
     return res.status(400).json({ ok: false, msg: 'Datos de subida no válidos' });
@@ -4682,11 +4685,16 @@ router.post('/files/resumable/start', async (req, res) => {
   if (await usersAreBlocked(userId, room.otherUser.id)) {
     return res.status(403).json({ ok: false, msg: 'No se puede enviar el archivo' });
   }
+  const childPolicy = await childProtection.communicationDecision(database,userId,room.otherUser.id);
+  if(!childPolicy.allowed)return res.status(403).json({ok:false,msg:'Archivo no autorizado por la protección familiar'});
 
   const existing = [...resumableUploads.values()].find(item =>
     item.userId === userId && item.clientUploadId === clientUploadId
   );
   if (existing) {
+    if(!matchesUploadIntent(existing,{conversationId,originalName,mimeType,totalSize,requestedType,originSource,viewOnce})){
+      return res.status(409).json({ok:false,code:'client_upload_id_conflict',msg:'El identificador ya pertenece a otra subida'});
+    }
     return res.json({
       ok: true,
       uploadId: existing.uploadId,
@@ -4708,8 +4716,8 @@ router.post('/files/resumable/start', async (req, res) => {
     totalSize,
     totalChunks: Math.ceil(totalSize / RESUMABLE_CHUNK_SIZE),
     requestedType,
-    originSource: String(req.body?.originSource || '').trim().slice(0, 30),
-    viewOnce: Boolean(req.body?.viewOnce),
+    originSource,
+    viewOnce,
     directory,
     received: new Set(),
     updatedAt: Date.now()
