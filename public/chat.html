@@ -4406,6 +4406,8 @@
 
       messagesLoadSequence: 0,
 
+      conversationsLoadSequence: 0,
+
       replyToMessage: null,
 
       editingMessage: null,
@@ -13380,6 +13382,8 @@
 
     async function loadConversations() {
 
+      const loadSequence = ++app.conversationsLoadSequence;
+
       const container =
         elements
           .conversationList;
@@ -13387,10 +13391,14 @@
 
       if (container) {
 
-        container.innerHTML =
-          '<div class="vobixStatusMessage">' +
-          'Cargando conversaciones…' +
-          '</div>';
+        container.setAttribute('aria-busy', 'true');
+
+        if (!container.querySelector('.vxConversation')) {
+          container.innerHTML =
+            '<div class="vobixStatusMessage">' +
+            'Cargando conversaciones…' +
+            '</div>';
+        }
 
       }
 
@@ -13409,6 +13417,9 @@
           );
 
 
+        if (loadSequence !== app.conversationsLoadSequence) return;
+
+
         renderConversations(
           conversations
         );
@@ -13418,6 +13429,8 @@
 
 
       } catch (error) {
+
+        if (loadSequence !== app.conversationsLoadSequence) return;
 
         console.error(
           '[VOBIXCHAT CONVERSATIONS]',
@@ -13443,6 +13456,12 @@
             ) +
             '</div>';
 
+        }
+
+      } finally {
+
+        if (container && loadSequence === app.conversationsLoadSequence) {
+          container.removeAttribute('aria-busy');
         }
 
       }
