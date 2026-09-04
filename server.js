@@ -7364,10 +7364,12 @@ app.post('/api/family-recovery/:requestId/cancel',requireAuth,async(req,res)=>{
 });
 
 app.post('/api/family-recovery/:requestId/status',async(req,res)=>{
+  if(!vobixFamilyRecovery.validUuid(req.params.requestId))return res.status(400).json({ok:false,msg:'Solicitud no válida'});
   try{const result=await database.query(`SELECT r.id,r.status,r.device_label,r.threshold_required,r.ready_at,r.expires_at,(SELECT COUNT(*)::int FROM family_recovery_votes v WHERE v.request_id=r.id AND v.decision='approved') approval_count FROM family_recovery_requests r WHERE r.id=$1 AND r.secret_hash=$2`,[req.params.requestId,vobixFamilyRecovery.hashRecoverySecret(req.body?.recoverySecret)]);if(!result.rows.length)return res.status(404).json({ok:false,msg:'Recuperación no disponible'});return res.json({ok:true,state:vobixFamilyRecovery.requestState(result.rows[0]),request:result.rows[0]});}catch(error){return res.status(500).json({ok:false,msg:'No se pudo consultar'});}
 });
 
 app.post('/api/family-recovery/:requestId/complete',async(req,res)=>{
+  if(!vobixFamilyRecovery.validUuid(req.params.requestId))return res.status(400).json({ok:false,msg:'Solicitud no válida'});
   const client=await database.pool.connect();
   try{
     await client.query('BEGIN');
