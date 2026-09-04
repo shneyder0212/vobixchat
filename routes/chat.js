@@ -4799,6 +4799,12 @@ router.post('/files/resumable/:uploadId/complete', async (req, res) => {
   await fs.promises.writeFile(finalPath, Buffer.alloc(0));
   for (let index = 0; index < session.totalChunks; index += 1) {
     const chunk = await fs.promises.readFile(path.join(session.directory, `${index}.part`));
+    const actualHash = crypto.createHash('sha256').update(chunk).digest('hex');
+    if (actualHash !== session.received.get(index)) {
+      await fs.promises.unlink(finalPath).catch(() => {});
+      session.completing = false;
+      return res.status(409).json({ ok: false, code: 'chunk_integrity_failed', msg: 'La integridad de un fragmento no coincide' });
+    }
     await fs.promises.appendFile(finalPath, chunk);
   }
   const assembled = await fs.promises.stat(finalPath);
