@@ -41,6 +41,7 @@ const vobixRescue = require('./core/vobix-rescue');
 const vobixChildProtection = require('./core/vobix-child-protection');
 const vobixSignSupport = require('./core/vobix-sign-support');
 const vobixProtectedRoute = require('./core/vobix-protected-route');
+const vobixFamilyRecovery = require('./core/vobix-family-recovery');
 
 const packageMetadata =
   require('./package.json');
@@ -7215,6 +7216,108 @@ app.put('/api/sign-support/preferences',requireAuth,async(req,res)=>{
   }catch(error){return res.status(500).json({ok:false,msg:'No se pudieron guardar las preferencias'});}
 });
 
+
+// ======================================================
+// CAPA 108 — VOBIX RECUPERACIÓN FAMILIAR
+// ======================================================
+app.get('/api/family-recovery',requireAuth,async(req,res)=>{
+  try{
+    const plan=await database.query(`SELECT enabled,threshold_required,consented_at,consent_version,updated_at FROM family_recovery_plans WHERE user_id=$1`,[req.vobixUser.id]);
+    const members=await database.query(`SELECT m.relationship_id,m.guardian_user_id,u.username,u.vobix_id FROM family_recovery_members m JOIN users u ON u.id=m.guardian_user_id WHERE m.user_id=$1 ORDER BY u.username`,[req.vobixUser.id]);
+    const requests=await database.query(`SELECT DISTINCT r.id,r.user_id,r.device_label,r.threshold_required,r.status,r.ready_at,r.expires_at,r.created_at,
+      CASE WHEN r.user_id=$1 THEN 'owner' ELSE 'guardian' END role,
+      (SELECT COUNT(*)::int FROM family_recovery_votes v WHERE v.request_id=r.id AND v.decision='approved') approval_count
+      FROM family_recovery_requests r LEFT JOIN family_recovery_members m ON m.user_id=r.user_id AND m.guardian_user_id=$1
+      WHERE (r.user_id=$1 OR m.guardian_user_id=$1) AND r.expires_at>NOW()-INTERVAL '7 days' ORDER BY r.created_at DESC LIMIT 50`,[req.vobixUser.id]);
+    return res.json({ok:true,plan:plan.rows[0]||{enabled:false,threshold_required:2},members:members.rows,requests:requests.rows});
+  }catch(error){console.error('VOBIX FAMILY RECOVERY LIST ERROR:',error);return res.status(500).json({ok:false,msg:'No se pudo cargar la recuperación familiar'});}
+});
+
+app.put('/api/family-recovery/plan',requireAuth,async(req,res)=>{
+  const enabled=req.body?.enabled===true;
+  const ids=Array.isArray(req.body?.relationshipIds)?[...new Set(req.body.relationshipIds.map(String))]:[];
+  const threshold=vobixFamilyRecovery.normalizeThreshold(req.body?.threshold,ids.length);
+  if(enabled&&(req.body?.explicitConsent!==true||!threshold||ids.some(id=>!vobixFamilyRecovery.validUuid(id))))return res.status(400).json({ok:false,msg:'Elija entre 2 y 5 guardianes y confirme el consentimiento'});
+  const client=await database.pool.connect();
+  try{
+    await client.query('BEGIN');
+    let guardians={rows:[]};
+    if(enabled){guardians=await client.query(`SELECT id,guardian_user_id FROM guardian_relationships WHERE protected_user_id=$1 AND status='active' AND id=ANY($2::uuid[])`,[req.vobixUser.id,ids]);if(guardians.rows.length!==ids.length)throw Object.assign(new Error('guardian_mismatch'),{status:403});}
+    await client.query(`INSERT INTO family_recovery_plans(user_id,enabled,threshold_required,consented_at,updated_at)
+      VALUES($1,$2,$3,CASE WHEN $2 THEN NOW() ELSE NULL END,NOW()) ON CONFLICT(user_id) DO UPDATE SET enabled=EXCLUDED.enabled,
+      threshold_required=EXCLUDED.threshold_required,consented_at=EXCLUDED.consented_at,updated_at=NOW()`,[req.vobixUser.id,enabled,threshold||2]);
+    await client.query(`UPDATE family_recovery_requests SET status='cancelled',cancelled_at=NOW()
+      WHERE user_id=$1 AND status IN ('pending','approved')`,[req.vobixUser.id]);
+    await client.query('DELETE FROM family_recovery_members WHERE user_id=$1',[req.vobixUser.id]);
+    for(const guardian of guardians.rows)await client.query(`INSERT INTO family_recovery_members(user_id,relationship_id,guardian_user_id) VALUES($1,$2,$3)`,[req.vobixUser.id,guardian.id,guardian.guardian_user_id]);
+    await client.query('COMMIT');return res.json({ok:true,enabled,threshold:threshold||2,guardianCount:guardians.rows.length});
+  }catch(error){await client.query('ROLLBACK');return res.status(error.status||500).json({ok:false,msg:error.status?'Todos deben ser guardianes activos':'No se pudo guardar el plan'});}finally{client.release();}
+});
+
+app.post('/api/family-recovery/start',async(req,res)=>{
+  const vobixId=String(req.body?.vobixId||'').trim().toLowerCase();
+  if(!/^@[a-z0-9._-]{3,40}$/.test(vobixId))return res.status(400).json({ok:false,msg:'Vobix ID no válido'});
+  try{
+    const account=await database.query(`SELECT u.id,u.username,p.threshold_required FROM users u JOIN family_recovery_plans p ON p.user_id=u.id WHERE LOWER(u.vobix_id)=LOWER($1) AND u.verified=TRUE AND p.enabled=TRUE LIMIT 1`,[vobixId]);
+    if(!account.rows.length)return res.status(404).json({ok:false,msg:'La recuperación familiar no está disponible para esta cuenta'});
+    const user=account.rows[0],members=await database.query(`SELECT m.guardian_user_id FROM family_recovery_members m
+      JOIN guardian_relationships g ON g.id=m.relationship_id AND g.guardian_user_id=m.guardian_user_id
+      WHERE m.user_id=$1 AND g.status='active'`,[user.id]);
+    if(members.rows.length<Number(user.threshold_required))return res.status(409).json({ok:false,msg:'El plan familiar necesita volver a configurarse'});
+    const open=await database.query(`SELECT id FROM family_recovery_requests WHERE user_id=$1 AND status IN ('pending','approved') AND expires_at>NOW()`,[user.id]);
+    if(open.rows.length)return res.status(409).json({ok:false,msg:'Ya existe una recuperación en curso'});
+    const secret=vobixFamilyRecovery.createRecoverySecret();
+    const created=await database.query(`INSERT INTO family_recovery_requests(user_id,secret_hash,device_label,threshold_required,expires_at)
+      VALUES($1,$2,$3,$4,NOW()+INTERVAL '${vobixFamilyRecovery.REQUEST_HOURS} hours') RETURNING id,device_label,threshold_required,status,expires_at,created_at`,
+      [user.id,vobixFamilyRecovery.hashRecoverySecret(secret),vobixFamilyRecovery.safeDeviceLabel(req.body?.deviceLabel),user.threshold_required]);
+    await Promise.all(members.rows.map(member=>sendPushToUser(member.guardian_user_id,{type:'family-recovery-request',title:'Vobix Recuperación Familiar',body:`${user.username} solicita recuperar su cuenta desde un nuevo dispositivo.`,url:'/family-recovery.html'})));
+    return res.status(201).json({ok:true,request:created.rows[0],recoverySecret:secret});
+  }catch(error){console.error('VOBIX FAMILY RECOVERY START ERROR:',error);return res.status(500).json({ok:false,msg:'No se pudo iniciar la recuperación'});}
+});
+
+app.post('/api/family-recovery/:requestId/vote',requireAuth,async(req,res)=>{
+  const decision=['approved','rejected'].includes(req.body?.decision)?req.body.decision:null;
+  if(!decision||!vobixFamilyRecovery.validUuid(req.params.requestId))return res.status(400).json({ok:false,msg:'Decisión no válida'});
+  const client=await database.pool.connect();
+  try{
+    await client.query('BEGIN');
+    const allowed=await client.query(`SELECT r.id,r.user_id,r.threshold_required FROM family_recovery_requests r
+      JOIN family_recovery_plans p ON p.user_id=r.user_id AND p.enabled=TRUE
+      JOIN family_recovery_members m ON m.user_id=r.user_id AND m.guardian_user_id=$2
+      JOIN guardian_relationships g ON g.id=m.relationship_id AND g.guardian_user_id=$2 AND g.status='active'
+      WHERE r.id=$1 AND r.status IN ('pending','approved') AND r.expires_at>NOW() FOR UPDATE OF r`,[req.params.requestId,req.vobixUser.id]);
+    if(!allowed.rows.length)throw Object.assign(new Error('not_available'),{status:404});
+    await client.query(`INSERT INTO family_recovery_votes(request_id,guardian_user_id,decision) VALUES($1,$2,$3) ON CONFLICT(request_id,guardian_user_id) DO UPDATE SET decision=EXCLUDED.decision,decided_at=NOW()`,[req.params.requestId,req.vobixUser.id,decision]);
+    const counts=await client.query(`SELECT COUNT(*) FILTER(WHERE decision='approved')::int approvals,COUNT(*) FILTER(WHERE decision='rejected')::int rejections FROM family_recovery_votes WHERE request_id=$1`,[req.params.requestId]);
+    const row=allowed.rows[0],count=counts.rows[0];
+    if(Number(count.approvals)>=Number(row.threshold_required))await client.query(`UPDATE family_recovery_requests SET status='approved',ready_at=COALESCE(ready_at,NOW()+INTERVAL '${vobixFamilyRecovery.WAIT_HOURS} hours') WHERE id=$1`,[row.id]);
+    else if(Number(count.rejections)>=Number(row.threshold_required))await client.query(`UPDATE family_recovery_requests SET status='rejected' WHERE id=$1`,[row.id]);
+    await client.query('COMMIT');await sendPushToUser(row.user_id,{type:'family-recovery-vote',title:'Recuperación Familiar actualizada',body:'Un familiar respondió a la solicitud. No compartas códigos.',url:'/family-recovery.html'});
+    return res.json({ok:true,approvals:count.approvals,rejections:count.rejections});
+  }catch(error){await client.query('ROLLBACK');return res.status(error.status||500).json({ok:false,msg:error.status?'Solicitud no disponible':'No se pudo guardar la decisión'});}finally{client.release();}
+});
+
+app.post('/api/family-recovery/:requestId/cancel',requireAuth,async(req,res)=>{
+  try{const result=await database.query(`UPDATE family_recovery_requests SET status='cancelled',cancelled_at=NOW() WHERE id=$1 AND user_id=$2 AND status IN ('pending','approved') RETURNING id`,[req.params.requestId,req.vobixUser.id]);return result.rows.length?res.json({ok:true}):res.status(404).json({ok:false,msg:'Solicitud no disponible'});}catch(error){return res.status(500).json({ok:false,msg:'No se pudo cancelar'});}
+});
+
+app.post('/api/family-recovery/:requestId/status',async(req,res)=>{
+  try{const result=await database.query(`SELECT r.id,r.status,r.device_label,r.threshold_required,r.ready_at,r.expires_at,(SELECT COUNT(*)::int FROM family_recovery_votes v WHERE v.request_id=r.id AND v.decision='approved') approval_count FROM family_recovery_requests r WHERE r.id=$1 AND r.secret_hash=$2`,[req.params.requestId,vobixFamilyRecovery.hashRecoverySecret(req.body?.recoverySecret)]);if(!result.rows.length)return res.status(404).json({ok:false,msg:'Recuperación no disponible'});return res.json({ok:true,state:vobixFamilyRecovery.requestState(result.rows[0]),request:result.rows[0]});}catch(error){return res.status(500).json({ok:false,msg:'No se pudo consultar'});}
+});
+
+app.post('/api/family-recovery/:requestId/complete',async(req,res)=>{
+  const client=await database.pool.connect();
+  try{
+    await client.query('BEGIN');
+    const request=await client.query(`SELECT r.*,(SELECT COUNT(*)::int FROM family_recovery_votes v WHERE v.request_id=r.id AND v.decision='approved') approval_count FROM family_recovery_requests r WHERE r.id=$1 AND r.secret_hash=$2 FOR UPDATE`,[req.params.requestId,vobixFamilyRecovery.hashRecoverySecret(req.body?.recoverySecret)]);
+    if(!request.rows.length||vobixFamilyRecovery.requestState(request.rows[0])!=='ready')throw Object.assign(new Error('not_ready'),{status:403});
+    const token=createSessionToken(),tokenHash=hashSessionToken(token),expiresAt=new Date(Date.now()+SESSION_TTL_MS),row=request.rows[0];
+    await client.query('UPDATE sessions SET revoked=TRUE,last_used_at=NOW() WHERE user_id=$1',[row.user_id]);
+    await client.query(`INSERT INTO sessions(user_id,token_hash,device_name,platform,created_at,last_used_at,expires_at,revoked,recognized_at) VALUES($1,$2,$3,NULL,NOW(),NOW(),$4,FALSE,NOW())`,[row.user_id,tokenHash,row.device_label,expiresAt]);
+    await client.query(`UPDATE family_recovery_requests SET status='completed',completed_at=NOW() WHERE id=$1`,[row.id]);
+    await client.query('COMMIT');return res.json({ok:true,token,expiresAt});
+  }catch(error){await client.query('ROLLBACK');return res.status(error.status||500).json({ok:false,msg:error.status?'Aún no se puede completar la recuperación':'No se pudo completar'});}finally{client.release();}
+});
 
 // ======================================================
 // CAPA 103 — VOBIX RUTA PROTEGIDA

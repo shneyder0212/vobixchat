@@ -1465,6 +1465,59 @@ async function initializeDatabase() {
       );
     `);
 
+    // CAPA 108 — recuperación por consenso familiar.
+    await database.query(`
+      CREATE TABLE IF NOT EXISTS family_recovery_plans (
+        user_id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+        enabled BOOLEAN NOT NULL DEFAULT FALSE,
+        threshold_required SMALLINT NOT NULL DEFAULT 2 CHECK(threshold_required BETWEEN 2 AND 5),
+        consented_at TIMESTAMPTZ,
+        consent_version VARCHAR(24) NOT NULL DEFAULT 'family-recovery-v1',
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+    `);
+    await database.query(`
+      CREATE TABLE IF NOT EXISTS family_recovery_members (
+        user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        relationship_id UUID NOT NULL REFERENCES guardian_relationships(id) ON DELETE CASCADE,
+        guardian_user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        added_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        PRIMARY KEY(user_id,guardian_user_id),
+        UNIQUE(user_id,relationship_id),
+        CHECK(user_id<>guardian_user_id)
+      );
+    `);
+    await database.query(`
+      CREATE TABLE IF NOT EXISTS family_recovery_requests (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        secret_hash CHAR(64) NOT NULL CHECK(secret_hash ~ '^[a-f0-9]{64}$'),
+        device_label VARCHAR(80) NOT NULL,
+        threshold_required SMALLINT NOT NULL CHECK(threshold_required BETWEEN 2 AND 5),
+        status VARCHAR(24) NOT NULL DEFAULT 'pending'
+          CHECK(status IN ('pending','approved','cancelled','completed','expired','rejected')),
+        ready_at TIMESTAMPTZ,
+        expires_at TIMESTAMPTZ NOT NULL,
+        completed_at TIMESTAMPTZ,
+        cancelled_at TIMESTAMPTZ,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+    `);
+    await database.query(`
+      CREATE UNIQUE INDEX IF NOT EXISTS family_recovery_one_open_request
+      ON family_recovery_requests(user_id) WHERE status IN ('pending','approved');
+    `);
+    await database.query(`
+      CREATE TABLE IF NOT EXISTS family_recovery_votes (
+        request_id UUID NOT NULL REFERENCES family_recovery_requests(id) ON DELETE CASCADE,
+        guardian_user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        decision VARCHAR(12) NOT NULL CHECK(decision IN ('approved','rejected')),
+        decided_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        PRIMARY KEY(request_id,guardian_user_id)
+      );
+    `);
+    await database.query(`CREATE INDEX IF NOT EXISTS family_recovery_guardian_idx ON family_recovery_members(guardian_user_id,user_id);`);
+
     // ====================================================
     // CAPA 103 — VOBIX RUTA PROTEGIDA
     // Ubicación temporal y solo para guardianes aceptados.
