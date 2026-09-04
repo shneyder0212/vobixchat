@@ -4410,6 +4410,8 @@
 
       conversationsLoadSequence: 0,
 
+      peopleSearchSequence: 0,
+
       replyToMessage: null,
 
       editingMessage: null,
@@ -6411,6 +6413,12 @@
       }
 
 
+      const searchSequence = ++app.peopleSearchSequence;
+      const searchIsCurrent = () =>
+        searchSequence === app.peopleSearchSequence &&
+        input.value.trim() === query;
+
+
       container.innerHTML =
         '<div class="vobixStatusMessage">' +
         'Buscando…' +
@@ -6434,12 +6442,17 @@
           );
 
 
+        if (!searchIsCurrent()) return;
+
+
         renderPeopleResults(
           users
         );
 
 
       } catch (error) {
+
+        if (!searchIsCurrent()) return;
 
         console.error(
           '[VOBIXCHAT BUSCAR]',
