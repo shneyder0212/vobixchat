@@ -8646,9 +8646,11 @@
       }
 
       const uploadFile = isImage ? await optimizeImageForUpload(file) : file;
+      const clientMessageId = createCallId();
       const form = new FormData();
       form.append('file', uploadFile);
       form.append('conversationId', cid);
+      form.append('clientMessageId', clientMessageId);
       form.append('type', kind);
       form.append('originSource', 'vobix-upload');
       if (isImage) {
@@ -8671,6 +8673,7 @@
         const data = useResumableUpload
           ? await uploadResumableChatFile(uploadFile, {
               conversationId: cid,
+              clientMessageId,
               type: kind,
               originSource: 'vobix-upload',
               viewOnce
@@ -8908,6 +8911,8 @@
                 'conversationId',
                 conversationId
               );
+
+              form.append('clientMessageId', createCallId());
 
               form.append('originSource', 'vobix-camera');
 
@@ -12865,6 +12870,8 @@
         'conversationId',
         conversationId
       );
+
+      form.append('clientMessageId', createCallId());
 
       form.append('dataMode', app.recordingDataMode || app.dataMode || 'full');
       form.append('audioBitsPerSecond', String(app.recordingAudioBitsPerSecond || 32000));

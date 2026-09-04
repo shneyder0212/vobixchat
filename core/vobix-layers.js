@@ -98,6 +98,7 @@ const VOBIX_LAYERS = Object.freeze([
   ,{ id:'114', name:'Reintentos sin Alterar Historial', status:'en_validacion', scope:'Un reintento ya confirmado no cambia la actividad de la conversación ni la reordena artificialmente en la bandeja.' }
   ,{ id:'115', name:'Identidad de Mensaje Vinculada', status:'en_validacion', scope:'Un identificador de envío queda ligado a su conversación, tipo y contenido originales; reutilizarlo con otra intención se rechaza.' }
   ,{ id:'116', name:'Confirmación Obligatoria de Envío', status:'en_validacion', scope:'Todo mensaje nuevo por HTTP o Socket exige un identificador de cliente válido para que la deduplicación nunca quede desactivada.' }
+  ,{ id:'117', name:'Archivos y Notas de Voz sin Duplicados', status:'en_validacion', scope:'Fotos, vídeos, documentos y audios vinculan su identificador a la conversación, tipo y huella SHA-256; los reintentos no emiten ni notifican dos veces.' }
 ]);
 
 function getVobixLayers() {

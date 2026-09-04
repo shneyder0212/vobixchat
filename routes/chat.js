@@ -4792,6 +4792,7 @@ router.post('/files/resumable/:uploadId/complete', async (req, res) => {
   };
   req.body = {
     conversationId: session.conversationId,
+    clientMessageId: session.clientUploadId,
     type: session.requestedType,
     originSource: session.originSource,
     viewOnce: session.viewOnce
@@ -4844,6 +4845,13 @@ async function uploadChatFileHandler(
       req.body.conversation_id
     );
 
+  const rawClientMessageId = String(
+    req.body.clientMessageId || req.body.client_message_id || ''
+  ).trim();
+  const clientMessageId = /^[A-Za-z0-9_-]{8,100}$/.test(rawClientMessageId)
+    ? rawClientMessageId
+    : null;
+
 
   /* ======================================================
      VALIDACIONES
@@ -4877,6 +4885,15 @@ async function uploadChatFileHandler(
           'No se recibió ningún archivo'
       });
 
+  }
+
+  if (!clientMessageId) {
+    removeUploadedFile(req.file);
+    return res.status(400).json({
+      ok:false,
+      code:'client_message_id_required',
+      msg:'El archivo necesita un identificador seguro'
+    });
   }
 
 
@@ -5072,7 +5089,8 @@ async function uploadChatFileHandler(
           origin_device_recognized,
           origin_location_shared,
           origin_capture_at,
-          origin_session_id
+          origin_session_id,
+          client_message_id
         )
 
         VALUES
@@ -5101,8 +5119,13 @@ async function uploadChatFileHandler(
           $11,
           FALSE,
           $12,
-          $13
+          $13,
+          $14
         )
+
+        ON CONFLICT (sender_user_id, client_message_id)
+        WHERE client_message_id IS NOT NULL
+        DO UPDATE SET client_message_id = EXCLUDED.client_message_id
 
         RETURNING
           id,
@@ -5127,7 +5150,9 @@ async function uploadChatFileHandler(
           origin_location_shared,
           origin_capture_at,
           origin_session_id,
-          origin_attestation_hmac
+          origin_attestation_hmac,
+          client_message_id,
+          (xmax = 0) AS inserted
         `,
         [
           conversationId,
@@ -5142,12 +5167,28 @@ async function uploadChatFileHandler(
           originUserVerified,
           originDeviceRecognized,
           originCapturedAt,
-          capturedInsideVobix ? req.vobixSession?.id : null
+          capturedInsideVobix ? req.vobixSession?.id : null,
+          clientMessageId
         ]
       );
 
     let persistedRow = result.rows[0];
-    if (capturedInsideVobix) {
+    if (!matchesPersistedMessage(persistedRow, {
+      conversationId,
+      content:'',
+      messageType,
+      originSha256
+    })) {
+      await r2Storage.deleteChatFile(permanentObjectKey).catch(() => {});
+      removeUploadedFile(req.file);
+      return res.status(409).json({ok:false,code:'client_message_id_conflict',msg:'El identificador ya pertenece a otro archivo'});
+    }
+    const inserted = persistedRow.inserted !== false;
+    if (!inserted) {
+      await r2Storage.deleteChatFile(permanentObjectKey).catch(() => {});
+      removeUploadedFile(req.file);
+    }
+    if (inserted && capturedInsideVobix) {
       const payload = {
         messageId:persistedRow.id,
         sha256:originSha256,
@@ -5165,7 +5206,7 @@ async function uploadChatFileHandler(
            RETURNING id,conversation_id,sender_user_id,content,message_type,file_url,file_name,mime_type,
            created_at,updated_at,edited,deleted,expires_at,view_once,origin_sha256,origin_source,
            origin_sealed_at,origin_user_verified,origin_device_recognized,origin_location_shared,
-           origin_capture_at,origin_session_id,origin_attestation_hmac`,
+           origin_capture_at,origin_session_id,origin_attestation_hmac,client_message_id`,
           [signature, persistedRow.id]
         );
         persistedRow = attested.rows[0];
@@ -5173,7 +5214,7 @@ async function uploadChatFileHandler(
     }
 
 
-    await database.query(
+    if (inserted) await database.query(
       `
       UPDATE conversations
 
@@ -5196,11 +5237,13 @@ async function uploadChatFileHandler(
       );
 
 
-    await notifyPrivateConversation(
-      req,
-      room,
-      message
-    );
+    if (inserted) {
+      await notifyPrivateConversation(
+        req,
+        room,
+        message
+      );
+    }
 
 
     return res
@@ -5208,6 +5251,8 @@ async function uploadChatFileHandler(
       .json({
 
         ok: true,
+
+        duplicate: !inserted,
 
         message,
 
@@ -5219,22 +5264,22 @@ async function uploadChatFileHandler(
         file: {
 
           url:
-            fileUrl,
+            message.fileUrl || fileUrl,
 
           fileUrl:
-            fileUrl,
+            message.fileUrl || fileUrl,
 
           file_url:
-            fileUrl,
+            message.fileUrl || fileUrl,
 
           name:
-            originalFileName,
+            message.fileName || originalFileName,
 
           fileName:
-            originalFileName,
+            message.fileName || originalFileName,
 
           file_name:
-            originalFileName,
+            message.fileName || originalFileName,
 
           mimeType:
             mimeType,
