@@ -86,6 +86,7 @@ const { containsSensitiveData, localPremiumHelp } = require('./core/premium-help
 
 const vobixLearn = require('./core/vobix-learn');
 const { localTutorReply, tutorSystemPrompt } = require('./core/learning-tutor');
+const { buildLessonMaterial } = require('./core/learning-content');
 
 const {
   createMeetingCode,
@@ -1750,6 +1751,15 @@ app.get('/api/learn/v2/courses/:courseKey/levels/:levelNumber', requireAuth, (re
   if (!level) return res.status(404).json({ ok:false, code:'learning_level_not_found' });
   res.setHeader('Cache-Control', 'private, max-age=300');
   return res.json({ ok:true, level });
+});
+
+app.get('/api/learn/v2/courses/:courseKey/levels/:levelNumber/lessons/:lessonNumber/content', requireAuth, (req, res) => {
+  const course = vobixLearn.getCourse(req.params.courseKey);
+  const lesson = vobixLearn.buildLesson(req.params.courseKey, req.params.levelNumber, req.params.lessonNumber);
+  const content = buildLessonMaterial(course, lesson);
+  if (!content) return res.status(404).json({ ok:false, code:'learning_content_not_found' });
+  res.setHeader('Cache-Control', 'private, max-age=300');
+  return res.json({ ok:true, lesson, content });
 });
 
 app.get('/api/learn/v2/profile/:courseKey', requireAuth, async (req, res) => {
