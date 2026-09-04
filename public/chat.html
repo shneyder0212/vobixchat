@@ -4402,6 +4402,8 @@
 
       receiptRetryTimer: null,
 
+      recentIncomingMessages: new Map(),
+
       replyToMessage: null,
 
       editingMessage: null,
@@ -10761,6 +10763,66 @@
     }
 
 
+    function normalizeIncomingMessage(payload) {
+      if (!payload || typeof payload !== 'object') return null;
+
+      const nested = payload.message;
+      if (!nested || typeof nested !== 'object' || Array.isArray(nested)) {
+        return payload;
+      }
+
+      const normalized = { ...nested };
+      normalized.conversationId =
+        normalized.conversationId ||
+        normalized.conversation_id ||
+        payload.conversationId ||
+        payload.conversation_id ||
+        null;
+      return normalized;
+    }
+
+    function incomingMessageEventKey(message) {
+      const messageId =
+        message?.id ||
+        message?._id ||
+        message?.messageId ||
+        message?.message_id ||
+        message?.clientMessageId ||
+        message?.client_message_id ||
+        null;
+      if (!messageId) return '';
+
+      const incomingConversationId =
+        message?.conversationId ||
+        message?.conversation_id ||
+        message?.conversation?.id ||
+        message?.conversation?._id ||
+        'unknown';
+      return `${String(incomingConversationId)}:${String(messageId)}`;
+    }
+
+    function isDuplicateIncomingMessage(message) {
+      const key = incomingMessageEventKey(message);
+      if (!key) return false;
+
+      const now = Date.now();
+      const ttl = 10 * 60 * 1000;
+      for (const [storedKey, timestamp] of app.recentIncomingMessages) {
+        if (now - timestamp > ttl) app.recentIncomingMessages.delete(storedKey);
+      }
+
+      if (app.recentIncomingMessages.has(key)) return true;
+      app.recentIncomingMessages.set(key, now);
+
+      while (app.recentIncomingMessages.size > 500) {
+        const oldestKey = app.recentIncomingMessages.keys().next().value;
+        if (!oldestKey) break;
+        app.recentIncomingMessages.delete(oldestKey);
+      }
+      return false;
+    }
+
+
     function mediaUrlFromMessage(message) {
       const file = message?.file || message?.attachment || {};
       const raw = file.url || file.secure_url || file.file_url || message?.fileUrl || message?.file_url || message?.url || '';
@@ -14266,9 +14328,18 @@
          =================================================== */
 
       const onIncomingMessage =
-        message => {
+        payload => {
+
+          const message = normalizeIncomingMessage(payload);
 
           if (!message) {
+
+            return;
+
+          }
+
+
+          if (isDuplicateIncomingMessage(message)) {
 
             return;
 
@@ -14287,6 +14358,21 @@
             message.conversation?.id ||
             message.conversation?._id ||
             null;
+
+
+          if (!activeId && incomingId) {
+
+            if (!messageIsMine(message)) {
+              playMessageSound();
+              showBrowserNotification(
+                'VOBIXCHAT',
+                message.text || message.message || 'Nuevo mensaje'
+              );
+            }
+            loadConversations();
+            return;
+
+          }
 
 
           /*
