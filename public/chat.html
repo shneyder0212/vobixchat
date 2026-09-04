@@ -10457,10 +10457,10 @@
         const isRead = !!(message.read_at || message.readAt || state === 'read');
         const isDelivered = !!(message.delivered_at || message.deliveredAt || state === 'delivered');
 
-        status.textContent = isFailed ? '!' : (isQueued ? '◷' : (isRead || isDelivered ? '✓✓' : '✓'));
-        if (isRead) status.classList.add('read');
-        if (isFailed) status.classList.add('failed');
-        status.title = isFailed ? 'No enviado' : (isQueued ? 'Pendiente de conexión' : (isRead ? 'Leído' : (isDelivered ? 'Entregado' : 'Enviado')));
+        setMessageStatusPresentation(
+          status,
+          isFailed ? 'failed' : (isQueued ? 'queued' : (isRead ? 'read' : (isDelivered ? 'delivered' : 'sent')))
+        );
         bubble.appendChild(status);
       }
 
@@ -11257,9 +11257,27 @@
       if (!status) return;
 
       const normalized = String(state || payload?.status || '').toLowerCase();
-      status.textContent = normalized === 'sent' ? '✓' : '✓✓';
+      setMessageStatusPresentation(status, normalized);
+    }
+
+    function setMessageStatusPresentation(status, state) {
+      if (!status) return;
+      const normalized = String(state || 'sent').toLowerCase();
+      const presentations = {
+        queued: { icon: '◷', label: 'Pendiente de conexión' },
+        pending: { icon: '◷', label: 'Pendiente de conexión' },
+        failed: { icon: '!', label: 'No enviado' },
+        sent: { icon: '✓', label: 'Enviado al servidor' },
+        delivered: { icon: '✓✓', label: 'Entregado al dispositivo' },
+        read: { icon: '✓✓', label: 'Leído' }
+      };
+      const presentation = presentations[normalized] || presentations.sent;
+      status.textContent = presentation.icon;
+      status.title = presentation.label;
+      status.setAttribute('role', 'img');
+      status.setAttribute('aria-label', presentation.label);
       status.classList.toggle('read', normalized === 'read');
-      status.title = normalized === 'read' ? 'Leído' : (normalized === 'delivered' ? 'Entregado' : 'Enviado');
+      status.classList.toggle('failed', normalized === 'failed');
     }
 
 
