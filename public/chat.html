@@ -13477,17 +13477,46 @@
 
     function saveConversationCache(conversations) {
       try {
-        localStorage.setItem('vobixchat_conversation_cache', JSON.stringify(conversations));
+        const safeConversations = Array.isArray(conversations)
+          ? conversations
+              .filter(item => item && typeof item === 'object' && conversationId(item))
+              .slice(0, 100)
+          : [];
+        const serialized = JSON.stringify({
+          version: 1,
+          savedAt: Date.now(),
+          conversations: safeConversations
+        });
+        if (new Blob([serialized]).size > 500000) {
+          console.warn('[VOBIXCHAT CONVERSATION CACHE] límite alcanzado');
+          return false;
+        }
+        localStorage.setItem('vobixchat_conversation_cache', serialized);
+        return true;
       } catch (error) {
         console.warn('[VOBIXCHAT CONVERSATION CACHE SAVE]', error);
+        return false;
       }
     }
 
     function readConversationCache() {
       try {
-        const value = JSON.parse(localStorage.getItem('vobixchat_conversation_cache') || '[]');
-        return Array.isArray(value) ? value : [];
+        const value = JSON.parse(localStorage.getItem('vobixchat_conversation_cache') || 'null');
+        const legacyConversations = Array.isArray(value) ? value : null;
+        const savedAt = Number(value?.savedAt || 0);
+        const cacheExpired = savedAt > 0 && Date.now() - savedAt > 7 * 24 * 60 * 60 * 1000;
+        if (cacheExpired) {
+          localStorage.removeItem('vobixchat_conversation_cache');
+          return [];
+        }
+        const conversations = legacyConversations || value?.conversations;
+        return Array.isArray(conversations)
+          ? conversations
+              .filter(item => item && typeof item === 'object' && conversationId(item))
+              .slice(0, 100)
+          : [];
       } catch (error) {
+        try { localStorage.removeItem('vobixchat_conversation_cache'); } catch (_) {}
         return [];
       }
     }
