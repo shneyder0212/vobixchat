@@ -4145,6 +4145,16 @@ io.on(
                 String(userId)
               ]),
 
+            group: true,
+
+            members:
+              new Set([
+                String(userId)
+              ]),
+
+            expelled:
+              new Set(),
+
             invited:
               new Set(
                 otherParticipants.map(
@@ -4159,6 +4169,10 @@ io.on(
               Date.now()
 
           };
+
+          for (const participant of otherParticipants) {
+            call.members.add(String(participant.user_id));
+          }
 
 
           activeCalls.set(
@@ -4914,6 +4928,12 @@ io.on(
             targetUserId
           );
 
+          if (call.group) {
+            call.members = call.members || new Set([String(call.callerId)]);
+            call.members.add(targetUserId);
+            call.expelled?.delete(targetUserId);
+          }
+
 
           // ==============================================
           // ENVIAR LLAMADA ENTRANTE AL NUEVO USUARIO
@@ -5069,7 +5089,8 @@ io.on(
         const currentUserKey = String(userId);
         const allowed = call && (
           call.participants.has(currentUserKey) ||
-          call.invited.has(currentUserKey)
+          call.invited.has(currentUserKey) ||
+          (call.group && call.members?.has(currentUserKey))
         );
 
         if (!allowed) {
@@ -5077,6 +5098,33 @@ io.on(
             ok: true,
             ended: false,
             code: callId && endedCalls.has(callId) ? 'call_already_ended' : 'call_not_found'
+          });
+          return;
+        }
+
+        if (call.group && String(call.callerId) !== currentUserKey) {
+          call.participants.delete(currentUserKey);
+          call.invited.delete(currentUserKey);
+          await socket.leave(callRoom(callId));
+          io.to(callRoom(callId)).emit('call:user-left', {
+            callId,
+            conversationId: call.conversationId,
+            userId,
+            canRejoin: true,
+            participants: Array.from(call.participants)
+          });
+          io.to(userRoom(userId)).emit('call:rejoin-available', {
+            callId,
+            conversationId: call.conversationId,
+            type: call.type,
+            participants: Array.from(call.participants)
+          });
+          if (typeof callback === 'function') callback({
+            ok: true,
+            ended: false,
+            code: 'group_call_left',
+            canRejoin: true,
+            callId
           });
           return;
         }
@@ -5094,6 +5142,77 @@ io.on(
         console.error('VOBIXCHAT CALL END ERROR:', error);
         if (typeof callback === 'function') callback({ ok:false });
       }
+    });
+
+    socket.on('call:rejoin', async (payload = {}, callback) => {
+      try {
+        const callId = normalizeCallId(payload.callId);
+        const call = callId ? activeCalls.get(callId) : null;
+        const currentUserKey = String(userId);
+        if (!call || !call.group) {
+          if (typeof callback === 'function') callback({ ok:false, code:'call_not_found' });
+          return;
+        }
+        if (call.expelled?.has(currentUserKey) || !call.members?.has(currentUserKey)) {
+          if (typeof callback === 'function') callback({ ok:false, code:'call_rejoin_forbidden' });
+          return;
+        }
+        call.rejoining = call.rejoining || new Set();
+        if (call.rejoining.has(currentUserKey)) {
+          if (typeof callback === 'function') callback({ ok:false, code:'call_rejoin_in_progress' });
+          return;
+        }
+        call.rejoining.add(currentUserKey);
+        call.participants.add(currentUserKey);
+        call.invited.delete(currentUserKey);
+        await socket.join(callRoom(callId));
+        const participants = Array.from(call.participants);
+        io.to(callRoom(callId)).emit('call:participant-rejoined', {
+          callId,
+          conversationId: call.conversationId,
+          userId,
+          type: call.type,
+          participants
+        });
+        if (typeof callback === 'function') callback({
+          ok:true,
+          callId,
+          conversationId:call.conversationId,
+          type:call.type,
+          participants
+        });
+        call.rejoining.delete(currentUserKey);
+      } catch (error) {
+        console.error('VOBIXCHAT CALL REJOIN ERROR:', error);
+        if (typeof callback === 'function') callback({ ok:false, code:'call_rejoin_failed' });
+      }
+    });
+
+    socket.on('call:remove-user', async (payload = {}, callback) => {
+      const callId = normalizeCallId(payload.callId);
+      const targetUserId = String(payload.userId || payload.targetUserId || '').trim();
+      const call = callId ? activeCalls.get(callId) : null;
+      if (!call?.group || String(call.callerId) !== String(userId) || !targetUserId) {
+        if (typeof callback === 'function') callback({ ok:false, code:'call_remove_forbidden' });
+        return;
+      }
+      call.members.delete(targetUserId);
+      call.participants.delete(targetUserId);
+      call.invited.delete(targetUserId);
+      call.expelled = call.expelled || new Set();
+      call.expelled.add(targetUserId);
+      io.to(callRoom(callId)).emit('call:participant-removed', {
+        callId,
+        conversationId:call.conversationId,
+        userId:targetUserId,
+        participants:Array.from(call.participants)
+      });
+      io.to(userRoom(targetUserId)).emit('call:removed', {
+        callId,
+        conversationId:call.conversationId,
+        reason:'removed'
+      });
+      if (typeof callback === 'function') callback({ ok:true, callId, userId:targetUserId });
     });
 
     // ==================================================
@@ -5352,6 +5471,24 @@ io.on(
 
         const existingCall = activeCalls.get(callId);
         if (existingCall && !matchesCallIntent(existingCall, { callerId:userId, conversationId, type })) {
+          if (existingCall.group && existingCall.members?.has(String(userId)) && !existingCall.expelled?.has(String(userId))) {
+            existingCall.offer = offer;
+            existingCall.type = type;
+            existingCall.pendingIce = existingCall.pendingIce || [];
+            await socket.join(callRoom(callId));
+            for (const targetUserId of existingCall.participants) {
+              if (String(targetUserId) === String(userId)) continue;
+              io.to(userRoom(targetUserId)).emit('call:rejoin-offer', {
+                callId,
+                conversationId,
+                type,
+                offer,
+                fromUserId:userId
+              });
+            }
+            if (typeof callback === 'function') callback({ ok:true, callId, rejoin:true });
+            return;
+          }
           if (typeof callback === 'function') callback({ ok:false, code:'call_id_conflict', msg:'El identificador pertenece a otra llamada' });
           return;
         }
@@ -5433,17 +5570,21 @@ io.on(
         // Capa 129 — el primer socket que llega gana; no hay await entre
         // comprobar y registrar para que respuestas simultáneas no se intercalen.
         if (call.answeredSocketId || call.answeredBy) {
-          if (typeof callback === 'function') callback({
-            ok:false,
-            code:'call_already_answered',
-            answeredSocketId:call.answeredSocketId || null,
-            msg:'La llamada ya fue atendida'
-          });
-          return;
+          if (!call.group) {
+            if (typeof callback === 'function') callback({
+              ok:false,
+              code:'call_already_answered',
+              answeredSocketId:call.answeredSocketId || null,
+              msg:'La llamada ya fue atendida'
+            });
+            return;
+          }
         }
-        call.answeredBy = currentUserKey;
-        call.answeredSocketId = socket.id;
-        call.acceptedAt = call.acceptedAt || Date.now();
+        if (!call.group) {
+          call.answeredBy = currentUserKey;
+          call.answeredSocketId = socket.id;
+          call.acceptedAt = call.acceptedAt || Date.now();
+        }
 
         call.participants.add(currentUserKey);
         call.invited.delete(currentUserKey);
@@ -5455,11 +5596,13 @@ io.on(
           answeredSocketId:socket.id
         });
 
-        const targetUserId = String(call.callerId) === String(userId)
-          ? Array.from(call.participants).find(id => String(id) !== String(userId))
-          : String(call.callerId);
+        const targetUserIds = call.group
+          ? Array.from(call.participants).filter(id => String(id) !== String(userId))
+          : [String(call.callerId) === String(userId)
+              ? Array.from(call.participants).find(id => String(id) !== String(userId))
+              : String(call.callerId)];
 
-        if (targetUserId) {
+        for (const targetUserId of targetUserIds.filter(Boolean)) {
           io.to(userRoom(targetUserId)).emit('call:answer', {
             callId,
             conversationId: call.conversationId,
@@ -6380,6 +6523,20 @@ io.on(
 
           }
 
+
+          if (call.group && String(call.callerId) !== userKey) {
+            call.participants.delete(userKey);
+            call.invited.delete(userKey);
+            io.to(callRoom(callId)).emit('call:user-left', {
+              callId,
+              conversationId: call.conversationId,
+              userId,
+              disconnected: true,
+              canRejoin: true,
+              participants: Array.from(call.participants)
+            });
+            continue;
+          }
 
           endActiveCall(
             callId,

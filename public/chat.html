@@ -54,8 +54,6 @@
       --topbar-height: 72px;
       --composer-height: 78px;
     }
-
-
     /* =====================================================
        RESET
        ===================================================== */
@@ -4173,6 +4171,8 @@
     class="callVideoArea"
   >
 
+    <button id="rejoinGroupCallButton" class="profileAction primary" type="button" hidden>Volver a la llamada</button>
+
     <div id="callStatus" class="callStatus" aria-live="polite">Conectando…</div>
 
     <div id="audioCallIdentity" class="audioCallIdentity">
@@ -4374,6 +4374,10 @@
       pendingIceCandidates: [],
 
       pendingCallOffer: null,
+
+      groupRejoin: null,
+
+      groupRejoinInFlight: false,
 
       incomingRingTimer: null,
 
@@ -5015,6 +5019,9 @@
 
       callVideoArea:
         $('callVideoArea'),
+
+      rejoinGroupCallButton:
+        $('rejoinGroupCallButton'),
 
       callStatus:
         $('callStatus'),
@@ -17160,7 +17167,78 @@
       };
 
       endLocalCall(false);
+      app.groupRejoin = null;
+      if (elements.rejoinGroupCallButton) elements.rejoinGroupCallButton.hidden = true;
       notifyUser(messages[reason] || 'Llamada finalizada');
+    }
+
+
+    function showGroupRejoin(payload = {}) {
+      if (!payload.callId || !payload.conversationId) return;
+      app.groupRejoin = {
+        callId: String(payload.callId),
+        conversationId: String(payload.conversationId),
+        type: payload.type === 'video' ? 'video' : 'audio',
+        participants: Array.isArray(payload.participants) ? payload.participants : []
+      };
+      if (elements.rejoinGroupCallButton) elements.rejoinGroupCallButton.hidden = false;
+    }
+
+
+    async function rejoinGroupCall() {
+      const pending = app.groupRejoin;
+      if (!pending || app.groupRejoinInFlight || app.callId) return;
+      app.groupRejoinInFlight = true;
+      try {
+        const result = await new Promise(resolve => {
+          app.socket?.timeout(8000).emit('call:rejoin', {
+            callId: pending.callId,
+            conversationId: pending.conversationId
+          }, (error, response) => resolve(error ? { ok:false, code:'call_rejoin_timeout' } : response));
+        });
+        if (!result?.ok) throw new Error(result?.msg || 'La llamada ya no está disponible');
+        app.callId = pending.callId;
+        app.callType = pending.type;
+        await prepareCallMedia(app.callType);
+        showCallScreen(app.callType);
+        const pc = createPeerConnection();
+        if (!pc) throw new Error('No se pudo crear la conexión');
+        const offer = await pc.createOffer();
+        await pc.setLocalDescription(offer);
+        app.socket?.emit('call:offer', {
+          callId: app.callId,
+          conversationId: pending.conversationId,
+          type: pending.type,
+          offer: pc.localDescription
+        });
+        if (elements.rejoinGroupCallButton) elements.rejoinGroupCallButton.hidden = true;
+        app.groupRejoinInFlight = false;
+        notifyUser('Volviendo a la llamada…');
+      } catch (error) {
+        app.callId = null;
+        app.groupRejoinInFlight = false;
+        notifyUser(error.message || 'No se pudo volver a la llamada');
+      }
+    }
+
+
+    elements.rejoinGroupCallButton?.addEventListener('click', rejoinGroupCall);
+
+
+    async function handleGroupRejoinOffer(payload = {}) {
+      if (!payload.offer || String(payload.callId || '') !== String(app.callId || '') || !app.peerConnection) return;
+      try {
+        await app.peerConnection.setRemoteDescription(new RTCSessionDescription(payload.offer));
+        const answer = await app.peerConnection.createAnswer();
+        await app.peerConnection.setLocalDescription(answer);
+        app.socket?.emit('call:answer', {
+          callId: app.callId,
+          conversationId: payload.conversationId || conversationId(app.conversation),
+          answer: app.peerConnection.localDescription
+        });
+      } catch (error) {
+        notifyUser('No se pudo actualizar la conexión del participante');
+      }
     }
 
 
@@ -17226,6 +17304,23 @@
         'call:ended',
         handleRemoteCallEnd
       );
+
+      app.socket.on('call:rejoin-available', showGroupRejoin);
+      app.socket.on('call:rejoin-offer', handleGroupRejoinOffer);
+      app.socket.on('call:removed', payload => {
+        if (String(payload?.callId || '') !== String(app.groupRejoin?.callId || '')) return;
+        app.groupRejoin = null;
+        if (elements.rejoinGroupCallButton) elements.rejoinGroupCallButton.hidden = true;
+        notifyUser('Has sido expulsado de la llamada');
+      });
+      app.socket.on('call:participant-rejoined', payload => {
+        if (String(payload?.callId || '') !== String(app.callId || '')) return;
+        if (elements.callStatus) elements.callStatus.textContent = 'Participantes actualizados';
+      });
+      app.socket.on('call:user-left', payload => {
+        if (String(payload?.callId || '') !== String(app.callId || '')) return;
+        if (elements.callStatus) elements.callStatus.textContent = 'Participantes actualizados';
+      });
 
     }
 

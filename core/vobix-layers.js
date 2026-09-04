@@ -110,6 +110,7 @@ const VOBIX_LAYERS = Object.freeze([
   ,{ id:'130', name:'Finalización Sincronizada de Llamadas', status:'en_validacion', scope:'Cualquier rechazo, cancelación, cuelgue, desconexión o expiración finaliza la llamada en todos los dispositivos; detiene tonos, temporizadores y media, cierra WebRTC y rechaza señalización tardía.' }
   ,{ id:'131', name:'Audio y Vídeo Activos al Contestar', status:'en_validacion', scope:'Al contestar, solicita la media necesaria, conecta audio o vídeo remoto al elemento adecuado, reproduce de forma compatible con móvil y libera recursos si falla o termina la llamada.' }
   ,{ id:'132', name:'Notas de Voz Fiables', status:'en_validacion', scope:'Graba, cancela, sube, entrega y reproduce audio con duración, progreso, una sola vista, validación de tipo y conversación, reintentos idempotentes y liberación completa de recursos.' }
+  ,{ id:'133', name:'Reingreso Seguro a Llamadas Grupales', status:'en_validacion', scope:'Los miembros de una llamada grupal conservan su autorización mientras la sesión siga activa; pueden salir, reconectar o volver con una conexión multimedia nueva, sin duplicados y sin reingreso después de terminar o ser expulsados.' }
 ]);
 
 function getVobixLayers() {
