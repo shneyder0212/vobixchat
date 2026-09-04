@@ -11,9 +11,10 @@ const PLANS = Object.freeze([
   }),
   Object.freeze({
     id: 'premium',
-    name: 'Vobix Premium',
+    name: 'Vobix Plus',
     rank: PLAN_ORDER.premium,
-    billingEnabled: false
+    billingEnabled: false,
+    promise: 'Más almacenamiento, traducción avanzada y herramientas de IA.'
   }),
   Object.freeze({
     id: 'business',
@@ -24,13 +25,26 @@ const PLANS = Object.freeze([
 ]);
 
 const CAPABILITIES = Object.freeze([
-  Object.freeze({ id: 'chat', name: 'VobixChat', minimumPlan: 'free', status: 'active' }),
-  Object.freeze({ id: 'meet', name: 'Vobix Meet', minimumPlan: 'premium', status: 'preparation' }),
+  Object.freeze({ id: 'chat', name: 'VobixChat personal', minimumPlan: 'free', status: 'active', advertisingInPrivateChats:false }),
+  Object.freeze({ id: 'plus-storage', name: 'Almacenamiento ampliado', minimumPlan: 'premium', status: 'preparation' }),
+  Object.freeze({ id: 'plus-translation', name: 'Traducción avanzada', minimumPlan: 'premium', status: 'preparation' }),
+  Object.freeze({ id: 'plus-ai', name: 'Herramientas de IA', minimumPlan: 'premium', status: 'preparation' }),
+  Object.freeze({ id: 'meet', name: 'Vobix Meet Pro', minimumPlan: 'premium', status: 'preparation' }),
   Object.freeze({ id: 'remote', name: 'Vobix Remote', minimumPlan: 'premium', status: 'preparation' }),
   Object.freeze({ id: 'verify-sign', name: 'Vobix Verify Sign', minimumPlan: 'premium', status: 'legal-design' }),
-  Object.freeze({ id: 'trade', name: 'Vobix Trade', minimumPlan: 'premium', status: 'preparation' }),
-  Object.freeze({ id: 'business', name: 'Vobix Business', minimumPlan: 'business', status: 'preparation' })
+  Object.freeze({ id: 'politics', name: 'Vobix Política', minimumPlan: 'premium', status: 'preparation' }),
+  Object.freeze({ id: 'trade', name: 'Vobix Trade', minimumPlan: 'premium', status: 'regulated-design', isolated:true, riskControlsRequired:true }),
+  Object.freeze({ id: 'business', name: 'Vobix Business', minimumPlan: 'business', status: 'preparation', features:['catalog','bookings','invoices','multi-agent','analytics'] })
 ]);
+
+const COMMERCIAL_PRINCIPLES = Object.freeze({
+  privateChatPrice:'free',
+  advertisingInPrivateChats:false,
+  sellPrivateConversationData:false,
+  billingEnabled:false,
+  premiumActivation:'explicit-user-consent',
+  tradeIsolation:'separate-service-and-data-boundary'
+});
 
 function normalizePlan(plan) {
   const value = String(plan || '').trim().toLowerCase();
@@ -72,6 +86,7 @@ function getPremiumCatalog(plan = 'free') {
   const normalizedPlan = normalizePlan(plan);
   return {
     billingEnabled: false,
+    principles: { ...COMMERCIAL_PRINCIPLES },
     currentPlan: normalizedPlan,
     plans: PLANS.map(item => ({ ...item })),
     capabilities: CAPABILITIES.map(item => capabilityAccess(item, normalizedPlan))
@@ -80,6 +95,7 @@ function getPremiumCatalog(plan = 'free') {
 
 module.exports = {
   CAPABILITIES,
+  COMMERCIAL_PRINCIPLES,
   PLANS,
   capabilityAccess,
   getCapabilityAccess,
