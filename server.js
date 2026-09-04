@@ -6890,6 +6890,69 @@ app.get('/api/sfu/status', requireAuth, (req, res) => {
   });
 });
 
+app.post('/api/meet/sfu/token', requireAuth, async (req, res) => {
+  res.setHeader('Cache-Control', 'no-store');
+  const roomId = String(req.body?.roomId || '').trim();
+  const userId = String(req.vobixUser?.id || '').trim();
+  if (!/^[0-9a-f-]{36}$/i.test(roomId)) {
+    return res.status(400).json({ ok:false, code:'invalid_meeting_room' });
+  }
+
+  const sfu = getSfuConfiguration();
+  if (!sfu.url || !sfu.apiKey || !sfu.apiSecret) {
+    return res.status(503).json({ ok:false, code:'SFU_NOT_CONFIGURED', msg:'El servidor SFU aún no está configurado' });
+  }
+
+  try {
+    const result = await database.query(
+      `SELECT p.role, p.state, r.status, r.expires_at
+       FROM meet_participants p
+       JOIN meet_rooms r ON r.id = p.room_id
+       WHERE p.room_id=$1 AND p.user_id=$2
+         AND p.state='admitted'
+         AND r.status IN ('scheduled', 'active')
+         AND r.expires_at > NOW()
+       LIMIT 1`,
+      [roomId, userId]
+    );
+    const membership = result.rows[0];
+    if (!membership) {
+      return res.status(403).json({ ok:false, code:'meet_admission_required' });
+    }
+
+    // En salas masivas solo anfitrión y moderadores emiten por defecto.
+    // Esto evita 1.000 cámaras publicando al mismo tiempo y protege el SFU.
+    const canPublish = membership.role === 'owner' || membership.role === 'moderator';
+    const room = `vobix-meet-${roomId}`;
+    const identity = `vobix-${userId}`;
+    const token = jwt.sign({
+      video:{
+        roomJoin:true,
+        room,
+        canPublish,
+        canSubscribe:true,
+        canPublishData:true,
+        roomAdmin:membership.role === 'owner'
+      },
+      metadata:JSON.stringify({
+        userId,
+        roomId,
+        role:membership.role,
+        username:String(req.vobixUser?.username || 'VOBIXCHAT').slice(0, 80)
+      })
+    }, sfu.apiSecret, {
+      algorithm:'HS256',
+      issuer:sfu.apiKey,
+      subject:identity,
+      expiresIn:'10m'
+    });
+    return res.json({ ok:true, url:sfu.url, token, room, canPublish, expiresIn:600 });
+  } catch (error) {
+    console.error('VOBIX MEET | No se pudo emitir el permiso SFU:', error.message);
+    return res.status(500).json({ ok:false, code:'meet_sfu_token_failed' });
+  }
+});
+
 app.post('/api/sfu/token', requireAuth, (req, res) => {
   const callId = String(req.body?.callId || '').trim();
   const call = activeCalls.get(callId);
