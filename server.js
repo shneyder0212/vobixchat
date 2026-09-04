@@ -5371,13 +5371,19 @@ io.on(
           return;
         }
 
-        // Capa 167 — una sola respuesta gana en todos los dispositivos del
-        // destinatario. Los demás móviles/ordenadores deben dejar de timbrar.
-        if (call.answeredBy && String(call.answeredBy) !== currentUserKey) {
-          if (typeof callback === 'function') callback({ ok:false, msg:'La llamada ya fue atendida' });
+        // Capa 129 — el primer socket que llega gana; no hay await entre
+        // comprobar y registrar para que respuestas simultáneas no se intercalen.
+        if (call.answeredSocketId || call.answeredBy) {
+          if (typeof callback === 'function') callback({
+            ok:false,
+            code:'call_already_answered',
+            answeredSocketId:call.answeredSocketId || null,
+            msg:'La llamada ya fue atendida'
+          });
           return;
         }
         call.answeredBy = currentUserKey;
+        call.answeredSocketId = socket.id;
         call.acceptedAt = call.acceptedAt || Date.now();
 
         call.participants.add(currentUserKey);
@@ -5479,6 +5485,21 @@ io.on(
           if (typeof callback === 'function') {
             callback({ ok:false, msg:'No estás invitado a esta llamada' });
           }
+          return;
+        }
+
+        if (call.answeredSocketId || call.answeredBy) {
+          io.to(userRoom(userId)).emit('call:accepted-device', {
+            callId,
+            conversationId:call.conversationId,
+            answeredSocketId:call.answeredSocketId || null
+          });
+          if (typeof callback === 'function') callback({
+            ok:false,
+            code:'call_already_answered',
+            answeredSocketId:call.answeredSocketId || null,
+            msg:'La llamada ya fue atendida'
+          });
           return;
         }
 

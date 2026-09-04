@@ -4358,6 +4358,8 @@
 
       callId: null,
 
+      acceptingCall: false,
+
       pendingIceCandidates: [],
 
       pendingCallOffer: null,
@@ -16628,9 +16630,13 @@
 
     async function acceptPendingCall() {
 
+      if (app.acceptingCall) return;
+      app.acceptingCall = true;
+
       pauseAllChatMedia();
       const payload = app.pendingCallOffer;
       if (!payload?.offer) {
+        app.acceptingCall = false;
         hideIncomingCallPanel();
         return;
       }
@@ -17646,6 +17652,8 @@
 
       app.callId =
         null;
+
+      app.acceptingCall = false;
 
       app.answeredCallId =
         null;
