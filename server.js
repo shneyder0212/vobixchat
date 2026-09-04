@@ -108,7 +108,24 @@ const premiumHelpRate = new Map();
 const meetJoinRate = new Map();
 const emergencyTriggerRate = new Map();
 const learningTutorRate = new Map();
+const familyRecoveryRate = new Map();
 const SAFETY_CONSENT_VERSION = '2026-09-04.1';
+
+function familyRecoveryRateLimit(req, res, action, limit, windowMs) {
+  const fingerprint = crypto.createHash('sha256')
+    .update(`${req.ip || req.socket?.remoteAddress || 'unknown'}|${req.get('user-agent') || 'unknown'}`)
+    .digest('hex');
+  const attempt = vobixFamilyRecovery.consumeAttempt(
+    familyRecoveryRate,
+    `${action}:${fingerprint}`,
+    limit,
+    windowMs
+  );
+  if (attempt.allowed) return true;
+  res.set('Retry-After', String(Math.ceil(attempt.retryAfterMs / 1000)));
+  res.status(429).json({ok:false,msg:'Demasiados intentos. Espere antes de volver a probar.'});
+  return false;
+}
 
 
 // ======================================================
@@ -7317,6 +7334,7 @@ app.put('/api/family-recovery/plan',requireAuth,async(req,res)=>{
 });
 
 app.post('/api/family-recovery/start',async(req,res)=>{
+  if(!familyRecoveryRateLimit(req,res,'start',5,15*60*1000))return;
   const vobixId=String(req.body?.vobixId||'').trim().toLowerCase();
   if(!/^@[a-z0-9._-]{3,40}$/.test(vobixId))return res.status(400).json({ok:false,msg:'Vobix ID no válido'});
   try{
@@ -7364,11 +7382,13 @@ app.post('/api/family-recovery/:requestId/cancel',requireAuth,async(req,res)=>{
 });
 
 app.post('/api/family-recovery/:requestId/status',async(req,res)=>{
+  if(!familyRecoveryRateLimit(req,res,'status',20,5*60*1000))return;
   if(!vobixFamilyRecovery.validUuid(req.params.requestId))return res.status(400).json({ok:false,msg:'Solicitud no válida'});
   try{const result=await database.query(`SELECT r.id,r.status,r.device_label,r.threshold_required,r.ready_at,r.expires_at,(SELECT COUNT(*)::int FROM family_recovery_votes v WHERE v.request_id=r.id AND v.decision='approved') approval_count FROM family_recovery_requests r WHERE r.id=$1 AND r.secret_hash=$2`,[req.params.requestId,vobixFamilyRecovery.hashRecoverySecret(req.body?.recoverySecret)]);if(!result.rows.length)return res.status(404).json({ok:false,msg:'Recuperación no disponible'});return res.json({ok:true,state:vobixFamilyRecovery.requestState(result.rows[0]),request:result.rows[0]});}catch(error){return res.status(500).json({ok:false,msg:'No se pudo consultar'});}
 });
 
 app.post('/api/family-recovery/:requestId/complete',async(req,res)=>{
+  if(!familyRecoveryRateLimit(req,res,'complete',8,15*60*1000))return;
   if(!vobixFamilyRecovery.validUuid(req.params.requestId))return res.status(400).json({ok:false,msg:'Solicitud no válida'});
   const client=await database.pool.connect();
   try{

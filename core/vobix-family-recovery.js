@@ -31,6 +31,20 @@ function safeDeviceLabel(value) {
   return String(value || 'Nuevo dispositivo').replace(/<[^>]*>/g, ' ').replace(/[\r\n<>]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 80) || 'Nuevo dispositivo';
 }
 
+function consumeAttempt(store, key, limit, windowMs, now = Date.now()) {
+  if (!(store instanceof Map) || !key || !Number.isInteger(limit) || limit < 1 || !Number.isFinite(windowMs) || windowMs < 1000) {
+    return { allowed:false, retryAfterMs:windowMs || 1000 };
+  }
+  const recent = (store.get(key) || []).filter(timestamp => now - timestamp < windowMs);
+  if (recent.length >= limit) {
+    return { allowed:false, retryAfterMs:Math.max(1000, windowMs - (now - recent[0])) };
+  }
+  recent.push(now);
+  store.set(key, recent);
+  if (store.size > 5000) store.delete(store.keys().next().value);
+  return { allowed:true, retryAfterMs:0 };
+}
+
 function requestState(row, now = new Date()) {
   if (!row) return 'missing';
   if (['cancelled', 'completed', 'expired', 'rejected'].includes(row.status)) return row.status;
@@ -52,5 +66,6 @@ module.exports = {
   createRecoverySecret,
   hashRecoverySecret,
   safeDeviceLabel,
+  consumeAttempt,
   requestState
 };
