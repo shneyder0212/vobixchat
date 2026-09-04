@@ -1400,6 +1400,29 @@ async function initializeDatabase() {
       ON emergency_alerts(guardian_user_id, status, expires_at);
     `);
 
+    // Capa 101 — sobre opaco reservado para la futura carga E2E nativa.
+    // Los metadatos mínimos permiten entregar y confirmar el SOS web.
+    await database.query(`
+      CREATE TABLE IF NOT EXISTS rescue_alerts (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        client_alert_id VARCHAR(100) NOT NULL,
+        protected_user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        guardian_user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        relationship_id UUID NOT NULL REFERENCES guardian_relationships(id) ON DELETE CASCADE,
+        emergency_type VARCHAR(20) NOT NULL,
+        ciphertext TEXT NOT NULL,
+        latitude NUMERIC(9,5), longitude NUMERIC(9,5), accuracy_m INTEGER,
+        battery_percent SMALLINT,
+        silent BOOLEAN NOT NULL DEFAULT FALSE,
+        status VARCHAR(20) NOT NULL DEFAULT 'queued',
+        last_location_at TIMESTAMPTZ, delivered_at TIMESTAMPTZ,
+        acknowledged_at TIMESTAMPTZ, expires_at TIMESTAMPTZ NOT NULL,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        UNIQUE(protected_user_id, client_alert_id)
+      );
+    `);
+    await database.query(`CREATE INDEX IF NOT EXISTS rescue_alerts_recipient_idx ON rescue_alerts(guardian_user_id,status,created_at DESC);`);
+
     // ====================================================
     // CAPA 103 — VOBIX RUTA PROTEGIDA
     // Ubicación temporal y solo para guardianes aceptados.

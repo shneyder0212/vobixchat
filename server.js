@@ -37,6 +37,7 @@ const crypto =
 
 const vobixGuardian = require('./core/vobix-guardian');
 const vobixEmergency = require('./core/vobix-emergency');
+const vobixRescue = require('./core/vobix-rescue');
 const vobixProtectedRoute = require('./core/vobix-protected-route');
 
 const packageMetadata =
@@ -7024,6 +7025,79 @@ app.post('/api/emergency/alerts/:alertId/cancel', requireAuth, async (req, res) 
   } catch (error) {
     return res.status(500).json({ ok:false, msg:'No se pudo cancelar la alerta' });
   }
+});
+
+// ======================================================
+// CAPA 101 — VOBIX RED DE RESCATE (TRANSPORTE WEB)
+// La API autentica, limita y confirma el SOS web. El cifrado E2E de relevo y
+// Bluetooth/Wi-Fi Direct/satélite se habilitarán solo en las apps nativas.
+// ======================================================
+app.post('/api/rescue/alerts', requireAuth, async (req, res) => {
+  const clientId = vobixRescue.safeClientId(req.body?.clientAlertId);
+  const type = vobixRescue.safeEmergencyType(req.body?.emergencyType);
+  const ciphertext = vobixRescue.safeCiphertext(req.body?.ciphertext);
+  const location = vobixEmergency.safeLocation(req.body?.latitude, req.body?.longitude, req.body?.accuracy);
+  const battery = vobixRescue.safeBattery(req.body?.batteryPercent);
+  if (!clientId || !type || !ciphertext || !location) return res.status(400).json({ ok:false, msg:'Alerta de rescate no válida' });
+  try {
+    const guardian = await database.query(
+      `SELECT g.id,g.guardian_user_id FROM guardian_relationships g
+       JOIN emergency_settings s ON s.relationship_id=g.id AND s.user_id=g.protected_user_id
+       WHERE g.protected_user_id=$1 AND g.status='active' AND s.enabled=TRUE
+       AND s.consent_version=$2 AND s.limitations_accepted_at IS NOT NULL LIMIT 1`,
+      [req.vobixUser.id, SAFETY_CONSENT_VERSION]
+    );
+    if (!guardian.rows.length) return res.status(403).json({ ok:false, msg:'Activa primero el consentimiento y un Guardián Familiar' });
+    const row = guardian.rows[0];
+    const result = await database.query(
+      `INSERT INTO rescue_alerts(client_alert_id,protected_user_id,guardian_user_id,relationship_id,
+       emergency_type,ciphertext,latitude,longitude,accuracy_m,battery_percent,silent,last_location_at,expires_at)
+       VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,NOW(),NOW()+INTERVAL '24 hours')
+       ON CONFLICT(protected_user_id,client_alert_id) DO UPDATE SET
+       latitude=EXCLUDED.latitude,longitude=EXCLUDED.longitude,accuracy_m=EXCLUDED.accuracy_m,
+       battery_percent=EXCLUDED.battery_percent,last_location_at=NOW(),updated_at=NOW()
+       RETURNING id,status,created_at,expires_at`,
+      [clientId,req.vobixUser.id,row.guardian_user_id,row.id,type,ciphertext,
+       location.latitude,location.longitude,location.accuracy,battery,req.body?.silent===true]
+    );
+    await sendPushToUser(row.guardian_user_id, {
+      type:'rescue-alert', title:'Vobix Red de Rescate',
+      body:'Una persona de tu red autorizada necesita que abras Vobix.', url:'/rescue.html?received=1'
+    });
+    return res.status(202).json({ ok:true, accepted:true, alert:result.rows[0] });
+  } catch (error) {
+    console.error('VOBIX RESCUE CREATE ERROR:', error);
+    return res.status(500).json({ ok:false, msg:'No se pudo poner la alerta en cola' });
+  }
+});
+
+app.get('/api/rescue/alerts', requireAuth, async (req, res) => {
+  try {
+    const result = await database.query(
+      `SELECT r.id,r.client_alert_id,r.emergency_type,r.ciphertext,r.latitude,r.longitude,r.accuracy_m,
+       r.battery_percent,r.silent,r.status,r.last_location_at,r.delivered_at,r.acknowledged_at,r.created_at,
+       CASE WHEN r.guardian_user_id=$1 THEN 'guardian' ELSE 'protected' END AS role,u.username AS protected_username
+       FROM rescue_alerts r JOIN users u ON u.id=r.protected_user_id
+       WHERE (r.guardian_user_id=$1 OR r.protected_user_id=$1) AND r.expires_at>NOW()
+       ORDER BY r.created_at DESC LIMIT 50`, [req.vobixUser.id]
+    );
+    await database.query(`UPDATE rescue_alerts SET status='delivered',delivered_at=COALESCE(delivered_at,NOW()),updated_at=NOW()
+      WHERE guardian_user_id=$1 AND status='queued' AND expires_at>NOW()`, [req.vobixUser.id]);
+    return res.json({ ok:true, alerts:result.rows, nativeRelay:false });
+  } catch (error) { return res.status(500).json({ ok:false, msg:'No se pudo cargar la Red de Rescate' }); }
+});
+
+app.post('/api/rescue/alerts/:alertId/acknowledge', requireAuth, async (req, res) => {
+  try {
+    const result = await database.query(
+      `UPDATE rescue_alerts SET status='acknowledged',acknowledged_at=NOW(),updated_at=NOW()
+       WHERE id=$1 AND guardian_user_id=$2 AND status IN ('queued','delivered') AND expires_at>NOW()
+       RETURNING id,protected_user_id,acknowledged_at`, [req.params.alertId,req.vobixUser.id]
+    );
+    if (!result.rows.length) return res.status(404).json({ ok:false, msg:'Alerta no disponible' });
+    await sendPushToUser(result.rows[0].protected_user_id,{type:'rescue-ack',title:'Alerta recibida',body:'Tu familiar confirmó la recepción.',url:'/rescue.html'});
+    return res.json({ ok:true, acknowledgedAt:result.rows[0].acknowledged_at });
+  } catch (error) { return res.status(500).json({ ok:false, msg:'No se pudo confirmar la recepción' }); }
 });
 
 
