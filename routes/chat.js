@@ -4748,6 +4748,9 @@ router.put(
     const session = resumableSessionFor(req);
     const index = Number(req.params.index);
     if (!session) return res.status(404).json({ ok: false, msg: 'Subida no encontrada' });
+    if (session.completing) {
+      return res.status(409).json({ ok: false, code: 'upload_session_finalizing', msg: 'La subida se está finalizando' });
+    }
     if (!Number.isInteger(index) || index < 0 || index >= session.totalChunks || !Buffer.isBuffer(req.body)) {
       return res.status(400).json({ ok: false, msg: 'Fragmento no válido' });
     }
@@ -4839,6 +4842,9 @@ router.post('/files/resumable/:uploadId/complete', async (req, res) => {
 router.delete('/files/resumable/:uploadId', async (req, res) => {
   const session = resumableSessionFor(req);
   if (!session) return res.status(404).json({ ok: false, msg: 'Subida no encontrada' });
+  if (session.completing) {
+    return res.status(409).json({ ok: false, code: 'upload_session_finalizing', msg: 'La subida se está finalizando' });
+  }
   await removeResumableSession(session.uploadId);
   return res.json({ ok: true });
 });
