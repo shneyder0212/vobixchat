@@ -202,10 +202,25 @@ const io =
       ],
 
       maxHttpBufferSize:
-        10 * 1024 * 1024
+        10 * 1024 * 1024,
+
+      // Reduce CPU por compresión y permite recuperar conexiones móviles
+      // breves sin reconstruir toda la sesión.
+      perMessageDeflate: false,
+      pingInterval: 25000,
+      pingTimeout: 20000,
+      connectionStateRecovery: {
+        maxDisconnectionDuration: 2 * 60 * 1000,
+        skipMiddlewares: false
+      }
 
     }
   );
+
+server.keepAliveTimeout = 65000;
+server.headersTimeout = 70000;
+server.requestTimeout = 30000;
+server.maxRequestsPerSocket = 1000;
 
 
 // ======================================================
@@ -6799,6 +6814,25 @@ app.post('/api/meet/join', requireAuth, async (req, res) => {
   } finally {
     if (client) client.release();
   }
+});
+
+app.get('/api/meet/capacity', requireAuth, (req, res) => {
+  res.setHeader('Cache-Control', 'no-store');
+  const configuredConnections = Math.max(0, Number.parseInt(process.env.LIVEKIT_MAX_CONNECTIONS, 10) || 0);
+  const sfu = getSfuConfiguration();
+  const sfuConfigured = Boolean(sfu.url && sfu.apiKey && sfu.apiSecret);
+  const capacityVerified = process.env.VOBIX_MEET_CAPACITY_VERIFIED === 'true';
+  return res.json({
+    ok:true,
+    designedParticipants:1000,
+    configuredConnections,
+    sfuConfigured,
+    capacityVerified,
+    operational:sfuConfigured && configuredConnections >= 1000 && capacityVerified,
+    note:capacityVerified
+      ? 'Capacidad verificada mediante prueba de carga'
+      : 'Diseñado para 1.000; requiere plan SFU compatible y prueba de carga antes de producción'
+  });
 });
 
 app.get('/api/rtc-config', requireAuth, (req, res) => {

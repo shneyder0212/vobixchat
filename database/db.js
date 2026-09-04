@@ -1,6 +1,11 @@
 'use strict';
 const { Pool } = require('pg');
 
+function boundedInteger(value, fallback, minimum, maximum) {
+  const parsed = Number.parseInt(value, 10);
+  return Number.isFinite(parsed) ? Math.max(minimum, Math.min(maximum, parsed)) : fallback;
+}
+
 if (!process.env.DATABASE_URL) {
   console.error('VOBIXCHAT DATABASE: DATABASE_URL no está configurada');
 }
@@ -8,9 +13,12 @@ if (!process.env.DATABASE_URL) {
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: { rejectUnauthorized: false },
-  max: 10,
+  // Un grupo moderado absorbe ráfagas sin abrir una conexión por asistente.
+  max: boundedInteger(process.env.DATABASE_POOL_MAX, 20, 5, 50),
+  min: boundedInteger(process.env.DATABASE_POOL_MIN, 2, 0, 10),
   idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 10000
+  connectionTimeoutMillis: 10000,
+  maxUses: 7500
 });
 
 pool.on('error', error => {
@@ -34,4 +42,4 @@ async function testConnection() {
 
 async function query(text, params = []) { return pool.query(text, params); }
 async function closeDatabase() { await pool.end(); }
-module.exports = { pool, query, testConnection, closeDatabase };
+module.exports = { boundedInteger, pool, query, testConnection, closeDatabase };
