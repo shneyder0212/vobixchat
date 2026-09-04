@@ -44,6 +44,7 @@ const vobixProtectedRoute = require('./core/vobix-protected-route');
 const vobixFamilyRecovery = require('./core/vobix-family-recovery');
 const { matchesPersistedMessage } = require('./core/message-intent');
 const { normalizeCallId, matchesCallIntent } = require('./core/call-intent');
+const { terminateCall } = require('./core/call-termination');
 
 const packageMetadata =
   require('./package.json');
@@ -2458,6 +2459,21 @@ const onlineUsers =
 
 const activeCalls =
   new Map();
+
+const endedCalls =
+  new Map();
+
+function endActiveCall(callId, endedBy, reason) {
+  return terminateCall({
+    activeCalls,
+    endedCalls,
+    io,
+    userRoom,
+    callId,
+    endedBy,
+    reason
+  });
+}
 
 
 // ======================================================
@@ -5043,11 +5059,49 @@ io.on(
 
 
     // ==================================================
-    // TERMINAR / SALIR DE LLAMADA
+    // CAPA 130 — FINALIZACIÓN SINCRONIZADA DE LLAMADAS
+    // ==================================================
+
+    socket.on('call:end', async (payload = {}, callback) => {
+      try {
+        const callId = normalizeCallId(payload.callId);
+        const call = callId ? activeCalls.get(callId) : null;
+        const currentUserKey = String(userId);
+        const allowed = call && (
+          call.participants.has(currentUserKey) ||
+          call.invited.has(currentUserKey)
+        );
+
+        if (!allowed) {
+          if (typeof callback === 'function') callback({
+            ok: true,
+            ended: false,
+            code: callId && endedCalls.has(callId) ? 'call_already_ended' : 'call_not_found'
+          });
+          return;
+        }
+
+        const result = endActiveCall(callId, userId, payload.reason || 'ended');
+        if (typeof callback === 'function') callback({
+          ok: true,
+          ended: result.ended,
+          code: result.code,
+          callId,
+          reason: result.payload?.reason,
+          endedBy: result.payload?.endedBy
+        });
+      } catch (error) {
+        console.error('VOBIXCHAT CALL END ERROR:', error);
+        if (typeof callback === 'function') callback({ ok:false });
+      }
+    });
+
+    // ==================================================
+    // TERMINAR / SALIR DE LLAMADA (LEGACY)
     // ==================================================
 
     socket.on(
-      'call:end',
+      'call:end:legacy',
       async (
         payload = {},
         callback
@@ -5270,6 +5324,11 @@ io.on(
           return;
         }
 
+        if (endedCalls.has(callId)) {
+          if (typeof callback === 'function') callback({ ok:false, code:'call_already_ended', msg:'La llamada ya terminó' });
+          return;
+        }
+
         const allowed = await socketCanAccessConversation(conversationId, userId);
         if (!allowed) {
           if (typeof callback === 'function') callback({ ok:false, msg:'No tienes acceso a esta conversación' });
@@ -5361,7 +5420,7 @@ io.on(
         const answer = payload.answer || null;
         const call = activeCalls.get(callId);
         if (!call || !answer) {
-          if (typeof callback === 'function') callback({ ok:false });
+          if (typeof callback === 'function') callback({ ok:false, code:endedCalls.has(callId) ? 'call_already_ended' : 'call_not_found' });
           return;
         }
 
@@ -5421,7 +5480,7 @@ io.on(
         const candidate = payload.candidate || null;
         const call = callId ? activeCalls.get(callId) : null;
         if (!call || !candidate) {
-          if (typeof callback === 'function') callback({ ok:false });
+          if (typeof callback === 'function') callback({ ok:false, code:callId && endedCalls.has(callId) ? 'call_already_ended' : 'call_not_found' });
           return;
         }
 
@@ -5472,7 +5531,7 @@ io.on(
 
         if (!call || !call.offer) {
           if (typeof callback === 'function') {
-            callback({ ok:false, msg:'La llamada ya no está disponible' });
+            callback({ ok:false, code:endedCalls.has(callId) ? 'call_already_ended' : 'call_not_found', msg:'La llamada ya no está disponible' });
           }
           return;
         }
@@ -6322,6 +6381,15 @@ io.on(
           }
 
 
+          endActiveCall(
+            callId,
+            userId,
+            String(call.callerId) === userKey ? 'caller-disconnected' : 'disconnected'
+          );
+
+          continue;
+
+
           call.participants.delete(
             userKey
           );
@@ -6485,6 +6553,9 @@ setInterval(
         call.createdAt >
         CALL_MAX_AGE_MS
       ) {
+
+        endActiveCall(callId, call.endedBy || null, 'expired');
+        continue;
 
         io
           .to(

@@ -4390,6 +4390,8 @@
 
       endingCall: false,
 
+      endedCallIds: new Map(),
+
       answeredCallId: null,
 
       remotePlaybackPending: false,
@@ -8171,6 +8173,21 @@
         clearTimeout(app.connectionRecoveryTimer);
         app.connectionRecoveryTimer = null;
       }
+    }
+
+
+    function rememberEndedCallId(callId) {
+      const id = String(callId || '').trim();
+      if (!id) return;
+      app.endedCallIds.set(id, Date.now());
+      while (app.endedCallIds.size > 100) {
+        app.endedCallIds.delete(app.endedCallIds.keys().next().value);
+      }
+    }
+
+
+    function hasEndedCallId(callId) {
+      return app.endedCallIds.has(String(callId || '').trim());
     }
 
 
@@ -16693,6 +16710,7 @@
 
     function rejectPendingCall(reason = 'rejected') {
       const payload = app.pendingCallOffer;
+      rememberEndedCallId(payload?.callId || payload?.call_id);
       stopAllCallSignals();
       hideIncomingCallPanel();
       app.pendingCallOffer = null;
@@ -16739,6 +16757,8 @@
 
       const incomingCallId = payload.callId || payload.call_id || '';
       const pendingCallId = app.pendingCallOffer?.callId || app.pendingCallOffer?.call_id || '';
+
+      if (hasEndedCallId(incomingCallId)) return;
 
       if (
         pendingCallId &&
@@ -16834,6 +16854,7 @@
       }
 
       const answerCallId = payload.callId || payload.call_id || app.callId;
+      if (hasEndedCallId(answerCallId)) return;
       if (
         answerCallId &&
         app.callId &&
@@ -16914,6 +16935,7 @@
       }
 
       const candidateCallId = payload.callId || payload.call_id || '';
+      if (hasEndedCallId(candidateCallId)) return;
       const pendingCallId = app.pendingCallOffer?.callId || app.pendingCallOffer?.call_id || '';
       const activeCallId = app.callId || pendingCallId || '';
 
@@ -16975,6 +16997,7 @@
         );
         const candidate = wrappedCandidate ? queued.candidate : queued;
         const queuedCallId = wrappedCandidate ? queued.callId : '';
+        if (hasEndedCallId(queuedCallId || activeCallId)) continue;
         if (
           queuedCallId &&
           activeCallId &&
@@ -16993,6 +17016,7 @@
 
     function handleRemoteCallEnd(payload = {}) {
       const remoteCallId = payload.callId || payload.call_id || '';
+      if (remoteCallId) rememberEndedCallId(remoteCallId);
       const pendingCallId = app.pendingCallOffer?.callId || app.pendingCallOffer?.call_id || '';
       const activeCallId = app.callId || pendingCallId || '';
 
@@ -17556,6 +17580,8 @@
 
       const oldCallId =
         app.callId;
+
+      rememberEndedCallId(oldCallId);
 
 
       if (
