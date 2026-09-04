@@ -6418,6 +6418,13 @@
         searchSequence === app.peopleSearchSequence &&
         input.value.trim() === query;
 
+      const searchButton = elements.peopleSearchButton;
+      if (searchButton) {
+        searchButton.disabled = true;
+        searchButton.setAttribute('aria-busy', 'true');
+        searchButton.textContent = 'Buscando…';
+      }
+
 
       container.innerHTML =
         '<div class="vobixStatusMessage">' +
@@ -6471,6 +6478,14 @@
                 )
           ) +
           '</div>';
+
+      } finally {
+
+        if (searchButton && searchSequence === app.peopleSearchSequence) {
+          searchButton.disabled = false;
+          searchButton.removeAttribute('aria-busy');
+          searchButton.textContent = 'Buscar';
+        }
 
       }
 
