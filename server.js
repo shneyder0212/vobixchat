@@ -82,7 +82,11 @@ const {
   isConfigurableCapability
 } = require('./core/vobix-premium');
 
+const { containsSensitiveData, localPremiumHelp } = require('./core/premium-help');
+
 const r2Storage = require('./core/r2-storage');
+
+const premiumHelpRate = new Map();
 
 
 // ======================================================
@@ -6597,6 +6601,49 @@ app.put('/api/premium/services/:capabilityId/setup', requireAuth, async (req, re
     [req.vobixUser.id, capabilityId, setupState, displayName, locale, onboardingStep]
   );
   return res.json({ ok:true, setup:result.rows[0] });
+});
+
+app.post('/api/premium/services/:capabilityId/help', requireAuth, async (req, res) => {
+  res.setHeader('Cache-Control', 'no-store');
+  const capabilityId = String(req.params.capabilityId || '').toLowerCase();
+  const question = String(req.body?.question || '').trim().slice(0, 800);
+  if (!isConfigurableCapability(capabilityId)) return res.status(404).json({ok:false, code:'unknown_capability'});
+  if (!question) return res.status(400).json({ok:false, code:'question_required'});
+  if (containsSensitiveData(question)) {
+    return res.status(400).json({ok:false, code:'sensitive_data_rejected', msg:'No incluya contraseñas, PIN, códigos ni datos bancarios'});
+  }
+  const userId = String(req.vobixUser.id);
+  const now = Date.now();
+  const attempts = (premiumHelpRate.get(userId) || []).filter(at => now - at < 60000);
+  if (attempts.length >= 20) return res.status(429).json({ok:false, code:'rate_limited'});
+  attempts.push(now);
+  premiumHelpRate.set(userId, attempts);
+
+  const fallbackAnswer = localPremiumHelp(capabilityId, question);
+  const providerUrl = String(process.env.VOBIX_AI_API_URL || '').trim();
+  const providerKey = String(process.env.VOBIX_AI_API_KEY || '').trim();
+  const providerModel = String(process.env.VOBIX_AI_MODEL || '').trim();
+  if (!providerUrl || !providerKey || !providerModel) {
+    return res.json({ok:true, answer:fallbackAnswer, source:'local-guide'});
+  }
+  try {
+    const response = await fetch(providerUrl, {
+      method:'POST',
+      headers:{'Content-Type':'application/json', Authorization:`Bearer ${providerKey}`},
+      body:JSON.stringify({model:providerModel, temperature:0.1, max_tokens:260, messages:[
+        {role:'system', content:`Ayuda al usuario a configurar ${capabilityId} por autoservicio. Máximo 140 palabras. No solicites secretos, datos bancarios ni documentos personales. No afirmes que un servicio en preparación está operativo. No tomes decisiones legales, financieras o comerciales.`},
+        {role:'user', content:question}
+      ]}),
+      signal:AbortSignal.timeout(15000)
+    });
+    const data = await response.json().catch(() => null);
+    const answer = String(data?.choices?.[0]?.message?.content || data?.output_text || '').trim().slice(0, 1800);
+    if (!response.ok || !answer) throw new Error('PREMIUM_AI_FAILED');
+    return res.json({ok:true, answer, source:'configured-ai'});
+  } catch (error) {
+    console.error('VOBIXCHAT PREMIUM HELP ERROR:', error.message);
+    return res.json({ok:true, answer:fallbackAnswer, source:'local-guide'});
+  }
 });
 
 app.get('/api/rtc-config', requireAuth, (req, res) => {
