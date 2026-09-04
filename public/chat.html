@@ -11467,27 +11467,44 @@
       }
     });
 
-    window.addEventListener('online', () => {
+    function recoverChatConnection() {
+      if (navigator.onLine === false) return;
+
       if (elements.connectionStatus) {
-        elements.connectionStatus.textContent = 'Reconectando…';
+        elements.connectionStatus.textContent = app.socket?.connected
+          ? 'Conectado · Chat seguro'
+          : 'Reconectando…';
       }
 
       try {
-        if (app.socket && !app.socket.connected) {
+        if (!app.socket) {
+          connectSocket();
+        } else if (!app.socket.connected) {
           app.socket.connect();
         }
       } catch (error) {
-        console.warn('[VOBIXCHAT ONLINE RECONNECT]', error);
+        console.warn('[VOBIXCHAT CHAT RECOVERY]', error);
       }
 
       loadConversations();
+      flushQueuedMessages();
+
+      const activeId = conversationId(app.conversation);
+      if (activeId && app.socket?.connected) {
+        joinConversationRoom(activeId);
+        syncConversationReceipts(activeId);
+      }
+    }
+
+    window.addEventListener('online', recoverChatConnection);
+
+    window.addEventListener('pageshow', () => {
+      window.setTimeout(recoverChatConnection, 100);
     });
 
     document.addEventListener('visibilitychange', () => {
       if (document.visibilityState !== 'visible' || navigator.onLine === false) return;
-      if (app.socket && !app.socket.connected) {
-        try { app.socket.connect(); } catch (_) {}
-      }
+      recoverChatConnection();
     });
 
 
