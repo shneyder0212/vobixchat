@@ -4720,6 +4720,7 @@ router.post('/files/resumable/start', async (req, res) => {
     viewOnce,
     directory,
     received: new Map(),
+    completing: false,
     updatedAt: Date.now()
   });
 
@@ -4787,6 +4788,10 @@ router.post('/files/resumable/:uploadId/complete', async (req, res) => {
       received: [...session.received.keys()].sort((a, b) => a - b)
     });
   }
+  if (session.completing) {
+    return res.status(409).json({ ok: false, code: 'upload_completion_in_progress', msg: 'La subida ya se está completando' });
+  }
+  session.completing = true;
 
   const extension = path.extname(session.originalName).toLowerCase();
   const finalName = `${Date.now()}-${crypto.randomBytes(4).toString('hex')}-${path.basename(session.originalName, extension).slice(0, 100) || 'archivo'}${extension}`;
@@ -4799,6 +4804,7 @@ router.post('/files/resumable/:uploadId/complete', async (req, res) => {
   const assembled = await fs.promises.stat(finalPath);
   if (assembled.size !== session.totalSize) {
     await fs.promises.unlink(finalPath).catch(() => {});
+    session.completing = false;
     return res.status(409).json({ ok: false, msg: 'El archivo reconstruido no coincide' });
   }
 
