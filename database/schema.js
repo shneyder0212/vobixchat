@@ -1368,6 +1368,42 @@ async function initializeDatabase() {
       );
     `);
 
+    await database.query(`
+      CREATE TABLE IF NOT EXISTS learning_profiles (
+        user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        course_key VARCHAR(60) NOT NULL,
+        current_level INTEGER NOT NULL DEFAULT 1 CHECK (current_level BETWEEN 1 AND 20),
+        current_lesson INTEGER NOT NULL DEFAULT 1 CHECK (current_lesson BETWEEN 1 AND 20),
+        xp INTEGER NOT NULL DEFAULT 0 CHECK (xp >= 0),
+        streak_days INTEGER NOT NULL DEFAULT 0 CHECK (streak_days >= 0),
+        last_activity_on DATE,
+        review_queue JSONB NOT NULL DEFAULT '[]'::jsonb,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        PRIMARY KEY (user_id, course_key)
+      );
+    `);
+
+    await database.query(`
+      CREATE TABLE IF NOT EXISTS learning_activity_attempts (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        course_key VARCHAR(60) NOT NULL,
+        lesson_key VARCHAR(80) NOT NULL,
+        activity_kind VARCHAR(20) NOT NULL,
+        score INTEGER NOT NULL CHECK (score BETWEEN 0 AND 100),
+        passed BOOLEAN NOT NULL DEFAULT FALSE,
+        response_summary JSONB NOT NULL DEFAULT '{}'::jsonb,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        CHECK (activity_kind IN ('written-1','spoken-1','written-2','spoken-2'))
+      );
+    `);
+
+    await database.query(`
+      CREATE INDEX IF NOT EXISTS learning_activity_attempts_user_lesson_idx
+      ON learning_activity_attempts(user_id, course_key, lesson_key, created_at DESC);
+    `);
+
     // Claves públicas para cifrado E2E de los chats privados.
     // La clave privada nunca se guarda en el servidor.
     await database.query(`

@@ -84,6 +84,8 @@ const {
 
 const { containsSensitiveData, localPremiumHelp } = require('./core/premium-help');
 
+const vobixLearn = require('./core/vobix-learn');
+
 const {
   createMeetingCode,
   hashMeetingCode,
@@ -1720,6 +1722,54 @@ app.put('/api/learn/room/:courseKey', requireAuth, async (req,res)=>{
   if(!learningCatalog.some(c=>c.key===courseKey)||body.length>3000) return res.status(400).json({ok:false,msg:'Nota no válida'});
   try { const result=await database.query(`INSERT INTO learning_room_notes(user_id,course_key,body,updated_at) VALUES($1,$2,$3,NOW()) ON CONFLICT(user_id,course_key) DO UPDATE SET body=EXCLUDED.body,updated_at=NOW() RETURNING body,updated_at`,[req.vobixUser.id,courseKey,body]);res.json({ok:true,note:result.rows[0]}); }
   catch(error){res.status(500).json({ok:false,msg:'No se pudo guardar tu nota'});}
+});
+
+// Capa 156 — API de aprendizaje progresivo. El catálogo es ligero y cada
+// nivel se descarga únicamente cuando el estudiante lo abre.
+app.get('/api/learn/v2/catalog', requireAuth, (req, res) => {
+  res.setHeader('Cache-Control', 'private, max-age=300');
+  return res.json({
+    ok:true,
+    courses:vobixLearn.catalogSummary(),
+    requirements:{
+      levels:vobixLearn.LEVEL_COUNT,
+      lessonsPerLevel:vobixLearn.LESSONS_PER_LEVEL,
+      assessmentsPerLesson:vobixLearn.ASSESSMENT_TYPES.length,
+      writtenAssessments:2,
+      spokenAssessments:2,
+      passingScore:vobixLearn.PASSING_SCORE,
+      assessmentLanguage:'en'
+    }
+  });
+});
+
+app.get('/api/learn/v2/courses/:courseKey/levels/:levelNumber', requireAuth, (req, res) => {
+  const level = vobixLearn.buildLevel(req.params.courseKey, req.params.levelNumber);
+  if (!level) return res.status(404).json({ ok:false, code:'learning_level_not_found' });
+  res.setHeader('Cache-Control', 'private, max-age=300');
+  return res.json({ ok:true, level });
+});
+
+app.get('/api/learn/v2/profile/:courseKey', requireAuth, async (req, res) => {
+  const course = vobixLearn.getCourse(req.params.courseKey);
+  if (!course) return res.status(404).json({ ok:false, code:'learning_course_not_found' });
+  try {
+    await database.query(
+      `INSERT INTO learning_profiles (user_id, course_key)
+       VALUES ($1, $2) ON CONFLICT (user_id, course_key) DO NOTHING`,
+      [req.vobixUser.id, course.key]
+    );
+    const result = await database.query(
+      `SELECT course_key, current_level, current_lesson, xp, streak_days,
+              last_activity_on, review_queue, updated_at
+       FROM learning_profiles WHERE user_id=$1 AND course_key=$2 LIMIT 1`,
+      [req.vobixUser.id, course.key]
+    );
+    return res.json({ ok:true, profile:result.rows[0] });
+  } catch (error) {
+    console.error('VOBIX APRENDE | No se pudo cargar el perfil:', error.message);
+    return res.status(500).json({ ok:false, code:'learning_profile_unavailable' });
+  }
 });
 
 
