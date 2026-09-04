@@ -38,6 +38,7 @@ const crypto =
 const vobixGuardian = require('./core/vobix-guardian');
 const vobixEmergency = require('./core/vobix-emergency');
 const vobixRescue = require('./core/vobix-rescue');
+const vobixChildProtection = require('./core/vobix-child-protection');
 const vobixProtectedRoute = require('./core/vobix-protected-route');
 
 const packageMetadata =
@@ -7098,6 +7099,88 @@ app.post('/api/rescue/alerts/:alertId/acknowledge', requireAuth, async (req, res
     await sendPushToUser(result.rows[0].protected_user_id,{type:'rescue-ack',title:'Alerta recibida',body:'Tu familiar confirmó la recepción.',url:'/rescue.html'});
     return res.json({ ok:true, acknowledgedAt:result.rows[0].acknowledged_at });
   } catch (error) { return res.status(500).json({ ok:false, msg:'No se pudo confirmar la recepción' }); }
+});
+
+// ======================================================
+// CAPA 106 — VOBIX PROTECCIÓN INFANTIL
+// Vinculación visible y revocable; no concede acceso al contenido del chat.
+// ======================================================
+const CHILD_PROTECTION_CONSENT_VERSION = '2026-09-04';
+
+app.post('/api/child-protection/request', requireAuth, async (req, res) => {
+  const relationshipId = String(req.body?.relationshipId || '').trim();
+  if (req.body?.childConsent !== true || !/^[0-9a-f-]{36}$/i.test(relationshipId)) {
+    return res.status(400).json({ok:false,msg:'Se necesita la aceptación expresa y un tutor válido'});
+  }
+  try {
+    const guardian = await database.query(`SELECT guardian_user_id FROM guardian_relationships
+      WHERE id=$1 AND protected_user_id=$2 AND status='active' LIMIT 1`,[relationshipId,req.vobixUser.id]);
+    if (!guardian.rows.length) return res.status(403).json({ok:false,msg:'El tutor debe ser un Guardián Familiar verificado'});
+    await database.query(`INSERT INTO child_protection_profiles
+      (child_user_id,relationship_id,guardian_user_id,status,child_consented_at,consent_version)
+      VALUES($1,$2,$3,'pending_guardian',NOW(),$4)
+      ON CONFLICT(child_user_id) DO UPDATE SET relationship_id=EXCLUDED.relationship_id,
+      guardian_user_id=EXCLUDED.guardian_user_id,status='pending_guardian',child_consented_at=NOW(),
+      guardian_consented_at=NULL,disabled_at=NULL,consent_version=EXCLUDED.consent_version,updated_at=NOW()`,
+      [req.vobixUser.id,relationshipId,guardian.rows[0].guardian_user_id,CHILD_PROTECTION_CONSENT_VERSION]);
+    await sendPushToUser(guardian.rows[0].guardian_user_id,{type:'child-protection-request',title:'Vobix Protección Infantil',body:'Revisa una solicitud de vinculación familiar.',url:'/child-protection.html'});
+    return res.status(201).json({ok:true,status:'pending_guardian'});
+  } catch(error) { return res.status(500).json({ok:false,msg:'No se pudo crear la solicitud'}); }
+});
+
+app.post('/api/child-protection/respond', requireAuth, async (req, res) => {
+  const childUserId=String(req.body?.childUserId||'').trim();
+  const decision=req.body?.decision==='accept'?'active':req.body?.decision==='decline'?'declined':null;
+  if(!decision||!/^[0-9a-f-]{36}$/i.test(childUserId)||req.body?.guardianConsent!==true)return res.status(400).json({ok:false,msg:'Decisión o consentimiento no válidos'});
+  try { const result=await database.query(`UPDATE child_protection_profiles SET status=$1,
+    guardian_consented_at=CASE WHEN $1='active' THEN NOW() ELSE NULL END,updated_at=NOW()
+    WHERE child_user_id=$2 AND guardian_user_id=$3 AND status='pending_guardian' RETURNING child_user_id,status`,
+    [decision,childUserId,req.vobixUser.id]);
+    if(!result.rows.length)return res.status(404).json({ok:false,msg:'Solicitud no disponible'});
+    return res.json({ok:true,profile:result.rows[0]});
+  } catch(error){return res.status(500).json({ok:false,msg:'No se pudo guardar la decisión'});}
+});
+
+app.get('/api/child-protection', requireAuth, async (req,res)=>{
+  try { const profiles=await database.query(`SELECT p.child_user_id,p.guardian_user_id,p.status,p.block_unknown,
+    p.allowed_from_minute,p.allowed_until_minute,p.child_consented_at,p.guardian_consented_at,p.updated_at,
+    CASE WHEN p.child_user_id=$1 THEN 'child' ELSE 'guardian' END AS role
+    FROM child_protection_profiles p WHERE p.child_user_id=$1 OR p.guardian_user_id=$1`,[req.vobixUser.id]);
+    const contacts=await database.query(`SELECT c.child_user_id,c.contact_user_id,u.username,u.vobix_id
+      FROM child_allowed_contacts c JOIN users u ON u.id=c.contact_user_id
+      JOIN child_protection_profiles p ON p.child_user_id=c.child_user_id
+      WHERE p.child_user_id=$1 OR p.guardian_user_id=$1 ORDER BY u.username LIMIT 100`,[req.vobixUser.id]);
+    return res.json({ok:true,profiles:profiles.rows,contacts:contacts.rows});
+  }catch(error){return res.status(500).json({ok:false,msg:'No se pudo cargar la protección infantil'});}
+});
+
+app.put('/api/child-protection/:childUserId/policy', requireAuth, async(req,res)=>{
+  const schedule=vobixChildProtection.validSchedule(req.body?.allowedFromMinute,req.body?.allowedUntilMinute);
+  if(!schedule)return res.status(400).json({ok:false,msg:'Horario no válido'});
+  try { const result=await database.query(`UPDATE child_protection_profiles SET block_unknown=$1,
+    allowed_from_minute=$2,allowed_until_minute=$3,updated_at=NOW()
+    WHERE child_user_id=$4 AND guardian_user_id=$5 AND status='active' RETURNING child_user_id,status,block_unknown,allowed_from_minute,allowed_until_minute`,
+    [req.body?.blockUnknown!==false,schedule.start,schedule.end,req.params.childUserId,req.vobixUser.id]);
+    if(!result.rows.length)return res.status(403).json({ok:false,msg:'Solo el tutor vinculado puede cambiar esta política'});
+    return res.json({ok:true,policy:result.rows[0]});
+  }catch(error){return res.status(500).json({ok:false,msg:'No se pudo guardar la política'});}
+});
+
+app.post('/api/child-protection/:childUserId/contacts',requireAuth,async(req,res)=>{
+  const contactUserId=String(req.body?.contactUserId||'').trim();
+  if(!/^[0-9a-f-]{36}$/i.test(contactUserId))return res.status(400).json({ok:false,msg:'Contacto no válido'});
+  try { const owner=await database.query(`SELECT 1 FROM child_protection_profiles WHERE child_user_id=$1 AND guardian_user_id=$2 AND status='active'`,[req.params.childUserId,req.vobixUser.id]);
+    if(!owner.rows.length)return res.status(403).json({ok:false,msg:'Tutor no autorizado'});
+    await database.query(`INSERT INTO child_allowed_contacts(child_user_id,contact_user_id,added_by_user_id) VALUES($1,$2,$3) ON CONFLICT DO NOTHING`,[req.params.childUserId,contactUserId,req.vobixUser.id]);
+    return res.status(201).json({ok:true});
+  }catch(error){return res.status(500).json({ok:false,msg:'No se pudo autorizar el contacto'});}
+});
+
+app.post('/api/child-protection/disable',requireAuth,async(req,res)=>{
+  try { const result=await database.query(`UPDATE child_protection_profiles SET status='disabled',disabled_at=NOW(),updated_at=NOW()
+    WHERE (child_user_id=$1 OR guardian_user_id=$1) AND status IN ('active','pending_guardian') RETURNING child_user_id`,[req.vobixUser.id]);
+    return res.json({ok:true,disabled:result.rowCount});
+  }catch(error){return res.status(500).json({ok:false,msg:'No se pudo desactivar'});}
 });
 
 

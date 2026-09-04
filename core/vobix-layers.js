@@ -87,6 +87,7 @@ const VOBIX_LAYERS = Object.freeze([
   ,{ id:'103', name:'Vobix Ruta Protegida', status:'en_validacion', scope:'Trayecto temporal compartido con familiares autorizados, aviso de parada prolongada o retraso y confirmación de llegada.' }
   ,{ id:'104', name:'Vobix Consentimiento de Seguridad', status:'en_validacion', scope:'Funciones de emergencia desactivadas por defecto, aceptación informada versionada y revocable; no sustituye al 112 ni elimina responsabilidades legales.' }
   ,{ id:'105', name:'Vobix Atestación de Origen', status:'requiere_configuracion', scope:'Firma del servidor que vincula contenido capturado en Vobix con cuenta verificada, sesión reconocida, integridad y decisión de ubicación; requiere secreto exclusivo en Render.' }
+  ,{ id:'106', name:'Vobix Protección Infantil', status:'en_validacion', scope:'Activación de doble aceptación con tutor verificado, contactos autorizados, bloqueo de desconocidos y horario; emergencias permanecen accesibles y no permite vigilancia secreta.' }
 ]);
 
 function getVobixLayers() {

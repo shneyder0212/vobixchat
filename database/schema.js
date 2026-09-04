@@ -1423,6 +1423,34 @@ async function initializeDatabase() {
     `);
     await database.query(`CREATE INDEX IF NOT EXISTS rescue_alerts_recipient_idx ON rescue_alerts(guardian_user_id,status,created_at DESC);`);
 
+    // Capa 106 — protección infantil voluntaria y transparente.
+    await database.query(`
+      CREATE TABLE IF NOT EXISTS child_protection_profiles (
+        child_user_id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+        relationship_id UUID NOT NULL REFERENCES guardian_relationships(id) ON DELETE CASCADE,
+        guardian_user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        status VARCHAR(24) NOT NULL DEFAULT 'pending_guardian',
+        block_unknown BOOLEAN NOT NULL DEFAULT TRUE,
+        allowed_from_minute SMALLINT, allowed_until_minute SMALLINT,
+        child_consented_at TIMESTAMPTZ NOT NULL,
+        guardian_consented_at TIMESTAMPTZ,
+        consent_version VARCHAR(20) NOT NULL,
+        disabled_at TIMESTAMPTZ, updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        CHECK(status IN ('pending_guardian','active','declined','disabled')),
+        CHECK(allowed_from_minute IS NULL OR allowed_from_minute BETWEEN 0 AND 1439),
+        CHECK(allowed_until_minute IS NULL OR allowed_until_minute BETWEEN 0 AND 1439)
+      );
+    `);
+    await database.query(`
+      CREATE TABLE IF NOT EXISTS child_allowed_contacts (
+        child_user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        contact_user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        added_by_user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        PRIMARY KEY(child_user_id,contact_user_id), CHECK(child_user_id<>contact_user_id)
+      );
+    `);
+
     // ====================================================
     // CAPA 103 — VOBIX RUTA PROTEGIDA
     // Ubicación temporal y solo para guardianes aceptados.
