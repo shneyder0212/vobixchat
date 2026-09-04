@@ -5530,6 +5530,12 @@
       options = {}
     ) {
 
+      const {
+        timeoutMs: requestedTimeoutMs,
+        signal: externalSignal,
+        ...requestOptions
+      } = options;
+
       const token =
         getAuthToken();
 
@@ -5543,7 +5549,7 @@
 
 
       const bodyIsFormData =
-        options.body instanceof
+        requestOptions.body instanceof
         FormData;
 
 
@@ -5569,25 +5575,54 @@
         ),
 
         ...(
-          options.headers ||
+          requestOptions.headers ||
           {}
         )
 
       };
 
 
-      const response =
-        await fetch(
+      const requestController = new AbortController();
+      const requestTimeoutMs = Number.isFinite(Number(requestedTimeoutMs))
+        ? Math.max(1000, Math.min(Number(requestedTimeoutMs), 180000))
+        : (bodyIsFormData ? 120000 : 20000);
+      let requestTimedOut = false;
+      const abortFromCaller = () => requestController.abort(externalSignal?.reason);
+
+      if (externalSignal?.aborted) abortFromCaller();
+      else externalSignal?.addEventListener?.('abort', abortFromCaller, { once: true });
+
+      const requestTimeout = window.setTimeout(() => {
+        requestTimedOut = true;
+        requestController.abort();
+      }, requestTimeoutMs);
+
+      let response;
+      try {
+        response = await fetch(
           url,
           {
-            ...options,
+            ...requestOptions,
 
             credentials:
               'include',
 
-            headers
+            headers,
+
+            signal: requestController.signal
           }
         );
+      } catch (error) {
+        if (requestTimedOut) {
+          const timeoutError = new Error('La conexión tardó demasiado. Vuelve a intentarlo.');
+          timeoutError.code = 'VOBIX_TIMEOUT';
+          throw timeoutError;
+        }
+        throw error;
+      } finally {
+        window.clearTimeout(requestTimeout);
+        externalSignal?.removeEventListener?.('abort', abortFromCaller);
+      }
 
 
       const contentType =
