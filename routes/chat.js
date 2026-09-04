@@ -20,6 +20,7 @@
 const express = require('express');
 const database = require('../database/db');
 const originAttestation = require('../core/vobix-origin-attestation');
+const childProtection = require('../core/vobix-child-protection');
 
 const router = express.Router();
 const seniorAssistantRate = new Map();
@@ -3116,6 +3117,10 @@ async function sendMessageHandler(
         });
 
     }
+
+    const childPolicy = await childProtection.communicationDecision(database,userId,room.otherUser.id);
+    if (!childPolicy.allowed) return res.status(403).json({ok:false,msg:childPolicy.reason==='outside_schedule'
+      ? 'La comunicación no está disponible en este horario' : 'Este contacto no está autorizado'});
 
 
     /* ==================================================

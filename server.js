@@ -5142,6 +5142,14 @@ io.on(
 
         const participants = await getConversationParticipants(conversationId);
         const targets = participants.filter(p => String(p.user_id) !== String(userId));
+        for (const target of targets) {
+          const childPolicy = await vobixChildProtection.communicationDecision(database,userId,target.user_id);
+          if (!childPolicy.allowed) {
+            if (typeof callback === 'function') callback({ok:false,msg:childPolicy.reason==='outside_schedule'
+              ? 'La llamada no está disponible en este horario' : 'Contacto no autorizado'});
+            return;
+          }
+        }
         if (!targets.length) {
           if (typeof callback === 'function') callback({ ok:false, msg:'No hay destinatario' });
           return;
@@ -6650,6 +6658,11 @@ app.post('/api/friends/request', requireAuth, async (req, res) => {
     const requesterId = String(req.vobixUser.id);
     const addresseeId = String(req.body.userId || '').trim();
 
+    const childPolicy = addresseeId && addresseeId !== requesterId
+      ? await vobixChildProtection.communicationDecision(database,requesterId,addresseeId)
+      : {allowed:true};
+    if (!childPolicy.allowed) return res.status(403).json({ok:false,msg:'Contacto no autorizado por la protección familiar'});
+
     if (!addresseeId || addresseeId === requesterId) {
       return res.status(400).json({ ok:false, msg:'Usuario no válido' });
     }
@@ -7123,6 +7136,8 @@ app.post('/api/child-protection/request', requireAuth, async (req, res) => {
       guardian_user_id=EXCLUDED.guardian_user_id,status='pending_guardian',child_consented_at=NOW(),
       guardian_consented_at=NULL,disabled_at=NULL,consent_version=EXCLUDED.consent_version,updated_at=NOW()`,
       [req.vobixUser.id,relationshipId,guardian.rows[0].guardian_user_id,CHILD_PROTECTION_CONSENT_VERSION]);
+    await database.query(`INSERT INTO child_allowed_contacts(child_user_id,contact_user_id,added_by_user_id)
+      VALUES($1,$2,$2) ON CONFLICT DO NOTHING`,[req.vobixUser.id,guardian.rows[0].guardian_user_id]);
     await sendPushToUser(guardian.rows[0].guardian_user_id,{type:'child-protection-request',title:'Vobix Protección Infantil',body:'Revisa una solicitud de vinculación familiar.',url:'/child-protection.html'});
     return res.status(201).json({ok:true,status:'pending_guardian'});
   } catch(error) { return res.status(500).json({ok:false,msg:'No se pudo crear la solicitud'}); }
