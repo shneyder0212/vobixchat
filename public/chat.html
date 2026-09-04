@@ -13078,6 +13078,15 @@
 
     }
 
+    function isValidConversationsPayload(data) {
+      return !!(
+        Array.isArray(data) ||
+        Array.isArray(data?.conversations) ||
+        Array.isArray(data?.results) ||
+        Array.isArray(data?.data)
+      );
+    }
+
 
     /* =====================================================
        OBTENER LA OTRA PERSONA
@@ -13514,14 +13523,28 @@
           );
 
 
+        if (loadSequence !== app.conversationsLoadSequence) return;
+
+
+        if (!isValidConversationsPayload(data)) {
+
+          console.warn('[VOBIXCHAT CONVERSATIONS] respuesta incompleta');
+          const cachedConversations = readConversationCache();
+          if (cachedConversations.length) renderConversations(cachedConversations);
+          else if (container && !container.querySelector('.vxConversation')) {
+            container.innerHTML =
+              '<div class="vobixStatusMessage error">No se pudo actualizar la bandeja.</div>';
+          }
+          notifyUser('No se pudo actualizar la bandeja. Se conserva el historial disponible.');
+          return;
+
+        }
+
+
         const conversations =
           extractConversations(
             data
           );
-
-
-        if (loadSequence !== app.conversationsLoadSequence) return;
-
 
         renderConversations(
           conversations
