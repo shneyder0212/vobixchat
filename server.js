@@ -3103,6 +3103,16 @@ io.on(
                 10000
               );
 
+          const rawClientMessageId = String(
+            payload.clientMessageId ||
+            payload.client_message_id ||
+            ''
+          ).trim();
+
+          const clientMessageId = /^[A-Za-z0-9_-]{8,100}$/.test(rawClientMessageId)
+            ? rawClientMessageId
+            : null;
+
 
           // ==============================================
           // VALIDACIONES
@@ -3150,6 +3160,21 @@ io.on(
 
             }
 
+
+            return;
+
+          }
+
+
+          if (!clientMessageId) {
+
+            if (typeof callback === 'function') {
+              callback({
+                ok: false,
+                code: 'client_message_id_required',
+                msg: 'El mensaje necesita un identificador seguro'
+              });
+            }
 
             return;
 
@@ -3310,6 +3335,7 @@ io.on(
                 sender_user_id,
                 message_type,
                 content,
+                client_message_id,
                 created_at,
                 updated_at
               )
@@ -3320,9 +3346,14 @@ io.on(
                 $2,
                 'text',
                 $3,
+                $4,
                 NOW(),
                 NOW()
               )
+
+              ON CONFLICT (sender_user_id, client_message_id)
+              WHERE client_message_id IS NOT NULL
+              DO UPDATE SET client_message_id = EXCLUDED.client_message_id
 
               RETURNING
                 id,
@@ -3330,22 +3361,27 @@ io.on(
                 sender_user_id,
                 message_type,
                 content,
+                client_message_id,
                 reply_to_message_id,
                 edited,
                 deleted,
                 created_at,
-                updated_at
+                updated_at,
+                (xmax = 0) AS inserted
               `,
               [
                 conversationId,
                 userId,
-                text
+                text,
+                clientMessageId
               ]
             );
 
 
           const row =
             result.rows[0];
+
+          const inserted = row.inserted !== false;
 
 
           // ==============================================
@@ -3404,6 +3440,12 @@ io.on(
             content:
               row.content,
 
+            clientMessageId:
+              row.client_message_id,
+
+            client_message_id:
+              row.client_message_id,
+
             edited:
               Boolean(
                 row.edited
@@ -3427,6 +3469,21 @@ io.on(
               row.updated_at
 
           };
+
+
+          if (!inserted) {
+
+            if (typeof callback === 'function') {
+              callback({
+                ok: true,
+                duplicate: true,
+                message
+              });
+            }
+
+            return;
+
+          }
 
 
           // ==============================================
@@ -3503,6 +3560,8 @@ io.on(
             callback({
 
               ok: true,
+
+              duplicate: false,
 
               message
 

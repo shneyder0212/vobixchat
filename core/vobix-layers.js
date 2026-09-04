@@ -94,6 +94,7 @@ const VOBIX_LAYERS = Object.freeze([
   ,{ id:'110', name:'Vobix Escudo Infantil Integral', status:'en_validacion', scope:'La política familiar se aplica al abrir conversaciones, aceptar contactos, enviar texto, archivos y llamadas; no inspecciona el contenido privado.' }
   ,{ id:'111', name:'Vobix Recuperación Familiar Completa', status:'en_validacion', scope:'La interfaz permite consultar, cancelar y completar una solicitud aprobada; al finalizar revoca sesiones anteriores y reconoce el nuevo dispositivo.' }
   ,{ id:'112', name:'Defensa de Recuperación Familiar', status:'en_validacion', scope:'Limita por dispositivo los intentos de iniciar, consultar y completar recuperaciones, con espera explícita y memoria temporal acotada.' }
+  ,{ id:'113', name:'Mensajería en Tiempo Real Idempotente', status:'en_validacion', scope:'Cada envío Socket exige un identificador seguro; los reintentos recuperan el mensaje confirmado sin guardarlo, emitirlo ni notificarlo dos veces.' }
 ]);
 
 function getVobixLayers() {
