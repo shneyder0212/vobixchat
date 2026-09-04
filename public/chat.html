@@ -3652,6 +3652,7 @@
         <button class="profileAction" type="button" data-guardian-category="code">🔢 Código</button>
       </div>
       <div id="guardianReviews" class="seniorAssistantLog" role="log" aria-live="polite">No hay consultas pendientes.</div>
+      <a class="profileAction primary" href="/emergency.html">🟢 Prueba de Vida y Alerta Silenciosa</a>
       <button id="closeGuardianPanelButton" class="profileAction profileClose" type="button">Guardar y volver</button>
     </div>
   </div>
@@ -4362,6 +4363,10 @@
       captionsConsentGiven: false,
 
       captionsRemoteConsent: false,
+
+      emergencyRecognition: null,
+
+      emergencyTriggering: false,
 
       endingCall: false,
 
@@ -16011,6 +16016,113 @@
     });
     elements.captionsConsentPanel?.addEventListener('click', event => {
       if (event.target === elements.captionsConsentPanel) closeCaptionsConsent();
+    });
+
+    /* =====================================================
+       CAPA 100 — PRUEBA DE VIDA Y ALERTA SILENCIOSA
+       La frase se compara en este dispositivo. Solo se envían su huella
+       y una ubicación temporal cuando hay coincidencia durante una llamada.
+       ===================================================== */
+
+    const EMERGENCY_PHRASE_KEY = 'vobix_emergency_phrase_v1';
+    const EMERGENCY_ENABLED_KEY = 'vobix_emergency_enabled_v1';
+
+    function normalizeEmergencyPhrase(value) {
+      return String(value || '')
+        .normalize('NFKC')
+        .toLocaleLowerCase('es')
+        .replace(/[^\p{L}\p{N}\s]/gu, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+    }
+
+    async function emergencyPhraseHash(value) {
+      const bytes = new TextEncoder().encode(normalizeEmergencyPhrase(value));
+      const digest = await crypto.subtle.digest('SHA-256', bytes);
+      return [...new Uint8Array(digest)]
+        .map(byte => byte.toString(16).padStart(2, '0'))
+        .join('');
+    }
+
+    function emergencyLocation() {
+      return new Promise((resolve, reject) => {
+        if (!navigator.geolocation) return reject(new Error('location_unavailable'));
+        navigator.geolocation.getCurrentPosition(
+          resolve,
+          () => reject(new Error('location_denied')),
+          { enableHighAccuracy: true, timeout: 12000, maximumAge: 30000 }
+        );
+      });
+    }
+
+    async function triggerSilentEmergency(phrase) {
+      if (app.emergencyTriggering || !app.callId) return;
+      app.emergencyTriggering = true;
+      try {
+        const position = await emergencyLocation();
+        const phraseHash = await emergencyPhraseHash(phrase);
+        const result = await api('/api/emergency/trigger', {
+          method: 'POST',
+          body: JSON.stringify({
+            phraseHash,
+            callId: app.callId,
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+            accuracy: position.coords.accuracy
+          })
+        });
+        if (result?.alertId) {
+          sessionStorage.setItem('vobix_emergency_last_alert', String(result.alertId));
+          stopEmergencyRecognition();
+        }
+      } catch (error) {
+        console.warn('[VOBIX TRUST ACTIVE]', error?.message || error);
+      } finally {
+        app.emergencyTriggering = false;
+      }
+    }
+
+    function stopEmergencyRecognition() {
+      const recognition = app.emergencyRecognition;
+      app.emergencyRecognition = null;
+      if (recognition) {
+        recognition.onend = null;
+        try { recognition.stop(); } catch (_) {}
+      }
+    }
+
+    function startEmergencyRecognition() {
+      if (app.emergencyRecognition || !app.callId || localStorage.getItem(EMERGENCY_ENABLED_KEY) !== 'true') return;
+      const phrase = normalizeEmergencyPhrase(localStorage.getItem(EMERGENCY_PHRASE_KEY));
+      const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!Recognition || phrase.length < 8) return;
+      const recognition = new Recognition();
+      recognition.lang = navigator.language || 'es-ES';
+      recognition.continuous = true;
+      recognition.interimResults = true;
+      recognition.onresult = event => {
+        let transcript = '';
+        for (let index = event.resultIndex; index < event.results.length; index += 1) {
+          transcript += ' ' + String(event.results[index]?.[0]?.transcript || '');
+        }
+        const spoken = normalizeEmergencyPhrase(transcript);
+        if (` ${spoken} `.includes(` ${phrase} `)) triggerSilentEmergency(phrase);
+      };
+      recognition.onerror = () => {};
+      recognition.onend = () => {
+        if (app.emergencyRecognition === recognition) app.emergencyRecognition = null;
+      };
+      app.emergencyRecognition = recognition;
+      try { recognition.start(); } catch (_) { app.emergencyRecognition = null; }
+    }
+
+    const emergencyRecognitionWatch = window.setInterval(() => {
+      if (app.callId) startEmergencyRecognition();
+      else stopEmergencyRecognition();
+    }, 2000);
+    window.addEventListener('pagehide', () => {
+      window.clearInterval(emergencyRecognitionWatch);
+      stopEmergencyRecognition();
     });
 
 

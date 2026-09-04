@@ -1314,6 +1314,45 @@ async function initializeDatabase() {
     `);
 
     // ====================================================
+    // CAPA 100 — VOBIX PRUEBA DE VIDA Y CONFIANZA ACTIVA
+    // La frase nunca se guarda: solo su huella SHA-256.
+    // ====================================================
+    await database.query(`
+      CREATE TABLE IF NOT EXISTS emergency_settings (
+        user_id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+        relationship_id UUID NOT NULL REFERENCES guardian_relationships(id) ON DELETE CASCADE,
+        phrase_hash CHAR(64) NOT NULL CHECK (phrase_hash ~ '^[a-f0-9]{64}$'),
+        enabled BOOLEAN NOT NULL DEFAULT FALSE,
+        consented_at TIMESTAMPTZ NOT NULL,
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+    `);
+
+    await database.query(`
+      CREATE TABLE IF NOT EXISTS emergency_alerts (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        relationship_id UUID NOT NULL REFERENCES guardian_relationships(id) ON DELETE CASCADE,
+        protected_user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        guardian_user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        call_id VARCHAR(120),
+        latitude NUMERIC(8,5) NOT NULL,
+        longitude NUMERIC(8,5) NOT NULL,
+        accuracy_m INTEGER,
+        status VARCHAR(20) NOT NULL DEFAULT 'active'
+          CHECK (status IN ('active','seen','cancelled','expired')),
+        expires_at TIMESTAMPTZ NOT NULL,
+        seen_at TIMESTAMPTZ,
+        cancelled_at TIMESTAMPTZ,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+    `);
+
+    await database.query(`
+      CREATE INDEX IF NOT EXISTS emergency_alerts_guardian_status_idx
+      ON emergency_alerts(guardian_user_id, status, expires_at);
+    `);
+
+    // ====================================================
     // VOBIX TE ENSEÑA
     // ====================================================
     await database.query(`

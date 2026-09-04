@@ -80,7 +80,8 @@ const VOBIX_LAYERS = Object.freeze([
   { id:'6.5', name:'Pruebas de privacidad', status:'pendiente', scope:'Registro, QR, ubicación y permisos.' },
   { id:'6.6', name:'Pruebas de seguridad', status:'pendiente', scope:'Cuenta, dispositivos y recuperación.' },
   { id:'6.7', name:'APK de pruebas', status:'pendiente', scope:'Versión interna antes de distribuir.' },
-  { id:'6.8', name:'APK final firmada', status:'pendiente', scope:'Publicación tras superar todas las pruebas obligatorias.' }
+  { id:'6.8', name:'APK final firmada', status:'pendiente', scope:'Publicación tras superar todas las pruebas obligatorias.' },
+  { id:'100', name:'Vobix Prueba de Vida y Confianza Activa', status:'en_validacion', scope:'Verificación humana y red de apoyo transversal para mensajes, llamadas y videollamadas; integra Guardián Familiar, alerta silenciosa y ubicación temporal con autorización previa.' }
 ]);
 
 function getVobixLayers() {

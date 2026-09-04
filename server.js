@@ -36,6 +36,7 @@ const crypto =
   require('crypto');
 
 const vobixGuardian = require('./core/vobix-guardian');
+const vobixEmergency = require('./core/vobix-emergency');
 
 const packageMetadata =
   require('./package.json');
@@ -100,6 +101,7 @@ const r2Storage = require('./core/r2-storage');
 
 const premiumHelpRate = new Map();
 const meetJoinRate = new Map();
+const emergencyTriggerRate = new Map();
 const learningTutorRate = new Map();
 
 
@@ -6860,6 +6862,162 @@ app.post('/api/guardian/reviews/:reviewId/decision', requireAuth, async (req, re
     return res.json({ ok:true, review:result.rows[0] });
   } catch (error) {
     return res.status(500).json({ ok:false, msg:'No se pudo guardar la decisión' });
+  }
+});
+
+// ======================================================
+// CAPA 100 — VOBIX PRUEBA DE VIDA Y CONFIANZA ACTIVA
+// Solo funciona con un Guardián Familiar aceptado y consentimiento previo.
+// ======================================================
+
+app.get('/api/emergency/settings', requireAuth, async (req, res) => {
+  try {
+    const result = await database.query(
+      `SELECT s.enabled,s.consented_at,s.updated_at,s.relationship_id,
+              g.status AS relationship_status,u.username AS guardian_username,u.vobix_id AS guardian_vobix_id
+       FROM emergency_settings s
+       JOIN guardian_relationships g ON g.id=s.relationship_id AND g.protected_user_id=s.user_id
+       JOIN users u ON u.id=g.guardian_user_id
+       WHERE s.user_id=$1 LIMIT 1`,
+      [req.vobixUser.id]
+    );
+    const row = result.rows[0];
+    return res.json({ ok:true, settings:row ? {
+      enabled:row.enabled === true && row.relationship_status === 'active',
+      hasPhrase:true, relationshipId:row.relationship_id,
+      guardianUsername:row.guardian_username, guardianVobixId:row.guardian_vobix_id,
+      consentedAt:row.consented_at, updatedAt:row.updated_at
+    } : { enabled:false, hasPhrase:false } });
+  } catch (error) {
+    return res.status(500).json({ ok:false, msg:'No se pudo cargar la alerta silenciosa' });
+  }
+});
+
+app.put('/api/emergency/settings', requireAuth, async (req, res) => {
+  const relationshipId = String(req.body?.relationshipId || '').trim();
+  const phraseHash = vobixEmergency.validPhraseHash(req.body?.phraseHash);
+  const enabled = req.body?.enabled === true;
+  const consent = req.body?.consent === true;
+  if (!/^[0-9a-f-]{36}$/i.test(relationshipId) || !phraseHash || !consent) {
+    return res.status(400).json({ ok:false, msg:'Configuración o consentimiento no válidos' });
+  }
+  try {
+    const guardian = await database.query(
+      `SELECT id FROM guardian_relationships
+       WHERE id=$1 AND protected_user_id=$2 AND status='active' LIMIT 1`,
+      [relationshipId, req.vobixUser.id]
+    );
+    if (!guardian.rows.length) return res.status(403).json({ ok:false, msg:'El familiar debe aceptar primero ser tu Guardián Vobix' });
+    await database.query(
+      `INSERT INTO emergency_settings(user_id,relationship_id,phrase_hash,enabled,consented_at,updated_at)
+       VALUES($1,$2,$3,$4,NOW(),NOW())
+       ON CONFLICT(user_id) DO UPDATE SET relationship_id=EXCLUDED.relationship_id,
+       phrase_hash=EXCLUDED.phrase_hash,enabled=EXCLUDED.enabled,consented_at=NOW(),updated_at=NOW()`,
+      [req.vobixUser.id, relationshipId, phraseHash, enabled]
+    );
+    return res.json({ ok:true, settings:{ enabled, hasPhrase:true, relationshipId } });
+  } catch (error) {
+    console.error('VOBIX EMERGENCY SETTINGS ERROR:', error);
+    return res.status(500).json({ ok:false, msg:'No se pudo guardar la alerta silenciosa' });
+  }
+});
+
+app.post('/api/emergency/trigger', requireAuth, async (req, res) => {
+  const phraseHash = vobixEmergency.validPhraseHash(req.body?.phraseHash);
+  const location = vobixEmergency.safeLocation(req.body?.latitude, req.body?.longitude, req.body?.accuracy);
+  if (!phraseHash || !location) return res.status(400).json({ ok:false, msg:'No se pudo validar la frase o ubicación' });
+  const userKey = String(req.vobixUser.id);
+  const now = Date.now();
+  const recent = (emergencyTriggerRate.get(userKey) || []).filter(at => now - at < 10 * 60 * 1000);
+  if (recent.length >= 3) return res.status(429).json({ ok:false, msg:'Límite temporal de alertas alcanzado' });
+  try {
+    const setting = await database.query(
+      `SELECT s.phrase_hash,s.relationship_id,g.guardian_user_id
+       FROM emergency_settings s JOIN guardian_relationships g ON g.id=s.relationship_id
+       WHERE s.user_id=$1 AND s.enabled=TRUE AND g.protected_user_id=$1 AND g.status='active' LIMIT 1`,
+      [req.vobixUser.id]
+    );
+    const row = setting.rows[0];
+    if (!row || !vobixEmergency.hashesMatch(row.phrase_hash, phraseHash)) {
+      return res.status(403).json({ ok:false, msg:'Alerta no configurada' });
+    }
+    recent.push(now);
+    emergencyTriggerRate.set(userKey, recent);
+    const result = await database.query(
+      `INSERT INTO emergency_alerts
+       (relationship_id,protected_user_id,guardian_user_id,call_id,latitude,longitude,accuracy_m,expires_at)
+       VALUES($1,$2,$3,$4,$5,$6,$7,NOW()+INTERVAL '30 minutes')
+       RETURNING id,status,expires_at,created_at`,
+      [row.relationship_id, req.vobixUser.id, row.guardian_user_id,
+       String(req.body?.callId || '').trim().slice(0, 120) || null,
+       location.latitude, location.longitude, location.accuracy]
+    );
+    await sendPushToUser(row.guardian_user_id, {
+      type:'emergency-silent', title:'Alerta privada de Vobix',
+      body:`${req.vobixUser.username} ha activado una alerta previamente autorizada. Abre Vobix para comprobarla.`,
+      url:'/emergency.html?alerts=1'
+    });
+    return res.status(201).json({ ok:true, accepted:true, alertId:result.rows[0].id, expiresAt:result.rows[0].expires_at });
+  } catch (error) {
+    console.error('VOBIX EMERGENCY TRIGGER ERROR:', error);
+    return res.status(500).json({ ok:false, msg:'No se pudo entregar la alerta' });
+  }
+});
+
+app.get('/api/emergency/alerts', requireAuth, async (req, res) => {
+  try {
+    await database.query(
+      `UPDATE emergency_alerts SET status='expired'
+       WHERE status='active' AND expires_at<=NOW()
+       AND (protected_user_id=$1 OR guardian_user_id=$1)`,
+      [req.vobixUser.id]
+    );
+    const result = await database.query(
+      `SELECT a.id,a.status,a.latitude,a.longitude,a.accuracy_m,a.expires_at,a.seen_at,a.created_at,
+              CASE WHEN a.guardian_user_id=$1 THEN 'guardian' ELSE 'protected' END AS role,
+              a.protected_user_id,a.guardian_user_id,u.username AS protected_username,u.vobix_id AS protected_vobix_id
+       FROM emergency_alerts a JOIN users u ON u.id=a.protected_user_id
+       WHERE a.protected_user_id=$1 OR a.guardian_user_id=$1
+       ORDER BY a.created_at DESC LIMIT 50`,
+      [req.vobixUser.id]
+    );
+    return res.json({ ok:true, alerts:result.rows });
+  } catch (error) {
+    return res.status(500).json({ ok:false, msg:'No se pudieron cargar las alertas' });
+  }
+});
+
+app.post('/api/emergency/alerts/:alertId/seen', requireAuth, async (req, res) => {
+  try {
+    const result = await database.query(
+      `UPDATE emergency_alerts SET status='seen',seen_at=NOW()
+       WHERE id=$1 AND guardian_user_id=$2 AND status='active' AND expires_at>NOW()
+       RETURNING id,status,seen_at`,
+      [req.params.alertId, req.vobixUser.id]
+    );
+    if (!result.rows.length) return res.status(404).json({ ok:false, msg:'Alerta no disponible' });
+    return res.json({ ok:true, alert:result.rows[0] });
+  } catch (error) {
+    return res.status(500).json({ ok:false, msg:'No se pudo confirmar la alerta' });
+  }
+});
+
+app.post('/api/emergency/alerts/:alertId/cancel', requireAuth, async (req, res) => {
+  try {
+    const result = await database.query(
+      `UPDATE emergency_alerts SET status='cancelled',cancelled_at=NOW()
+       WHERE id=$1 AND protected_user_id=$2 AND status='active'
+       AND created_at>NOW()-INTERVAL '2 minutes' RETURNING id,status,guardian_user_id`,
+      [req.params.alertId, req.vobixUser.id]
+    );
+    if (!result.rows.length) return res.status(404).json({ ok:false, msg:'La alerta ya no puede cancelarse' });
+    await sendPushToUser(result.rows[0].guardian_user_id, {
+      type:'emergency-cancelled', title:'Actualización de alerta Vobix',
+      body:'La alerta fue cancelada desde el dispositivo que la activó.', url:'/emergency.html?alerts=1'
+    });
+    return res.json({ ok:true, alert:{ id:result.rows[0].id, status:'cancelled' } });
+  } catch (error) {
+    return res.status(500).json({ ok:false, msg:'No se pudo cancelar la alerta' });
   }
 });
 
