@@ -1422,6 +1422,41 @@ async function initializeDatabase() {
       );
     `);
 
+    await database.query(`
+      CREATE TABLE IF NOT EXISTS meet_rooms (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        owner_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        title VARCHAR(120) NOT NULL,
+        access_code_hash TEXT NOT NULL UNIQUE,
+        waiting_room BOOLEAN NOT NULL DEFAULT TRUE,
+        allow_guests BOOLEAN NOT NULL DEFAULT FALSE,
+        max_participants INTEGER NOT NULL DEFAULT 25,
+        scheduled_for TIMESTAMPTZ,
+        expires_at TIMESTAMPTZ NOT NULL,
+        status VARCHAR(20) NOT NULL DEFAULT 'scheduled',
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        CHECK (max_participants BETWEEN 2 AND 100),
+        CHECK (status IN ('scheduled', 'active', 'ended', 'cancelled'))
+      );
+    `);
+
+    await database.query(`
+      CREATE TABLE IF NOT EXISTS meet_participants (
+        room_id UUID NOT NULL REFERENCES meet_rooms(id) ON DELETE CASCADE,
+        user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        role VARCHAR(20) NOT NULL DEFAULT 'participant',
+        state VARCHAR(20) NOT NULL DEFAULT 'waiting',
+        joined_at TIMESTAMPTZ,
+        left_at TIMESTAMPTZ,
+        PRIMARY KEY (room_id, user_id),
+        CHECK (role IN ('owner', 'moderator', 'participant')),
+        CHECK (state IN ('invited', 'waiting', 'admitted', 'left', 'removed'))
+      );
+    `);
+
+    await database.query(`CREATE INDEX IF NOT EXISTS meet_rooms_owner_status_idx ON meet_rooms(owner_id, status);`);
+
     // ====================================================
     // FINAL
     // ====================================================
@@ -1464,6 +1499,10 @@ async function initializeDatabase() {
 
     console.log(
       'VOBIXCHAT DATABASE: premium_service_settings verificada'
+    );
+
+    console.log(
+      'VOBIXCHAT DATABASE: meet_rooms + meet_participants verificadas'
     );
 
     console.log(
