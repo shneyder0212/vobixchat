@@ -3141,8 +3141,7 @@ async function sendMessageHandler(
           updated_at,
           edited,
           deleted,
-          expires_at,
-          (xmax = 0) AS inserted
+          expires_at
         )
 
         VALUES
@@ -3181,7 +3180,8 @@ async function sendMessageHandler(
           updated_at,
           edited,
           deleted,
-          expires_at
+          expires_at,
+          (xmax = 0) AS inserted
         `,
         [
           conversationId,
