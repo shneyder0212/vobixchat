@@ -34,3 +34,12 @@ test('sonda de red es pública, mínima y no consulta la base de datos', () => {
   assert.match(probe[0], /no-store, max-age=0/);
   assert.doesNotMatch(probe[0], /database\.query|requireAuth/);
 });
+
+test('health permite comprobar capacidades sin contenido ni identificadores', () => {
+  assert.match(server, /capabilities:\s*\{/);
+  assert.match(server, /adaptiveNetwork:\s*true/);
+  assert.match(server, /offlineOutbox:\s*true/);
+  assert.match(server, /messageReceipts:\s*true/);
+  assert.match(server, /receiptReconnectSync:\s*true/);
+  assert.doesNotMatch(server, /capabilities:\s*\{[^}]*messageContent/s);
+});

@@ -1749,6 +1749,20 @@ app.get(
               : 'local'
         },
 
+        capabilities: {
+          adaptiveNetwork:
+            true,
+
+          offlineOutbox:
+            true,
+
+          messageReceipts:
+            true,
+
+          receiptReconnectSync:
+            true
+        },
+
         uptimeSeconds:
           Math.floor(process.uptime()),
 
@@ -1791,6 +1805,20 @@ app.get(
               process.env.RENDER
                 ? 'render'
                 : 'local'
+          },
+
+          capabilities: {
+            adaptiveNetwork:
+              true,
+
+            offlineOutbox:
+              true,
+
+            messageReceipts:
+              true,
+
+            receiptReconnectSync:
+              true
           }
 
         });
