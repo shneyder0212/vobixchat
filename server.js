@@ -84,6 +84,12 @@ const {
 
 const { containsSensitiveData, localPremiumHelp } = require('./core/premium-help');
 
+const {
+  createMeetingCode,
+  hashMeetingCode,
+  normalizeMeetingOptions
+} = require('./core/vobix-meet');
+
 const r2Storage = require('./core/r2-storage');
 
 const premiumHelpRate = new Map();
@@ -6643,6 +6649,71 @@ app.post('/api/premium/services/:capabilityId/help', requireAuth, async (req, re
   } catch (error) {
     console.error('VOBIXCHAT PREMIUM HELP ERROR:', error.message);
     return res.json({ok:true, answer:fallbackAnswer, source:'local-guide'});
+  }
+});
+
+// Capa 151 — salas Vobix Meet autenticadas. El código de acceso se entrega
+// una sola vez al propietario y en PostgreSQL solo se conserva su hash.
+app.get('/api/meet/rooms', requireAuth, requirePremiumCapability('meet'), async (req, res) => {
+  res.setHeader('Cache-Control', 'no-store');
+  try {
+    const result = await database.query(
+      `SELECT id, title, waiting_room, allow_guests, max_participants,
+              scheduled_for, expires_at, status, created_at, updated_at
+       FROM meet_rooms
+       WHERE owner_id = $1
+       ORDER BY created_at DESC
+       LIMIT 100`,
+      [req.vobixUser.id]
+    );
+    return res.json({ ok:true, rooms:result.rows });
+  } catch (error) {
+    console.error('VOBIX MEET | No se pudieron listar las salas:', error.message);
+    return res.status(500).json({ ok:false, code:'meet_rooms_unavailable' });
+  }
+});
+
+app.post('/api/meet/rooms', requireAuth, requirePremiumCapability('meet'), async (req, res) => {
+  res.setHeader('Cache-Control', 'no-store');
+  const options = normalizeMeetingOptions(req.body);
+  const scheduledFor = req.body?.scheduledFor ? new Date(req.body.scheduledFor) : new Date();
+  if (Number.isNaN(scheduledFor.getTime())) {
+    return res.status(400).json({ ok:false, code:'invalid_schedule' });
+  }
+  if (scheduledFor.getTime() > Date.now() + (365 * 24 * 60 * 60 * 1000)) {
+    return res.status(400).json({ ok:false, code:'schedule_too_far' });
+  }
+
+  const accessCode = createMeetingCode();
+  const accessCodeHash = hashMeetingCode(accessCode);
+  const expiresAt = new Date(scheduledFor.getTime() + (options.durationMinutes * 60 * 1000));
+  let client;
+  try {
+    client = await database.pool.connect();
+    await client.query('BEGIN');
+    const roomResult = await client.query(
+      `INSERT INTO meet_rooms
+         (owner_id, title, access_code_hash, waiting_room, allow_guests,
+          max_participants, scheduled_for, expires_at, status)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'scheduled')
+       RETURNING id, title, waiting_room, allow_guests, max_participants,
+                 scheduled_for, expires_at, status, created_at`,
+      [req.vobixUser.id, options.title, accessCodeHash, options.waitingRoom,
+       options.allowGuests, options.maxParticipants, scheduledFor, expiresAt]
+    );
+    await client.query(
+      `INSERT INTO meet_participants (room_id, user_id, role, state)
+       VALUES ($1, $2, 'owner', 'admitted')`,
+      [roomResult.rows[0].id, req.vobixUser.id]
+    );
+    await client.query('COMMIT');
+    return res.status(201).json({ ok:true, room:roomResult.rows[0], accessCode });
+  } catch (error) {
+    if (client) await client.query('ROLLBACK').catch(() => {});
+    console.error('VOBIX MEET | No se pudo crear la sala:', error.message);
+    return res.status(500).json({ ok:false, code:'meet_room_create_failed' });
+  } finally {
+    if (client) client.release();
   }
 });
 
