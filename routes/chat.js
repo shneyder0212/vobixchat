@@ -4699,7 +4699,7 @@ router.post('/files/resumable/start', async (req, res) => {
       ok: true,
       uploadId: existing.uploadId,
       chunkSize: RESUMABLE_CHUNK_SIZE,
-      received: [...existing.received].sort((a, b) => a - b)
+      received: [...existing.received.keys()].sort((a, b) => a - b)
     });
   }
 
@@ -4719,7 +4719,7 @@ router.post('/files/resumable/start', async (req, res) => {
     originSource,
     viewOnce,
     directory,
-    received: new Set(),
+    received: new Map(),
     updatedAt: Date.now()
   });
 
@@ -4735,7 +4735,7 @@ router.get('/files/resumable/:uploadId', (req, res) => {
     uploadId: session.uploadId,
     chunkSize: RESUMABLE_CHUNK_SIZE,
     totalChunks: session.totalChunks,
-    received: [...session.received].sort((a, b) => a - b)
+    received: [...session.received.keys()].sort((a, b) => a - b)
   });
 });
 
@@ -4756,8 +4756,22 @@ router.put(
     if (req.body.length !== expectedSize) {
       return res.status(400).json({ ok: false, msg: 'Tamaño de fragmento incorrecto' });
     }
-    await fs.promises.writeFile(path.join(session.directory, `${index}.part`), req.body, { flag: 'w' });
-    session.received.add(index);
+    const chunkPath = path.join(session.directory, `${index}.part`);
+    const chunkHash = crypto.createHash('sha256').update(req.body).digest('hex');
+    const acceptedHash = session.received.get(index);
+    if (acceptedHash) {
+      if (acceptedHash !== chunkHash) {
+        return res.status(409).json({ ok: false, code: 'chunk_content_conflict', msg: 'El fragmento ya fue recibido con otro contenido' });
+      }
+      return res.json({ ok: true, index, receivedCount: session.received.size, replayed: true });
+    }
+    const temporaryPath = `${chunkPath}.${crypto.randomBytes(6).toString('hex')}.tmp`;
+    await fs.promises.writeFile(temporaryPath, req.body, { flag: 'wx' });
+    await fs.promises.rename(temporaryPath, chunkPath).catch(async error => {
+      await fs.promises.unlink(temporaryPath).catch(() => {});
+      throw error;
+    });
+    session.received.set(index, chunkHash);
     return res.json({ ok: true, index, receivedCount: session.received.size });
   }
 );
@@ -4770,7 +4784,7 @@ router.post('/files/resumable/:uploadId/complete', async (req, res) => {
     return res.status(409).json({
       ok: false,
       msg: 'Faltan fragmentos',
-      received: [...session.received].sort((a, b) => a - b)
+      received: [...session.received.keys()].sort((a, b) => a - b)
     });
   }
 

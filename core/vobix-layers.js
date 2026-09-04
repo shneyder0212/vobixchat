@@ -100,6 +100,7 @@ const VOBIX_LAYERS = Object.freeze([
   ,{ id:'116', name:'Confirmación Obligatoria de Envío', status:'en_validacion', scope:'Todo mensaje nuevo por HTTP o Socket exige un identificador de cliente válido para que la deduplicación nunca quede desactivada.' }
   ,{ id:'117', name:'Archivos y Notas de Voz sin Duplicados', status:'en_validacion', scope:'Fotos, vídeos, documentos y audios vinculan su identificador a la conversación, tipo y huella SHA-256; los reintentos no emiten ni notifican dos veces.' }
   ,{ id:'118', name:'Sesión de Subida Reanudable Vinculada', status:'en_validacion', scope:'Una sesión reanudable solo continúa si coinciden usuario, conversación, nombre, tipo, tamaño, origen y modo de visualización originales.' }
+  ,{ id:'119', name:'Fragmentos Reanudables Inmutables', status:'en_validacion', scope:'Cada fragmento queda fijado por su huella SHA-256; un reintento idéntico se confirma sin reescribir y un contenido diferente para el mismo índice se rechaza.' }
 ]);
 
 function getVobixLayers() {
