@@ -48,3 +48,11 @@ test('volver a la aplicación sincroniza lectura del dispositivo activo', () => 
   assert.match(html, /!document\.hidden && app\.socket\?\.connected/);
   assert.match(html, /syncConversationReceipts\(conversationId\(app\.conversation\)\)/);
 });
+
+test('recibos manipulados o excesivos se descartan antes de consultar', () => {
+  assert.match(server, /const receiptUuidPattern/);
+  assert.match(server, /receiptRate\.count > 240/);
+  assert.match(server, /now - receiptRate\.startedAt >= 60000/);
+  assert.match(server, /!\['delivered', 'read'\]\.includes\(receiptType\)/);
+  assert.match(server, /!receiptUuidPattern\.test\(conversationId\)/);
+});

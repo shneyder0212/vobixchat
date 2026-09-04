@@ -3138,11 +3138,23 @@ io.on(
 
     // Capa 113 — recibos por mensaje. Se valida que el usuario pertenece
     // a la conversación y que el mensaje fue enviado por la otra persona.
+    const receiptRate = { startedAt: Date.now(), count: 0 };
+    const receiptUuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
     async function saveMessageReceipt(payload = {}, receiptType = 'delivered') {
       const conversationId = String(payload.conversationId || payload.conversation_id || '').trim();
       const messageId = String(payload.messageId || payload.message_id || payload.id || '').trim();
 
-      if (!conversationId || !messageId) return;
+      const now = Date.now();
+      if (now - receiptRate.startedAt >= 60000) {
+        receiptRate.startedAt = now;
+        receiptRate.count = 0;
+      }
+      receiptRate.count += 1;
+
+      if (receiptRate.count > 240) return;
+      if (!receiptUuidPattern.test(conversationId) || !receiptUuidPattern.test(messageId)) return;
+      if (!['delivered', 'read'].includes(receiptType)) return;
       if (!(await socketCanAccessConversation(conversationId, userId))) return;
 
       const messageResult = await database.query(
