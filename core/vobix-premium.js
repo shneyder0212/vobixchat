@@ -63,6 +63,11 @@ function getCapabilityAccess(capabilityId, plan = 'free') {
   return capability ? capabilityAccess(capability, plan) : null;
 }
 
+function isConfigurableCapability(capabilityId) {
+  const access = getCapabilityAccess(capabilityId, 'business');
+  return !!access && access.id !== 'chat';
+}
+
 function getPremiumCatalog(plan = 'free') {
   const normalizedPlan = normalizePlan(plan);
   return {
@@ -79,6 +84,7 @@ module.exports = {
   capabilityAccess,
   getCapabilityAccess,
   getPremiumCatalog,
+  isConfigurableCapability,
   normalizePlan,
   planAllows
 };

@@ -78,7 +78,8 @@ const {
 
 const {
   getCapabilityAccess,
-  getPremiumCatalog
+  getPremiumCatalog,
+  isConfigurableCapability
 } = require('./core/vobix-premium');
 
 const r2Storage = require('./core/r2-storage');
@@ -6556,6 +6557,47 @@ function requirePremiumCapability(capabilityId) {
     return next();
   };
 }
+
+app.get('/api/premium/services/:capabilityId/setup', requireAuth, async (req, res) => {
+  res.setHeader('Cache-Control', 'no-store');
+  const capabilityId = String(req.params.capabilityId || '').toLowerCase();
+  if (!isConfigurableCapability(capabilityId)) {
+    return res.status(404).json({ ok:false, code:'unknown_capability' });
+  }
+  const result = await database.query(
+    `SELECT capability_id, setup_state, display_name, locale, onboarding_step, updated_at
+     FROM premium_service_settings WHERE user_id = $1 AND capability_id = $2 LIMIT 1`,
+    [req.vobixUser.id, capabilityId]
+  );
+  return res.json({ ok:true, setup:result.rows[0] || {
+    capability_id:capabilityId, setup_state:'draft', display_name:null, locale:'es', onboarding_step:0
+  }});
+});
+
+app.put('/api/premium/services/:capabilityId/setup', requireAuth, async (req, res) => {
+  res.setHeader('Cache-Control', 'no-store');
+  const capabilityId = String(req.params.capabilityId || '').toLowerCase();
+  if (!isConfigurableCapability(capabilityId)) {
+    return res.status(404).json({ ok:false, code:'unknown_capability' });
+  }
+  const allowedStates = new Set(['draft', 'ready', 'paused']);
+  const setupState = allowedStates.has(req.body?.setupState) ? req.body.setupState : 'draft';
+  const displayName = String(req.body?.displayName || '').trim().slice(0, 80) || null;
+  const locale = /^[a-z]{2}(?:-[A-Z]{2})?$/.test(String(req.body?.locale || ''))
+    ? String(req.body.locale) : 'es';
+  const onboardingStep = Math.max(0, Math.min(20, Number.parseInt(req.body?.onboardingStep, 10) || 0));
+  const result = await database.query(
+    `INSERT INTO premium_service_settings
+       (user_id, capability_id, setup_state, display_name, locale, onboarding_step, updated_at)
+     VALUES ($1, $2, $3, $4, $5, $6, NOW())
+     ON CONFLICT (user_id, capability_id) DO UPDATE SET
+       setup_state = EXCLUDED.setup_state, display_name = EXCLUDED.display_name,
+       locale = EXCLUDED.locale, onboarding_step = EXCLUDED.onboarding_step, updated_at = NOW()
+     RETURNING capability_id, setup_state, display_name, locale, onboarding_step, updated_at`,
+    [req.vobixUser.id, capabilityId, setupState, displayName, locale, onboardingStep]
+  );
+  return res.json({ ok:true, setup:result.rows[0] });
+});
 
 app.get('/api/rtc-config', requireAuth, (req, res) => {
   const iceServers = [

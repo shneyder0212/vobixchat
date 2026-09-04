@@ -1407,6 +1407,21 @@ async function initializeDatabase() {
       WHERE provider IS NOT NULL AND provider_subscription_id IS NOT NULL;
     `);
 
+    await database.query(`
+      CREATE TABLE IF NOT EXISTS premium_service_settings (
+        user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        capability_id VARCHAR(40) NOT NULL,
+        setup_state VARCHAR(20) NOT NULL DEFAULT 'draft',
+        display_name VARCHAR(80),
+        locale VARCHAR(10) NOT NULL DEFAULT 'es',
+        onboarding_step INTEGER NOT NULL DEFAULT 0,
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        PRIMARY KEY (user_id, capability_id),
+        CHECK (setup_state IN ('draft', 'ready', 'paused')),
+        CHECK (onboarding_step BETWEEN 0 AND 20)
+      );
+    `);
+
     // ====================================================
     // FINAL
     // ====================================================
@@ -1445,6 +1460,10 @@ async function initializeDatabase() {
 
     console.log(
       'VOBIXCHAT DATABASE: premium_subscriptions verificada'
+    );
+
+    console.log(
+      'VOBIXCHAT DATABASE: premium_service_settings verificada'
     );
 
     console.log(
