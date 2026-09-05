@@ -4009,6 +4009,11 @@
       </span>
     </button>
 
+    <button id="openMediaPermissionsButton" class="chatOptionButton" type="button">
+      <span class="chatOptionIcon">📷</span>
+      <span class="chatOptionText">Permisos de cámara y micrófono</span>
+    </button>
+
 
     <button
       id="refreshChatButton"
@@ -5262,6 +5267,9 @@
 
       openNotificationsButton:
         $('openNotificationsButton'),
+
+      openMediaPermissionsButton:
+        $('openMediaPermissionsButton'),
 
       notificationPanel:
         $('notificationPanel'),
@@ -9834,8 +9842,8 @@
       elements.mediaPermissionPanel?.setAttribute('aria-hidden', 'true');
     }
 
-    function showMediaPermissionOnboarding() {
-      if (mediaPermissionDismissedForSession || mediaPermissionsWereActivated()) return;
+    function showMediaPermissionOnboarding(force = false) {
+      if (!force && (mediaPermissionDismissedForSession || mediaPermissionsWereActivated())) return;
       if (!navigator.mediaDevices?.getUserMedia) return;
       if (elements.mediaPermissionStatus) elements.mediaPermissionStatus.textContent = '';
       elements.mediaPermissionPanel?.classList.add('open');
@@ -9889,6 +9897,10 @@
     }
 
     elements.activateMediaPermissionsButton?.addEventListener('click', activateMediaPermissions);
+    elements.openMediaPermissionsButton?.addEventListener('click', () => {
+      closeOptionsMenu();
+      showMediaPermissionOnboarding(true);
+    });
     elements.dismissMediaPermissionsButton?.addEventListener('click', () => {
       mediaPermissionDismissedForSession = true;
       closeMediaPermissionPanel();

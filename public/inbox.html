@@ -239,6 +239,7 @@ html[data-vobix-controls="large"] .vobixBubbleTrigger{width:72px;height:72px}htm
  <div class="vobixBubblePanel" id="vobixBubblePanel">
   <button class="vobixBubbleItem" id="bubbleCentro" type="button"><i>◈</i>Centro Vobix</button>
   <button class="vobixBubbleItem" id="bubbleSettings" type="button"><i>⚙</i>Ajustes</button>
+  <button class="vobixBubbleItem" id="bubblePermissions" type="button"><i>📷</i>Permisos</button>
   <button class="vobixBubbleItem" id="bubbleAccessibility" type="button"><i>👁</i>Accesibilidad</button>
   <button class="vobixBubbleItem" id="bubblePrivacy" type="button"><i>🔒</i>Privacidad</button>
   <button class="vobixBubbleItem" id="bubbleInvite" type="button"><i>↗</i>Invitar persona</button>
@@ -278,6 +279,7 @@ html[data-vobix-controls="large"] .vobixBubbleTrigger{width:72px;height:72px}htm
    <button class="settingsMenuButton" id="openAppearanceSettings">🎨 Capa 1.2 · Apariencia<small>Colores y aspecto de la aplicación</small></button>
    <button class="settingsMenuButton" id="openPrivacySettings">🔒 Capa 4.1 · Privacidad<small>Estados, conexión y confirmaciones</small></button>
    <button class="settingsMenuButton" id="openSecuritySettings">🛡️ Capa 4.2 · Seguridad<small>PIN, huella, bloqueo y dispositivos</small></button>
+   <button class="settingsMenuButton" id="openPermissionsSettings">📷 Permisos de la aplicación<small>Cámara, micrófono y notificaciones</small></button>
    <button class="settingsMenuButton" id="openAccessibilitySettings">👁️ Capa 1.3 · Accesibilidad<small>Letra grande, controles amplios y modo señas</small></button>
    <button class="settingsMenuButton" id="openStorageSettings">💾 Capa 4.3 · Almacenamiento y datos<small>Descargas, Wi‑Fi, datos móviles y uso de red</small></button>
    <button class="settingsMenuButton" id="openUpdatesSettings">⬆️ Capa 4.4 · Actualizaciones<small>Versión, novedades y actualizaciones por Wi‑Fi</small></button>
@@ -324,6 +326,19 @@ html[data-vobix-controls="large"] .vobixBubbleTrigger{width:72px;height:72px}htm
    <div class="row"><label>Huella / rostro</label><select id="biometricUnlock" class="settingsSelect"><option value="on">Activar al crear APK</option><option value="off">Desactivado</option></select></div>
    <div class="row"><label>Dispositivos vinculados</label><button id="manageDevices" class="settingsMenuButton" type="button">Ver dispositivos</button></div>
    <button class="save" id="saveSecuritySettings">Guardar seguridad</button>
+   <button class="settingsMenuButton" data-back-settings>‹ Volver</button>
+   <button class="settingsExit" type="button" data-close-settings>← Salir de configuración</button>
+  </div>
+  <div class="settingsView" id="permissionsSettingsView">
+   <h2>Permisos de la aplicación</h2>
+   <p style="color:var(--muted)">Vobix solo solicita cada permiso cuando tú pulsas el botón. La captura se detiene inmediatamente después de comprobar cámara y micrófono.</p>
+   <div class="row"><label>Cámara</label><strong id="cameraPermissionStatus">Sin comprobar</strong></div>
+   <div class="row"><label>Micrófono</label><strong id="microphonePermissionStatus">Sin comprobar</strong></div>
+   <button class="save" id="requestMediaPermissions" type="button">Activar cámara y micrófono</button>
+   <div class="row"><label>Notificaciones</label><strong id="notificationPermissionStatus">Sin comprobar</strong></div>
+   <button class="save" id="requestNotificationPermission" type="button">Activar notificaciones</button>
+   <p id="permissionHelp" role="status" aria-live="polite" style="color:var(--muted);font-size:13px;line-height:1.45"></p>
+   <p style="color:var(--muted);font-size:13px">Las fotos y documentos se eligen con el selector privado del teléfono; Vobix no necesita acceso permanente a toda tu memoria.</p>
    <button class="settingsMenuButton" data-back-settings>‹ Volver</button>
    <button class="settingsExit" type="button" data-close-settings>← Salir de configuración</button>
   </div>
@@ -583,16 +598,69 @@ $('backBtn').onclick=()=>{if(document.body.classList.contains('finding')||docume
 $('finderBackButton').onclick=()=>{$('backBtn').click();$('searchInput').blur()};
 $('muteSwitch').onclick=e=>{e.currentTarget.style.opacity=e.currentTarget.style.opacity==='0.35'?'1':'0.35'};
 
+const permissionLabel=state=>({granted:'Activado',denied:'Bloqueado',prompt:'Pendiente'}[state]||'Se comprobará al usar');
+async function readBrowserPermission(name){
+ try{
+  if(!navigator.permissions?.query)return 'unknown';
+  return (await navigator.permissions.query({name})).state||'unknown';
+ }catch(_){return 'unknown'}
+}
+async function refreshPermissionStatuses(){
+ const [camera,microphone]=await Promise.all([readBrowserPermission('camera'),readBrowserPermission('microphone')]);
+ $('cameraPermissionStatus').textContent=permissionLabel(camera);
+ $('microphonePermissionStatus').textContent=permissionLabel(microphone);
+ $('notificationPermissionStatus').textContent='Notification' in window?permissionLabel(Notification.permission):'No disponible';
+}
+function blockedPermissionHelp(){
+ const apple=/iPhone|iPad|iPod/i.test(navigator.userAgent||'');
+ return apple
+  ? 'Permiso bloqueado. Abre Ajustes > Safari (o VOBIXCHAT) > Cámara y Micrófono y selecciona Permitir.'
+  : 'Permiso bloqueado. Abre Ajustes > Aplicaciones > VOBIXCHAT > Permisos y activa Cámara y Micrófono.';
+}
+$('requestMediaPermissions').onclick=async()=>{
+ const button=$('requestMediaPermissions');let stream=null;
+ button.disabled=true;button.textContent='Esperando permiso…';$('permissionHelp').textContent='';
+ try{
+  if(!navigator.mediaDevices?.getUserMedia)throw new Error('Este dispositivo no ofrece acceso web a cámara y micrófono.');
+  stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true},video:{facingMode:{ideal:'user'}}});
+  const hasCamera=stream.getVideoTracks().length>0,hasMicrophone=stream.getAudioTracks().length>0;
+  if(!hasCamera||!hasMicrophone)throw new Error('No se detectaron correctamente la cámara y el micrófono.');
+  $('cameraPermissionStatus').textContent='Activado';$('microphonePermissionStatus').textContent='Activado';
+  $('permissionHelp').textContent='Cámara y micrófono están listos para fotos, notas de voz, llamadas y videollamadas.';
+ }catch(error){
+  const blocked=['NotAllowedError','SecurityError'].includes(error?.name);
+  $('permissionHelp').textContent=blocked?blockedPermissionHelp():(error?.message||'No se pudieron comprobar los permisos.');
+ }finally{
+  stream?.getTracks().forEach(track=>track.stop());button.disabled=false;button.textContent='Activar cámara y micrófono';refreshPermissionStatuses();
+ }
+};
+$('requestNotificationPermission').onclick=async()=>{
+ const button=$('requestNotificationPermission');button.disabled=true;$('permissionHelp').textContent='';
+ try{
+  if(!('Notification' in window))throw new Error('Este dispositivo no admite notificaciones web.');
+  const permission=Notification.permission==='default'?await Notification.requestPermission():Notification.permission;
+  if(permission==='granted'){
+   localStorage.setItem('vobix_notifications','true');
+   await window.VobixPush?.register?.();
+   $('permissionHelp').textContent='Notificaciones activadas en este dispositivo.';
+  }else if(permission==='denied')$('permissionHelp').textContent=blockedPermissionHelp().replace('Cámara y Micrófono','Notificaciones');
+  else $('permissionHelp').textContent='La activación quedó pendiente.';
+ }catch(error){$('permissionHelp').textContent=error?.message||'No se pudieron activar las notificaciones.'}
+ finally{button.disabled=false;refreshPermissionStatuses()}
+};
+
 const settings=$('settings');
 const showSettingsView=id=>{
- ['settingsHome','soundSettingsView','appearanceSettingsView','privacySettingsView','securitySettingsView','accessibilitySettingsView','storageSettingsView','updatesSettingsView','premiumSettingsView'].forEach(view=>$((view)).classList.toggle('open',view===id));
+ ['settingsHome','soundSettingsView','appearanceSettingsView','privacySettingsView','securitySettingsView','permissionsSettingsView','accessibilitySettingsView','storageSettingsView','updatesSettingsView','premiumSettingsView'].forEach(view=>$((view)).classList.toggle('open',view===id));
  $('settingsHome').style.display=id==='settingsHome'?'block':'none';
+ if(id==='permissionsSettingsView')refreshPermissionStatuses();
 };
 const openSettings=()=>{settings.classList.add('open');showSettingsView('settingsHome')};
 $('openSoundSettings').onclick=()=>showSettingsView('soundSettingsView');
 $('openAppearanceSettings').onclick=()=>showSettingsView('appearanceSettingsView');
 $('openPrivacySettings').onclick=()=>showSettingsView('privacySettingsView');
 $('openSecuritySettings').onclick=()=>showSettingsView('securitySettingsView');
+$('openPermissionsSettings').onclick=()=>showSettingsView('permissionsSettingsView');
 $('openAccessibilitySettings').onclick=()=>showSettingsView('accessibilitySettingsView');
 $('openStorageSettings').onclick=()=>showSettingsView('storageSettingsView');
 $('openUpdatesSettings').onclick=()=>showSettingsView('updatesSettingsView');
@@ -616,6 +684,7 @@ const closeBubble=()=>bubbleShell?.classList.remove('open');
 $('vobixBubbleTrigger')?.addEventListener('click',()=>bubbleShell?.classList.toggle('open'));
 $('bubbleCentro')?.addEventListener('click',()=>location.href='/vobix-menu.html');
 $('bubbleSettings')?.addEventListener('click',()=>{closeBubble();openSettings()});
+$('bubblePermissions')?.addEventListener('click',()=>{closeBubble();openSettings();showSettingsView('permissionsSettingsView')});
 $('bubbleAccessibility')?.addEventListener('click',()=>{closeBubble();openSettings();showSettingsView('accessibilitySettingsView')});
 $('bubblePrivacy')?.addEventListener('click',()=>{closeBubble();openSettings();showSettingsView('privacySettingsView')});
 $('bubbleInvite')?.addEventListener('click',()=>{closeBubble();document.body.classList.remove('hasSelectedUser');document.body.classList.add('finding');$('invitePhone').focus();window.scrollTo({top:0,behavior:'smooth'})});
