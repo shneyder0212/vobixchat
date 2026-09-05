@@ -33,6 +33,13 @@ test('servidor aplica idempotencia por remitente y dispositivo', () => {
   assert.match(routes, /if \(inserted\) \{\s*await notifyPrivateConversation/);
 });
 
+test('el receptor entra a la sala real y escucha los eventos HTTP modernos', () => {
+  assert.match(html, /socket\.emit\(\s*['"]conversation-join['"]/);
+  assert.match(html, /app\.socket\.on\(\s*['"]conversation-message['"]\s*,\s*onIncomingMessage/);
+  assert.match(html, /app\.socket\.on\(\s*['"]conversation:new-message['"]\s*,\s*onIncomingMessage/);
+  assert.match(routes, /io\.to\(`user:\$\{String\(room\.otherUser\.id\)\}`\)\s*\.emit\(['"]chat:message['"], message\)/);
+});
+
 test('cola se restaura tras recargar y reconcilia confirmaciones perdidas', () => {
   assert.match(html, /function reconcileAndRenderQueuedMessages/);
   assert.match(html, /deliveredClientIds\.has/);

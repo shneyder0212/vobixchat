@@ -2431,6 +2431,11 @@ async function notifyPrivateConversation(req, room, message) {
       io.to(`user:${String(room.otherUser.id)}`)
         .emit('conversation:new-message', payload);
 
+      // Entrega directa al usuario aunque el navegador se haya reconectado
+      // antes de volver a entrar en la sala de conversación.
+      io.to(`user:${String(room.otherUser.id)}`)
+        .emit('chat:message', message);
+
       io.to(`user:${String(currentUserId(req))}`)
         .emit('conversation:new-message', payload);
     }
