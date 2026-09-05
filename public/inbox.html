@@ -136,6 +136,7 @@ html[data-vobix-font="large"] .chatHomeInfo b{font-size:20px}html[data-vobix-fon
 html[data-vobix-font="xlarge"] .chatHomeInfo b{font-size:23px}html[data-vobix-font="xlarge"] .chatHomeInfo span{font-size:17px}html[data-vobix-font="xlarge"] .head b{font-size:26px!important}html[data-vobix-font="xlarge"] .chatHomeRow{min-height:92px}
 html[data-vobix-controls="large"] .vobixBubbleTrigger{width:72px;height:72px}html[data-vobix-controls="large"] .vobixBubbleItem{min-height:54px;font-size:17px}html[data-vobix-controls="large"] .chatHomeTop button{width:52px;height:52px}
 .qrSharePanel{position:fixed;z-index:160;inset:0;display:grid;place-items:center;padding:20px;background:rgba(0,0,0,.67)}.qrSharePanel[hidden]{display:none}.qrShareCard{position:relative;width:min(360px,100%);padding:26px;border:1px solid rgba(213,246,204,.20);border-radius:24px;background:#18211b;color:#f6faf4;text-align:center;box-shadow:0 24px 70px rgba(0,0,0,.45)}.qrShareCard h2{margin:0 0 8px;color:#9aec72}.qrShareCard p{margin:0 0 18px;color:#b8c7ba}.qrShareCard img{display:block;width:240px;height:240px;max-width:100%;margin:0 auto 18px;padding:10px;border-radius:14px;background:#fff}.qrShareCard>button:first-child{position:absolute;top:10px;right:12px;border:0;background:transparent;color:#fff;font-size:27px}
+.vobixDraggableSurface{will-change:transform}.vobixDraggableHandle{cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none}.vobixDraggableSurface.dragging,.vobixDraggableSurface.dragging .vobixDraggableHandle{cursor:grabbing}
 </style>
 </head>
 <body>
@@ -630,6 +631,30 @@ $('bubbleContacts')?.addEventListener('click',()=>{closeBubble();showAgenda()});
 $('bubbleChats')?.addEventListener('click',()=>{closeBubble();$('newBtn').click()});
 $('bubbleLogout')?.addEventListener('click',()=>{closeBubble();logoutCurrentDevice()});
 $('logoutDeviceButton')?.addEventListener('click',logoutCurrentDevice);
+
+// CAPA 155 — Los menús flotantes de la sala principal también se mueven
+// con ratón o dedo y conservan su posición en este dispositivo.
+function prepareInboxDraggable(surface,handle,key){
+ if(!surface||!handle||surface.dataset.vobixDraggableReady==='true')return;
+ let x=0,y=0,startX=0,startY=0,originX=0,originY=0,dragging=false;
+ try{const saved=JSON.parse(localStorage.getItem(key)||'null');if(Number.isFinite(saved?.x))x=saved.x;if(Number.isFinite(saved?.y))y=saved.y}catch(_){}
+ const paint=(nextX,nextY,persist=false)=>{
+  const old=surface.style.transform;surface.style.transform='translate(0px,0px)';const base=surface.getBoundingClientRect();surface.style.transform=old;
+  const margin=8;x=Math.min(innerWidth-base.right-margin,Math.max(margin-base.left,Number(nextX)||0));y=Math.min(innerHeight-base.bottom-margin,Math.max(margin-base.top,Number(nextY)||0));
+  surface.style.transform=`translate(${x}px,${y}px)`;if(persist)try{localStorage.setItem(key,JSON.stringify({x,y}))}catch(_){}
+ };
+ surface.dataset.vobixDraggableReady='true';surface.classList.add('vobixDraggableSurface');handle.classList.add('vobixDraggableHandle');handle.title='Arrastra para mover este menú';paint(x,y);
+ handle.addEventListener('pointerdown',event=>{if(event.pointerType==='mouse'&&event.button!==0)return;if(event.target.closest('button,input,select,textarea,a'))return;event.preventDefault();dragging=true;startX=event.clientX;startY=event.clientY;originX=x;originY=y;surface.classList.add('dragging');try{handle.setPointerCapture(event.pointerId)}catch(_){}});
+ handle.addEventListener('pointermove',event=>{if(!dragging)return;event.preventDefault();paint(originX+event.clientX-startX,originY+event.clientY-startY)});
+ const finish=event=>{if(!dragging)return;dragging=false;surface.classList.remove('dragging');paint(x,y,true);try{handle.releasePointerCapture(event.pointerId)}catch(_){}};
+ handle.addEventListener('pointerup',finish);handle.addEventListener('pointercancel',finish);addEventListener('resize',()=>paint(x,y));
+}
+prepareInboxDraggable(document.querySelector('.settingsBox'),document.querySelector('.settingsBox'),'vobix_menu_position_settings');
+prepareInboxDraggable(document.querySelector('.mobileHistorySheet'),document.querySelector('.mobileHistoryHeader'),'vobix_menu_position_history');
+prepareInboxDraggable(document.querySelector('.qrShareCard'),document.querySelector('.qrShareCard h2'),'vobix_menu_position_qr');
+
+// El menú burbuja completo se mueve arrastrando el botón circular.
+(()=>{const shell=$('vobixBubbleShell'),handle=$('vobixBubbleTrigger');if(!shell||!handle)return;let right=16,bottom=42,startX=0,startY=0,originRight=0,originBottom=0,moved=false,dragging=false;try{const saved=JSON.parse(localStorage.getItem('vobix_bubble_position')||'null');if(Number.isFinite(saved?.right))right=saved.right;if(Number.isFinite(saved?.bottom))bottom=saved.bottom}catch(_){}const paint=()=>{right=Math.max(8,Math.min(innerWidth-shell.offsetWidth-8,right));bottom=Math.max(8,Math.min(innerHeight-shell.offsetHeight-8,bottom));shell.style.right=right+'px';shell.style.bottom=bottom+'px'};paint();handle.addEventListener('pointerdown',event=>{if(event.pointerType==='mouse'&&event.button!==0)return;dragging=true;moved=false;startX=event.clientX;startY=event.clientY;originRight=right;originBottom=bottom;try{handle.setPointerCapture(event.pointerId)}catch(_){}});handle.addEventListener('pointermove',event=>{if(!dragging)return;const dx=event.clientX-startX,dy=event.clientY-startY;if(Math.abs(dx)+Math.abs(dy)>6)moved=true;if(!moved)return;event.preventDefault();right=originRight-dx;bottom=originBottom-dy;paint()});handle.addEventListener('pointerup',event=>{if(!dragging)return;dragging=false;if(moved){event.preventDefault();event.stopImmediatePropagation();try{localStorage.setItem('vobix_bubble_position',JSON.stringify({right,bottom}))}catch(_){}}});addEventListener('resize',paint)})();
 const theme=JSON.parse(localStorage.getItem('vobixchat_theme')||'{}');
 function apply(t){if(t.bg)document.documentElement.style.setProperty('--bg',t.bg);if(t.text)document.documentElement.style.setProperty('--text',t.text);if(t.accent)document.documentElement.style.setProperty('--accent',t.accent)}
 apply(theme);if(theme.bg)$('bgColor').value=theme.bg;if(theme.text)$('textColor').value=theme.text;if(theme.accent)$('accentColor').value=theme.accent;

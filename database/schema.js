@@ -653,6 +653,8 @@ async function initializeDatabase() {
         archived BOOLEAN
           DEFAULT FALSE,
 
+        cleared_at TIMESTAMPTZ,
+
         last_read_at TIMESTAMPTZ,
 
         UNIQUE (
@@ -690,6 +692,13 @@ async function initializeDatabase() {
       ALTER TABLE conversation_participants
       ADD COLUMN IF NOT EXISTS archived BOOLEAN
       DEFAULT FALSE;
+    `);
+
+    // CAPA 154 — Cada persona puede vaciar su copia del chat sin borrar
+    // el historial que todavía conserva el otro participante.
+    await database.query(`
+      ALTER TABLE conversation_participants
+      ADD COLUMN IF NOT EXISTS cleared_at TIMESTAMPTZ;
     `);
 
     /*

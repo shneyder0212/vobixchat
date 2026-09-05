@@ -131,6 +131,8 @@ const VOBIX_LAYERS = Object.freeze([
 ,{ id:'151', name:'Control Personal de Red y Datos', status:'en_validacion', scope:'Cada dispositivo permite elegir Wi‑Fi y datos móviles, solo Wi‑Fi o solo datos móviles para archivos, notas de voz y llamadas; el ahorro de datos permanece desactivado por defecto y puede activarse voluntariamente.' }
 ,{ id:'152', name:'Sesión Cerrada por Dispositivo', status:'en_validacion', scope:'Cerrar sesión revoca la sesión del servidor, cancela las notificaciones push del dispositivo, borra únicamente la autenticación local y conserva la cuenta y las conversaciones.' }
 ,{ id:'153', name:'Zonas Seguras Multidispositivo', status:'en_validacion', scope:'En modo instalado, la cabecera y los controles reservan las áreas del sistema en Android e iOS; navegador, tablet y escritorio mantienen una distribución adaptable sin márgenes fijos de una marca.' }
+,{ id:'154', name:'Eliminación Personal y Bloqueo', status:'en_validacion', scope:'Permite eliminar el historial solo para la cuenta actual, quitar un usuario sin bloquearlo o quitarlo y bloquearlo, siempre con confirmación visible.' }
+,{ id:'155', name:'Todos los Menús Movibles', status:'en_validacion', scope:'Los menús y paneles flotantes pueden moverse en horizontal y vertical con ratón o dedo, se mantienen dentro de la pantalla y recuerdan su posición por dispositivo.' }
 ]);
 
 function getVobixLayers() {

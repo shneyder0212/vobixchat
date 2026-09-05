@@ -958,26 +958,48 @@ router.delete(
 
 
     try {
+      const shouldBlock = String(req.query.block || '').toLowerCase() === 'true';
+      const client = await database.pool.connect();
 
-      await database.query(
-        `
-        DELETE FROM contacts
+      try {
+        await client.query('BEGIN');
+        await client.query(
+          `DELETE FROM contacts
+           WHERE owner_user_id = $1 AND contact_user_id = $2`,
+          [ownerUserId, contactUserId]
+        );
+        await client.query(
+          `DELETE FROM friendships
+           WHERE (requester_id = $1 AND addressee_id = $2)
+              OR (requester_id = $2 AND addressee_id = $1)`,
+          [ownerUserId, contactUserId]
+        );
 
-        WHERE
-          owner_user_id = $1
-          AND
-          contact_user_id = $2
-        `,
-        [
-          ownerUserId,
-          contactUserId
-        ]
-      );
+        if (shouldBlock) {
+          const target = await client.query(
+            'SELECT id FROM users WHERE id = $1 LIMIT 1',
+            [contactUserId]
+          );
+          if (!target.rows[0]) {
+            await client.query('ROLLBACK');
+            return res.status(404).json({ ok:false, msg:'Usuario no encontrado' });
+          }
+          await client.query(
+            `INSERT INTO user_blocks(blocker_user_id, blocked_user_id, created_at)
+             VALUES($1, $2, NOW())
+             ON CONFLICT(blocker_user_id, blocked_user_id) DO NOTHING`,
+            [ownerUserId, contactUserId]
+          );
+        }
 
-
-      return res.json({
-        ok: true
-      });
+        await client.query('COMMIT');
+        return res.json({ ok:true, blocked:shouldBlock });
+      } catch (error) {
+        await client.query('ROLLBACK');
+        throw error;
+      } finally {
+        client.release();
+      }
 
 
     } catch (error) {
@@ -1892,6 +1914,11 @@ router.get(
 
             WHERE
               m.conversation_id = c.id
+
+              AND m.created_at > COALESCE(
+                me.cleared_at,
+                '-infinity'::timestamptz
+              )
 
               AND
               COALESCE(
@@ -2812,6 +2839,13 @@ async function getMessagesHandler(
               WHERE hidden.message_id = m.id AND hidden.user_id = $4
             )
 
+            AND m.created_at > COALESCE((
+              SELECT participant.cleared_at
+              FROM conversation_participants participant
+              WHERE participant.conversation_id = $1
+                AND participant.user_id = $4
+            ), '-infinity'::timestamptz)
+
           ORDER BY
             m.created_at DESC,
             m.id DESC
@@ -2884,6 +2918,13 @@ async function getMessagesHandler(
               SELECT 1 FROM message_hidden_users hidden
               WHERE hidden.message_id = m.id AND hidden.user_id = $3
             )
+
+            AND m.created_at > COALESCE((
+              SELECT participant.cleared_at
+              FROM conversation_participants participant
+              WHERE participant.conversation_id = $1
+                AND participant.user_id = $3
+            ), '-infinity'::timestamptz)
 
           ORDER BY
             m.created_at DESC,
@@ -3031,8 +3072,8 @@ router.post('/messages/:messageId/consume-view-once', async (req, res) => {
   }
 });
 
-// Vacía una conversación para todos sus participantes. La interfaz pide
-// confirmación antes de llamar a esta ruta.
+// CAPA 154 — Vacía el historial únicamente para quien lo solicita.
+// El otro participante conserva su copia y los mensajes nuevos siguen llegando.
 router.delete('/conversations/:conversationId/messages', async (req, res) => {
   const userId = currentUserId(req);
   const conversationId = cleanId(req.params.conversationId);
@@ -3040,10 +3081,13 @@ router.delete('/conversations/:conversationId/messages', async (req, res) => {
     const room = await validatePrivateRoom(conversationId, userId);
     if (!room.ok) return res.status(room.status).json({ ok:false, msg:room.msg });
     const result = await database.query(
-      `UPDATE messages SET deleted=TRUE, updated_at=NOW() WHERE conversation_id=$1 AND COALESCE(deleted,FALSE)=FALSE`,
-      [conversationId]
+      `UPDATE conversation_participants
+       SET cleared_at=NOW()
+       WHERE conversation_id=$1 AND user_id=$2
+       RETURNING cleared_at`,
+      [conversationId, userId]
     );
-    return res.json({ ok:true, cleared:result.rowCount || 0 });
+    return res.json({ ok:true, cleared:true, clearedAt:result.rows[0]?.cleared_at || null });
   } catch (error) {
     console.error('VOBIXCHAT CLEAR CHAT ERROR:', error);
     return res.status(500).json({ ok:false, msg:'No se pudo vaciar el chat' });
