@@ -42,7 +42,7 @@ object CallNotifications {
         val fullScreenPending = PendingIntent.getActivity(context, CALL_ID, fullScreenIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
 
         val notification = NotificationCompat.Builder(context, CALL_CHANNEL)
-            .setSmallIcon(android.R.drawable.sym_action_call)
+            .setSmallIcon(R.drawable.ic_notification_vobix)
             .setContentTitle(title)
             .setContentText(caller)
             .setCategory(NotificationCompat.CATEGORY_CALL)
