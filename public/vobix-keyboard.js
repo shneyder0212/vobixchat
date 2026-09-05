@@ -1,0 +1,91 @@
+'use strict';
+
+(() => {
+  const root = document.documentElement;
+  const editableSelector = 'input:not([type="checkbox"]):not([type="radio"]):not([type="button"]), textarea, select, [contenteditable="true"]';
+  let baselineHeight = Math.max(window.innerHeight || 0, window.visualViewport?.height || 0);
+  let updateFrame = 0;
+
+  try {
+    if (navigator.virtualKeyboard) navigator.virtualKeyboard.overlaysContent = false;
+  } catch (_) {}
+
+  function activeEditable() {
+    return document.activeElement?.matches?.(editableSelector) ? document.activeElement : null;
+  }
+
+  function keyboardGeometryHeight() {
+    const height = Number(navigator.virtualKeyboard?.boundingRect?.height || 0);
+    return Number.isFinite(height) ? Math.max(0, Math.round(height)) : 0;
+  }
+
+  function updateViewport() {
+    updateFrame = 0;
+    const viewport = window.visualViewport;
+    const visibleHeight = Math.max(1, Math.round(viewport?.height || window.innerHeight || baselineHeight));
+    const visibleWidth = Math.max(1, Math.round(viewport?.width || window.innerWidth || 1));
+    const offsetTop = Math.max(0, Math.round(viewport?.offsetTop || 0));
+    const offsetLeft = Math.max(0, Math.round(viewport?.offsetLeft || 0));
+    const geometryHeight = keyboardGeometryHeight();
+    const focused = activeEditable();
+
+    if (!focused && geometryHeight < 80) baselineHeight = Math.max(baselineHeight, visibleHeight);
+    const viewportReduction = Math.max(0, baselineHeight - visibleHeight);
+    const keyboardHeight = Math.max(geometryHeight, viewportReduction);
+    const keyboardOpen = Boolean(focused && keyboardHeight >= 80);
+
+    root.style.setProperty('--vobix-visual-height', `${visibleHeight}px`);
+    root.style.setProperty('--vobix-visual-width', `${visibleWidth}px`);
+    root.style.setProperty('--vobix-visual-top', `${offsetTop}px`);
+    root.style.setProperty('--vobix-visual-left', `${offsetLeft}px`);
+    root.style.setProperty('--vobix-keyboard-height', `${keyboardOpen ? keyboardHeight : 0}px`);
+    root.style.setProperty('--vobix-viewport-height', `${visibleHeight}px`);
+    root.style.setProperty('--vobix-viewport-top', `${offsetTop}px`);
+    root.style.setProperty('--vobix-inbox-height', `${visibleHeight}px`);
+    root.style.setProperty('--vobix-login-height', `${visibleHeight}px`);
+    root.classList.toggle('vobixKeyboardOpen', keyboardOpen);
+    document.body?.classList.toggle('keyboardOpen', keyboardOpen);
+
+    if (keyboardOpen && focused) {
+      const rect = focused.getBoundingClientRect();
+      const visibleTop = offsetTop + 8;
+      const visibleBottom = offsetTop + visibleHeight - 12;
+      if (rect.top < visibleTop || rect.bottom > visibleBottom) {
+        focused.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'auto' });
+      }
+    }
+
+    window.dispatchEvent(new CustomEvent('vobixviewportchange', {
+      detail: { visibleHeight, visibleWidth, offsetTop, offsetLeft, keyboardHeight, keyboardOpen }
+    }));
+  }
+
+  function scheduleUpdate() {
+    if (updateFrame) cancelAnimationFrame(updateFrame);
+    updateFrame = requestAnimationFrame(updateViewport);
+  }
+
+  window.visualViewport?.addEventListener('resize', scheduleUpdate, { passive: true });
+  window.visualViewport?.addEventListener('scroll', scheduleUpdate, { passive: true });
+  window.addEventListener('resize', scheduleUpdate, { passive: true });
+  window.addEventListener('pageshow', scheduleUpdate, { passive: true });
+  window.addEventListener('orientationchange', () => {
+    baselineHeight = Math.max(window.innerHeight || 0, window.visualViewport?.height || 0);
+    setTimeout(scheduleUpdate, 120);
+    setTimeout(scheduleUpdate, 420);
+  }, { passive: true });
+  navigator.virtualKeyboard?.addEventListener?.('geometrychange', scheduleUpdate);
+  document.addEventListener('focusin', event => {
+    if (!event.target.matches?.(editableSelector)) return;
+    scheduleUpdate();
+    setTimeout(scheduleUpdate, 80);
+    setTimeout(scheduleUpdate, 260);
+  });
+  document.addEventListener('focusout', () => {
+    setTimeout(scheduleUpdate, 120);
+    setTimeout(scheduleUpdate, 360);
+  });
+
+  window.VobixKeyboard = Object.freeze({ update: scheduleUpdate });
+  scheduleUpdate();
+})();

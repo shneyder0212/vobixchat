@@ -134,6 +134,7 @@ const VOBIX_LAYERS = Object.freeze([
 ,{ id:'154', name:'Eliminación Personal y Bloqueo', status:'en_validacion', scope:'Permite eliminar el historial solo para la cuenta actual, quitar un usuario sin bloquearlo o quitarlo y bloquearlo, siempre con confirmación visible.' }
 ,{ id:'155', name:'Todos los Menús Movibles', status:'en_validacion', scope:'Los menús y paneles flotantes pueden moverse en horizontal y vertical con ratón o dedo, se mantienen dentro de la pantalla y recuerdan su posición por dispositivo.' }
 ,{ id:'156', name:'Centro de Permisos Reversible', status:'en_validacion', scope:'El menú permite comprobar y solicitar cámara, micrófono y notificaciones mediante controles oficiales del dispositivo, informa bloqueos y evita acceso permanente innecesario a fotos o documentos.' }
+,{ id:'157', name:'Teclado Universal Adaptativo', status:'en_validacion', scope:'Registro, búsqueda y conversación combinan VisualViewport, VirtualKeyboard y foco para conservar campos y acciones visibles en Android, iOS, tablets y escritorio sin depender de una marca concreta.' }
 ]);
 
 function getVobixLayers() {
