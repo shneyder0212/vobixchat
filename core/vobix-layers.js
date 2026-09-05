@@ -120,6 +120,8 @@ const VOBIX_LAYERS = Object.freeze([
 ,{ id:'140', name:'Arranque Resistente de Base de Datos', status:'en_validacion', scope:'El servidor abre el puerto durante despliegues solapados y reintenta la conexión PostgreSQL con pausa progresiva, evitando que un límite temporal de sesiones bloquee la versión corregida.' }
 ,{ id:'141', name:'Cámara Directa y Documentos Claros', status:'en_validacion', scope:'La cámara móvil captura fotografías nuevas con la cámara trasera; los archivos se envían sin avisos rutinarios y muestran formato, nombre compacto y tamaño legible.' }
 ,{ id:'142', name:'Permisos Multimedia al Entrar', status:'en_validacion', scope:'Cada cuenta activa cámara y micrófono desde una pantalla inicial con pulsación explícita; se comprueban ambas pistas, se detienen inmediatamente y se recuerda el permiso en ese dispositivo.' }
+,{ id:'143', name:'Escritura Compacta Configurable', status:'en_validacion', scope:'Las letras del compositor usan tamaño pequeño por defecto y cada persona puede elegir Pequeña, Normal o Grande; iPhone conserva el mínimo que evita zoom involuntario.' }
+,{ id:'144', name:'Interruptor Directo de Modo Senior', status:'en_validacion', scope:'El menú muestra Activar o Desactivar Modo Senior según su estado y cambia con una sola pulsación, sin confirmación ni espera de tres segundos.' }
 ]);
 
 function getVobixLayers() {

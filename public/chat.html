@@ -679,6 +679,14 @@
     body.vobixFontSmall .messageBubble { font-size: 13px; }
     body.vobixFontNormal .messageBubble { font-size: 15px; }
     body.vobixFontLarge .messageBubble { font-size: 18px; }
+    body.vobixFontSmall #messageInput { font-size: 15px; }
+    body.vobixFontNormal #messageInput { font-size: 16px; }
+    body.vobixFontLarge #messageInput { font-size: 18px; }
+
+    /* Safari amplía toda la página cuando un campo enfocado baja de 16 px. */
+    @supports (-webkit-touch-callout: none) {
+      body.vobixFontSmall #messageInput { font-size: 16px; }
+    }
 
     .fontSizeChoices {
       display: grid;
@@ -3854,9 +3862,9 @@
       <span class="chatOptionText">Datos y almacenamiento</span>
     </button>
 
-    <button id="openSeniorModeButton" class="chatOptionButton" type="button">
+    <button id="openSeniorModeButton" class="chatOptionButton" type="button" aria-pressed="false">
       <span class="chatOptionIcon">👵</span>
-      <span class="chatOptionText">Vobix Senior — Modo Fácil (gratis)</span>
+      <span id="seniorModeOptionText" class="chatOptionText">Activar Modo Senior</span>
     </button>
 
 
@@ -4389,7 +4397,7 @@
   <div id="appearancePanel" class="notificationPanel" aria-hidden="true">
     <div class="notificationCard">
       <div class="notificationTitle">Tamaño del texto</div>
-      <div class="notificationDescription">Cambia solamente el tamaño de los mensajes en este dispositivo.</div>
+      <div class="notificationDescription">Cambia el tamaño de los mensajes y de las letras al escribir en este dispositivo.</div>
       <div class="fontSizeChoices">
         <button class="fontSizeChoice" data-font-size="small" type="button">Pequeña</button>
         <button class="fontSizeChoice" data-font-size="normal" type="button">Normal</button>
@@ -5066,6 +5074,9 @@
 
       openSeniorModeButton:
         $('openSeniorModeButton'),
+
+      seniorModeOptionText:
+        $('seniorModeOptionText'),
 
       seniorHome:
         $('seniorHome'),
@@ -9876,6 +9887,8 @@
     elements.openStarredMessagesButton?.addEventListener('click', openStarredMessages);
     elements.closeStarredMessagesButton?.addEventListener('click', () => setPanel(elements.starredMessagesPanel, false));
 
+    const CHAT_FONT_SIZE_STORAGE_KEY = 'vobixchat_font_size_v2';
+
     function applyChatFontSize(size) {
       const allowed = ['small', 'normal', 'large'];
       const selected = allowed.includes(size) ? size : 'normal';
@@ -9886,7 +9899,7 @@
         button.classList.toggle('active', button.dataset.fontSize === selected);
       });
 
-      try { localStorage.setItem('vobixchat_font_size', selected); } catch (_) {}
+      try { localStorage.setItem(CHAT_FONT_SIZE_STORAGE_KEY, selected); } catch (_) {}
     }
 
     function openAppearance() {
@@ -9903,8 +9916,8 @@
       });
     });
 
-    let storedFontSize = 'normal';
-    try { storedFontSize = localStorage.getItem('vobixchat_font_size') || 'normal'; } catch (_) {}
+    let storedFontSize = 'small';
+    try { storedFontSize = localStorage.getItem(CHAT_FONT_SIZE_STORAGE_KEY) || 'small'; } catch (_) {}
     applyChatFontSize(storedFontSize);
 
     elements.openDataSettingsButton?.addEventListener('click', () => {
@@ -10378,6 +10391,14 @@
       if (persist) {
         try { localStorage.setItem(SENIOR_MODE_STORAGE_KEY, active ? 'on' : 'off'); } catch (_) {}
       }
+      if (elements.openSeniorModeButton) {
+        elements.openSeniorModeButton.setAttribute('aria-pressed', String(active));
+      }
+      if (elements.seniorModeOptionText) {
+        elements.seniorModeOptionText.textContent = active
+          ? 'Desactivar Modo Senior'
+          : 'Activar Modo Senior';
+      }
       if (active) renderSeniorFavorites();
       applySeniorSettings();
       if (active) {
@@ -10458,10 +10479,9 @@
 
     elements.openSeniorModeButton?.addEventListener('click', () => {
       closeOptionsMenu();
-      if (window.confirm('¿Activar gratis Vobix Senior — Modo Fácil en este dispositivo? Tus chats y configuraciones no cambiarán.')) {
-        applySeniorMode(true);
-        notifyUser('Vobix Senior activado');
-      }
+      const active = document.body.classList.contains('vobixSeniorMode');
+      applySeniorMode(!active);
+      notifyUser(active ? 'Modo Senior desactivado' : 'Vobix Senior activado');
     });
 
     elements.seniorVoiceGuideButton?.addEventListener('click', () => {
