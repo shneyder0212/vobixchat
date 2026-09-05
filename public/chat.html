@@ -9448,9 +9448,9 @@
     elements.cameraButton?.addEventListener('click', event => {
       event.preventDefault();
       if (!ensureActiveConversation()) return;
-      elements.cameraChoicePanel?.classList.add('open');
-      elements.cameraChoicePanel?.setAttribute('aria-hidden', 'false');
-      window.setTimeout(() => elements.openBackCameraButton?.focus(), 40);
+      // En móvil se abre directamente la cámara trasera, igual que en las
+      // aplicaciones de mensajería. La galería sigue disponible en Adjuntar.
+      openPhotoCamera(elements.chatCameraInput);
     });
 
     function closeCameraChoice() {
@@ -13541,6 +13541,20 @@
         return;
       }
 
+      // Respuesta visual inmediata: el mensaje aparece al pulsar Enviar y la
+      // confirmación HTTP actualiza el mismo elemento mediante clientMessageId.
+      renderTextMessage({
+        ...payload,
+        status: 'sending',
+        createdAt: new Date().toISOString()
+      }, true);
+      sendTypingState(false);
+      clearCurrentDraft();
+      input.value = '';
+      cancelMessageReply();
+      resizeMessageInput();
+      syncComposerAction();
+
       app.messageSending = true;
       if (elements.sendButton) {
         elements.sendButton.disabled = true;
@@ -13614,14 +13628,7 @@
               : 'No se pudo enviar. Pulsa Reintentar'
           );
 
-          renderTextMessage({
-            text,
-            clientMessageId: payload.clientMessageId,
-            reply: payload.reply,
-            status: queued ? 'queued' : 'failed',
-            failed: !queued,
-            createdAt: new Date().toISOString()
-          }, true);
+          updateMessageStatus({ clientMessageId: payload.clientMessageId }, queued ? 'queued' : 'failed');
 
           sendTypingState(false);
           clearCurrentDraft();
@@ -13643,19 +13650,8 @@
 
         clearCurrentDraft();
 
-        renderTextMessage(
-          {
-            ...(confirmedMessage || {}),
-            text,
-            clientMessageId: payload.clientMessageId,
-            reply: payload.reply,
-            status: 'sent',
-            createdAt:
-              new Date()
-                .toISOString()
-          },
-          true
-        );
+        bindConfirmedMessageId(payload.clientMessageId, confirmedMessage);
+        updateMessageStatus({ clientMessageId: payload.clientMessageId }, 'sent');
 
         playOutgoingMessageSound();
 
