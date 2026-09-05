@@ -3916,11 +3916,12 @@
   <div id="cameraChoicePanel" class="mediaPermissionPanel" role="dialog" aria-modal="true" aria-labelledby="cameraChoiceTitle" aria-hidden="true">
     <div class="mediaPermissionCard">
       <div class="mediaPermissionIcon" aria-hidden="true">📷</div>
-      <h2 id="cameraChoiceTitle">Elegir cámara</h2>
-      <p>Selecciona cómo quieres hacer la fotografía.</p>
+      <h2 id="cameraChoiceTitle">Enviar foto o vídeo</h2>
+      <p>Elige desde la galería o crea contenido ahora.</p>
       <div class="cameraChoiceActions">
-        <button id="openFrontCameraButton" class="cameraChoiceButton" type="button"><span>🤳</span>Cámara frontal<br>(selfie)</button>
-        <button id="openBackCameraButton" class="cameraChoiceButton" type="button"><span>📸</span>Cámara trasera</button>
+        <button id="openGalleryButton" class="cameraChoiceButton" type="button"><span>🖼️</span>Galería</button>
+        <button id="openBackCameraButton" class="cameraChoiceButton" type="button"><span>📸</span>Hacer foto</button>
+        <button id="openVideoCameraButton" class="cameraChoiceButton" type="button"><span>🎥</span>Grabar vídeo</button>
       </div>
       <button id="cancelCameraChoiceButton" class="mediaPermissionLater cameraChoiceCancel" type="button">Cancelar</button>
     </div>
@@ -3929,7 +3930,7 @@
   <input
     id="chatPhotoInput"
     type="file"
-    accept="image/*"
+    accept="image/*,video/*"
     hidden
   >
 
@@ -3947,6 +3948,14 @@
     type="file"
     accept="image/*"
     capture="user"
+    hidden
+  >
+
+  <input
+    id="chatVideoInput"
+    type="file"
+    accept="video/*"
+    capture="environment"
     hidden
   >
 
@@ -5129,17 +5138,23 @@
       cameraChoicePanel:
         $('cameraChoicePanel'),
 
-      openFrontCameraButton:
-        $('openFrontCameraButton'),
+      openGalleryButton:
+        $('openGalleryButton'),
 
       openBackCameraButton:
         $('openBackCameraButton'),
+
+      openVideoCameraButton:
+        $('openVideoCameraButton'),
 
       cancelCameraChoiceButton:
         $('cancelCameraChoiceButton'),
 
       chatCameraInput:
         $('chatCameraInput'),
+
+      chatVideoInput:
+        $('chatVideoInput'),
 
       chatSelfieInput:
         $('chatSelfieInput'),
@@ -9448,9 +9463,8 @@
     elements.cameraButton?.addEventListener('click', event => {
       event.preventDefault();
       if (!ensureActiveConversation()) return;
-      // En móvil se abre directamente la cámara trasera, igual que en las
-      // aplicaciones de mensajería. La galería sigue disponible en Adjuntar.
-      openPhotoCamera(elements.chatCameraInput);
+      elements.cameraChoicePanel?.classList.add('open');
+      elements.cameraChoicePanel?.setAttribute('aria-hidden', 'false');
     });
 
     function closeCameraChoice() {
@@ -9465,8 +9479,9 @@
       input.click();
     }
 
-    elements.openFrontCameraButton?.addEventListener('click', () => openPhotoCamera(elements.chatSelfieInput));
+    elements.openGalleryButton?.addEventListener('click', () => openPhotoCamera(elements.chatPhotoInput));
     elements.openBackCameraButton?.addEventListener('click', () => openPhotoCamera(elements.chatCameraInput));
+    elements.openVideoCameraButton?.addEventListener('click', () => openPhotoCamera(elements.chatVideoInput));
     elements.cancelCameraChoiceButton?.addEventListener('click', closeCameraChoice);
     elements.cameraChoicePanel?.addEventListener('click', event => {
       if (event.target === elements.cameraChoicePanel) closeCameraChoice();
@@ -9835,6 +9850,24 @@
         if (file) await uploadChatAttachment(file, 'image', { originSource: 'vobix-camera' });
       } finally {
         elements.chatSelfieInput.value = '';
+      }
+    });
+
+    elements.chatVideoInput?.addEventListener('change', async () => {
+      const file = elements.chatVideoInput.files?.[0];
+      try {
+        if (file) await uploadChatAttachment(file, 'video', { originSource: 'vobix-camera' });
+      } finally {
+        elements.chatVideoInput.value = '';
+      }
+    });
+
+    elements.chatPhotoInput?.addEventListener('change', async () => {
+      const file = elements.chatPhotoInput.files?.[0];
+      try {
+        if (file) await uploadChatAttachment(file, file.type.startsWith('video/') ? 'video' : 'image');
+      } finally {
+        elements.chatPhotoInput.value = '';
       }
     });
 
@@ -15278,6 +15311,24 @@
 
         app.conversations = conversations;
 
+        // La lista autenticada es la única autoridad sobre el nombre del
+        // interlocutor. Refresca también un chat ya abierto para expulsar
+        // nombres antiguos procedentes de URL, caché o pantallas previas.
+        const activeId = String(conversationId(app.conversation) || '');
+        const refreshedActiveConversation = activeId
+          ? conversations.find(item => String(conversationId(item) || '') === activeId)
+          : null;
+        if (refreshedActiveConversation) {
+          const refreshedPeer = getConversationPeer(refreshedActiveConversation);
+          app.conversation = refreshedActiveConversation;
+          app.peer = refreshedPeer;
+          if (elements.topbarUserName) elements.topbarUserName.textContent = userName(refreshedPeer);
+          if (elements.myAvatar && refreshedPeer) {
+            elements.myAvatar.textContent = userInitial(refreshedPeer);
+            elements.myAvatar.setAttribute('aria-label', `Perfil de ${userName(refreshedPeer)}`);
+          }
+        }
+
         renderConversations(
           conversations
         );
@@ -15674,7 +15725,7 @@
 
 
       app.peer =
-        [peer, getConversationPeer(conversation)].find(candidate => {
+        [getConversationPeer(conversation), peer].find(candidate => {
           const candidateId = String(userId(candidate) || '');
           const myId = String(userId(app.me) || '');
           return candidate && (!candidateId || !myId || candidateId !== myId);
@@ -18359,16 +18410,10 @@
 
       if (!button) return;
 
-      button.addEventListener('pointerdown', event => {
-        if (event.pointerType === 'mouse' && event.button !== 0) return;
+      button.addEventListener('click', event => {
         event.preventDefault();
         unlockAudio();
         startCall(type);
-      });
-
-      button.addEventListener('click', event => {
-        event.preventDefault();
-        if (event.detail === 0) startCall(type);
       });
 
     }
