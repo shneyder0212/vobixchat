@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:fillColor="@android:color/transparent"
+        android:pathData="M54,15 A39,39 0,1 1,53.99 15"
+        android:strokeColor="@color/vobix_green"
+        android:strokeLineCap="round"
+        android:strokeWidth="5" />
+    <path
+        android:fillColor="@color/vobix_green"
+        android:pathData="M31,34 L42,34 L54,65 L66,34 L77,34 L59,77 L49,77 Z" />
+</vector>
