@@ -1040,6 +1040,11 @@
       transform: scale(.94);
     }
 
+
+    #sendPhotoButton {
+      display: none;
+    }
+
     .vobixEmojiTray {
       position: absolute;
       left: 12px;
@@ -1238,6 +1243,10 @@
 
       cursor: pointer;
 
+      touch-action: manipulation;
+      user-select: none;
+      -webkit-user-select: none;
+
       box-shadow:
         0 0 28px
         rgba(104,255,114,.18);
@@ -1279,6 +1288,11 @@
 
       display: none;
 
+      max-height: calc(100dvh - 24px);
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      will-change: top;
+
       padding: 8px;
 
       border:
@@ -1301,6 +1315,43 @@
 
     .chatOptionsMenu.open {
       display: block;
+    }
+
+
+    .chatOptionsDragHandle {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      width: 100%;
+      min-height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin: 0 0 4px;
+      border: 0;
+      border-radius: 12px;
+      background: rgba(104,255,114,.10);
+      color: rgba(255,255,255,.78);
+      font-size: 12px;
+      font-weight: 850;
+      cursor: ns-resize;
+      touch-action: none;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+
+    .chatOptionsDragHandle::before {
+      content: '↕';
+      color: var(--green);
+      font-size: 17px;
+    }
+
+
+    .chatOptionsMenu.dragging,
+    .chatOptionsMenu.dragging .chatOptionsDragHandle {
+      cursor: grabbing;
     }
 
 
@@ -2985,7 +3036,6 @@
         min-width: 42px;
       }
 
-
       .messages {
         padding:
           12px
@@ -3000,19 +3050,39 @@
 
 
       .vobixComposer {
-        gap: 8px;
+        gap: 6px;
 
         padding:
-          8px
-          10px;
+          7px
+          6px;
+      }
+
+
+      .vobixComposerTool {
+        width: 36px;
+        height: 36px;
+        min-width: 36px;
+        font-size: 18px;
+      }
+
+
+      #viewOnceToggle {
+        display: none;
+      }
+
+
+      #messageInput {
+        min-width: 96px;
+        padding: 11px 12px;
+        font-size: 16px;
       }
 
 
       .vobixActionSlot,
       .vobixComposerAction {
-        width: 50px;
-        height: 50px;
-        min-width: 50px;
+        width: 46px;
+        height: 46px;
+        min-width: 46px;
       }
 
 
@@ -3273,7 +3343,7 @@
         aria-label="Videollamada"
         title="Videollamada"
       >
-        ◉
+        📹
       </button>
 
 
@@ -3502,7 +3572,18 @@
   <div
     id="chatOptionsMenu"
     class="chatOptionsMenu"
+    aria-label="Menú de opciones desplazable"
   >
+
+    <button
+      id="chatOptionsDragHandle"
+      class="chatOptionsDragHandle"
+      type="button"
+      aria-label="Mover menú arriba o abajo"
+      title="Arrastra para mover el menú"
+    >
+      Mover menú
+    </button>
 
     <button
       id="openPeopleButton"
@@ -4626,6 +4707,9 @@
 
       chatOptionsMenu:
         $('chatOptionsMenu'),
+
+      chatOptionsDragHandle:
+        $('chatOptionsDragHandle'),
 
       openPeopleButton:
         $('openPeopleButton'),
@@ -5888,7 +5972,167 @@
           'open'
         );
 
+
+      if (
+        elements
+          .chatOptionsMenu
+          .classList
+          .contains('open')
+      ) {
+
+        requestAnimationFrame(
+          restoreOptionsMenuPosition
+        );
+
+      }
+
     }
+
+
+    const OPTIONS_MENU_TOP_KEY =
+      'vobix_chat_options_top_v1';
+
+
+    function clampOptionsMenuTop(top) {
+
+      const menu = elements.chatOptionsMenu;
+
+      if (!menu) return 12;
+
+      const safeTop = 12;
+      const safeBottom = 12;
+      const maxTop = Math.max(
+        safeTop,
+        window.innerHeight - menu.offsetHeight - safeBottom
+      );
+
+      return Math.max(
+        safeTop,
+        Math.min(maxTop, Number(top) || safeTop)
+      );
+
+    }
+
+
+    function setOptionsMenuTop(top, persist = false) {
+
+      const menu = elements.chatOptionsMenu;
+
+      if (!menu) return;
+
+      const clampedTop = clampOptionsMenuTop(top);
+      menu.style.top = `${clampedTop}px`;
+
+      if (persist) {
+        try {
+          localStorage.setItem(
+            OPTIONS_MENU_TOP_KEY,
+            String(clampedTop)
+          );
+        } catch (error) {
+          // El menú sigue funcionando aunque el navegador bloquee almacenamiento.
+        }
+      }
+
+    }
+
+
+    function restoreOptionsMenuPosition() {
+
+      const menu = elements.chatOptionsMenu;
+
+      if (!menu) return;
+
+      let savedTop = menu.getBoundingClientRect().top;
+
+      try {
+        const storedTop = Number(
+          localStorage.getItem(OPTIONS_MENU_TOP_KEY)
+        );
+        if (Number.isFinite(storedTop)) savedTop = storedTop;
+      } catch (error) {
+        // Usamos la posición visible actual.
+      }
+
+      setOptionsMenuTop(savedTop);
+
+    }
+
+
+    function makeOptionsMenuVerticallyDraggable() {
+
+      const menu = elements.chatOptionsMenu;
+      const handle = elements.chatOptionsDragHandle;
+
+      if (!menu || !handle) return;
+
+      let dragging = false;
+      let startY = 0;
+      let originTop = 0;
+
+      handle.addEventListener('pointerdown', event => {
+        if (event.pointerType === 'mouse' && event.button !== 0) return;
+
+        event.preventDefault();
+        event.stopPropagation();
+        dragging = true;
+        startY = event.clientY;
+        originTop = menu.getBoundingClientRect().top;
+        menu.classList.add('dragging');
+
+        try {
+          handle.setPointerCapture(event.pointerId);
+        } catch (error) {
+          // La captura no es imprescindible para moverlo.
+        }
+      });
+
+      handle.addEventListener('pointermove', event => {
+        if (!dragging) return;
+        event.preventDefault();
+        setOptionsMenuTop(
+          originTop + event.clientY - startY
+        );
+      });
+
+      const stopDragging = event => {
+        if (!dragging) return;
+        dragging = false;
+        menu.classList.remove('dragging');
+        setOptionsMenuTop(
+          menu.getBoundingClientRect().top,
+          true
+        );
+
+        try {
+          handle.releasePointerCapture(event.pointerId);
+        } catch (error) {
+          // La captura puede haber terminado automáticamente.
+        }
+      };
+
+      handle.addEventListener('pointerup', stopDragging);
+      handle.addEventListener('pointercancel', stopDragging);
+      handle.addEventListener('keydown', event => {
+        if (!['ArrowUp', 'ArrowDown'].includes(event.key)) return;
+        event.preventDefault();
+        const direction = event.key === 'ArrowUp' ? -1 : 1;
+        setOptionsMenuTop(
+          menu.getBoundingClientRect().top + direction * 24,
+          true
+        );
+      });
+
+      window.addEventListener('resize', () => {
+        if (menu.classList.contains('open')) {
+          setOptionsMenuTop(menu.getBoundingClientRect().top);
+        }
+      });
+
+    }
+
+
+    makeOptionsMenuVerticallyDraggable();
 
 
     /* =====================================================
@@ -6032,9 +6276,7 @@
                   .trim()
               ) {
 
-                elements
-                  .sendButton
-                  ?.click();
+                sendCurrentMessage();
 
               }
 
@@ -12389,12 +12631,32 @@
       elements
         .sendButton
         .addEventListener(
+          'pointerdown',
+          event => {
+
+            if (event.pointerType === 'mouse' && event.button !== 0) return;
+
+            event.preventDefault();
+
+            event.stopPropagation();
+
+            sendCurrentMessage();
+
+          }
+        );
+
+
+      elements
+        .sendButton
+        .addEventListener(
           'click',
           event => {
 
             event.preventDefault();
 
-            sendCurrentMessage();
+            if (event.detail === 0) {
+              sendCurrentMessage();
+            }
 
           }
         );
@@ -16669,52 +16931,38 @@
        BOTÓN LLAMADA
        ===================================================== */
 
-    if (
-      elements.audioCallButton
-    ) {
+    function bindImmediateCallButton(button, type) {
 
-      elements
-        .audioCallButton
-        .addEventListener(
-          'click',
-          event => {
+      if (!button) return;
 
-            event.preventDefault();
+      button.addEventListener('pointerdown', event => {
+        if (event.pointerType === 'mouse' && event.button !== 0) return;
+        event.preventDefault();
+        event.stopPropagation();
+        startCall(type);
+      });
 
-            startCall(
-              'audio'
-            );
-
-          }
-        );
+      button.addEventListener('click', event => {
+        event.preventDefault();
+        if (event.detail === 0) startCall(type);
+      });
 
     }
+
+    bindImmediateCallButton(
+      elements.audioCallButton,
+      'audio'
+    );
 
 
     /* =====================================================
        BOTÓN VIDEOLLAMADA
        ===================================================== */
 
-    if (
-      elements.videoCallButton
-    ) {
-
-      elements
-        .videoCallButton
-        .addEventListener(
-          'click',
-          event => {
-
-            event.preventDefault();
-
-            startCall(
-              'video'
-            );
-
-          }
-        );
-
-    }
+    bindImmediateCallButton(
+      elements.videoCallButton,
+      'video'
+    );
 
 
     /* =====================================================
