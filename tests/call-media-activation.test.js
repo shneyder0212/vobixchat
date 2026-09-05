@@ -58,7 +58,7 @@ test('la contestación no crea una segunda conexión ni captura duplicada', () =
   assert.match(html, /if \(app\.acceptingCall\) return/);
   assert.match(html, /if \(\s*app\.peerConnection\s*\)/);
   assert.match(html, /return app\.peerConnection/);
-  assert.match(html, /if \(app\.localStream && app\.localMediaType === type\)/);
+  assert.match(html, /if \(app\.localStream && app\.localMediaType === app\.callType\)/);
 });
 
 test('la limpieza al colgar detiene pistas, cierra WebRTC y limpia elementos', () => {

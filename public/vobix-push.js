@@ -24,6 +24,27 @@
     return /Android|iPhone|iPad|iPod|Mobile/i.test(ua);
   }
 
+  async function registerNativeDevice(token) {
+    const value = String(token || '').trim();
+    if (!getToken() || value.length < 30) return false;
+
+    try {
+      const response = await fetch('/api/push/device', {
+        method: 'POST',
+        headers: authHeaders({ 'Content-Type': 'application/json' }),
+        body: JSON.stringify({
+          token: value,
+          platform: 'android',
+          deviceName: navigator.userAgent || 'VobixChat Android'
+        })
+      });
+      return response.ok;
+    } catch (error) {
+      console.warn('[VOBIX FCM DEVICE]', error?.message || error);
+      return false;
+    }
+  }
+
   function urlBase64ToUint8Array(value) {
     const padding = '='.repeat((4 - (value.length % 4)) % 4);
     const base64 = (value + padding).replace(/-/g, '+').replace(/_/g, '/');
@@ -32,8 +53,19 @@
   }
 
   async function registerPush() {
-    if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) return;
     if (!getToken()) return;
+
+    // En la APK, Firebase despierta el teléfono aunque el WebView esté
+    // cerrado. Recuperamos el token también al cargar para no perderlo si
+    // Firebase lo entregó antes de que la página estuviera lista.
+    try {
+      const nativeToken = window.VobixNative?.getFcmToken?.();
+      if (nativeToken) await registerNativeDevice(nativeToken);
+    } catch (error) {
+      console.warn('[VOBIX FCM BRIDGE]', error?.message || error);
+    }
+
+    if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) return;
 
     try {
       const registration = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
@@ -116,8 +148,13 @@
     setTimeout(registerPush, 800);
   }, { once: true });
 
+  window.addEventListener('vobix:fcm-token', event => {
+    registerNativeDevice(event?.detail?.token);
+  });
+
   window.VobixPush = Object.freeze({
     register: registerPush,
+    registerNativeDevice,
     unregister: unregisterPush
   });
 })();

@@ -4929,6 +4929,8 @@
 
       peer: null,
 
+      callPeer: null,
+
       conversations: [],
 
       mediaRecorder: null,
@@ -9218,18 +9220,23 @@
       }
 
       try {
-        [0, .28].forEach(delay => {
-          const oscillator = context.createOscillator();
-          const gain = context.createGain();
-          oscillator.type = 'sine';
-          oscillator.frequency.setValueAtTime(680, context.currentTime + delay);
-          gain.gain.setValueAtTime(.0001, context.currentTime + delay);
-          gain.gain.exponentialRampToValueAtTime(.13, context.currentTime + delay + .02);
-          gain.gain.exponentialRampToValueAtTime(.0001, context.currentTime + delay + .22);
-          oscillator.connect(gain);
-          gain.connect(context.destination);
-          oscillator.start(context.currentTime + delay);
-          oscillator.stop(context.currentTime + delay + .24);
+        // Timbre telefónico doble: mezcla dos frecuencias para que se perciba
+        // como una llamada real incluso en el pequeño altavoz de un móvil.
+        [0, .42].forEach(delay => {
+          [440, 480].forEach(frequency => {
+            const oscillator = context.createOscillator();
+            const gain = context.createGain();
+            oscillator.type = 'sine';
+            oscillator.frequency.setValueAtTime(frequency, context.currentTime + delay);
+            gain.gain.setValueAtTime(.0001, context.currentTime + delay);
+            gain.gain.exponentialRampToValueAtTime(.085, context.currentTime + delay + .035);
+            gain.gain.setValueAtTime(.085, context.currentTime + delay + .31);
+            gain.gain.exponentialRampToValueAtTime(.0001, context.currentTime + delay + .38);
+            oscillator.connect(gain);
+            gain.connect(context.destination);
+            oscillator.start(context.currentTime + delay);
+            oscillator.stop(context.currentTime + delay + .40);
+          });
         });
       } catch (error) {
         console.warn('[VOBIXCHAT CALL SOUND]', error);
@@ -9245,17 +9252,23 @@
       if (!context) return;
 
       try {
-        const oscillator = context.createOscillator();
-        const gain = context.createGain();
-        oscillator.type = 'sine';
-        oscillator.frequency.setValueAtTime(425, context.currentTime);
-        gain.gain.setValueAtTime(.0001, context.currentTime);
-        gain.gain.exponentialRampToValueAtTime(.045, context.currentTime + .08);
-        gain.gain.exponentialRampToValueAtTime(.0001, context.currentTime + .78);
-        oscillator.connect(gain);
-        gain.connect(context.destination);
-        oscillator.start();
-        oscillator.stop(context.currentTime + .82);
+        // Tono de espera del llamante: dos pulsos, como una llamada telefónica.
+        [0, .38].forEach(delay => {
+          [425, 450].forEach(frequency => {
+            const oscillator = context.createOscillator();
+            const gain = context.createGain();
+            oscillator.type = 'sine';
+            oscillator.frequency.setValueAtTime(frequency, context.currentTime + delay);
+            gain.gain.setValueAtTime(.0001, context.currentTime + delay);
+            gain.gain.exponentialRampToValueAtTime(.032, context.currentTime + delay + .06);
+            gain.gain.setValueAtTime(.032, context.currentTime + delay + .27);
+            gain.gain.exponentialRampToValueAtTime(.0001, context.currentTime + delay + .34);
+            oscillator.connect(gain);
+            gain.connect(context.destination);
+            oscillator.start(context.currentTime + delay);
+            oscillator.stop(context.currentTime + delay + .36);
+          });
+        });
       } catch (error) {
         console.warn('[VOBIXCHAT OUTGOING RING]', error);
       }
@@ -9375,7 +9388,7 @@
     function startOutgoingRing() {
       stopOutgoingRing();
       playOutgoingRingPulse();
-      app.outgoingRingTimer = setInterval(playOutgoingRingPulse, 2600);
+      app.outgoingRingTimer = setInterval(playOutgoingRingPulse, 3200);
     }
 
 
@@ -17627,8 +17640,8 @@
          AGREGAR TRACKS LOCALES
          =================================================== */
 
-      if (app.localStream && app.localMediaType === type) {
-        attachLocalCallStream(app.localStream, type);
+      if (app.localStream && app.localMediaType === app.callType) {
+        attachLocalCallStream(app.localStream, app.callType);
         return app.localStream;
       }
 
@@ -18307,7 +18320,7 @@
 
         elements.remoteVideoWaiting?.classList.remove('open');
 
-        const peerName = userName(app.peer);
+        const peerName = userName(app.callPeer || app.peer);
         elements.audioCallIdentity?.classList.add('open');
 
         if (elements.audioCallName) {
@@ -18504,6 +18517,7 @@
         unlockAudio();
 
         app.callIsGroup = false;
+        app.callPeer = app.peer;
         app.primaryPeerUserId = String(userId(app.peer) || '');
         app.callParticipantIds = new Set([
           String(userId(app.me) || ''),
@@ -18676,6 +18690,7 @@
 
     function showIncomingCallPanel(payload) {
       app.pendingCallOffer = payload;
+      app.callPeer = payload?.caller || payload?.sender || app.peer;
       const type = payload?.type === 'video' ? 'video' : 'audio';
       const assessment = seniorCallerAssessment(payload);
       app.incomingVibrationPattern = document.body.classList.contains('vobixSeniorMode') &&
@@ -18705,7 +18720,7 @@
       elements.incomingCallPanel?.setAttribute('aria-hidden', 'false');
       playIncomingCallSound();
       if (app.incomingRingTimer) clearInterval(app.incomingRingTimer);
-      app.incomingRingTimer = setInterval(playIncomingCallSound, 1400);
+      app.incomingRingTimer = setInterval(playIncomingCallSound, 3000);
       scheduleCallTimeout('incoming');
       showBrowserNotification('VOBIXCHAT', type === 'video' ? 'Videollamada entrante' : 'Llamada entrante');
     }
@@ -18892,26 +18907,14 @@
         null;
 
 
+      // Una llamada debe sonar aunque el destinatario esté mirando otro chat.
+      // El identificador incluido en la oferta mantiene la señalización aislada.
       if (
         activeConversationId &&
         incomingConversationId &&
-        String(
-          activeConversationId
-        ) !==
-        String(
-          incomingConversationId
-        )
+        String(activeConversationId) !== String(incomingConversationId)
       ) {
-
-        declineIncomingOffer(payload, 'unavailable');
-
-        showBrowserNotification(
-          'VOBIXCHAT',
-          'Llamada no atendida de otra conversación'
-        );
-
-        return;
-
+        app.callPeer = payload.caller || payload.sender || null;
       }
 
       showIncomingCallPanel(payload);
@@ -20069,6 +20072,8 @@
 
       app.callId =
         null;
+
+      app.callPeer = null;
 
       for (const peerUserId of Array.from(app.groupPeerConnections.keys())) {
         closeGroupPeerConnection(peerUserId);

@@ -24,10 +24,13 @@ test('el chat recupera llamadas desde Push o al volver la conexión', () => {
   assert.match(chat, /<script src="\/vobix-push\.js"><\/script>/);
 });
 
-test('el tono de espera es suave y se detiene al conectar', () => {
-  assert.match(chat, /exponentialRampToValueAtTime\(\.045/);
-  assert.match(chat, /setInterval\(playOutgoingRingPulse, 2600\)/);
+test('los tonos imitan un teléfono y se detienen al conectar', () => {
+  assert.match(chat, /\[425, 450\]\.forEach\(frequency/);
+  assert.match(chat, /setInterval\(playOutgoingRingPulse, 3200\)/);
+  assert.match(chat, /\[440, 480\]\.forEach\(frequency/);
+  assert.match(chat, /setInterval\(playIncomingCallSound, 3000\)/);
   assert.match(chat, /state === 'connected'[\s\S]{0,100}stopOutgoingRing\(\)/);
+  assert.match(chat, /function stopAllCallSignals\(\)[\s\S]{0,420}navigator\.vibrate\(0\)/);
 });
 
 test('el llamante ve y oye la llamada antes de esperar red o permisos', () => {
@@ -37,6 +40,26 @@ test('el llamante ve y oye la llamada antes de esperar red o permisos', () => {
   assert.match(chat, /Llamando.*userName\(app\.peer\)/);
   assert.match(chat, /no está disponible en estos momentos/);
   assert.match(chat, /function waitForCallSocket/);
+});
+
+test('la conexión usa el tipo de llamada guardado y no una variable inexistente', () => {
+  const connection = chat.slice(
+    chat.indexOf('function createPeerConnection()'),
+    chat.indexOf('CONEXIONES ADICIONALES PARA LLAMADAS')
+  );
+  assert.match(connection, /app\.localMediaType === app\.callType/);
+  assert.match(connection, /attachLocalCallStream\(app\.localStream, app\.callType\)/);
+  assert.doesNotMatch(connection, /localMediaType === type/);
+});
+
+test('una llamada entrante suena aunque el usuario esté mirando otro chat', () => {
+  const incoming = chat.slice(
+    chat.indexOf('function handleIncomingCallOffer'),
+    chat.indexOf('RECUPERAR LLAMADA PERDIDA DURANTE DESCONEXIÓN')
+  );
+  assert.doesNotMatch(incoming, /declineIncomingOffer\(payload, 'unavailable'\)/);
+  assert.match(incoming, /showIncomingCallPanel\(payload\)/);
+  assert.match(chat, /app\.callPeer = payload\?\.caller \|\| payload\?\.sender \|\| app\.peer/);
 });
 
 test('el tono de llamada saliente está activo y el sonido de mensajes salientes es opcional', () => {
