@@ -11,13 +11,14 @@ const activity = fs.readFileSync(path.join(root, 'android', 'app', 'src', 'main'
 const workflow = fs.readFileSync(path.join(root, '.github', 'workflows', 'android-debug-apk.yml'), 'utf8');
 
 test('Android reconoce la nueva APK como una versión superior', () => {
-  assert.match(gradle, /versionCode = 5/);
-  assert.match(gradle, /versionName = "1\.2\.2"/);
-  assert.match(activity, /VobixChatAndroid\/1\.2\.2/);
+  assert.match(gradle, /versionCode = 6/);
+  assert.match(gradle, /versionName = "1\.2\.3"/);
+  assert.match(activity, /VobixChatAndroid\/1\.2\.3/);
+  assert.match(activity, /cacheMode = WebSettings\.LOAD_NO_CACHE/);
 });
 
 test('GitHub compila y conserva la APK de pruebas', () => {
   assert.match(workflow, /gradle -p android --no-daemon assembleDebug/);
   assert.match(workflow, /android\/app\/build\/outputs\/apk\/debug\/app-debug\.apk/);
-  assert.match(workflow, /VobixChat-1\.2\.2-debug/);
+  assert.match(workflow, /VobixChat-1\.2\.3-debug/);
 });

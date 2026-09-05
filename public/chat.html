@@ -9860,6 +9860,11 @@
     }
 
     function showMediaPermissionOnboarding(force = false) {
+      if (window.VobixNative?.hasMediaPermissions?.() === true) {
+        try { localStorage.setItem(mediaPermissionStorageKey(), 'granted'); } catch (_) {}
+        closeMediaPermissionPanel();
+        return;
+      }
       if (!force && (mediaPermissionDismissedForSession || mediaPermissionsWereActivated())) return;
       if (!navigator.mediaDevices?.getUserMedia) return;
       if (elements.mediaPermissionStatus) elements.mediaPermissionStatus.textContent = '';
@@ -15271,7 +15276,32 @@
         renderSeniorFavorites();
 
         if (!app.conversation) {
-          ensureActiveConversation();
+          const launchParams = new URLSearchParams(window.location.search);
+          const requestedConversationId = String(
+            launchParams.get('conversationId') || launchParams.get('conversation') || ''
+          ).trim();
+          const requestedUserId = String(launchParams.get('userId') || '').trim();
+          const requestedUserName = String(launchParams.get('userName') || '').trim().slice(0, 120);
+          const requestedConversation = requestedConversationId
+            ? conversations.find(item => String(conversationId(item) || '') === requestedConversationId)
+            : null;
+
+          if (requestedConversation) {
+            const candidates = [
+              requestedConversation.otherUser,
+              requestedConversation.other_user,
+              requestedConversation.contact,
+              requestedConversation.peer,
+              requestedConversation.user,
+              ...(Array.isArray(requestedConversation.participants) ? requestedConversation.participants : [])
+            ].filter(Boolean);
+            const requestedPeer = candidates.find(candidate =>
+              requestedUserId && String(userId(candidate) || '') === requestedUserId
+            ) || (requestedUserId ? { id:requestedUserId, name:requestedUserName || 'Contacto' } : null);
+            await selectConversation(requestedConversation, requestedPeer || getConversationPeer(requestedConversation));
+          } else {
+            ensureActiveConversation();
+          }
         }
 
 
