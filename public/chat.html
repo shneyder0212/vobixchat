@@ -1276,6 +1276,18 @@
     }
     .mediaPermissionPrimary { border: 0; background: var(--green); color: #061008; }
     .mediaPermissionLater { border: 1px solid rgba(255,255,255,.18); background: transparent; color: #fff; }
+    .mediaPermissionSettings { display:none; border:1px solid var(--green); background:transparent; color:var(--green); }
+    .mediaPermissionSettings.open { display:block; }
+
+    html.vobixKeyboardOpen .vobixApp {
+      top: var(--vobix-visual-top, 0px);
+      height: var(--vobix-visual-height, 100dvh);
+    }
+
+    html.vobixKeyboardOpen .vobixComposer {
+      flex: 0 0 auto;
+      padding-bottom: max(7px, env(safe-area-inset-bottom));
+    }
 
     .cameraChoiceActions {
       display: grid;
@@ -3895,6 +3907,7 @@
       <p id="mediaPermissionStatus" class="mediaPermissionStatus" role="status" aria-live="polite"></p>
       <div class="mediaPermissionActions">
         <button id="activateMediaPermissionsButton" class="mediaPermissionPrimary" type="button">Activar cámara y micrófono</button>
+        <button id="openNativePermissionSettingsButton" class="mediaPermissionPrimary mediaPermissionSettings" type="button">Abrir ajustes de permisos</button>
         <button id="dismissMediaPermissionsButton" class="mediaPermissionLater" type="button">Ahora no</button>
       </div>
     </div>
@@ -5106,6 +5119,9 @@
 
       activateMediaPermissionsButton:
         $('activateMediaPermissionsButton'),
+
+      openNativePermissionSettingsButton:
+        $('openNativePermissionSettingsButton'),
 
       dismissMediaPermissionsButton:
         $('dismissMediaPermissionsButton'),
@@ -9869,6 +9885,9 @@
       if (elements.mediaPermissionStatus) elements.mediaPermissionStatus.textContent = '';
 
       try {
+        if (window.VobixNative?.requestMediaPermissions && window.VobixNative?.hasMediaPermissions?.() !== true) {
+          window.VobixNative.requestMediaPermissions();
+        }
         permissionStream = await navigator.mediaDevices.getUserMedia({
           audio: { echoCancellation: true, noiseSuppression: true },
           video: { facingMode: { ideal: 'user' } }
@@ -9883,6 +9902,7 @@
       } catch (error) {
         console.warn('[VOBIXCHAT MEDIA PERMISSIONS]', error);
         const blocked = ['NotAllowedError', 'SecurityError'].includes(error?.name);
+        elements.openNativePermissionSettingsButton?.classList.toggle('open', blocked || Boolean(window.VobixNative));
         if (elements.mediaPermissionStatus) {
           elements.mediaPermissionStatus.textContent = blocked
             ? 'Permiso bloqueado. Actívalo en Ajustes del navegador > Cámara y Micrófono.'
@@ -9898,6 +9918,17 @@
     }
 
     elements.activateMediaPermissionsButton?.addEventListener('click', activateMediaPermissions);
+    elements.openNativePermissionSettingsButton?.addEventListener('click', () => {
+      if (window.VobixNative?.openAppPermissionSettings) window.VobixNative.openAppPermissionSettings();
+      else notifyUser('Abre Ajustes del teléfono > Aplicaciones > VobixChat > Permisos');
+    });
+    window.addEventListener('vobix:native-media-permission', event => {
+      if (event.detail?.granted) activateMediaPermissions();
+      else {
+        if (elements.mediaPermissionStatus) elements.mediaPermissionStatus.textContent = 'Cámara o micrófono siguen bloqueados. Ábrelos en los ajustes de VobixChat.';
+        elements.openNativePermissionSettingsButton?.classList.add('open');
+      }
+    });
     elements.openMediaPermissionsButton?.addEventListener('click', () => {
       closeOptionsMenu();
       showMediaPermissionOnboarding(true);
@@ -14671,49 +14702,19 @@
       }
 
 
-      if (
-        conversation.peer
-      ) {
-
-        return conversation.peer;
-
-      }
-
-
-      if (
-        conversation.otherUser
-      ) {
-
-        return conversation.otherUser;
-
-      }
-
-
-      if (
-        conversation.other_user
-      ) {
-
-        return conversation.other_user;
-
-      }
-
-
-      if (
+      const myId = String(userId(app.me) || '');
+      const namedCandidates = [
+        conversation.otherUser,
+        conversation.other_user,
+        conversation.contact,
+        conversation.peer,
         conversation.user
-      ) {
-
-        return conversation.user;
-
-      }
-
-
-      if (
-        conversation.contact
-      ) {
-
-        return conversation.contact;
-
-      }
+      ].filter(Boolean);
+      const namedOther = namedCandidates.find(candidate => {
+        const candidateId = String(userId(candidate) || '');
+        return !myId || !candidateId || candidateId !== myId;
+      });
+      if (namedOther) return namedOther;
 
 
       const participants =
@@ -14730,12 +14731,6 @@
         participants.length
       ) {
 
-        const myId =
-          userId(
-            app.me
-          );
-
-
         if (myId) {
 
           const other =
@@ -14750,8 +14745,7 @@
 
                 return (
                   id &&
-                  String(id) !==
-                  String(myId)
+                  String(id) !== myId
                 );
 
               }
@@ -15634,10 +15628,11 @@
 
 
       app.peer =
-        peer ||
-        getConversationPeer(
-          conversation
-        );
+        [peer, getConversationPeer(conversation)].find(candidate => {
+          const candidateId = String(userId(candidate) || '');
+          const myId = String(userId(app.me) || '');
+          return candidate && (!candidateId || !myId || candidateId !== myId);
+        }) || null;
 
       restoreCurrentDraft();
 
@@ -15653,6 +15648,11 @@
             app.peer
           );
 
+      }
+
+      if (elements.myAvatar && app.peer) {
+        elements.myAvatar.textContent = userInitial(app.peer);
+        elements.myAvatar.setAttribute('aria-label', `Perfil de ${userName(app.peer)}`);
       }
 
 
