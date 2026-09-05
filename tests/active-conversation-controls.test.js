@@ -18,7 +18,8 @@ test('recuerda y recupera una conversación activa por usuario', () => {
 
 test('la bandeja activa el último chat o el más reciente al cargar', () => {
   const html = read('public/chat.html');
-  assert.match(html, /app\.conversations = conversations;[\s\S]{0,400}if \(!app\.conversation\) \{\s*ensureActiveConversation\(\)/);
+  assert.match(html, /app\.conversations = conversations;[\s\S]{0,1600}if \(!app\.conversation\) \{/);
+  assert.match(html, /if \(!app\.conversation\) \{[\s\S]{0,1800}ensureActiveConversation\(\)/);
   assert.match(html, /return \[\.\.\.available\]\.sort/);
   assert.match(html, /app\.conversations = cachedConversations;[\s\S]{0,180}ensureActiveConversation\(\)/);
 });

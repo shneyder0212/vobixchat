@@ -22,12 +22,14 @@ test('el mensaje aparece antes de esperar la confirmación HTTP', () => {
   assert.match(send, /updateMessageStatus\(\{ clientMessageId: payload\.clientMessageId \}, 'sent'\)/);
 });
 
-test('el botón de cámara abre directamente la cámara trasera', () => {
+test('el botón de cámara abre el selector de galería, foto y vídeo', () => {
   const start = chat.indexOf("elements.cameraButton?.addEventListener('click'");
   const end = chat.indexOf('function closeCameraChoice()', start);
   const handler = chat.slice(start, end);
-  assert.match(handler, /openPhotoCamera\(elements\.chatCameraInput\)/);
-  assert.doesNotMatch(handler, /cameraChoicePanel/);
+  assert.match(handler, /cameraChoicePanel\?\.classList\.add\('open'\)/);
+  assert.match(chat, /openGalleryButton/);
+  assert.match(chat, /openBackCameraButton/);
+  assert.match(chat, /openVideoCameraButton/);
 });
 
 test('vaciar un chat lo oculta del historial hasta que llegue otro mensaje', () => {
@@ -37,6 +39,7 @@ test('vaciar un chat lo oculta del historial hasta que llegue otro mensaje', () 
 test('Android atiende cámara y galería nativas sin pedir multimedia al arrancar', () => {
   assert.match(android, /override fun onShowFileChooser/);
   assert.match(android, /Intent\(MediaStore\.ACTION_IMAGE_CAPTURE\)/);
+  assert.match(android, /Intent\(MediaStore\.ACTION_VIDEO_CAPTURE\)/);
   assert.match(android, /Intent\(Intent\.ACTION_OPEN_DOCUMENT\)/);
   const onCreate = android.slice(android.indexOf('override fun onCreate'), android.indexOf('override fun onNewIntent'));
   assert.doesNotMatch(onCreate, /requestNeededPermissions/);

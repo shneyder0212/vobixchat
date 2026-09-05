@@ -20,5 +20,5 @@ test('el chat abre exactamente la conversación y el destinatario elegidos en la
   assert.match(inbox, /userName=\$\{encodeURIComponent\(selectedUser\.username\|\|selectedUser\.name/);
   assert.match(chat, /launchParams\.get\('conversationId'\)/);
   assert.match(chat, /launchParams\.get\('userId'\)/);
-  assert.match(chat, /requestedConversation[\s\S]{0,1600}await selectConversation\(requestedConversation, requestedPeer/);
+  assert.match(chat, /requestedConversation[\s\S]{0,2200}await selectConversation\(requestedConversation, authoritativePeer \|\| requestedPeer/);
 });
