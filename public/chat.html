@@ -1312,6 +1312,39 @@
       .cameraChoiceButton { min-height: 64px; }
     }
 
+    .integratedCamera {
+      position: fixed; inset: 0; z-index: 12500; display: none;
+      grid-template-rows: auto 1fr auto; background: #000; color: #fff;
+    }
+    .integratedCamera.open { display: grid; }
+    .integratedCameraTop {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: max(12px, env(safe-area-inset-top)) 16px 10px;
+      background: linear-gradient(180deg, rgba(0,0,0,.78), transparent);
+    }
+    .integratedCameraTop button, .integratedCameraControls button {
+      min-width: 48px; min-height: 48px; border: 0; border-radius: 999px;
+      background: rgba(28,28,28,.82); color: #fff; font-size: 22px;
+    }
+    .integratedCameraStage { min-height: 0; display: grid; place-items: center; overflow: hidden; }
+    .integratedCameraPreview { width: 100%; height: 100%; object-fit: cover; background: #050505; }
+    .integratedCameraControls {
+      padding: 10px 16px max(16px, env(safe-area-inset-bottom)); background: #090909;
+    }
+    .integratedCameraModes { display: flex; justify-content: center; gap: 22px; margin-bottom: 12px; }
+    .integratedCameraMode {
+      border: 0; background: transparent; color: #aaa; font-weight: 900; padding: 7px 10px;
+    }
+    .integratedCameraMode.active { color: #68ff72; }
+    .integratedCameraActions { display: grid; grid-template-columns: 1fr 1fr 1fr; align-items: center; }
+    .integratedCameraActions button { justify-self: center; }
+    #integratedCameraShutter {
+      width: 72px; height: 72px; border: 5px solid #fff; background: #fff;
+      box-shadow: inset 0 0 0 4px #111;
+    }
+    #integratedCameraShutter.recording { background: #ef3c3c; border-radius: 18px; }
+    .integratedCameraStatus { min-height: 20px; text-align: center; color: #ddd; font-size: 13px; }
+
 
     /* =====================================================
        SLOT MICRO / ENVIAR
@@ -3927,6 +3960,29 @@
     </div>
   </div>
 
+  <div id="integratedCamera" class="integratedCamera" role="dialog" aria-modal="true" aria-label="Cámara de VobixChat" aria-hidden="true">
+    <div class="integratedCameraTop">
+      <button id="closeIntegratedCamera" type="button" aria-label="Cerrar cámara">✕</button>
+      <strong>Cámara</strong>
+      <button id="switchIntegratedCamera" type="button" aria-label="Cambiar cámara">🔄</button>
+    </div>
+    <div class="integratedCameraStage">
+      <video id="integratedCameraPreview" class="integratedCameraPreview" autoplay muted playsinline></video>
+    </div>
+    <div class="integratedCameraControls">
+      <div class="integratedCameraModes">
+        <button id="integratedPhotoMode" class="integratedCameraMode active" type="button">FOTO</button>
+        <button id="integratedVideoMode" class="integratedCameraMode" type="button">VÍDEO</button>
+      </div>
+      <div class="integratedCameraActions">
+        <button id="integratedCameraGallery" type="button" aria-label="Abrir galería">🖼️</button>
+        <button id="integratedCameraShutter" type="button" aria-label="Capturar"></button>
+        <span></span>
+      </div>
+      <div id="integratedCameraStatus" class="integratedCameraStatus" role="status" aria-live="polite"></div>
+    </div>
+  </div>
+
   <input
     id="chatPhotoInput"
     type="file"
@@ -5137,6 +5193,18 @@
 
       cameraChoicePanel:
         $('cameraChoicePanel'),
+
+      integratedCamera:
+        $('integratedCamera'),
+
+      integratedCameraPreview:
+        $('integratedCameraPreview'),
+
+      integratedCameraStatus:
+        $('integratedCameraStatus'),
+
+      integratedCameraShutter:
+        $('integratedCameraShutter'),
 
       openGalleryButton:
         $('openGalleryButton'),
@@ -9463,8 +9531,7 @@
     elements.cameraButton?.addEventListener('click', event => {
       event.preventDefault();
       if (!ensureActiveConversation()) return;
-      elements.cameraChoicePanel?.classList.add('open');
-      elements.cameraChoicePanel?.setAttribute('aria-hidden', 'false');
+      openIntegratedCamera();
     });
 
     function closeCameraChoice() {
@@ -9485,6 +9552,114 @@
     elements.cancelCameraChoiceButton?.addEventListener('click', closeCameraChoice);
     elements.cameraChoicePanel?.addEventListener('click', event => {
       if (event.target === elements.cameraChoicePanel) closeCameraChoice();
+    });
+
+    let integratedCameraStream = null;
+    let integratedCameraFacing = 'environment';
+    let integratedCameraMode = 'photo';
+    let integratedCameraRecorder = null;
+    let integratedCameraChunks = [];
+
+    async function stopIntegratedCamera() {
+      if (integratedCameraRecorder?.state === 'recording') integratedCameraRecorder.stop();
+      integratedCameraRecorder = null;
+      integratedCameraChunks = [];
+      integratedCameraStream?.getTracks().forEach(track => track.stop());
+      integratedCameraStream = null;
+      if (elements.integratedCameraPreview) elements.integratedCameraPreview.srcObject = null;
+      elements.integratedCamera?.classList.remove('open');
+      elements.integratedCamera?.setAttribute('aria-hidden', 'true');
+      elements.integratedCameraShutter?.classList.remove('recording');
+    }
+
+    async function startIntegratedCameraStream() {
+      integratedCameraStream?.getTracks().forEach(track => track.stop());
+      integratedCameraStream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: { ideal: integratedCameraFacing } },
+        audio: integratedCameraMode === 'video'
+      });
+      elements.integratedCameraPreview.srcObject = integratedCameraStream;
+      await elements.integratedCameraPreview.play().catch(() => {});
+    }
+
+    async function openIntegratedCamera() {
+      if (!navigator.mediaDevices?.getUserMedia) {
+        notifyUser('Este navegador no permite usar la cámara dentro de VobixChat');
+        return;
+      }
+      elements.integratedCamera?.classList.add('open');
+      elements.integratedCamera?.setAttribute('aria-hidden', 'false');
+      if (elements.integratedCameraStatus) elements.integratedCameraStatus.textContent = 'Abriendo cámara…';
+      try {
+        await startIntegratedCameraStream();
+        if (elements.integratedCameraStatus) elements.integratedCameraStatus.textContent = '';
+      } catch (error) {
+        await stopIntegratedCamera();
+        notifyUser(callMediaErrorMessage(error, 'video'));
+      }
+    }
+
+    function setIntegratedCameraMode(mode) {
+      if (integratedCameraRecorder?.state === 'recording') return;
+      integratedCameraMode = mode === 'video' ? 'video' : 'photo';
+      $('integratedPhotoMode')?.classList.toggle('active', integratedCameraMode === 'photo');
+      $('integratedVideoMode')?.classList.toggle('active', integratedCameraMode === 'video');
+      if (integratedCameraStream) startIntegratedCameraStream().catch(error => notifyUser(callMediaErrorMessage(error, 'video')));
+    }
+
+    async function captureIntegratedPhoto() {
+      const video = elements.integratedCameraPreview;
+      if (!video?.videoWidth) return notifyUser('La cámara todavía no está lista');
+      const canvas = document.createElement('canvas');
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      canvas.getContext('2d').drawImage(video, 0, 0);
+      const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', .9));
+      if (!blob) return notifyUser('No se pudo crear la fotografía');
+      const file = new File([blob], `vobix-${Date.now()}.jpg`, { type:'image/jpeg' });
+      await stopIntegratedCamera();
+      await uploadChatAttachment(file, 'image', { originSource:'vobix-camera' });
+    }
+
+    function toggleIntegratedVideoRecording() {
+      if (integratedCameraRecorder?.state === 'recording') {
+        integratedCameraRecorder.stop();
+        return;
+      }
+      if (!integratedCameraStream || typeof MediaRecorder === 'undefined') {
+        notifyUser('Este dispositivo no permite grabar vídeo aquí');
+        return;
+      }
+      integratedCameraChunks = [];
+      integratedCameraRecorder = new MediaRecorder(integratedCameraStream);
+      integratedCameraRecorder.ondataavailable = event => { if (event.data?.size) integratedCameraChunks.push(event.data); };
+      integratedCameraRecorder.onstop = async () => {
+        const mimeType = integratedCameraRecorder?.mimeType || 'video/webm';
+        const blob = new Blob(integratedCameraChunks, { type:mimeType });
+        const extension = mimeType.includes('mp4') ? 'mp4' : 'webm';
+        const file = new File([blob], `vobix-${Date.now()}.${extension}`, { type:mimeType });
+        await stopIntegratedCamera();
+        if (blob.size) await uploadChatAttachment(file, 'video', { originSource:'vobix-camera' });
+      };
+      integratedCameraRecorder.start(500);
+      elements.integratedCameraShutter?.classList.add('recording');
+      if (elements.integratedCameraStatus) elements.integratedCameraStatus.textContent = 'Grabando… toca para terminar';
+    }
+
+    $('closeIntegratedCamera')?.addEventListener('click', stopIntegratedCamera);
+    $('integratedCameraGallery')?.addEventListener('click', async () => {
+      await stopIntegratedCamera();
+      openPhotoCamera(elements.chatPhotoInput);
+    });
+    $('switchIntegratedCamera')?.addEventListener('click', async () => {
+      integratedCameraFacing = integratedCameraFacing === 'environment' ? 'user' : 'environment';
+      try { await startIntegratedCameraStream(); } catch (error) { notifyUser(callMediaErrorMessage(error, 'video')); }
+    });
+    $('integratedPhotoMode')?.addEventListener('click', () => setIntegratedCameraMode('photo'));
+    $('integratedVideoMode')?.addEventListener('click', () => setIntegratedCameraMode('video'));
+    elements.integratedCameraShutter?.addEventListener('click', () => {
+      if (integratedCameraMode === 'video') toggleIntegratedVideoRecording();
+      else captureIntegratedPhoto();
     });
 
     function setViewOnceMode(enabled) {
@@ -10470,6 +10645,35 @@
         }
       });
       bubble.appendChild(button);
+    }
+
+    async function translateFromMessageMenu(bubble, rawText, button) {
+      const value = String(rawText || '').trim();
+      if (!value) return;
+      const existing = bubble.querySelector('.messageTranslation');
+      if (existing) {
+        existing.hidden = !existing.hidden;
+        button.textContent = existing.hidden ? '🌐 Mostrar traducción' : '🌐 Ocultar traducción';
+        return;
+      }
+      button.disabled = true;
+      button.textContent = '🌐 Traduciendo…';
+      try {
+        const result = await translateMessageText(value);
+        const translated = document.createElement('div');
+        translated.className = 'messageTranslation';
+        const label = document.createElement('span');
+        label.className = 'messageTranslationLabel';
+        label.textContent = `Traducción · ${result.targetLanguage}`;
+        translated.append(label, document.createTextNode(result.translatedText));
+        bubble.querySelector('.messageText')?.insertAdjacentElement('afterend', translated);
+        button.textContent = '🌐 Ocultar traducción';
+      } catch (error) {
+        button.textContent = '🌐 Traducir';
+        notifyUser(error?.message || 'No se pudo traducir el mensaje');
+      } finally {
+        button.disabled = false;
+      }
     }
 
     function starredStorageKey() {
@@ -11840,7 +12044,6 @@
           unknownWarning.textContent = '⚠ Mensaje de una persona no reconocida. No compartas dinero, contraseñas ni códigos.';
           bubble.appendChild(unknownWarning);
         }
-        addMessageTranslationControl(bubble, message.text || message.message || message.body || '');
         const fraudAssessment = assessSeniorFraudSignals(message.text || message.message || message.body || '');
         if (fraudAssessment.suspicious) {
           const warning = document.createElement('div');
@@ -11963,6 +12166,14 @@
       shareButton.textContent = '↗ Compartir';
       shareButton.addEventListener('click', () => shareMessageText(messagePreviewText(message)));
 
+      const translateButton = document.createElement('button');
+      translateButton.type = 'button';
+      translateButton.className = 'replyMessageButton';
+      translateButton.textContent = '🌐 Traducir';
+      translateButton.addEventListener('click', () =>
+        translateFromMessageMenu(bubble, message.text || message.message || message.body || '', translateButton)
+      );
+
       const replyButton = document.createElement('button');
       replyButton.type = 'button';
       replyButton.className = 'replyMessageButton';
@@ -12017,6 +12228,7 @@
       if (!isDeleted) {
         // Orden corto y familiar en móvil. Las acciones destructivas quedan al final.
         actions.append(reactionButton, reactionPicker, replyButton, pasteButton, copyButton, starButton, shareButton);
+        if (!mine) actions.append(translateButton);
         actions.append(hideButton);
         const messageType = String(message?.messageType || message?.message_type || message?.type || 'text').toLowerCase();
         if (mine && messageType === 'text') actions.append(editButton);
@@ -18410,8 +18622,17 @@
 
       if (!button) return;
 
+      let lastTouchAt = 0;
+      button.addEventListener('touchend', event => {
+        event.preventDefault();
+        lastTouchAt = Date.now();
+        unlockAudio();
+        startCall(type);
+      }, { passive:false });
+
       button.addEventListener('click', event => {
         event.preventDefault();
+        if (Date.now() - lastTouchAt < 700) return;
         unlockAudio();
         startCall(type);
       });
