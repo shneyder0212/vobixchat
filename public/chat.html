@@ -14704,6 +14704,20 @@
 
 
       const myId = String(userId(app.me) || '');
+      const explicitOtherId = String(
+        conversation.otherUserId || conversation.other_user_id || ''
+      );
+      if (explicitOtherId && (!myId || explicitOtherId !== myId)) {
+        return {
+          id: explicitOtherId,
+          username: conversation.otherUsername || conversation.other_username ||
+            conversation.otherUserName || conversation.other_user_name || 'Contacto',
+          vobix_id: conversation.otherVobixId || conversation.other_vobix_id || '',
+          avatar_url: conversation.otherAvatarUrl || conversation.other_avatar_url || '',
+          online: conversation.online,
+          last_seen: conversation.lastSeen || conversation.last_seen || null
+        };
+      }
       const namedCandidates = [
         conversation.otherUser,
         conversation.other_user,
@@ -15283,6 +15297,7 @@
             : null;
 
           if (requestedConversation) {
+            const authoritativePeer = getConversationPeer(requestedConversation);
             const candidates = [
               requestedConversation.otherUser,
               requestedConversation.other_user,
@@ -15293,8 +15308,13 @@
             ].filter(Boolean);
             const requestedPeer = candidates.find(candidate =>
               requestedUserId && String(userId(candidate) || '') === requestedUserId
-            ) || (requestedUserId ? { id:requestedUserId, name:requestedUserName || 'Contacto' } : null);
-            await selectConversation(requestedConversation, requestedPeer || getConversationPeer(requestedConversation));
+            ) || (
+              requestedUserId &&
+              (!authoritativePeer || String(userId(authoritativePeer) || '') === requestedUserId)
+                ? { id:requestedUserId, name:requestedUserName || 'Contacto' }
+                : null
+            );
+            await selectConversation(requestedConversation, authoritativePeer || requestedPeer);
           } else {
             ensureActiveConversation();
           }
