@@ -1935,6 +1935,12 @@ router.get(
           AS last_message
           ON TRUE
 
+          /* Una conversación vaciada desaparece del historial del usuario.
+             Si luego llega un mensaje nuevo, vuelve a aparecer automáticamente. */
+          WHERE
+            me.cleared_at IS NULL
+            OR last_message.id IS NOT NULL
+
 
           ORDER BY
             COALESCE(
