@@ -7,7 +7,7 @@
 
   <meta
     name="viewport"
-    content="width=device-width, initial-scale=1, viewport-fit=cover"
+    content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content"
   >
 
   <meta name="theme-color" content="#071009">
@@ -36,6 +36,8 @@
       justify-content:center;
 
       padding:20px;
+      overflow-y:auto;
+      overscroll-behavior-y:contain;
 
       background:
         radial-gradient(
@@ -75,6 +77,7 @@
         0 20px 70px rgba(0,0,0,.45);
 
       text-align:center;
+      margin:auto;
     }
 
     .logo{
@@ -229,6 +232,7 @@
       margin:0;
       flex:1;
       min-width:0;
+      caret-color:#6eff7a;
     }
 
     .countryInfo{
@@ -309,6 +313,30 @@
         width:78px;
         min-width:78px;
       }
+
+      body.keyboardOpen{
+        display:block;
+        min-height:var(--vobix-login-height, 100dvh);
+        padding:8px 12px 18px;
+      }
+
+      body.keyboardOpen .card{
+        margin:0 auto;
+        padding:14px 17px 20px;
+      }
+
+      body.keyboardOpen .logo{
+        width:46px;
+        height:46px;
+        margin-bottom:6px;
+        border-radius:14px;
+        font-size:27px;
+      }
+
+      body.keyboardOpen h1{ font-size:21px; }
+      body.keyboardOpen .todo{ margin:3px 0 0; font-size:12px; }
+      body.keyboardOpen .sub{ display:none; }
+      body.keyboardOpen .e2e{ margin:6px 0 10px; }
 
     }
 
@@ -491,6 +519,39 @@ const btn =
 
 const statusElement =
   document.getElementById('status');
+
+
+/* =======================================================
+   TECLADO MÓVIL: MANTENER EL CAMPO ACTIVO VISIBLE
+======================================================= */
+
+const LOGIN_VIEWPORT_BASELINE = Math.max(window.innerHeight, window.visualViewport?.height || 0);
+
+function updateLoginViewport(){
+  const viewport = window.visualViewport;
+  const visibleHeight = Math.round(viewport?.height || window.innerHeight);
+  const activeField = document.activeElement?.matches('input,select');
+  const keyboardOpen = Boolean(activeField && visibleHeight < Math.round(LOGIN_VIEWPORT_BASELINE * .92));
+  document.documentElement.style.setProperty('--vobix-login-height', `${visibleHeight}px`);
+  document.body.classList.toggle('keyboardOpen', keyboardOpen);
+
+  if(keyboardOpen && document.activeElement?.matches('input,select')){
+    window.setTimeout(() => {
+      document.activeElement?.scrollIntoView({block:'center', inline:'nearest'});
+    }, 80);
+  }
+}
+
+window.visualViewport?.addEventListener('resize', updateLoginViewport);
+window.visualViewport?.addEventListener('scroll', updateLoginViewport);
+window.addEventListener('resize', updateLoginViewport);
+document.addEventListener('focusin', event => {
+  if(!event.target.matches('input,select')) return;
+  document.body.classList.add('keyboardOpen');
+  window.setTimeout(() => event.target.scrollIntoView({block:'center', inline:'nearest'}), 180);
+});
+document.addEventListener('focusout', () => window.setTimeout(updateLoginViewport, 120));
+updateLoginViewport();
 
 
 /* =======================================================

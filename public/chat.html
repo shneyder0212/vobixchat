@@ -203,6 +203,21 @@
       -webkit-backdrop-filter: blur(16px);
     }
 
+    .vobixBackButton {
+      width: 42px;
+      height: 42px;
+      min-width: 42px;
+      display: grid;
+      place-items: center;
+      border: 1px solid rgba(104,255,114,.18);
+      border-radius: 50%;
+      color: white;
+      text-decoration: none;
+      font-size: 30px;
+      line-height: 1;
+      background: rgba(18,32,22,.95);
+    }
+
 
     /* =====================================================
        AVATAR
@@ -3594,6 +3609,13 @@
          ================================================= -->
 
     <header class="vobixTopbar">
+
+      <a
+        class="vobixBackButton"
+        href="/inbox.html"
+        aria-label="Volver a los chats"
+        title="Volver a los chats"
+      >‹</a>
 
       <div
         id="myAvatar"
@@ -8952,7 +8974,11 @@
         }
 
         if (mode === 'outgoing' && app.callId) {
-          notifyUser('La llamada no fue respondida');
+          const peerName = userName(app.peer);
+          if (elements.callStatus) {
+            elements.callStatus.textContent = `${peerName} no está disponible en estos momentos`;
+          }
+          notifyUser(`${peerName} no está disponible en estos momentos`);
           endLocalCall(true);
         }
       }, 45000);
@@ -17751,9 +17777,34 @@
        ===================================================== */
 
     function acknowledgeOutgoingCall(response) {
-      if (elements.callStatus && response?.recipientOnline === false && response?.notificationQueued) {
-        elements.callStatus.textContent = 'Avisando al teléfono…';
-      }
+      if (!elements.callStatus || response?.recipientOnline !== false) return;
+      const peerName = userName(app.peer);
+      elements.callStatus.textContent = response?.notificationQueued
+        ? `Avisando al teléfono de ${peerName}…`
+        : `Llamando a ${peerName}…`;
+    }
+
+    function waitForCallSocket(timeoutMs = 10000) {
+      if (app.socket?.connected) return Promise.resolve(true);
+      if (!app.socket) return Promise.resolve(false);
+
+      return new Promise(resolve => {
+        let settled = false;
+        const finish = connected => {
+          if (settled) return;
+          settled = true;
+          clearTimeout(timer);
+          app.socket.off?.('connect', onConnect);
+          app.socket.off?.('connect_error', onError);
+          resolve(connected);
+        };
+        const onConnect = () => finish(true);
+        const onError = () => finish(false);
+        const timer = setTimeout(() => finish(false), timeoutMs);
+        app.socket.once?.('connect', onConnect);
+        app.socket.once?.('connect_error', onError);
+        try { app.socket.connect?.(); } catch (_) { finish(false); }
+      });
     }
 
     async function startCall(
@@ -17769,24 +17820,11 @@
 
       if (!ensureActiveConversation()) return;
 
-
-      if (
-        !app.socket ||
-        !app.socket.connected
-      ) {
-
-        notifyUser(
-          'Esperando conexión del chat'
-        );
-
-        return;
-
-      }
-
-
       try {
 
-        await loadRtcConfiguration();
+        // El toque del usuario debe activar el audio antes de cualquier espera.
+        // Así Android e iPhone permiten oír el tono saliente desde el inicio.
+        unlockAudio();
 
         app.callIsGroup = false;
         app.primaryPeerUserId = String(userId(app.peer) || '');
@@ -17803,16 +17841,22 @@
         app.callId =
           createCallId();
 
+        showCallScreen(type);
+        if (elements.callStatus) {
+          elements.callStatus.textContent = `${type === 'video' ? 'Videollamando' : 'Llamando'} a ${userName(app.peer)}…`;
+        }
+        startOutgoingRing();
+        scheduleCallTimeout('outgoing');
+
+        if (!await waitForCallSocket()) {
+          throw new Error('No hay conexión para iniciar la llamada');
+        }
+
+        await loadRtcConfiguration();
 
         await prepareCallMedia(
           type
         );
-
-
-        showCallScreen(
-          type
-        );
-
 
         const pc =
           createPeerConnection();
@@ -17863,14 +17907,6 @@
           }
         );
 
-        if (elements.callStatus) {
-          elements.callStatus.textContent = type === 'video' ? 'Videollamando…' : 'Llamando…';
-        }
-
-        startOutgoingRing();
-        scheduleCallTimeout('outgoing');
-
-
         notifyUser(
           type ===
           'video'
@@ -17912,7 +17948,7 @@
       button.addEventListener('pointerdown', event => {
         if (event.pointerType === 'mouse' && event.button !== 0) return;
         event.preventDefault();
-        event.stopPropagation();
+        unlockAudio();
         startCall(type);
       });
 

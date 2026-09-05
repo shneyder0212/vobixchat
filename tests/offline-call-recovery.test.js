@@ -30,6 +30,15 @@ test('el tono de espera es suave y se detiene al conectar', () => {
   assert.match(chat, /state === 'connected'[\s\S]{0,100}stopOutgoingRing\(\)/);
 });
 
+test('el llamante ve y oye la llamada antes de esperar red o permisos', () => {
+  const start = chat.slice(chat.indexOf('async function startCall'), chat.indexOf('function bindImmediateCallButton'));
+  assert.match(start, /unlockAudio\(\)/);
+  assert.match(start, /showCallScreen\(type\)[\s\S]{0,300}startOutgoingRing\(\)[\s\S]{0,180}waitForCallSocket/);
+  assert.match(chat, /Llamando.*userName\(app\.peer\)/);
+  assert.match(chat, /no está disponible en estos momentos/);
+  assert.match(chat, /function waitForCallSocket/);
+});
+
 test('el tono de llamada saliente está activo y el sonido de mensajes salientes es opcional', () => {
   assert.match(chat, /function playOutgoingRingPulse\(\) \{\s*if \(!app\.callSound\) return;/);
   assert.match(chat, /id="outgoingMessageSoundSwitch" class="vobixSwitch"/);

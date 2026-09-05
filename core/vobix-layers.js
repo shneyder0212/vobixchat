@@ -126,6 +126,8 @@ const VOBIX_LAYERS = Object.freeze([
 ,{ id:'146', name:'Selector de Cámara para Fotos', status:'en_validacion', scope:'Antes de hacer una fotografía se elige cámara frontal para selfie o cámara trasera, manteniendo la galería separada.' }
 ,{ id:'147', name:'Acciones Seguras de Mensajes', status:'en_validacion', scope:'El menú de tres puntos permite reaccionar, copiar, pegar, editar mensajes propios y elegir entre eliminar para todos o únicamente para la cuenta actual.' }
 ,{ id:'148', name:'Llamadas Ampliables de Seis Personas', status:'en_validacion', scope:'Una llamada de voz o vídeo 1×1 puede añadir contactos hasta seis plazas mediante conexiones WebRTC dirigidas; cualquier miembro, incluido quien inició, puede salir, reconectar y volver mientras quede activa, salvo expulsión.' }
+,{ id:'149', name:'Formularios Visibles con Teclado Móvil', status:'en_validacion', scope:'Registro y búsqueda calculan el área visible del teclado en Android y iPhone, mantienen el campo activo a la vista y reservan un botón Buscar pulsable sin modificar el teclado del chat.' }
+,{ id:'150', name:'Regreso Visible a la Sala Principal', status:'en_validacion', scope:'La búsqueda, las conversaciones y las pantallas secundarias sin navegación previa ofrecen una salida directa, táctil y accesible hacia la lista principal de chats.' }
 ]);
 
 function getVobixLayers() {

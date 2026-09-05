@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,interactive-widget=resizes-content">
 <meta name="theme-color" content="#18221d">
 <title>VOBIXCHAT</title>
 <style>
@@ -23,7 +23,7 @@ button,input{font:inherit}button{cursor:pointer;color:inherit}
 .main{min-width:0}.topbar{height:78px;border-bottom:1px solid var(--line);display:flex;align-items:center;padding:0 28px;gap:14px;background:rgba(18,26,22,.65);backdrop-filter:blur(10px)}
 .back{border:0;background:transparent;font-size:26px}.head{flex:1}.head b,.head span{display:block}.head span{font-size:12px;color:var(--accent)}.dots{border:0;background:transparent;font-size:28px}
 .content{padding:24px;max-width:1050px;margin:auto}
-.searchbox{display:flex;gap:8px;margin-bottom:18px}.searchbox input{flex:1;padding:13px 15px;border:1px solid var(--line);border-radius:12px;background:#121b16;color:var(--text);outline:none}.searchbox input:focus{border-color:var(--accent)}.searchbox button{border:0;border-radius:12px;padding:0 20px;background:var(--accent);color:#142415;font-weight:900}
+.searchbox{display:flex;gap:8px;margin-bottom:18px}.searchbox input{flex:1 1 auto;min-width:0;width:0;padding:13px 15px;border:1px solid var(--line);border-radius:12px;background:#121b16;color:var(--text);outline:none;caret-color:var(--accent)}.searchbox input:focus{border-color:var(--accent)}.searchbox button{flex:0 0 94px;min-width:94px;min-height:48px;border:0;border-radius:12px;padding:0 12px;background:var(--accent);color:#142415;font-weight:900}
 .inviteBox{display:flex;gap:8px;align-items:center;margin:0 0 14px;padding:11px;border:1px solid var(--line);border-radius:12px;background:rgba(5,20,12,.62)}.inviteBox input{min-width:0;flex:1;padding:11px 12px;border:1px solid var(--line);border-radius:9px;background:#121b16;color:var(--text);outline:none}.inviteBox button{border:0;border-radius:9px;padding:11px 13px;background:#183522;color:var(--accent);font-weight:800}.inviteBox .smsInvite{background:var(--accent);color:#142415}
 .results{display:none;margin-bottom:18px;padding:10px;border:1px solid var(--line);border-radius:14px;background:var(--panel)}
 .result{width:100%;display:flex;align-items:center;gap:10px;border:0;background:transparent;padding:10px;border-radius:10px;text-align:left}.result:hover{background:rgba(255,255,255,.05)}
@@ -37,6 +37,7 @@ button,input{font:inherit}button{cursor:pointer;color:inherit}
 .settings{position:fixed;inset:0;z-index:20;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.65);padding:20px}.settings.open{display:flex}.settingsBox{width:min(430px,100%);background:#1e2c25;border:1px solid var(--line);border-radius:18px;padding:22px}.settingsExit{width:100%;margin-top:12px;padding:13px;border:1px solid var(--line);border-radius:11px;background:transparent;color:var(--text);font-weight:900}.row{display:flex;align-items:center;justify-content:space-between;margin:18px 0}.row input{width:62px;height:40px}.save{width:100%;padding:13px;border:0;border-radius:11px;background:var(--accent);color:#142415;font-weight:900}
 .settingsMenuButton{width:100%;margin:10px 0;padding:15px;border:1px solid var(--line);border-radius:12px;background:#142e20;color:var(--text);text-align:left;font-weight:900}.settingsMenuButton small{display:block;margin-top:4px;color:var(--muted);font-weight:500}.settingsView{display:none}.settingsView.open{display:block}.settingsSelect{width:100%;padding:12px;border:1px solid var(--line);border-radius:10px;background:#10251a;color:var(--text)}
 .error{display:none;padding:10px 0;color:#ffb5b5}
+.finderReturn{display:none;margin:0 0 10px}.finderReturn button{min-height:46px;border:1px solid var(--line);border-radius:12px;padding:0 14px;background:#243026;color:var(--text);font-weight:900}
 @media(max-width:760px){
  .shell{display:block}.side{display:none}.topbar{height:65px;padding:0 14px}.content{padding:12px}.stats{grid-template-columns:1fr 1fr;padding:0 12px 12px}.secure{margin:0 12px 12px}.actions{grid-template-columns:1fr 1fr;padding:0 12px 12px}.actions .open{grid-column:1/-1}.hero{padding-top:22px}.searchbox{margin-top:2px}.notice{margin-top:10px}
 }
@@ -73,6 +74,7 @@ body{background:radial-gradient(circle at 62% 12%,rgba(143,255,42,.12),transpare
  .content{padding:10px 10px 18px}
  .inviteBox{flex-wrap:wrap}.inviteBox input{flex-basis:100%}.inviteBox button{flex:1}
  .searchbox{display:flex}
+ body.finding .finderReturn{display:block;position:sticky;top:0;z-index:4;padding-top:2px;background:linear-gradient(180deg,#101612 72%,transparent)}
  body.hasSelectedUser .searchbox{display:none}
  .profile{border:0;background:transparent;box-shadow:none}
  #emptyState{display:block}
@@ -94,6 +96,7 @@ body{background:radial-gradient(circle at 62% 12%,rgba(116,173,76,.14),transpare
 .side{background:linear-gradient(180deg,#323531,#222522);border-right-color:rgba(234,238,229,.18)}.vlogo{background:#f4eee2;color:#3d7f25;border-color:#6cc043;box-shadow:0 0 18px rgba(104,194,66,.20)}.new{background:linear-gradient(180deg,#6fbd42,#4b9828);color:#fff}.nav button{color:#f6f3eb}.topbar{background:rgba(45,48,44,.96);border-bottom-color:rgba(235,239,229,.17)}.head b{color:#fffdf7}.head span{color:#cef0bd}.searchbox input,.inviteBox input{background:#f7f2e8;color:#253328;border-color:rgba(72,93,68,.34)}.searchbox button,.inviteBox .smsInvite{background:#5cab32;color:#fff}.inviteBox{background:rgba(236,232,222,.92);border-color:rgba(67,95,61,.32)}.inviteBox button{background:#dce9d5;color:#2f6927}.profile{background:radial-gradient(circle at 50% 10%,rgba(104,176,67,.13),transparent 34%),linear-gradient(180deg,#f5f0e5,#ded8cc);box-shadow:0 20px 55px rgba(16,18,16,.24)}.hero .avatar,.avatar{background:#f6f0e4;color:#4a9828;border-color:#5cab32}.secure,.featureGrid>div,.stat,.notice{background:rgba(244,239,230,.92);border-color:rgba(67,95,61,.30)}.stat small,.secure p{color:#566057}.actions button{background:#e4dfd3;color:#1d3b28}.actions .open{background:linear-gradient(180deg,#6fbd42,#4b9828);color:#fff}.mobileNav{background:rgba(35,38,35,.98);border-top-color:rgba(235,239,229,.15)}.mobileNav button{color:#9be66f}.mobileNav span{color:#fffdf7}.mobileHistorySheet,.settingsBox{background:#f4eee2;color:#173624}.settingsMenuButton{background:#dfd9cd;color:#173624}.settingsSelect{background:#f7f2e8;color:#173624}.settingsExit{color:#173624}.settings{background:rgba(20,22,20,.54)}
 /* APK móvil: una sola pantalla sólida, sin arrastre horizontal ni controles tapados. */
 @media(max-width:760px){html,body{width:100%;height:100%;max-width:100%;overflow:hidden;overscroll-behavior:none;touch-action:pan-y}body{position:fixed;inset:0}.shell{width:100%;max-width:100%;height:100%;min-height:0;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;padding-bottom:70px}.main,.content,.profile,.searchbox,.inviteBox,.notice{min-width:0;max-width:100%}.mobileNav{position:fixed;left:0;right:0;bottom:0;width:100%;height:70px;padding-bottom:0}.mobileHistoryPanel{overscroll-behavior:contain}}
+@media(max-width:760px){body.keyboardOpen .shell{height:var(--vobix-inbox-height,100dvh);padding-bottom:12px!important}body.keyboardOpen .topbar{height:66px!important;padding-top:8px!important}body.keyboardOpen .vobixBubbleShell{display:none!important}.searchbox input{font-size:16px}.searchbox button{display:block!important;visibility:visible!important}}
 /* Inicio móvil: lista de conversaciones de lectura rápida, con identidad Vobix propia. */
 .chatHome{display:none}.chatHomeTop{display:flex;align-items:center;justify-content:space-between}.chatHomeTop h1{margin:0;font-size:26px}.chatHomeTop span{display:block;margin-top:3px;color:var(--muted);font-size:12px}.chatHomeTop button{border:0;border-radius:50%;width:44px;height:44px;background:#dce9d5;color:#286d28;font-size:28px;font-weight:900}.chatHomeList{margin-top:15px}.chatHomeRow{width:100%;min-height:76px;display:flex;align-items:center;gap:12px;border:0;border-bottom:1px solid rgba(74,130,48,.16);padding:10px 4px;background:transparent;color:#173624;text-align:left}.chatHomeRow:active{background:#e4eedf}.chatHomeAvatar{width:54px;height:54px;min-width:54px;border-radius:50%;display:grid;place-items:center;background:#dce9d5;background-position:center;background-size:cover;color:#348330;font-size:21px;font-weight:900;border:1px solid rgba(74,130,48,.30)}.chatHomeInfo{min-width:0;flex:1}.chatHomeInfo b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:16px}.chatHomeInfo span{display:block;margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#657066;font-size:13px}.chatHomeRow time{align-self:flex-start;padding-top:4px;color:#5c9e44;font-size:11px;white-space:nowrap}.chatHomeEmpty{min-height:190px;display:grid;place-content:center;gap:7px;text-align:center;color:#5f695f}.chatHomeEmpty span{font-size:13px}.newChatFloat{position:absolute;right:18px;bottom:90px;z-index:5;width:58px;height:58px;border:0;border-radius:18px;background:linear-gradient(180deg,#6fbd42,#4b9828);color:#fff;font-size:33px;font-weight:500;box-shadow:0 10px 24px rgba(45,106,36,.34)}
 .agendaPanel{display:none}.agendaPanel:not([hidden]){display:block}
@@ -148,15 +151,16 @@ html[data-vobix-controls="large"] .vobixBubbleTrigger{width:72px;height:72px}htm
 
  <main class="main">
   <header class="topbar">
-   <button class="back" id="backBtn">‹</button>
+   <button class="back" id="backBtn" type="button" aria-label="Volver a los chats">‹</button>
    <div class="head"><b id="topName">VOBIXCHAT</b><span id="topStatus">Selecciona un contacto</span></div>
    <button class="dots" id="topSettings">⋮</button>
   </header>
 
   <div class="content">
+   <div class="finderReturn" id="finderReturn"><button id="finderBackButton" type="button">← Volver a los chats</button></div>
    <div class="searchbox" id="searchArea">
-    <input id="searchInput" type="search" placeholder="Buscar por nombre o teléfono" autocomplete="off">
-    <button id="searchBtn">Buscar</button>
+    <input id="searchInput" type="search" inputmode="search" enterkeyhint="search" placeholder="Buscar por nombre o teléfono" autocomplete="off">
+    <button id="searchBtn" type="button">Buscar</button>
    </div>
    <div class="inviteBox" id="inviteArea">
     <input id="invitePhone" type="tel" inputmode="tel" placeholder="Número para invitar (+34...)" autocomplete="tel">
@@ -351,6 +355,28 @@ html[data-vobix-controls="large"] .vobixBubbleTrigger{width:72px;height:72px}htm
 (()=>{
 'use strict';
 const $=id=>document.getElementById(id);
+
+const INBOX_VIEWPORT_BASELINE=Math.max(window.innerHeight,window.visualViewport?.height||0);
+function updateInboxViewport(){
+ const viewport=window.visualViewport;
+ const visibleHeight=Math.round(viewport?.height||window.innerHeight);
+ const keyboardOpen=Boolean(document.activeElement?.matches('input')&&visibleHeight<Math.round(INBOX_VIEWPORT_BASELINE*.92));
+ document.documentElement.style.setProperty('--vobix-inbox-height',visibleHeight+'px');
+ document.body.classList.toggle('keyboardOpen',keyboardOpen);
+ if(keyboardOpen&&document.activeElement?.matches('input')){
+  setTimeout(()=>document.activeElement?.closest('.searchbox,.inviteBox')?.scrollIntoView({block:'start',inline:'nearest'}),70);
+ }
+}
+window.visualViewport?.addEventListener('resize',updateInboxViewport);
+window.visualViewport?.addEventListener('scroll',updateInboxViewport);
+window.addEventListener('resize',updateInboxViewport);
+document.addEventListener('focusin',event=>{
+ if(!event.target.matches('input'))return;
+ document.body.classList.add('keyboardOpen');
+ setTimeout(()=>event.target.closest('.searchbox,.inviteBox')?.scrollIntoView({block:'start',inline:'nearest'}),160);
+});
+document.addEventListener('focusout',()=>setTimeout(updateInboxViewport,120));
+updateInboxViewport();
 // El lateral solo contiene marca, nueva conversación y navegación.
 // Se elimina cualquier bloque antiguo que haya quedado de versiones previas.
 document.querySelectorAll('.side .history,.side .me,.side [data-legacy-history],.side .legacyHistory').forEach(node=>node.remove());
@@ -526,6 +552,7 @@ $('historyNav').onclick=()=>{document.body.classList.remove('hasSelectedUser','f
 $('contactsNav').onclick=()=>{$('newBtn').click()};
 $('callsNav').onclick=()=>{if(selectedUser)$('callBtn').click();else err('Selecciona primero un contacto')};
 $('backBtn').onclick=()=>{if(document.body.classList.contains('finding')||document.body.classList.contains('hasSelectedUser')){document.body.classList.remove('finding','hasSelectedUser');document.querySelector('.profile').style.display='none';$('emptyState').style.display='none';window.scrollTo({top:0,behavior:'smooth'});return}history.back()};
+$('finderBackButton').onclick=()=>{$('backBtn').click();$('searchInput').blur()};
 $('muteSwitch').onclick=e=>{e.currentTarget.style.opacity=e.currentTarget.style.opacity==='0.35'?'1':'0.35'};
 
 const settings=$('settings');
