@@ -7,6 +7,7 @@ const test = require('node:test');
 
 const chat = fs.readFileSync(path.join(__dirname, '..', 'public', 'chat.html'), 'utf8');
 const layers = fs.readFileSync(path.join(__dirname, '..', 'core', 'vobix-layers.js'), 'utf8');
+const activity = fs.readFileSync(path.join(__dirname, '..', 'android', 'app', 'src', 'main', 'java', 'com', 'vobixchat', 'mobile', 'MainActivity.kt'), 'utf8');
 
 test('al entrar aparece una activación explícita de cámara y micrófono', () => {
   assert.match(chat, /id="mediaPermissionPanel"[\s\S]*Activar cámara y micrófono/);
@@ -19,6 +20,16 @@ test('la activación comprueba ambas pistas y las detiene al terminar', () => {
   assert.match(chat, /getAudioTracks\(\)\.length > 0/);
   assert.match(chat, /getVideoTracks\(\)\.length > 0/);
   assert.match(chat, /permissionStream\?\.getTracks\(\)\.forEach\(track => track\.stop\(\)\)/);
+});
+
+test('Android coordina el permiso nativo con WebView y permite abrir ajustes', () => {
+  assert.match(activity, /pendingWebPermissionRequest/);
+  assert.match(activity, /handleWebPermissionRequest\(request\)/);
+  assert.match(activity, /request\.origin\.host != "vobixchat\.onrender\.com"/);
+  assert.match(activity, /fun requestMediaPermissions\(\)/);
+  assert.match(activity, /Settings\.ACTION_APPLICATION_DETAILS_SETTINGS/);
+  assert.match(chat, /id="openNativePermissionSettingsButton"/);
+  assert.match(chat, /vobix:native-media-permission/);
 });
 
 test('el permiso se recuerda por cuenta y ahora no solo cierra la visita', () => {

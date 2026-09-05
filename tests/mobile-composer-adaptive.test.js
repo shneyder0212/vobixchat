@@ -24,6 +24,8 @@ test('Android e iPhone reciben una superficie compatible con su teclado', () => 
   assert.match(html, /function syncMobileVisualViewport\(\)/);
   assert.match(html, /window\.visualViewport\?\.addEventListener\('resize'/);
   assert.match(html, /--vobix-viewport-height/);
+  assert.match(html, /html\.vobixKeyboardOpen \.vobixApp/);
+  assert.match(html, /height:\s*var\(--vobix-visual-height/);
   assert.match(html, /font-size:\s*16px;/);
 });
 

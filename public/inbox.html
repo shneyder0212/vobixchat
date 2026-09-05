@@ -335,6 +335,7 @@ html[data-vobix-controls="large"] .vobixBubbleTrigger{width:72px;height:72px}htm
    <div class="row"><label>Cámara</label><strong id="cameraPermissionStatus">Sin comprobar</strong></div>
    <div class="row"><label>Micrófono</label><strong id="microphonePermissionStatus">Sin comprobar</strong></div>
    <button class="save" id="requestMediaPermissions" type="button">Activar cámara y micrófono</button>
+   <button class="save" id="openNativePermissionSettings" type="button">Abrir ajustes de permisos</button>
    <div class="row"><label>Notificaciones</label><strong id="notificationPermissionStatus">Sin comprobar</strong></div>
    <button class="save" id="requestNotificationPermission" type="button">Activar notificaciones</button>
    <p id="permissionHelp" role="status" aria-live="polite" style="color:var(--muted);font-size:13px;line-height:1.45"></p>
@@ -622,6 +623,7 @@ $('requestMediaPermissions').onclick=async()=>{
  const button=$('requestMediaPermissions');let stream=null;
  button.disabled=true;button.textContent='Esperando permiso…';$('permissionHelp').textContent='';
  try{
+  if(window.VobixNative?.requestMediaPermissions&&window.VobixNative?.hasMediaPermissions?.()!==true)window.VobixNative.requestMediaPermissions();
   if(!navigator.mediaDevices?.getUserMedia)throw new Error('Este dispositivo no ofrece acceso web a cámara y micrófono.');
   stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true},video:{facingMode:{ideal:'user'}}});
   const hasCamera=stream.getVideoTracks().length>0,hasMicrophone=stream.getAudioTracks().length>0;
@@ -635,6 +637,14 @@ $('requestMediaPermissions').onclick=async()=>{
   stream?.getTracks().forEach(track=>track.stop());button.disabled=false;button.textContent='Activar cámara y micrófono';refreshPermissionStatuses();
  }
 };
+$('openNativePermissionSettings').onclick=()=>{
+ if(window.VobixNative?.openAppPermissionSettings)window.VobixNative.openAppPermissionSettings();
+ else $('permissionHelp').textContent=blockedPermissionHelp();
+};
+window.addEventListener('vobix:native-media-permission',event=>{
+ $('permissionHelp').textContent=event.detail?.granted?'Permisos Android activados. Ya puedes comprobar cámara y micrófono.':'Cámara o micrófono siguen bloqueados. Pulsa Abrir ajustes de permisos.';
+ refreshPermissionStatuses();
+});
 $('requestNotificationPermission').onclick=async()=>{
  const button=$('requestNotificationPermission');button.disabled=true;$('permissionHelp').textContent='';
  try{

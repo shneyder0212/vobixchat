@@ -5,8 +5,10 @@ import android.annotation.SuppressLint
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Color
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.provider.Settings
 import android.view.WindowManager
 import android.webkit.JavascriptInterface
 import android.webkit.PermissionRequest
@@ -23,6 +25,8 @@ import com.google.firebase.messaging.FirebaseMessaging
 
 class MainActivity : ComponentActivity() {
     private lateinit var webView: WebView
+    private var pendingWebPermissionRequest: PermissionRequest? = null
+    private val mediaPermissionRequestCode = 91
 
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -45,13 +49,17 @@ class MainActivity : ComponentActivity() {
             domStorageEnabled = true
             mediaPlaybackRequiresUserGesture = false
             cacheMode = WebSettings.LOAD_DEFAULT
-            userAgentString = "$userAgentString VobixChatAndroid/1.2.1"
+            userAgentString = "$userAgentString VobixChatAndroid/1.2.2"
         }
         webView.addJavascriptInterface(NativeBridge(), "VobixNative")
         webView.webViewClient = WebViewClient()
         webView.webChromeClient = object : WebChromeClient() {
             override fun onPermissionRequest(request: PermissionRequest) {
-                runOnUiThread { request.grant(request.resources) }
+                runOnUiThread { handleWebPermissionRequest(request) }
+            }
+
+            override fun onPermissionRequestCanceled(request: PermissionRequest) {
+                if (pendingWebPermissionRequest == request) pendingWebPermissionRequest = null
             }
         }
 
@@ -67,6 +75,22 @@ class MainActivity : ComponentActivity() {
         super.onNewIntent(intent)
         setIntent(intent)
         loadRequestedUrl(intent)
+    }
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode != mediaPermissionRequestCode && requestCode != 90) return
+        val granted = hasMediaPermissions()
+        pendingWebPermissionRequest?.let { request ->
+            if (granted) request.grant(allowedWebResources(request)) else request.deny()
+        }
+        pendingWebPermissionRequest = null
+        dispatchMediaPermissionResult(granted)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        if (::webView.isInitialized) dispatchMediaPermissionResult(hasMediaPermissions())
     }
 
     private fun loadRequestedUrl(intent: Intent) {
@@ -87,6 +111,47 @@ class MainActivity : ComponentActivity() {
         )
     }
 
+    private fun hasMediaPermissions(): Boolean =
+        ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED &&
+            ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
+
+    private fun requestNativeMediaPermissions() {
+        val missing = listOf(Manifest.permission.CAMERA, Manifest.permission.RECORD_AUDIO)
+            .filter { ContextCompat.checkSelfPermission(this, it) != PackageManager.PERMISSION_GRANTED }
+        if (missing.isEmpty()) dispatchMediaPermissionResult(true)
+        else ActivityCompat.requestPermissions(this, missing.toTypedArray(), mediaPermissionRequestCode)
+    }
+
+    private fun allowedWebResources(request: PermissionRequest): Array<String> = request.resources.filter {
+        it == PermissionRequest.RESOURCE_AUDIO_CAPTURE || it == PermissionRequest.RESOURCE_VIDEO_CAPTURE
+    }.toTypedArray()
+
+    private fun handleWebPermissionRequest(request: PermissionRequest) {
+        if (request.origin.host != "vobixchat.onrender.com") {
+            request.deny()
+            return
+        }
+        val allowed = allowedWebResources(request)
+        if (allowed.isEmpty()) {
+            request.deny()
+            return
+        }
+        if (hasMediaPermissions()) request.grant(allowed)
+        else {
+            pendingWebPermissionRequest?.deny()
+            pendingWebPermissionRequest = request
+            requestNativeMediaPermissions()
+        }
+    }
+
+    private fun dispatchMediaPermissionResult(granted: Boolean) {
+        if (!::webView.isInitialized) return
+        webView.evaluateJavascript(
+            "window.dispatchEvent(new CustomEvent('vobix:native-media-permission',{detail:{granted:${if (granted) "true" else "false"}}}));",
+            null
+        )
+    }
+
     private fun requestNeededPermissions() {
         val needed = mutableListOf(Manifest.permission.CAMERA, Manifest.permission.RECORD_AUDIO)
         if (Build.VERSION.SDK_INT >= 33) needed.add(Manifest.permission.POST_NOTIFICATIONS)
@@ -97,5 +162,18 @@ class MainActivity : ComponentActivity() {
     inner class NativeBridge {
         @JavascriptInterface
         fun getFcmToken(): String = getSharedPreferences("vobix", MODE_PRIVATE).getString("fcm_token", "") ?: ""
+
+        @JavascriptInterface
+        fun requestMediaPermissions() = runOnUiThread { requestNativeMediaPermissions() }
+
+        @JavascriptInterface
+        fun openAppPermissionSettings() = runOnUiThread {
+            startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                data = Uri.parse("package:$packageName")
+            })
+        }
+
+        @JavascriptInterface
+        fun hasMediaPermissions(): Boolean = this@MainActivity.hasMediaPermissions()
     }
 }
