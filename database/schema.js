@@ -840,6 +840,41 @@ async function initializeDatabase() {
       WHERE expires_at IS NOT NULL AND deleted = FALSE;
     `);
 
+    // CAPA 147 — Una reacción activa por usuario y mensaje. Cambiar de
+    // emoji reemplaza la anterior; repetir el mismo emoji la elimina.
+    await database.query(`
+      CREATE TABLE IF NOT EXISTS message_reactions (
+        message_id UUID NOT NULL REFERENCES messages(id) ON DELETE CASCADE,
+        user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        emoji VARCHAR(16) NOT NULL,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        PRIMARY KEY (message_id, user_id)
+      );
+    `);
+
+    await database.query(`
+      CREATE INDEX IF NOT EXISTS message_reactions_message_idx
+      ON message_reactions(message_id);
+    `);
+
+    // CAPA 147 — "Eliminar para mí" no modifica lo que ve la otra persona.
+    // Se guarda por usuario para mantener la elección al recargar o cambiar
+    // de dispositivo.
+    await database.query(`
+      CREATE TABLE IF NOT EXISTS message_hidden_users (
+        message_id UUID NOT NULL REFERENCES messages(id) ON DELETE CASCADE,
+        user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        hidden_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        PRIMARY KEY (message_id, user_id)
+      );
+    `);
+
+    await database.query(`
+      CREATE INDEX IF NOT EXISTS message_hidden_users_user_idx
+      ON message_hidden_users(user_id, message_id);
+    `);
+
     // CAPA 2.6.1 — Los adjuntos normales mantienen FALSE y no cambian.
     await database.query(`
       ALTER TABLE messages

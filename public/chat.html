@@ -866,12 +866,58 @@
     }
 
     .messageActions {
-      display: flex;
+      display: none;
       flex-wrap: wrap;
       justify-content: flex-end;
       gap: 4px;
       margin-top: 4px;
     }
+
+    .messageActions.mobileOpen {
+      position: absolute;
+      top: 36px;
+      right: 5px;
+      z-index: 20;
+      width: min(235px, 76vw);
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      padding: 8px;
+      border: 1px solid rgba(104,255,114,.22);
+      border-radius: 15px;
+      background: #102016;
+      box-shadow: 0 16px 42px rgba(0,0,0,.55);
+    }
+
+    .messageRow.theirs .messageActions.mobileOpen { left: 5px; right: auto; }
+    .messageActions.mobileOpen .replyMessageButton {
+      min-height: 38px;
+      margin: 0;
+      padding: 7px 9px;
+      text-align: left;
+    }
+    .messageActions.mobileOpen .messageReactionPicker { flex-direction: row; }
+
+    .messageMenuButton {
+      position: absolute;
+      top: 4px;
+      right: 5px;
+      width: 30px;
+      height: 30px;
+      display: grid;
+      place-items: center;
+      border: 0;
+      border-radius: 50%;
+      background: rgba(0,0,0,.24);
+      color: rgba(255,255,255,.82);
+      font-size: 20px;
+      line-height: 1;
+      cursor: pointer;
+    }
+
+    .messageBubble.hasMessageMenu { padding-right: 39px; }
+    .messageRow.theirs .messageMenuButton { left: 5px; right: auto; }
+    .messageRow.theirs .messageBubble.hasMessageMenu { padding-left: 39px; padding-right: 13px; }
 
     .messageBubble.longPressActive {
       outline: 2px solid rgba(104,255,114,.45);
@@ -879,8 +925,7 @@
     }
 
     @media (max-width: 760px), (pointer: coarse) {
-      .messageActions { display: none; padding-top: 4px; }
-      .messageActions.mobileOpen { display: flex; }
+      .messageActions { padding-top: 4px; }
     }
 
     .messageReactions {
@@ -10804,6 +10849,32 @@
       }
     }
 
+    async function pasteClipboardIntoMessage() {
+      if (!elements.messageInput) return;
+      try {
+        if (!navigator.clipboard?.readText || !window.isSecureContext) throw new Error('CLIPBOARD_UNAVAILABLE');
+        const value = await navigator.clipboard.readText();
+        if (!value) {
+          notifyUser('El portapapeles está vacío');
+          return;
+        }
+        const input = elements.messageInput;
+        const start = Number.isInteger(input.selectionStart) ? input.selectionStart : input.value.length;
+        const end = Number.isInteger(input.selectionEnd) ? input.selectionEnd : start;
+        input.value = `${input.value.slice(0, start)}${value}${input.value.slice(end)}`.slice(0, 4000);
+        const cursor = Math.min(start + value.length, input.value.length);
+        input.focus();
+        input.setSelectionRange(cursor, cursor);
+        resizeMessageInput();
+        syncComposerAction();
+        saveCurrentDraft();
+        notifyUser('Texto pegado');
+      } catch (error) {
+        elements.messageInput.focus();
+        notifyUser('Mantén pulsado el campo “Mensaje” y elige Pegar');
+      }
+    }
+
     async function shareMessageText(value) {
       const text = String(value || '').trim();
       if (!text) {
@@ -10961,6 +11032,10 @@
       if (!event.target.closest?.('.messageBubble')) closeMobileMessageActions();
     }, { passive: true });
 
+    document.addEventListener('pointerdown', event => {
+      if (!event.target.closest?.('.messageBubble')) closeMobileMessageActions();
+    }, { passive: true });
+
     elements.cancelReplyButton?.addEventListener('click', cancelMessageReply);
     elements.cancelEditButton?.addEventListener('click', () => cancelMessageEdit(true));
 
@@ -11014,6 +11089,11 @@
         const delta = payload?.removed || payload?.action === 'remove' ? -1 : 1;
         row._vobixReactionCounts[emoji] = Math.max(0, Number(row._vobixReactionCounts[emoji] || 0) + delta);
       }
+      const reactingUserId = payload?.userId || payload?.user_id;
+      if (payload?.myReaction !== undefined) row._vobixMyReaction = payload.myReaction || '';
+      else if (reactingUserId && String(reactingUserId) === String(userId(app.me))) {
+        row._vobixMyReaction = payload?.removed ? '' : (payload?.emoji || '');
+      }
       renderReactionBadges(row);
       return true;
     }
@@ -11036,21 +11116,12 @@
       };
 
       try {
-        if (app.socket?.connected) {
-          app.socket.emit('chat:message:reaction', payload);
-        } else {
-          await api(`/api/chat/messages/${encodeURIComponent(id)}/reaction`, {
-            method: removed ? 'DELETE' : 'POST',
-            body: JSON.stringify({ emoji, conversationId: payload.conversationId })
-          });
-        }
-
-        row._vobixReactionCounts ||= {};
-        if (previous && previous !== emoji) {
-          row._vobixReactionCounts[previous] = Math.max(0, Number(row._vobixReactionCounts[previous] || 0) - 1);
-        }
-        row._vobixReactionCounts[emoji] = Math.max(0, Number(row._vobixReactionCounts[emoji] || 0) + (removed ? -1 : 1));
-        row._vobixMyReaction = removed ? '' : emoji;
+        const result = await api(`/api/chat/messages/${encodeURIComponent(id)}/reaction`, {
+          method: removed ? 'DELETE' : 'POST',
+          body: JSON.stringify({ emoji, conversationId: payload.conversationId })
+        });
+        row._vobixReactionCounts = normalizeMessageReactions(result);
+        row._vobixMyReaction = result?.myReaction || '';
         row._vobixLastReactionId = payload.clientReactionId;
         renderReactionBadges(row);
         row.querySelector('.messageReactionPicker')?.classList.remove('open');
@@ -11345,6 +11416,12 @@
       copyButton.textContent = '⧉ Copiar';
       copyButton.addEventListener('click', () => copyMessageText(messagePreviewText(message)));
 
+      const pasteButton = document.createElement('button');
+      pasteButton.type = 'button';
+      pasteButton.className = 'replyMessageButton';
+      pasteButton.textContent = '▣ Pegar';
+      pasteButton.addEventListener('click', pasteClipboardIntoMessage);
+
       const starButton = document.createElement('button');
       starButton.type = 'button';
       starButton.className = 'replyMessageButton';
@@ -11373,8 +11450,14 @@
       const deleteButton = document.createElement('button');
       deleteButton.type = 'button';
       deleteButton.className = 'replyMessageButton';
-      deleteButton.textContent = '⌫ Eliminar';
+      deleteButton.textContent = '⌫ Eliminar para todos';
       deleteButton.addEventListener('click', () => requestMessageDelete(message));
+
+      const hideButton = document.createElement('button');
+      hideButton.type = 'button';
+      hideButton.className = 'replyMessageButton';
+      hideButton.textContent = '⌫ Eliminar para mí';
+      hideButton.addEventListener('click', () => requestMessageHideForMe(message, row));
 
       const retryButton = document.createElement('button');
       retryButton.type = 'button';
@@ -11404,11 +11487,30 @@
       });
 
       if (!isDeleted) {
-        actions.append(starButton, copyButton, shareButton, replyButton, reactionButton, reactionPicker);
-        if (mine) actions.append(editButton, deleteButton);
+        // Orden corto y familiar en móvil. Las acciones destructivas quedan al final.
+        actions.append(reactionButton, reactionPicker, replyButton, pasteButton, copyButton, starButton, shareButton);
+        actions.append(hideButton);
+        const messageType = String(message?.messageType || message?.message_type || message?.type || 'text').toLowerCase();
+        if (mine && messageType === 'text') actions.append(editButton);
+        if (mine) actions.append(deleteButton);
         if (mine && isFailed) actions.appendChild(retryButton);
         bubble.appendChild(actions);
         enableLongPressActions(bubble, actions);
+
+        const menuButton = document.createElement('button');
+        menuButton.type = 'button';
+        menuButton.className = 'messageMenuButton';
+        menuButton.textContent = '⋮';
+        menuButton.setAttribute('aria-label', 'Opciones del mensaje');
+        menuButton.addEventListener('click', event => {
+          event.stopPropagation();
+          const opening = !actions.classList.contains('mobileOpen');
+          closeMobileMessageActions(actions);
+          actions.classList.toggle('mobileOpen', opening);
+          bubble.classList.toggle('longPressActive', opening);
+        });
+        bubble.classList.add('hasMessageMenu');
+        bubble.appendChild(menuButton);
       }
 
       enableSwipeToReply(bubble, message);
@@ -12575,7 +12677,28 @@
       row.querySelector('.messageEdited')?.remove();
       row.querySelector('.messageReactions')?.remove();
       row.querySelector('.messageActions')?.remove();
+      row.querySelector('.messageMenuButton')?.remove();
       return true;
+    }
+
+    async function requestMessageHideForMe(message, row) {
+      const id = message?.id || message?._id || message?.messageId || message?.clientMessageId;
+      if (!id) {
+        row?.remove();
+        notifyUser('Mensaje eliminado para ti');
+        return;
+      }
+      if (!window.confirm('¿Eliminar este mensaje solo para ti? La otra persona seguirá viéndolo.')) return;
+
+      try {
+        await api(`/api/chat/messages/${encodeURIComponent(id)}/me`, { method: 'DELETE' });
+        if (String(app.editingMessage?.id || '') === String(id)) cancelMessageEdit(true);
+        row?.remove();
+        notifyUser('Mensaje eliminado solo para ti');
+      } catch (error) {
+        console.error('[VOBIXCHAT HIDE MESSAGE]', error);
+        notifyUser('No se pudo eliminar el mensaje para ti');
+      }
     }
 
     async function requestMessageDelete(message) {
@@ -12593,14 +12716,11 @@
       const payload = { conversationId, messageId: String(id), deletedAt: new Date().toISOString() };
 
       try {
-        if (app.socket?.connected) {
-          app.socket.emit('chat:message:delete', payload);
-        } else {
-          await api(`/api/chat/messages/${encodeURIComponent(id)}`, {
-            method: 'DELETE',
-            body: JSON.stringify({ conversationId })
-          });
-        }
+        const result = await api(`/api/chat/messages/${encodeURIComponent(id)}`, {
+          method: 'DELETE',
+          body: JSON.stringify({ conversationId })
+        });
+        payload.deletedAt = result?.deletedAt || payload.deletedAt;
         applyDeletedMessage(payload);
         message.deleted = true;
         message.deletedAt = payload.deletedAt;
@@ -12630,16 +12750,12 @@
       };
 
       try {
-        if (app.socket?.connected) {
-          app.socket.emit('chat:message:edit', payload);
-        } else {
-          await api(`/api/chat/messages/${encodeURIComponent(editing.id)}`, {
-            method: 'PATCH',
-            body: JSON.stringify({ text, conversationId })
-          });
-        }
+        const result = await api(`/api/chat/messages/${encodeURIComponent(editing.id)}`, {
+          method: 'PUT',
+          body: JSON.stringify({ text, conversationId })
+        });
 
-        applyEditedMessage(payload);
+        applyEditedMessage({ ...payload, text: result?.message?.content || text });
         editing.message.text = text;
         editing.message.editedAt = payload.editedAt;
         cancelMessageEdit(true);

@@ -2427,6 +2427,14 @@ async function notifyPrivateConversation(req, room, message) {
   }
 }
 
+function emitMessageMutation(req, conversationId, eventName, payload) {
+  const io = req.app && req.app.get('io');
+  const roomId = cleanId(conversationId);
+  if (!io || !roomId) return;
+  io.to(`conversation:${roomId}`).emit(`chat:message:${eventName}`, payload);
+  io.to(`conversation:${roomId}`).emit(`message:${eventName}`, payload);
+}
+
 /* ========================================================
    BLOQUE 3 DE 4
 
@@ -2606,6 +2614,18 @@ function normalizeMessage(
         row.deleted
       ),
 
+    reactionCounts:
+      row.reaction_counts || {},
+
+    reaction_counts:
+      row.reaction_counts || {},
+
+    myReaction:
+      row.my_reaction || '',
+
+    my_reaction:
+      row.my_reaction || '',
+
     mine:
       String(senderId) ===
       String(currentUserIdValue)
@@ -2760,7 +2780,18 @@ async function getMessagesHandler(
             m.created_at,
             m.updated_at,
             m.edited,
-            m.deleted
+            m.deleted,
+            COALESCE((
+              SELECT jsonb_object_agg(grouped.emoji, grouped.total)
+              FROM (
+                SELECT emoji, COUNT(*)::int AS total
+                FROM message_reactions
+                WHERE message_id = m.id
+                GROUP BY emoji
+              ) grouped
+            ), '{}'::jsonb) AS reaction_counts,
+            (SELECT emoji FROM message_reactions
+             WHERE message_id = m.id AND user_id = $4 LIMIT 1) AS my_reaction
 
           FROM messages m
 
@@ -2776,6 +2807,11 @@ async function getMessagesHandler(
               FALSE
             ) = FALSE
 
+            AND NOT EXISTS (
+              SELECT 1 FROM message_hidden_users hidden
+              WHERE hidden.message_id = m.id AND hidden.user_id = $4
+            )
+
           ORDER BY
             m.created_at DESC,
             m.id DESC
@@ -2785,7 +2821,8 @@ async function getMessagesHandler(
           [
             conversationId,
             before,
-            limit
+            limit,
+            userId
           ]
         );
 
@@ -2819,7 +2856,18 @@ async function getMessagesHandler(
             m.created_at,
             m.updated_at,
             m.edited,
-            m.deleted
+            m.deleted,
+            COALESCE((
+              SELECT jsonb_object_agg(grouped.emoji, grouped.total)
+              FROM (
+                SELECT emoji, COUNT(*)::int AS total
+                FROM message_reactions
+                WHERE message_id = m.id
+                GROUP BY emoji
+              ) grouped
+            ), '{}'::jsonb) AS reaction_counts,
+            (SELECT emoji FROM message_reactions
+             WHERE message_id = m.id AND user_id = $3 LIMIT 1) AS my_reaction
 
           FROM messages m
 
@@ -2832,6 +2880,11 @@ async function getMessagesHandler(
               FALSE
             ) = FALSE
 
+            AND NOT EXISTS (
+              SELECT 1 FROM message_hidden_users hidden
+              WHERE hidden.message_id = m.id AND hidden.user_id = $3
+            )
+
           ORDER BY
             m.created_at DESC,
             m.id DESC
@@ -2840,7 +2893,8 @@ async function getMessagesHandler(
           `,
           [
             conversationId,
-            limit
+            limit,
+            userId
           ]
         );
 
@@ -3556,16 +3610,22 @@ router.put(
           ]
         );
 
+      const normalized = normalizeMessage(updated.rows[0], userId);
+      const mutationPayload = {
+        conversationId: original.conversation_id,
+        messageId,
+        text: normalized.content,
+        editedAt: normalized.updatedAt
+      };
+      emitMessageMutation(req, original.conversation_id, 'edited', mutationPayload);
+
 
       return res.json({
 
         ok: true,
 
         message:
-          normalizeMessage(
-            updated.rows[0],
-            userId
-          )
+          normalized
 
       });
 
@@ -3727,6 +3787,13 @@ router.delete(
         ]
       );
 
+      const mutationPayload = {
+        conversationId: message.conversation_id,
+        messageId,
+        deletedAt: new Date().toISOString()
+      };
+      emitMessageMutation(req, message.conversation_id, 'deleted', mutationPayload);
+
 
       await database.query(
         `
@@ -3776,6 +3843,93 @@ router.delete(
 
   }
 );
+
+
+/* ========================================================
+   CAPA 147 — ACCIONES INDIVIDUALES DEL MENSAJE
+======================================================== */
+
+router.delete('/messages/:messageId/me', async (req, res) => {
+  const userId = currentUserId(req);
+  const messageId = cleanId(req.params.messageId);
+  if (!messageId) return res.status(400).json({ ok:false, msg:'Mensaje no válido' });
+
+  try {
+    const found = await database.query(
+      'SELECT id, conversation_id FROM messages WHERE id=$1 LIMIT 1',
+      [messageId]
+    );
+    const message = found.rows[0];
+    if (!message) return res.status(404).json({ ok:false, msg:'Mensaje no encontrado' });
+    const room = await validatePrivateRoom(message.conversation_id, userId);
+    if (!room.ok) return res.status(room.status).json({ ok:false, msg:room.msg });
+
+    await database.query(`
+      INSERT INTO message_hidden_users(message_id, user_id, hidden_at)
+      VALUES ($1, $2, NOW())
+      ON CONFLICT(message_id, user_id) DO UPDATE SET hidden_at=NOW()
+    `, [messageId, userId]);
+
+    return res.json({ ok:true, messageId, conversationId:message.conversation_id, hiddenForMe:true });
+  } catch (error) {
+    console.error('VOBIXCHAT HIDE MESSAGE ERROR:', error);
+    return res.status(500).json({ ok:false, msg:'No se pudo eliminar el mensaje para ti' });
+  }
+});
+
+const MESSAGE_REACTION_EMOJIS = new Set(['👍', '❤️', '😂', '😮', '😢', '🙏']);
+
+async function messageReactionHandler(req, res, remove) {
+  const userId = currentUserId(req);
+  const messageId = cleanId(req.params.messageId);
+  const emoji = String(req.body?.emoji || '').trim();
+  if (!messageId || (!remove && !MESSAGE_REACTION_EMOJIS.has(emoji))) {
+    return res.status(400).json({ ok:false, msg:'Reacción no válida' });
+  }
+
+  try {
+    const found = await database.query(
+      'SELECT id, conversation_id, deleted FROM messages WHERE id=$1 LIMIT 1',
+      [messageId]
+    );
+    const message = found.rows[0];
+    if (!message || message.deleted) return res.status(404).json({ ok:false, msg:'Mensaje no encontrado' });
+    const room = await validatePrivateRoom(message.conversation_id, userId);
+    if (!room.ok) return res.status(room.status).json({ ok:false, msg:room.msg });
+
+    if (remove) {
+      await database.query('DELETE FROM message_reactions WHERE message_id=$1 AND user_id=$2', [messageId, userId]);
+    } else {
+      await database.query(`
+        INSERT INTO message_reactions(message_id, user_id, emoji, created_at, updated_at)
+        VALUES ($1, $2, $3, NOW(), NOW())
+        ON CONFLICT(message_id, user_id) DO UPDATE SET emoji=EXCLUDED.emoji, updated_at=NOW()
+      `, [messageId, userId, emoji]);
+    }
+
+    const counts = await database.query(`
+      SELECT emoji, COUNT(*)::int AS total
+      FROM message_reactions WHERE message_id=$1 GROUP BY emoji
+    `, [messageId]);
+    const reactionCounts = Object.fromEntries(counts.rows.map(row => [row.emoji, Number(row.total)]));
+    const payload = {
+      conversationId: message.conversation_id,
+      messageId,
+      emoji,
+      removed: Boolean(remove),
+      userId,
+      reactionCounts
+    };
+    emitMessageMutation(req, message.conversation_id, 'reaction', payload);
+    return res.json({ ok:true, ...payload, myReaction:remove ? '' : emoji });
+  } catch (error) {
+    console.error('VOBIXCHAT MESSAGE REACTION ERROR:', error);
+    return res.status(500).json({ ok:false, msg:'No se pudo guardar la reacción' });
+  }
+}
+
+router.post('/messages/:messageId/reaction', (req, res) => messageReactionHandler(req, res, false));
+router.delete('/messages/:messageId/reaction', (req, res) => messageReactionHandler(req, res, true));
 
 
 /* ========================================================

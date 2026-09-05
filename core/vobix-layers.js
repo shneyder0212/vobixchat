@@ -124,6 +124,7 @@ const VOBIX_LAYERS = Object.freeze([
 ,{ id:'144', name:'Interruptor Directo de Modo Senior', status:'en_validacion', scope:'El menú muestra Activar o Desactivar Modo Senior según su estado y cambia con una sola pulsación, sin confirmación ni espera de tres segundos.' }
 ,{ id:'145', name:'Llamada Recuperable sin Conexión', status:'en_validacion', scope:'Una llamada pendiente se recupera al volver la cobertura o al abrir su notificación; el llamante escucha un tono suave mientras el teléfono destinatario es avisado.' }
 ,{ id:'146', name:'Selector de Cámara para Fotos', status:'en_validacion', scope:'Antes de hacer una fotografía se elige cámara frontal para selfie o cámara trasera, manteniendo la galería separada.' }
+,{ id:'147', name:'Acciones Seguras de Mensajes', status:'en_validacion', scope:'El menú de tres puntos permite reaccionar, copiar, pegar, editar mensajes propios y elegir entre eliminar para todos o únicamente para la cuenta actual.' }
 ]);
 
 function getVobixLayers() {
