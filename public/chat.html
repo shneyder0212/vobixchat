@@ -16735,6 +16735,19 @@
         onIncomingMessage
       );
 
+      // Rutas HTTP modernas: el servidor envuelve el mensaje con el ID de
+      // conversación. Escuchar ambos eventos evita depender exclusivamente
+      // de haber entrado a la sala mientras el móvil se reconecta.
+      app.socket.on(
+        'conversation-message',
+        onIncomingMessage
+      );
+
+      app.socket.on(
+        'conversation:new-message',
+        onIncomingMessage
+      );
+
       app.socket.on('chat:message:edited', applyEditedMessage);
       app.socket.on('message:edited', applyEditedMessage);
       app.socket.on('chat:message:deleted', applyDeletedMessage);
@@ -16848,22 +16861,26 @@
           try {
 
             app.socket.emit(
-              'chat:join',
+              'conversation-join',
               {
                 conversationId:
                   id
+              },
+              response => {
+                if (response?.ok === false) {
+                  console.warn('[VOBIXCHAT JOIN]', response.msg || 'No se pudo entrar a la conversación');
+                }
               }
             );
 
 
             /*
-              EVENTO DE RESPALDO.
-              Si el servidor solo escucha "join",
-              también recibe el ID.
+              Alias para servidores anteriores durante una actualización
+              gradual. El servidor actual usa conversation-join.
             */
 
             app.socket.emit(
-              'join',
+              'chat:join',
               {
                 conversationId:
                   id

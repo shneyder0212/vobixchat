@@ -2894,9 +2894,7 @@ io.on(
     // UNIRSE A SALA PRIVADA
     // ==================================================
 
-    socket.on(
-      'conversation-join',
-      async (
+    const joinPrivateConversation = async (
         payload = {},
         callback
       ) => {
@@ -3025,8 +3023,13 @@ io.on(
 
         }
 
-      }
-    );
+      };
+
+    socket.on('conversation-join', joinPrivateConversation);
+    // Compatibilidad con APK/web anteriores. Todos terminan en la misma
+    // validación de acceso; no se permite entrar a salas arbitrarias.
+    socket.on('chat:join', joinPrivateConversation);
+    socket.on('join', joinPrivateConversation);
 
 
     // ==================================================
