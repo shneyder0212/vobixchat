@@ -9275,37 +9275,6 @@ async function startVobixChat() {
 
 
     // ==================================================
-    // INICIALIZAR / ACTUALIZAR BASE DE DATOS
-    // ==================================================
-
-    console.log(
-      'VOBIXCHAT | INICIALIZANDO BASE DE DATOS...'
-    );
-
-
-    await initializeDatabase();
-
-
-    console.log(
-      'VOBIXCHAT | BASE DE DATOS LISTA'
-    );
-
-
-    // ==================================================
-    // COMPROBAR CONEXIÓN POSTGRESQL
-    // ==================================================
-
-    await database.query(
-      'SELECT 1'
-    );
-
-
-    console.log(
-      'VOBIXCHAT | POSTGRESQL CONECTADO'
-    );
-
-
-    // ==================================================
     // PUERTO
     // ==================================================
 
@@ -9374,6 +9343,13 @@ async function startVobixChat() {
           '=========================================='
         );
 
+        // Capa 140 — durante un despliegue Render mantiene por unos
+        // segundos la instancia anterior. Si el proxy PostgreSQL está
+        // lleno, escuchar primero permite que Render sustituya la
+        // instancia antigua; el esquema se comprueba después con pausa
+        // progresiva sin tumbar el servidor ni crear un bucle agresivo.
+        initializeDatabaseWithRetry();
+
       }
     );
 
@@ -9401,6 +9377,32 @@ async function startVobixChat() {
 
   }
 
+}
+
+async function initializeDatabaseWithRetry(attempt = 1) {
+  console.log(
+    `VOBIXCHAT | INICIALIZANDO BASE DE DATOS (intento ${attempt})...`
+  );
+
+  try {
+    const schemaReady = await initializeDatabase();
+    if (!schemaReady) throw new Error('El esquema todavía no está disponible');
+
+    await database.query('SELECT 1');
+    console.log('VOBIXCHAT | BASE DE DATOS LISTA');
+    console.log('VOBIXCHAT | POSTGRESQL CONECTADO');
+  } catch (error) {
+    const delayMs = Math.min(30000, 2000 * (2 ** Math.min(attempt - 1, 4)));
+    console.error(
+      `VOBIXCHAT | BASE DE DATOS OCUPADA; NUEVO INTENTO EN ${delayMs / 1000}s:`,
+      error.message
+    );
+    const retryTimer = setTimeout(
+      () => initializeDatabaseWithRetry(attempt + 1),
+      delayMs
+    );
+    retryTimer.unref();
+  }
 }
 
 

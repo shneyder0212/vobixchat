@@ -117,6 +117,7 @@ const VOBIX_LAYERS = Object.freeze([
 ,{ id:'137', name:'Compositor Móvil Adaptativo', status:'en_validacion', scope:'Barra de mensaje ancha tipo WhatsApp y ajuste al teclado visual en Android y iPhone, conservando emoji, documentos, cámara, voz y envío.' }
 ,{ id:'138', name:'Comunicación Móvil sin Bloqueos', status:'en_validacion', scope:'Reduce la presión sobre la base de datos, agrupa recibos, acota subidas, carga TURN y muestra controles claros para detener, enviar o cancelar notas de voz.' }
 ,{ id:'139', name:'Salida Directa de Modo Senior', status:'en_validacion', scope:'Permite desactivar Modo Senior con un botón visible de una sola pulsación, sin temporizador ni pulsación prolongada.' }
+,{ id:'140', name:'Arranque Resistente de Base de Datos', status:'en_validacion', scope:'El servidor abre el puerto durante despliegues solapados y reintenta la conexión PostgreSQL con pausa progresiva, evitando que un límite temporal de sesiones bloquee la versión corregida.' }
 ]);
 
 function getVobixLayers() {
