@@ -18,10 +18,11 @@ test('las llamadas grupales conservan miembros separados de participantes activo
 
 test('salir de una llamada grupal no termina a los demás y ofrece reingreso', () => {
   const server = read('server.js');
-  assert.match(server, /call\.group && String\(call\.callerId\) !== currentUserKey/);
+  assert.match(server, /if \(call\.group\) \{/);
   assert.match(server, /code: 'group_call_left'/);
   assert.match(server, /canRejoin: true/);
   assert.match(server, /call:user-left/);
+  assert.match(server, /call\.participants\.size === 0/);
 });
 
 test('reingreso valida llamada, pertenencia y expulsión, y evita carreras', () => {
@@ -35,7 +36,7 @@ test('reingreso valida llamada, pertenencia y expulsión, y evita carreras', () 
 
 test('desconexión grupal conserva el derecho de reingreso y actualiza participantes', () => {
   const server = read('server.js');
-  assert.match(server, /call\.group && String\(call\.callerId\) !== userKey/);
+  assert.match(server, /if \(call\.group\) \{/);
   assert.match(server, /disconnected: true/);
   assert.match(server, /participants: Array\.from\(call\.participants\)/);
 });
@@ -74,11 +75,42 @@ test('el cliente actualiza participantes, rechaza expulsados y evita ofertas ant
   assert.match(html, /call:removed/);
   assert.match(html, /function handleGroupRejoinOffer/);
   assert.match(html, /String\(payload\.callId \|\| ''\) !== String\(app\.callId \|\| ''\)/);
-  assert.match(html, /peerConnection\.setRemoteDescription/);
+  assert.match(html, /createGroupPeerConnection\(fromUserId\)/);
+  assert.match(html, /pc\.setRemoteDescription/);
 });
 
-test('la Capa 133 queda registrada y las capas 127 a 132 permanecen', () => {
+test('la Capa 148 queda registrada y las capas de llamadas permanecen', () => {
   const layers = read('core/vobix-layers.js');
-  for (const id of ['127', '128', '129', '130', '131', '132']) assert.match(layers, new RegExp(`id:'${id}'`));
+  for (const id of ['127', '128', '129', '130', '131', '132', '133', '145']) assert.match(layers, new RegExp(`id:'${id}'`));
   assert.match(layers, /id:'133'.*Reingreso Seguro a Llamadas Grupales/);
+  assert.match(layers, /id:'148'.*Llamadas Ampliables de Seis Personas/);
+});
+
+test('una llamada 1x1 se amplía hasta seis con señalización WebRTC dirigida', () => {
+  const server = read('server.js');
+  assert.match(server, /const MAX_CALL_PARTICIPANTS = 6/);
+  assert.match(server, /socket\.on\('call:peer-offer'/);
+  assert.match(server, /socket\.on\('call:peer-answer'/);
+  assert.match(server, /socket\.on\('call:peer-ice'/);
+  assert.match(server, /targetUserId/);
+  assert.match(server, /call\.group = true/);
+});
+
+test('el cliente permite añadir personas y crea una conexión por participante', () => {
+  const html = read('public/chat.html');
+  assert.match(html, /id="addCallParticipantButton"/);
+  assert.match(html, /id="callParticipantPanel"/);
+  assert.match(html, /function addParticipantToCurrentCall/);
+  assert.match(html, /function createGroupPeerConnection/);
+  assert.match(html, /call:add-user/);
+  assert.match(html, /call:peer-offer/);
+});
+
+test('al reconectar se descubre una llamada grupal reingresable', () => {
+  const server = read('server.js');
+  const html = read('public/chat.html');
+  assert.match(server, /const rejoinable = Array\.from\(activeCalls\.values\(\)\)/);
+  assert.match(server, /rejoin:true/);
+  assert.match(html, /if \(response\.rejoin\)/);
+  assert.match(html, /showGroupRejoin\(response\)/);
 });

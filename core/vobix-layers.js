@@ -125,6 +125,7 @@ const VOBIX_LAYERS = Object.freeze([
 ,{ id:'145', name:'Llamada Recuperable sin Conexión', status:'en_validacion', scope:'Una llamada pendiente se recupera al volver la cobertura o al abrir su notificación; el llamante escucha un tono suave mientras el teléfono destinatario es avisado.' }
 ,{ id:'146', name:'Selector de Cámara para Fotos', status:'en_validacion', scope:'Antes de hacer una fotografía se elige cámara frontal para selfie o cámara trasera, manteniendo la galería separada.' }
 ,{ id:'147', name:'Acciones Seguras de Mensajes', status:'en_validacion', scope:'El menú de tres puntos permite reaccionar, copiar, pegar, editar mensajes propios y elegir entre eliminar para todos o únicamente para la cuenta actual.' }
+,{ id:'148', name:'Llamadas Ampliables de Seis Personas', status:'en_validacion', scope:'Una llamada de voz o vídeo 1×1 puede añadir contactos hasta seis plazas mediante conexiones WebRTC dirigidas; cualquier miembro, incluido quien inició, puede salir, reconectar y volver mientras quede activa, salvo expulsión.' }
 ]);
 
 function getVobixLayers() {

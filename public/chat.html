@@ -2891,7 +2891,39 @@
 
       transform:
         translateX(-50%);
+      max-width: calc(100vw - 24px);
+      overflow-x: auto;
+      scrollbar-width: none;
     }
+
+    .callControls::-webkit-scrollbar { display: none; }
+
+    .callParticipantList {
+      display: grid;
+      gap: 10px;
+      max-height: min(52vh, 430px);
+      margin: 16px 0;
+      overflow-y: auto;
+    }
+
+    .callParticipantChoice {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      width: 100%;
+      min-height: 58px;
+      padding: 10px 12px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: var(--panel-2);
+      color: var(--text);
+      text-align: left;
+      font: inherit;
+      font-weight: 800;
+    }
+
+    .callParticipantChoice:disabled { opacity: .55; }
 
     .callStatus {
       position: absolute;
@@ -2907,6 +2939,27 @@
       font-weight: 900;
       white-space: nowrap;
       backdrop-filter: blur(10px);
+    }
+
+    .groupRemoteMediaGrid {
+      position: absolute;
+      left: 12px;
+      right: 12px;
+      bottom: 112px;
+      z-index: 12;
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      pointer-events: none;
+    }
+
+    .groupRemoteMediaGrid video {
+      width: min(29vw, 180px);
+      aspect-ratio: 3 / 4;
+      border: 1px solid rgba(104,255,114,.45);
+      border-radius: 14px;
+      background: #050805;
+      object-fit: cover;
     }
 
     .audioCallIdentity {
@@ -4587,6 +4640,8 @@
       Subtítulos preparados. Esperando voz…
     </div>
 
+    <div id="groupRemoteMediaGrid" class="groupRemoteMediaGrid" aria-label="Participantes de la videollamada"></div>
+
     <button id="captionsToggleButton" class="captionsToggle" type="button" aria-pressed="false">
       CC Subtítulos
     </button>
@@ -4630,6 +4685,10 @@
         🔄
       </button>
 
+      <button id="addCallParticipantButton" class="callControl" type="button" aria-label="Añadir personas" title="Añadir personas (máximo 6)">
+        👥+
+      </button>
+
 
       <button
         id="endCallButton"
@@ -4642,6 +4701,15 @@
 
     </div>
 
+  </div>
+
+  <div id="callParticipantPanel" class="notificationPanel" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="callParticipantTitle">
+    <div class="notificationCard">
+      <div id="callParticipantTitle" class="notificationTitle">Añadir personas</div>
+      <div id="callParticipantSummary" class="notificationDescription">Puedes tener hasta 6 personas en esta llamada.</div>
+      <div id="callParticipantList" class="callParticipantList"></div>
+      <button id="closeCallParticipantButton" class="profileAction profileClose" type="button">Cerrar</button>
+    </div>
   </div>
 
   <div id="captionsConsentPanel" class="captionsConsentPanel" role="dialog" aria-modal="true" aria-labelledby="captionsConsentTitle" aria-hidden="true">
@@ -4735,6 +4803,18 @@
       localStream: null,
 
       peerConnection: null,
+
+      groupPeerConnections: new Map(),
+
+      groupPeerCandidates: new Map(),
+
+      callParticipantIds: new Set(),
+
+      callInvitedIds: new Set(),
+
+      callIsGroup: false,
+
+      primaryPeerUserId: null,
 
       callType: null,
 
@@ -5441,8 +5521,26 @@
       rejoinGroupCallButton:
         $('rejoinGroupCallButton'),
 
+      addCallParticipantButton:
+        $('addCallParticipantButton'),
+
+      callParticipantPanel:
+        $('callParticipantPanel'),
+
+      callParticipantSummary:
+        $('callParticipantSummary'),
+
+      callParticipantList:
+        $('callParticipantList'),
+
+      closeCallParticipantButton:
+        $('closeCallParticipantButton'),
+
       callStatus:
         $('callStatus'),
+
+      groupRemoteMediaGrid:
+        $('groupRemoteMediaGrid'),
 
       captionsToggleButton:
         $('captionsToggleButton'),
@@ -16628,7 +16726,7 @@
 
 
           app.socket.emit(
-            'call:ice',
+            app.callIsGroup && app.primaryPeerUserId ? 'call:peer-ice' : 'call:ice',
             {
 
               callId:
@@ -16638,6 +16736,9 @@
                 conversationId(
                   app.conversation
                 ),
+
+              targetUserId:
+                app.callIsGroup ? app.primaryPeerUserId : undefined,
 
               candidate:
                 event.candidate
@@ -16853,6 +16954,155 @@
 
       return pc;
 
+    }
+
+
+    /* =====================================================
+       CONEXIONES ADICIONALES PARA LLAMADAS DE HASTA 6
+       ===================================================== */
+
+    function closeGroupPeerConnection(peerUserId) {
+      const key = String(peerUserId || '');
+      const pc = app.groupPeerConnections.get(key);
+      if (pc) {
+        try { pc.close(); } catch (_) {}
+      }
+      app.groupPeerConnections.delete(key);
+      app.groupPeerCandidates.delete(key);
+      document.querySelector(`[data-call-peer="${CSS.escape(key)}"]`)?.remove();
+    }
+
+    function attachGroupRemoteStream(peerUserId, stream) {
+      if (!stream || !app.callId) return;
+      const key = String(peerUserId || '');
+      let media = document.querySelector(`[data-call-peer="${CSS.escape(key)}"]`);
+      if (!media) {
+        media = document.createElement(app.callType === 'video' ? 'video' : 'audio');
+        media.dataset.callPeer = key;
+        media.autoplay = true;
+        media.playsInline = true;
+        media.controls = false;
+        media.muted = false;
+        if (app.callType === 'video') elements.groupRemoteMediaGrid?.appendChild(media);
+        else elements.callVideoArea?.appendChild(media);
+      }
+      media.srcObject = stream;
+      media.play?.().catch(() => { app.remotePlaybackPending = true; });
+    }
+
+    function createGroupPeerConnection(peerUserId) {
+      const key = String(peerUserId || '').trim();
+      if (!key || key === String(userId(app.me) || '')) return null;
+      if (app.groupPeerConnections.has(key)) return app.groupPeerConnections.get(key);
+      if (typeof RTCPeerConnection === 'undefined') return null;
+
+      const pc = new RTCPeerConnection(RTC_CONFIGURATION);
+      app.groupPeerConnections.set(key, pc);
+
+      for (const track of app.localStream?.getTracks?.() || []) {
+        pc.addTrack(track, app.localStream);
+      }
+      applyAdaptiveCallEncoding(pc);
+
+      pc.onicecandidate = event => {
+        if (!event.candidate || !app.socket?.connected || !app.callId) return;
+        app.socket.emit('call:peer-ice', {
+          callId:app.callId,
+          targetUserId:key,
+          candidate:event.candidate
+        });
+      };
+      pc.ontrack = event => {
+        let stream = event.streams?.[0] || null;
+        if (!stream && event.track && typeof MediaStream !== 'undefined') {
+          stream = new MediaStream([event.track]);
+        }
+        attachGroupRemoteStream(key, stream);
+      };
+      pc.onconnectionstatechange = () => {
+        if (pc.connectionState === 'connected') {
+          stopOutgoingRing();
+          clearCallTimeout();
+          if (!app.callConnectedAt) startCallDuration();
+          if (elements.callStatus) elements.callStatus.textContent = `${app.callParticipantIds.size || 2} en la llamada`;
+        }
+        if (pc.connectionState === 'failed' || pc.connectionState === 'closed') {
+          closeGroupPeerConnection(key);
+        }
+      };
+      return pc;
+    }
+
+    async function flushGroupPeerCandidates(peerUserId) {
+      const key = String(peerUserId || '');
+      const pc = app.groupPeerConnections.get(key);
+      if (!pc?.remoteDescription) return;
+      const queued = app.groupPeerCandidates.get(key) || [];
+      app.groupPeerCandidates.delete(key);
+      for (const candidate of queued) {
+        try { await pc.addIceCandidate(new RTCIceCandidate(candidate)); } catch (_) {}
+      }
+    }
+
+    async function sendGroupPeerOffer(peerUserId) {
+      const key = String(peerUserId || '');
+      const pc = createGroupPeerConnection(key);
+      if (!pc || pc.signalingState !== 'stable') return;
+      const offer = await pc.createOffer();
+      await pc.setLocalDescription(offer);
+      app.socket?.emit('call:peer-offer', {
+        callId:app.callId,
+        targetUserId:key,
+        offer:pc.localDescription
+      });
+    }
+
+    async function handleGroupPeerOffer(payload = {}) {
+      const callId = String(payload.callId || '');
+      const fromUserId = String(payload.fromUserId || '');
+      if (!payload.offer || !callId || !fromUserId) return;
+
+      if (!app.callId) {
+        showIncomingCallPanel({...payload, group:true, groupPeerOffer:true});
+        return;
+      }
+      if (callId !== String(app.callId)) return;
+
+      app.callIsGroup = true;
+      app.callParticipantIds.add(fromUserId);
+      const pc = createGroupPeerConnection(fromUserId);
+      if (!pc) return;
+      await pc.setRemoteDescription(new RTCSessionDescription(payload.offer));
+      await flushGroupPeerCandidates(fromUserId);
+      const answer = await pc.createAnswer();
+      await pc.setLocalDescription(answer);
+      app.socket?.emit('call:peer-answer', {
+        callId,
+        targetUserId:fromUserId,
+        answer:pc.localDescription
+      });
+    }
+
+    async function handleGroupPeerAnswer(payload = {}) {
+      if (String(payload.callId || '') !== String(app.callId || '')) return;
+      const fromUserId = String(payload.fromUserId || '');
+      const pc = app.groupPeerConnections.get(fromUserId);
+      if (!pc || !payload.answer) return;
+      await pc.setRemoteDescription(new RTCSessionDescription(payload.answer));
+      await flushGroupPeerCandidates(fromUserId);
+    }
+
+    async function handleGroupPeerIce(payload = {}) {
+      if (String(payload.callId || '') !== String(app.callId || '') || !payload.candidate) return;
+      const fromUserId = String(payload.fromUserId || '');
+      const pc = app.groupPeerConnections.get(fromUserId);
+      if (!pc?.remoteDescription) {
+        const queued = app.groupPeerCandidates.get(fromUserId) || [];
+        queued.push(payload.candidate);
+        app.groupPeerCandidates.set(fromUserId, queued.slice(-40));
+        return;
+      }
+      try { await pc.addIceCandidate(new RTCIceCandidate(payload.candidate)); } catch (_) {}
     }
 
 
@@ -17538,6 +17788,14 @@
 
         await loadRtcConfiguration();
 
+        app.callIsGroup = false;
+        app.primaryPeerUserId = String(userId(app.peer) || '');
+        app.callParticipantIds = new Set([
+          String(userId(app.me) || ''),
+          String(userId(app.peer) || '')
+        ].filter(Boolean));
+        app.callInvitedIds = new Set();
+
         app.callType =
           type;
 
@@ -17757,6 +18015,12 @@
       try {
         app.callId = payload.callId || createCallId();
         app.callType = payload.type || 'audio';
+        app.callIsGroup = Boolean(payload.group || payload.groupPeerOffer);
+        app.primaryPeerUserId = String(payload.fromUserId || userId(payload.caller) || '');
+        app.callParticipantIds = new Set([
+          String(userId(app.me) || ''),
+          app.primaryPeerUserId
+        ].filter(Boolean));
         await loadRtcConfiguration();
         await prepareCallMedia(app.callType);
         showCallScreen(app.callType);
@@ -17780,15 +18044,26 @@
         await pc.setLocalDescription(answer);
 
         const acceptedCallId = app.callId;
-        app.socket?.emit('call:answer', {
+        const answerPayload = {
           callId: app.callId,
+          targetUserId: payload.groupPeerOffer ? app.primaryPeerUserId : undefined,
           conversationId: payload.conversationId || payload.conversation_id || conversationId(app.conversation),
           answer: pc.localDescription
-        }, response => {
+        };
+        const handleAnswerResponse = response => {
           if (response?.ok || String(app.callId || '') !== String(acceptedCallId || '')) return;
           notifyUser(response?.msg || 'La llamada ya no está disponible');
           endLocalCall(false);
-        });
+        };
+        if (payload.groupPeerOffer) {
+          app.socket?.emit('call:peer-answer', answerPayload, handleAnswerResponse);
+        } else {
+          app.socket?.emit('call:answer', answerPayload, response => {
+            if (response?.ok || String(app.callId || '') !== String(acceptedCallId || '')) return;
+            notifyUser(response?.msg || 'La llamada ya no está disponible');
+            endLocalCall(false);
+          });
+        }
 
         enterCallConnectingState(app.callId);
 
@@ -17955,7 +18230,12 @@
           });
         });
 
-        if (!response?.ok || response.pending === false || !response.offer) return;
+        if (!response?.ok || response.pending === false) return;
+        if (response.rejoin) {
+          showGroupRejoin(response);
+          return;
+        }
+        if (!response.offer) return;
 
         const recoveredConversationId = String(response.conversationId || '');
         const currentConversationId = String(conversationId(app.conversation) || '');
@@ -18216,6 +18496,98 @@
       if (elements.rejoinGroupCallButton) elements.rejoinGroupCallButton.hidden = false;
     }
 
+    function closeCallParticipantPanel() {
+      elements.callParticipantPanel?.classList.remove('open');
+      elements.callParticipantPanel?.setAttribute('aria-hidden', 'true');
+    }
+
+    function callSeatCount() {
+      return new Set([
+        ...Array.from(app.callParticipantIds || []),
+        ...Array.from(app.callInvitedIds || [])
+      ].filter(Boolean)).size;
+    }
+
+    function renderCallParticipantChoices() {
+      if (!elements.callParticipantList) return;
+      elements.callParticipantList.replaceChildren();
+      const existing = new Set([
+        ...Array.from(app.callParticipantIds || []),
+        ...Array.from(app.callInvitedIds || [])
+      ].map(String));
+      const candidates = [];
+      const seen = new Set();
+      for (const conversation of app.conversations || []) {
+        const peer = getConversationPeer(conversation);
+        const id = String(userId(peer) || '');
+        if (!id || id === String(userId(app.me) || '') || seen.has(id)) continue;
+        seen.add(id);
+        candidates.push({id, peer});
+      }
+
+      if (elements.callParticipantSummary) {
+        elements.callParticipantSummary.textContent = `${callSeatCount()} de 6 plazas ocupadas o reservadas.`;
+      }
+      if (!candidates.length) {
+        const empty = document.createElement('div');
+        empty.className = 'notificationDescription';
+        empty.textContent = 'No hay otros contactos disponibles para añadir.';
+        elements.callParticipantList.appendChild(empty);
+        return;
+      }
+
+      for (const candidate of candidates) {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'callParticipantChoice';
+        const alreadyIncluded = existing.has(candidate.id);
+        button.disabled = alreadyIncluded || callSeatCount() >= 6;
+        button.textContent = alreadyIncluded
+          ? `${userName(candidate.peer)} · ya está en la llamada`
+          : `Añadir a ${userName(candidate.peer)}`;
+        button.addEventListener('click', () => addParticipantToCurrentCall(candidate.id, button));
+        elements.callParticipantList.appendChild(button);
+      }
+    }
+
+    function openCallParticipantPanel() {
+      if (!app.callId) {
+        notifyUser('Primero inicia o acepta una llamada');
+        return;
+      }
+      renderCallParticipantChoices();
+      elements.callParticipantPanel?.classList.add('open');
+      elements.callParticipantPanel?.setAttribute('aria-hidden', 'false');
+    }
+
+    async function addParticipantToCurrentCall(targetUserId, button) {
+      if (!app.callId || callSeatCount() >= 6) {
+        notifyUser('La llamada admite un máximo de 6 personas');
+        return;
+      }
+      button.disabled = true;
+      try {
+        const result = await new Promise(resolve => {
+          app.socket?.timeout(8000).emit('call:add-user', {
+            callId:app.callId,
+            targetUserId
+          }, (error, response) => resolve(error ? {ok:false, msg:'No respondió el servidor'} : response));
+        });
+        if (!result?.ok) throw new Error(result?.msg || 'No se pudo añadir a esta persona');
+        app.callIsGroup = true;
+        app.callInvitedIds.add(String(targetUserId));
+        await sendGroupPeerOffer(targetUserId);
+        notifyUser(`Invitación enviada a ${userName(result.user)}`);
+        renderCallParticipantChoices();
+      } catch (error) {
+        button.disabled = false;
+        notifyUser(error.message || 'No se pudo añadir a esta persona');
+      }
+    }
+
+    elements.addCallParticipantButton?.addEventListener('click', openCallParticipantPanel);
+    elements.closeCallParticipantButton?.addEventListener('click', closeCallParticipantPanel);
+
 
     async function rejoinGroupCall() {
       const pending = app.groupRejoin;
@@ -18231,19 +18603,17 @@
         if (!result?.ok) throw new Error(result?.msg || 'La llamada ya no está disponible');
         app.callId = pending.callId;
         app.callType = pending.type;
+        app.callIsGroup = true;
+        app.primaryPeerUserId = null;
+        app.callParticipantIds = new Set((result.participants || []).map(String));
+        app.callParticipantIds.add(String(userId(app.me) || ''));
         await loadRtcConfiguration();
         await prepareCallMedia(app.callType);
         showCallScreen(app.callType);
-        const pc = createPeerConnection();
-        if (!pc) throw new Error('No se pudo crear la conexión');
-        const offer = await pc.createOffer();
-        await pc.setLocalDescription(offer);
-        app.socket?.emit('call:offer', {
-          callId: app.callId,
-          conversationId: pending.conversationId,
-          type: pending.type,
-          offer: pc.localDescription
-        });
+        const otherParticipants = (result.participants || [])
+          .map(String)
+          .filter(id => id && id !== String(userId(app.me) || ''));
+        await Promise.all(otherParticipants.map(id => sendGroupPeerOffer(id)));
         if (elements.rejoinGroupCallButton) elements.rejoinGroupCallButton.hidden = true;
         app.groupRejoinInFlight = false;
         notifyUser('Volviendo a la llamada…');
@@ -18259,15 +18629,18 @@
 
 
     async function handleGroupRejoinOffer(payload = {}) {
-      if (!payload.offer || String(payload.callId || '') !== String(app.callId || '') || !app.peerConnection) return;
+      if (!payload.offer || String(payload.callId || '') !== String(app.callId || '')) return;
       try {
-        await app.peerConnection.setRemoteDescription(new RTCSessionDescription(payload.offer));
-        const answer = await app.peerConnection.createAnswer();
-        await app.peerConnection.setLocalDescription(answer);
-        app.socket?.emit('call:answer', {
+        const fromUserId = String(payload.fromUserId || '');
+        const pc = createGroupPeerConnection(fromUserId);
+        if (!pc) return;
+        await pc.setRemoteDescription(new RTCSessionDescription(payload.offer));
+        const answer = await pc.createAnswer();
+        await pc.setLocalDescription(answer);
+        app.socket?.emit('call:peer-answer', {
           callId: app.callId,
-          conversationId: payload.conversationId || conversationId(app.conversation),
-          answer: app.peerConnection.localDescription
+          targetUserId:fromUserId,
+          answer: pc.localDescription
         });
       } catch (error) {
         notifyUser('No se pudo actualizar la conexión del participante');
@@ -18340,19 +18713,68 @@
 
       app.socket.on('call:rejoin-available', showGroupRejoin);
       app.socket.on('call:rejoin-offer', handleGroupRejoinOffer);
+      app.socket.on('call:peer-offer', payload => {
+        handleGroupPeerOffer(payload).catch(() => notifyUser('No se pudo conectar al nuevo participante'));
+      });
+      app.socket.on('call:peer-answer', payload => {
+        handleGroupPeerAnswer(payload).catch(() => notifyUser('No se pudo completar la conexión grupal'));
+      });
+      app.socket.on('call:peer-ice', payload => {
+        handleGroupPeerIce(payload).catch(() => {});
+      });
+      app.socket.on('call:user-invited', payload => {
+        if (String(payload?.callId || '') !== String(app.callId || '')) return;
+        app.callIsGroup = true;
+        const invitedId = String(userId(payload.user) || '');
+        if (invitedId) app.callInvitedIds.add(invitedId);
+        if (elements.callStatus) elements.callStatus.textContent = `${callSeatCount()} personas · esperando respuesta`;
+      });
+      app.socket.on('call:participant-joined', payload => {
+        if (String(payload?.callId || '') !== String(app.callId || '')) return;
+        app.callIsGroup = true;
+        const joinedUserId = String(payload.userId || '');
+        for (const participantId of payload.participants || []) app.callParticipantIds.add(String(participantId));
+        app.callInvitedIds.delete(joinedUserId);
+        if (joinedUserId && joinedUserId !== String(userId(app.me) || '') &&
+            joinedUserId !== String(app.primaryPeerUserId || '') &&
+            !app.groupPeerConnections.has(joinedUserId)) {
+          sendGroupPeerOffer(joinedUserId).catch(() => {});
+        }
+        if (elements.callStatus) elements.callStatus.textContent = `${app.callParticipantIds.size} en la llamada`;
+      });
       app.socket.on('call:removed', payload => {
-        if (String(payload?.callId || '') !== String(app.groupRejoin?.callId || '')) return;
+        const removedCallId = String(payload?.callId || '');
+        const activeMatch = removedCallId === String(app.callId || '');
+        const rejoinMatch = removedCallId === String(app.groupRejoin?.callId || '');
+        if (!activeMatch && !rejoinMatch) return;
         app.groupRejoin = null;
         if (elements.rejoinGroupCallButton) elements.rejoinGroupCallButton.hidden = true;
-        notifyUser('Has sido expulsado de la llamada');
+        if (activeMatch) endLocalCall(false);
+        notifyUser('Has sido expulsado de la llamada y no puedes volver a entrar');
+      });
+      app.socket.on('call:participant-removed', payload => {
+        if (String(payload?.callId || '') !== String(app.callId || '')) return;
+        const removedUserId = String(payload.userId || '');
+        app.callParticipantIds.delete(removedUserId);
+        closeGroupPeerConnection(removedUserId);
+        if (elements.callStatus) elements.callStatus.textContent = `${app.callParticipantIds.size} en la llamada`;
       });
       app.socket.on('call:participant-rejoined', payload => {
         if (String(payload?.callId || '') !== String(app.callId || '')) return;
-        if (elements.callStatus) elements.callStatus.textContent = 'Participantes actualizados';
+        for (const participantId of payload.participants || []) app.callParticipantIds.add(String(participantId));
+        const rejoinedId = String(payload.userId || '');
+        if (rejoinedId && rejoinedId !== String(userId(app.me) || '') &&
+            rejoinedId !== String(app.primaryPeerUserId || '')) {
+          sendGroupPeerOffer(rejoinedId).catch(() => {});
+        }
+        if (elements.callStatus) elements.callStatus.textContent = `${app.callParticipantIds.size} en la llamada`;
       });
       app.socket.on('call:user-left', payload => {
         if (String(payload?.callId || '') !== String(app.callId || '')) return;
-        if (elements.callStatus) elements.callStatus.textContent = 'Participantes actualizados';
+        const leftUserId = String(payload.userId || '');
+        app.callParticipantIds.delete(leftUserId);
+        closeGroupPeerConnection(leftUserId);
+        if (elements.callStatus) elements.callStatus.textContent = `${app.callParticipantIds.size} en la llamada`;
       });
 
     }
@@ -18931,6 +19353,18 @@
 
       app.callId =
         null;
+
+      for (const peerUserId of Array.from(app.groupPeerConnections.keys())) {
+        closeGroupPeerConnection(peerUserId);
+      }
+      app.groupPeerConnections.clear();
+      app.groupPeerCandidates.clear();
+      app.callParticipantIds.clear();
+      app.callInvitedIds.clear();
+      app.callIsGroup = false;
+      app.primaryPeerUserId = null;
+      elements.groupRemoteMediaGrid?.replaceChildren();
+      closeCallParticipantPanel();
 
       app.acceptingCall = false;
 

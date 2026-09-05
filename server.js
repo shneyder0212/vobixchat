@@ -2485,7 +2485,7 @@ function endActiveCall(callId, endedBy, reason) {
 // confía en un botón del navegador para controlar aforo.
 // ======================================================
 
-const MAX_CALL_PARTICIPANTS = 12;
+const MAX_CALL_PARTICIPANTS = 6;
 
 
 // ======================================================
@@ -4996,15 +4996,16 @@ io.on(
           // REGISTRAR INVITACIÓN
           // ==============================================
 
-          call.invited.add(
-            targetUserId
-          );
-
-          if (call.group) {
-            call.members = call.members || new Set([String(call.callerId)]);
-            call.members.add(targetUserId);
-            call.expelled?.delete(targetUserId);
-          }
+          call.group = true;
+          call.members = call.members || new Set([
+            String(call.callerId),
+            ...Array.from(call.participants || []),
+            ...Array.from(call.invited || [])
+          ]);
+          call.expelled = call.expelled || new Set();
+          call.invited.add(targetUserId);
+          call.members.add(targetUserId);
+          call.expelled.delete(targetUserId);
 
 
           // ==============================================
@@ -5174,10 +5175,20 @@ io.on(
           return;
         }
 
-        if (call.group && String(call.callerId) !== currentUserKey) {
+        if (call.group) {
           call.participants.delete(currentUserKey);
           call.invited.delete(currentUserKey);
           await socket.leave(callRoom(callId));
+          if (call.participants.size === 0) {
+            const result = endActiveCall(callId, userId, 'group-empty');
+            if (typeof callback === 'function') callback({
+              ok:true,
+              ended:result.ended,
+              code:result.code,
+              callId
+            });
+            return;
+          }
           io.to(callRoom(callId)).emit('call:user-left', {
             callId,
             conversationId: call.conversationId,
@@ -5485,6 +5496,93 @@ io.on(
 
       }
     );
+
+    // Señalización dirigida para la malla de llamadas ampliables. Cada par
+    // negocia su propia conexión WebRTC; una oferta o candidato nunca se
+    // difunde a participantes que no sean su destinatario.
+    socket.on('call:peer-offer', async (payload = {}, callback) => {
+      const callId = normalizeCallId(payload.callId);
+      const targetUserId = String(payload.targetUserId || '').trim();
+      const call = callId ? activeCalls.get(callId) : null;
+      const currentUserKey = String(userId);
+      if (!call?.group || !targetUserId || !payload.offer ||
+          !call.participants.has(currentUserKey) ||
+          (!call.members?.has(targetUserId) && !call.invited.has(targetUserId))) {
+        if (typeof callback === 'function') callback({ok:false, code:'call_peer_forbidden'});
+        return;
+      }
+      io.to(userRoom(targetUserId)).emit('call:peer-offer', {
+        callId,
+        conversationId:call.conversationId,
+        type:call.type,
+        offer:payload.offer,
+        fromUserId:userId,
+        group:true,
+        caller:call.caller
+      });
+      if (typeof callback === 'function') callback({ok:true});
+    });
+
+    socket.on('call:peer-answer', async (payload = {}, callback) => {
+      const callId = normalizeCallId(payload.callId);
+      const targetUserId = String(payload.targetUserId || '').trim();
+      const call = callId ? activeCalls.get(callId) : null;
+      const currentUserKey = String(userId);
+      const canJoin = call && (
+        call.participants.has(currentUserKey) ||
+        call.invited.has(currentUserKey) ||
+        call.members?.has(currentUserKey)
+      );
+      if (!call?.group || !targetUserId || !payload.answer || !canJoin ||
+          call.expelled?.has(currentUserKey) || !call.participants.has(targetUserId)) {
+        if (typeof callback === 'function') callback({ok:false, code:'call_peer_forbidden'});
+        return;
+      }
+      if (!call.participants.has(currentUserKey) && call.participants.size >= MAX_CALL_PARTICIPANTS) {
+        if (typeof callback === 'function') callback({ok:false, code:'call_full'});
+        return;
+      }
+      call.participants.add(currentUserKey);
+      call.invited.delete(currentUserKey);
+      await socket.join(callRoom(callId));
+      io.to(userRoom(targetUserId)).emit('call:peer-answer', {
+        callId,
+        answer:payload.answer,
+        fromUserId:userId
+      });
+      io.to(callRoom(callId)).emit('call:participant-joined', {
+        callId,
+        userId,
+        participants:Array.from(call.participants)
+      });
+      if (typeof callback === 'function') callback({ok:true});
+    });
+
+    socket.on('call:peer-ice', async (payload = {}, callback) => {
+      const callId = normalizeCallId(payload.callId);
+      const targetUserId = String(payload.targetUserId || '').trim();
+      const call = callId ? activeCalls.get(callId) : null;
+      const currentUserKey = String(userId);
+      let candidateSize = Infinity;
+      try { candidateSize = Buffer.byteLength(JSON.stringify(payload.candidate), 'utf8'); } catch (_) {}
+      const senderAllowed = call && (
+        call.participants.has(currentUserKey) ||
+        call.invited.has(currentUserKey) ||
+        call.members?.has(currentUserKey)
+      );
+      if (!call?.group || !targetUserId || !payload.candidate || candidateSize > 8192 ||
+          !senderAllowed || call.expelled?.has(currentUserKey) ||
+          (!call.participants.has(targetUserId) && !call.invited.has(targetUserId))) {
+        if (typeof callback === 'function') callback({ok:false, code:'call_peer_forbidden'});
+        return;
+      }
+      io.to(userRoom(targetUserId)).emit('call:peer-ice', {
+        callId,
+        candidate:payload.candidate,
+        fromUserId:userId
+      });
+      if (typeof callback === 'function') callback({ok:true});
+    });
 
 
 // ======================================================
@@ -5810,6 +5908,28 @@ io.on(
     socket.on('call:pending', async (_payload = {}, callback) => {
       try {
         const currentUserKey = String(userId);
+        const rejoinable = Array.from(activeCalls.values())
+          .filter(call =>
+            call?.group &&
+            call.members?.has(currentUserKey) &&
+            !call.participants?.has(currentUserKey) &&
+            !call.expelled?.has(currentUserKey) &&
+            call.participants?.size > 0
+          )
+          .sort((left, right) => Number(right.createdAt || 0) - Number(left.createdAt || 0))[0];
+
+        if (rejoinable) {
+          if (typeof callback === 'function') callback({
+            ok:true,
+            pending:true,
+            rejoin:true,
+            callId:rejoinable.callId || rejoinable.id,
+            conversationId:rejoinable.conversationId,
+            type:rejoinable.type,
+            participants:Array.from(rejoinable.participants)
+          });
+          return;
+        }
         const pending = Array.from(activeCalls.values())
           .filter(call =>
             call?.offer &&
@@ -6643,9 +6763,13 @@ io.on(
           }
 
 
-          if (call.group && String(call.callerId) !== userKey) {
+          if (call.group) {
             call.participants.delete(userKey);
             call.invited.delete(userKey);
+            if (call.participants.size === 0) {
+              endActiveCall(callId, userId, 'group-empty');
+              continue;
+            }
             io.to(callRoom(callId)).emit('call:user-left', {
               callId,
               conversationId: call.conversationId,
