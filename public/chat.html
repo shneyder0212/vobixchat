@@ -4420,6 +4420,8 @@
 
       peer: null,
 
+      conversations: [],
+
       mediaRecorder: null,
 
       recordingStream: null,
@@ -8619,10 +8621,7 @@
 
     elements.documentButton?.addEventListener('click', event => {
       event.preventDefault();
-      if (!app.conversation) {
-        notifyUser('Abre primero un chat 1×1');
-        return;
-      }
+      if (!ensureActiveConversation()) return;
       if (elements.chatDocumentInput) {
         elements.chatDocumentInput.value = '';
         elements.chatDocumentInput.click();
@@ -8631,10 +8630,7 @@
 
     elements.cameraButton?.addEventListener('click', event => {
       event.preventDefault();
-      if (!app.conversation) {
-        notifyUser('Abre primero un chat 1×1');
-        return;
-      }
+      if (!ensureActiveConversation()) return;
       if (elements.chatCameraInput) {
         elements.chatCameraInput.value = '';
         elements.chatCameraInput.click();
@@ -12403,17 +12399,7 @@
       }
 
 
-      if (
-        !app.conversation
-      ) {
-
-        notifyUser(
-          'Busca una persona y abre un chat 1×1'
-        );
-
-        return;
-
-      }
+      if (!ensureActiveConversation()) return;
 
 
       const conversationId =
@@ -12760,17 +12746,7 @@
         return;
       }
 
-      if (
-        !app.conversation
-      ) {
-
-        notifyUser(
-          'Abre primero un chat 1×1'
-        );
-
-        return;
-
-      }
+      if (!ensureActiveConversation()) return;
 
 
       if (
@@ -13961,9 +13937,78 @@
 
     const LEGACY_CONVERSATION_CACHE_KEY = 'vobixchat_conversation_cache';
 
+    const ACTIVE_CONVERSATION_KEY_PREFIX = 'vobixchat_active_conversation_';
+
     function conversationCacheKey() {
       const owner = userId(app.me);
       return owner ? `vobixchat_conversation_cache_${owner}` : '';
+    }
+
+    function activeConversationKey() {
+      const owner = userId(app.me);
+      return owner ? `${ACTIVE_CONVERSATION_KEY_PREFIX}${owner}` : '';
+    }
+
+    function rememberActiveConversation(conversation) {
+      const key = activeConversationKey();
+      const id = String(conversationId(conversation) || '');
+      if (!key || !id) return;
+      try {
+        localStorage.setItem(key, id);
+      } catch (_) {
+        // La conversación continúa activa aunque no pueda recordarse.
+      }
+    }
+
+    function preferredConversation(conversations) {
+      const available = Array.isArray(conversations)
+        ? conversations.filter(item => conversationId(item))
+        : [];
+      if (!available.length) return null;
+
+      let rememberedId = '';
+      try {
+        const key = activeConversationKey();
+        if (key) rememberedId = String(localStorage.getItem(key) || '');
+      } catch (_) {
+        // Usamos la conversación más reciente.
+      }
+
+      const remembered = rememberedId
+        ? available.find(item => String(conversationId(item)) === rememberedId)
+        : null;
+      if (remembered) return remembered;
+
+      return [...available].sort((a, b) => {
+        const aDate = new Date(a.updatedAt || a.updated_at || a.lastMessage?.createdAt || a.last_message?.created_at || 0).getTime();
+        const bDate = new Date(b.updatedAt || b.updated_at || b.lastMessage?.createdAt || b.last_message?.created_at || 0).getTime();
+        return bDate - aDate;
+      })[0] || null;
+    }
+
+    function ensureActiveConversation() {
+      if (app.conversation && conversationId(app.conversation)) return true;
+
+      const candidates = app.conversations.length
+        ? app.conversations
+        : readConversationCache();
+      const conversation = preferredConversation(candidates);
+
+      if (!conversation) {
+        notifyUser('Selecciona una persona para comenzar');
+        setPanel(elements.peopleDrawer, true);
+        return false;
+      }
+
+      selectConversation(
+        conversation,
+        getConversationPeer(conversation)
+      ).catch(error => {
+        console.error('[VOBIXCHAT RESTORE CONVERSATION]', error);
+        notifyUser('No se pudo recuperar el chat activo');
+      });
+
+      return !!app.conversation;
     }
 
     function removeLegacyConversationCache() {
@@ -14094,7 +14139,11 @@
 
           console.warn('[VOBIXCHAT CONVERSATIONS] respuesta incompleta');
           const cachedConversations = readConversationCache();
-          if (cachedConversations.length) renderConversations(cachedConversations);
+          if (cachedConversations.length) {
+            app.conversations = cachedConversations;
+            renderConversations(cachedConversations);
+            if (!app.conversation) ensureActiveConversation();
+          }
           else if (container && !container.querySelector('.vxConversation')) {
             container.innerHTML =
               '<div class="vobixStatusMessage error">No se pudo actualizar la bandeja.</div>';
@@ -14110,12 +14159,18 @@
             data
           );
 
+        app.conversations = conversations;
+
         renderConversations(
           conversations
         );
 
         saveConversationCache(conversations);
         renderSeniorFavorites();
+
+        if (!app.conversation) {
+          ensureActiveConversation();
+        }
 
 
       } catch (error) {
@@ -14133,7 +14188,9 @@
           const cachedConversations = readConversationCache();
 
           if (cachedConversations.length) {
+            app.conversations = cachedConversations;
             renderConversations(cachedConversations);
+            if (!app.conversation) ensureActiveConversation();
             notifyUser('Mostrando historial guardado mientras reconecta');
             return;
           }
@@ -14460,6 +14517,8 @@
 
       app.conversation =
         conversation;
+
+      rememberActiveConversation(conversation);
 
       app.unreadBelowCount = 0;
       elements.latestMessagesButton?.classList.remove('open');
@@ -15683,6 +15742,11 @@
       renderProfile();
 
 
+      if (!app.conversation && elements.topbarUserName) {
+        elements.topbarUserName.textContent = 'Selecciona un contacto';
+      }
+
+
       renderPreferenceSwitches();
 
 
@@ -16794,17 +16858,7 @@
         return;
       }
 
-      if (
-        !app.conversation
-      ) {
-
-        notifyUser(
-          'Abre primero un chat 1×1'
-        );
-
-        return;
-
-      }
+      if (!ensureActiveConversation()) return;
 
 
       if (
