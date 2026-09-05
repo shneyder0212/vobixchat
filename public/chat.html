@@ -1210,6 +1210,29 @@
     .mediaPermissionPrimary { border: 0; background: var(--green); color: #061008; }
     .mediaPermissionLater { border: 1px solid rgba(255,255,255,.18); background: transparent; color: #fff; }
 
+    .cameraChoiceActions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 8px;
+    }
+    .cameraChoiceButton {
+      min-height: 88px;
+      border: 1px solid rgba(104,255,114,.28);
+      border-radius: 20px;
+      background: rgba(104,255,114,.08);
+      color: #fff;
+      font: inherit;
+      font-weight: 900;
+      cursor: pointer;
+    }
+    .cameraChoiceButton span { display: block; margin-bottom: 5px; font-size: 28px; }
+    .cameraChoiceCancel { margin-top: 12px; width: 100%; }
+    @media (max-width: 360px) {
+      .cameraChoiceActions { grid-template-columns: 1fr; }
+      .cameraChoiceButton { min-height: 64px; }
+    }
+
 
     /* =====================================================
        SLOT MICRO / ENVIAR
@@ -3734,6 +3757,19 @@
     </div>
   </div>
 
+  <div id="cameraChoicePanel" class="mediaPermissionPanel" role="dialog" aria-modal="true" aria-labelledby="cameraChoiceTitle" aria-hidden="true">
+    <div class="mediaPermissionCard">
+      <div class="mediaPermissionIcon" aria-hidden="true">📷</div>
+      <h2 id="cameraChoiceTitle">Elegir cámara</h2>
+      <p>Selecciona cómo quieres hacer la fotografía.</p>
+      <div class="cameraChoiceActions">
+        <button id="openFrontCameraButton" class="cameraChoiceButton" type="button"><span>🤳</span>Cámara frontal<br>(selfie)</button>
+        <button id="openBackCameraButton" class="cameraChoiceButton" type="button"><span>📸</span>Cámara trasera</button>
+      </div>
+      <button id="cancelCameraChoiceButton" class="mediaPermissionLater cameraChoiceCancel" type="button">Cancelar</button>
+    </div>
+  </div>
+
   <input
     id="chatPhotoInput"
     type="file"
@@ -3747,6 +3783,14 @@
     type="file"
     accept="image/*"
     capture="environment"
+    hidden
+  >
+
+  <input
+    id="chatSelfieInput"
+    type="file"
+    accept="image/*"
+    capture="user"
     hidden
   >
 
@@ -4659,6 +4703,8 @@
 
       outgoingRingTimer: null,
 
+      pendingCallRecoveryInFlight: false,
+
       callTimeout: null,
 
       callConnectedAt: 0,
@@ -4856,8 +4902,23 @@
       dismissMediaPermissionsButton:
         $('dismissMediaPermissionsButton'),
 
+      cameraChoicePanel:
+        $('cameraChoicePanel'),
+
+      openFrontCameraButton:
+        $('openFrontCameraButton'),
+
+      openBackCameraButton:
+        $('openBackCameraButton'),
+
+      cancelCameraChoiceButton:
+        $('cancelCameraChoiceButton'),
+
       chatCameraInput:
         $('chatCameraInput'),
+
+      chatSelfieInput:
+        $('chatSelfieInput'),
 
       chatDocumentInput:
         $('chatDocumentInput'),
@@ -8597,14 +8658,14 @@
         const oscillator = context.createOscillator();
         const gain = context.createGain();
         oscillator.type = 'sine';
-        oscillator.frequency.setValueAtTime(440, context.currentTime);
+        oscillator.frequency.setValueAtTime(425, context.currentTime);
         gain.gain.setValueAtTime(.0001, context.currentTime);
-        gain.gain.exponentialRampToValueAtTime(.08, context.currentTime + .02);
-        gain.gain.exponentialRampToValueAtTime(.0001, context.currentTime + .65);
+        gain.gain.exponentialRampToValueAtTime(.045, context.currentTime + .08);
+        gain.gain.exponentialRampToValueAtTime(.0001, context.currentTime + .78);
         oscillator.connect(gain);
         gain.connect(context.destination);
         oscillator.start();
-        oscillator.stop(context.currentTime + .7);
+        oscillator.stop(context.currentTime + .82);
       } catch (error) {
         console.warn('[VOBIXCHAT OUTGOING RING]', error);
       }
@@ -8720,7 +8781,7 @@
     function startOutgoingRing() {
       stopOutgoingRing();
       playOutgoingRingPulse();
-      app.outgoingRingTimer = setInterval(playOutgoingRingPulse, 1800);
+      app.outgoingRingTimer = setInterval(playOutgoingRingPulse, 2600);
     }
 
 
@@ -8876,10 +8937,28 @@
     elements.cameraButton?.addEventListener('click', event => {
       event.preventDefault();
       if (!ensureActiveConversation()) return;
-      if (elements.chatCameraInput) {
-        elements.chatCameraInput.value = '';
-        elements.chatCameraInput.click();
-      }
+      elements.cameraChoicePanel?.classList.add('open');
+      elements.cameraChoicePanel?.setAttribute('aria-hidden', 'false');
+      window.setTimeout(() => elements.openBackCameraButton?.focus(), 40);
+    });
+
+    function closeCameraChoice() {
+      elements.cameraChoicePanel?.classList.remove('open');
+      elements.cameraChoicePanel?.setAttribute('aria-hidden', 'true');
+    }
+
+    function openPhotoCamera(input) {
+      closeCameraChoice();
+      if (!input) return;
+      input.value = '';
+      input.click();
+    }
+
+    elements.openFrontCameraButton?.addEventListener('click', () => openPhotoCamera(elements.chatSelfieInput));
+    elements.openBackCameraButton?.addEventListener('click', () => openPhotoCamera(elements.chatCameraInput));
+    elements.cancelCameraChoiceButton?.addEventListener('click', closeCameraChoice);
+    elements.cameraChoicePanel?.addEventListener('click', event => {
+      if (event.target === elements.cameraChoicePanel) closeCameraChoice();
     });
 
     function setViewOnceMode(enabled) {
@@ -9233,6 +9312,15 @@
         if (file) await uploadChatAttachment(file, 'image', { originSource: 'vobix-camera' });
       } finally {
         elements.chatCameraInput.value = '';
+      }
+    });
+
+    elements.chatSelfieInput?.addEventListener('change', async () => {
+      const file = elements.chatSelfieInput.files?.[0];
+      try {
+        if (file) await uploadChatAttachment(file, 'image', { originSource: 'vobix-camera' });
+      } finally {
+        elements.chatSelfieInput.value = '';
       }
     });
 
@@ -15443,6 +15531,8 @@
 
           attachCallSocketEvents();
 
+          recoverPendingIncomingCall();
+
           if (app.callId) {
             if (elements.callStatus) {
               elements.callStatus.textContent =
@@ -17251,6 +17341,12 @@
        INICIAR LLAMADA
        ===================================================== */
 
+    function acknowledgeOutgoingCall(response) {
+      if (elements.callStatus && response?.recipientOnline === false && response?.notificationQueued) {
+        elements.callStatus.textContent = 'Avisando al teléfono…';
+      }
+    }
+
     async function startCall(
       type
     ) {
@@ -17343,7 +17439,7 @@
 
           },
           (error, response) => {
-            if (!error && response?.ok) return;
+            if (!error && response?.ok) return acknowledgeOutgoingCall(response);
             if (String(app.callId || '') !== String(outgoingCallId || '')) return;
             notifyUser(error ? 'El servidor no respondió a la llamada' : (response?.msg || 'No se pudo iniciar la llamada'));
             endLocalCall(false);
@@ -17670,6 +17766,73 @@
 
       showIncomingCallPanel(payload);
 
+    }
+
+
+    /* =====================================================
+       RECUPERAR LLAMADA PERDIDA DURANTE DESCONEXIÓN
+       ===================================================== */
+
+    async function recoverPendingIncomingCall() {
+      if (
+        app.pendingCallRecoveryInFlight ||
+        app.callId ||
+        app.pendingCallOffer ||
+        !app.socket?.connected
+      ) return;
+
+      const params = new URLSearchParams(window.location.search);
+      const launchCallId = params.get('incomingCall') === '1'
+        ? String(params.get('call') || '').trim()
+        : '';
+      const eventName = launchCallId ? 'call:resume' : 'call:pending';
+      const request = launchCallId ? { callId:launchCallId } : {};
+
+      app.pendingCallRecoveryInFlight = true;
+      try {
+        const response = await new Promise(resolve => {
+          app.socket.timeout(8000).emit(eventName, request, (error, result) => {
+            resolve(error ? { ok:false, code:'call_recovery_timeout' } : result);
+          });
+        });
+
+        if (!response?.ok || response.pending === false || !response.offer) return;
+
+        const recoveredConversationId = String(response.conversationId || '');
+        const currentConversationId = String(conversationId(app.conversation) || '');
+        if (recoveredConversationId && recoveredConversationId !== currentConversationId) {
+          const recoveredConversation = app.conversations.find(item =>
+            String(conversationId(item) || '') === recoveredConversationId
+          ) || { id:recoveredConversationId, peer:response.caller || null };
+          selectConversation(
+            recoveredConversation,
+            response.caller || getConversationPeer(recoveredConversation)
+          ).catch(error => console.warn('[VOBIXCHAT CALL CHAT RECOVERY]', error));
+        }
+
+        app.pendingIceCandidates = (response.candidates || []).map(candidate => ({
+          callId:response.callId,
+          candidate
+        }));
+
+        handleIncomingCallOffer({
+          ...response,
+          recoveredFromOffline:true
+        });
+
+        if (launchCallId) {
+          params.delete('incomingCall');
+          params.delete('call');
+          params.delete('from');
+          params.delete('callType');
+          const cleanQuery = params.toString();
+          history.replaceState(null, '', `${location.pathname}${cleanQuery ? `?${cleanQuery}` : ''}${location.hash}`);
+        }
+      } catch (error) {
+        console.warn('[VOBIXCHAT CALL RECOVERY]', error);
+      } finally {
+        app.pendingCallRecoveryInFlight = false;
+      }
     }
 
 
@@ -19165,6 +19328,8 @@
 
   })();
   </script>
+
+  <script src="/vobix-push.js"></script>
 
 
 </body>

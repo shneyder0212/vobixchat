@@ -14,6 +14,14 @@ test('la cámara móvil solicita una fotografía nueva con la cámara trasera', 
   assert.doesNotMatch(chat, /id="chatCameraInput"[\s\S]{0,160}accept="image\/\*,video\/\*"/);
 });
 
+test('la persona puede elegir cámara frontal para selfie o cámara trasera', () => {
+  assert.match(chat, /id="chatSelfieInput"[\s\S]{0,160}accept="image\/\*"[\s\S]{0,100}capture="user"/);
+  assert.match(chat, /Cámara frontal[\s\S]{0,40}\(selfie\)/);
+  assert.match(chat, /id="openBackCameraButton"/);
+  assert.match(chat, /openPhotoCamera\(elements\.chatSelfieInput\)/);
+  assert.match(chat, /openPhotoCamera\(elements\.chatCameraInput\)/);
+});
+
 test('fotos y documentos se envían sin la ventana de confirmación rutinaria', () => {
   assert.doesNotMatch(chat, /function confirmAttachmentSend/);
   assert.doesNotMatch(chat, /¿Enviar este \$\{label\}\?/);

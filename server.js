@@ -5616,7 +5616,14 @@ io.on(
         }
 
         activeCalls.set(callId, call);
-        if (typeof callback === 'function') callback({ ok:true, callId, conversationId, type });
+        if (typeof callback === 'function') callback({
+          ok:true,
+          callId,
+          conversationId,
+          type,
+          recipientOnline:targets.some(target => isUserOnline(target.user_id)),
+          notificationQueued:(pushEnabled || firebasePushEnabled) && targets.length > 0
+        });
       } catch (error) {
         console.error('VOBIXCHAT LEGACY CALL OFFER ERROR:', error);
         if (typeof callback === 'function') callback({ ok:false, msg:'No se pudo iniciar la llamada' });
@@ -5794,6 +5801,46 @@ io.on(
       } catch (error) {
         console.error('VOBIXCHAT CALL RESUME ERROR:', error);
         if (typeof callback === 'function') callback({ ok:false });
+      }
+    });
+
+    // Capa 145 — una persona que estaba sin conexión no pudo recibir
+    // call:offer por Socket.IO. Al reconectar puede recuperar de forma
+    // autenticada la invitación pendiente y los candidatos ICE guardados.
+    socket.on('call:pending', async (_payload = {}, callback) => {
+      try {
+        const currentUserKey = String(userId);
+        const pending = Array.from(activeCalls.values())
+          .filter(call =>
+            call?.offer &&
+            call.invited?.has(currentUserKey) &&
+            !call.answeredSocketId &&
+            !call.answeredBy
+          )
+          .sort((left, right) => Number(right.createdAt || 0) - Number(left.createdAt || 0))[0];
+
+        if (!pending) {
+          if (typeof callback === 'function') callback({ ok:true, pending:false });
+          return;
+        }
+
+        if (typeof callback === 'function') {
+          callback({
+            ok:true,
+            pending:true,
+            callId:pending.callId || pending.id,
+            conversationId:pending.conversationId,
+            type:pending.type,
+            offer:pending.offer,
+            caller:pending.caller,
+            candidates:(pending.pendingIce || [])
+              .filter(item => String(item.fromUserId) !== currentUserKey)
+              .map(item => item.candidate)
+          });
+        }
+      } catch (error) {
+        console.error('VOBIXCHAT PENDING CALL ERROR:', error);
+        if (typeof callback === 'function') callback({ ok:false, msg:'No se pudo recuperar la llamada pendiente' });
       }
     });
 
