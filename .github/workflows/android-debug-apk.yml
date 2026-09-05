@@ -9,7 +9,7 @@ on:
       - ".github/workflows/android-debug-apk.yml"
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build-debug-apk:
@@ -32,10 +32,22 @@ jobs:
       - name: Compilar APK de pruebas
         run: gradle -p android --no-daemon assembleDebug
 
+      - name: Preparar descarga directa
+        run: cp android/app/build/outputs/apk/debug/app-debug.apk VobixChat-1.2.3-debug.apk
+
       - name: Guardar APK
         uses: actions/upload-artifact@v4
         with:
           name: VobixChat-1.2.3-debug
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          path: VobixChat-1.2.3-debug.apk
           if-no-files-found: error
           retention-days: 30
+
+      - name: Publicar APK para descarga directa
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v1.2.3
+          name: VobixChat 1.2.3
+          body: APK de pruebas con correcciones de teclado, cabecera del chat y permisos persistentes.
+          files: VobixChat-1.2.3-debug.apk
+          prerelease: true
