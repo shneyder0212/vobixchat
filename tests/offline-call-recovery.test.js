@@ -30,11 +30,14 @@ test('el tono de espera es suave y se detiene al conectar', () => {
   assert.match(chat, /state === 'connected'[\s\S]{0,100}stopOutgoingRing\(\)/);
 });
 
-test('el tono saliente comienza desactivado y puede activarse', () => {
-  assert.match(chat, /id="outgoingCallSoundSwitch" class="vobixSwitch"/);
-  assert.match(chat, /readBooleanPreference\('vobix_outgoing_call_sound', false\)/);
-  assert.match(chat, /bindPrivacySwitch\(elements\.outgoingCallSoundSwitch, 'outgoingCallSound'/);
-  assert.match(chat, /function playOutgoingRingPulse\(\) \{\s*if \(!app\.outgoingCallSound\) return;/);
+test('el tono de llamada saliente está activo y el sonido de mensajes salientes es opcional', () => {
+  assert.match(chat, /function playOutgoingRingPulse\(\) \{\s*if \(!app\.callSound\) return;/);
+  assert.match(chat, /id="outgoingMessageSoundSwitch" class="vobixSwitch"/);
+  assert.match(chat, /readBooleanPreference\('vobix_outgoing_message_sound', false\)/);
+  assert.match(chat, /bindPrivacySwitch\(elements\.outgoingMessageSoundSwitch, 'outgoingMessageSound'/);
+  assert.match(chat, /function playOutgoingMessageSound\(\) \{\s*if \(!app\.outgoingMessageSound\) return;/);
+  assert.match(chat, /Foto enviada'[\s\S]{0,100}playOutgoingMessageSound\(\)/);
+  assert.match(chat, /Nota de voz enviada'[\s\S]{0,100}playOutgoingMessageSound\(\)/);
 });
 
 test('las capas 145 y 146 quedan registradas', () => {

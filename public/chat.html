@@ -4324,17 +4324,17 @@
       <div class="settingRow">
         <div class="settingInfo">
           <div class="settingName">Tono de llamadas</div>
-          <div class="settingDescription">Hacer sonar las llamadas entrantes en este dispositivo.</div>
+          <div class="settingDescription">Hacer sonar las llamadas entrantes y escuchar un tono suave mientras llamas.</div>
         </div>
         <button id="callSoundSwitch" class="vobixSwitch on" type="button" aria-label="Tono de llamadas"></button>
       </div>
 
       <div class="settingRow">
         <div class="settingInfo">
-          <div class="settingName">Tono suave al llamar</div>
-          <div class="settingDescription">Escuchar un aviso suave mientras la llamada saliente está marcando. Está desactivado por defecto.</div>
+          <div class="settingName">Sonido al enviar mensajes</div>
+          <div class="settingDescription">Reproducir un aviso suave al enviar mensajes, fotos, documentos o notas de voz. Está desactivado por defecto.</div>
         </div>
-        <button id="outgoingCallSoundSwitch" class="vobixSwitch" type="button" aria-label="Tono suave de llamada saliente"></button>
+        <button id="outgoingMessageSoundSwitch" class="vobixSwitch" type="button" aria-label="Sonido al enviar mensajes"></button>
       </div>
 
       <div class="settingRow">
@@ -5126,8 +5126,8 @@
       notificationSwitch:
         $('notificationSwitch'),
 
-      outgoingCallSoundSwitch:
-        $('outgoingCallSoundSwitch'),
+      outgoingMessageSoundSwitch:
+        $('outgoingMessageSoundSwitch'),
 
       callSoundSwitch:
         $('callSoundSwitch'),
@@ -8287,7 +8287,7 @@
     app.profileVisible = readBooleanPreference('vobix_profile_visible', true);
     app.incognito = readBooleanPreference('vobix_incognito', false);
     app.callSound = readBooleanPreference('vobix_call_sound', true);
-    app.outgoingCallSound = readBooleanPreference('vobix_outgoing_call_sound', false);
+    app.outgoingMessageSound = readBooleanPreference('vobix_outgoing_message_sound', false);
     app.vibration = readBooleanPreference('vobix_vibration', true);
     app.notificationPreview = readBooleanPreference('vobix_notification_preview', true);
     app.mobileOnlyNotifications = readBooleanPreference('vobix_mobile_only_notifications', true);
@@ -8331,7 +8331,7 @@
         [elements.profileVisibilitySwitch, app.profileVisible]
         , [elements.incognitoSwitch, app.incognito]
         , [elements.callSoundSwitch, app.callSound]
-        , [elements.outgoingCallSoundSwitch, app.outgoingCallSound]
+        , [elements.outgoingMessageSoundSwitch, app.outgoingMessageSound]
         , [elements.vibrationSwitch, app.vibration]
         , [elements.notificationPreviewSwitch, app.notificationPreview]
         , [elements.mobileOnlyNotificationsSwitch, app.mobileOnlyNotifications]
@@ -8356,7 +8356,7 @@
     bindPrivacySwitch(elements.lastSeenSwitch, 'lastSeenVisible', 'vobix_last_seen_visible');
     bindPrivacySwitch(elements.profileVisibilitySwitch, 'profileVisible', 'vobix_profile_visible');
     bindPrivacySwitch(elements.callSoundSwitch, 'callSound', 'vobix_call_sound');
-    bindPrivacySwitch(elements.outgoingCallSoundSwitch, 'outgoingCallSound', 'vobix_outgoing_call_sound');
+    bindPrivacySwitch(elements.outgoingMessageSoundSwitch, 'outgoingMessageSound', 'vobix_outgoing_message_sound');
     bindPrivacySwitch(elements.vibrationSwitch, 'vibration', 'vobix_vibration');
     bindPrivacySwitch(elements.notificationPreviewSwitch, 'notificationPreview', 'vobix_notification_preview');
     bindPrivacySwitch(elements.mobileOnlyNotificationsSwitch, 'mobileOnlyNotifications', 'vobix_mobile_only_notifications');
@@ -8660,6 +8660,30 @@
     }
 
 
+    function playOutgoingMessageSound() {
+      if (!app.outgoingMessageSound) return;
+      const context = getAudioContext();
+      if (!context) return;
+
+      try {
+        const oscillator = context.createOscillator();
+        const gain = context.createGain();
+        oscillator.type = 'sine';
+        oscillator.frequency.setValueAtTime(520, context.currentTime);
+        oscillator.frequency.exponentialRampToValueAtTime(680, context.currentTime + .09);
+        gain.gain.setValueAtTime(.0001, context.currentTime);
+        gain.gain.exponentialRampToValueAtTime(.035, context.currentTime + .015);
+        gain.gain.exponentialRampToValueAtTime(.0001, context.currentTime + .14);
+        oscillator.connect(gain);
+        gain.connect(context.destination);
+        oscillator.start();
+        oscillator.stop(context.currentTime + .16);
+      } catch (error) {
+        console.warn('[VOBIXCHAT OUTGOING MESSAGE SOUND]', error);
+      }
+    }
+
+
     function vibrateDevice(pattern = [180]) {
       if (!app.vibration || !navigator.vibrate) {
         return;
@@ -8709,7 +8733,7 @@
 
 
     function playOutgoingRingPulse() {
-      if (!app.outgoingCallSound) return;
+      if (!app.callSound) return;
       const context = getAudioContext();
       if (!context) return;
 
@@ -9351,6 +9375,7 @@
             ? 'Documento enviado'
             : (isVideo ? 'Vídeo enviado' : 'Foto enviada')
         );
+        playOutgoingMessageSound();
         rememberSentAttachment(file);
         if (viewOnce) setViewOnceMode(false);
       } catch (error) {
@@ -9684,6 +9709,7 @@
               notifyUser(
                 'Foto enviada'
               );
+              playOutgoingMessageSound();
 
               rememberSentAttachment(file);
 
@@ -13176,6 +13202,8 @@
           true
         );
 
+        playOutgoingMessageSound();
+
 
         input.value =
           '';
@@ -13798,6 +13826,7 @@
         notifyUser(
           'Nota de voz enviada'
         );
+        playOutgoingMessageSound();
 
         if (viewOnce) setViewOnceMode(false);
         app.voiceUploadPending = null;
