@@ -50,4 +50,4 @@ jobs:
           name: VobixChat 1.2.3
           body: APK de pruebas con correcciones de teclado, cabecera del chat y permisos persistentes.
           files: VobixChat-1.2.3-debug.apk
-          prerelease: true
+          prerelease: false
