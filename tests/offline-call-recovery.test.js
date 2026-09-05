@@ -30,6 +30,13 @@ test('el tono de espera es suave y se detiene al conectar', () => {
   assert.match(chat, /state === 'connected'[\s\S]{0,100}stopOutgoingRing\(\)/);
 });
 
+test('el tono saliente comienza desactivado y puede activarse', () => {
+  assert.match(chat, /id="outgoingCallSoundSwitch" class="vobixSwitch"/);
+  assert.match(chat, /readBooleanPreference\('vobix_outgoing_call_sound', false\)/);
+  assert.match(chat, /bindPrivacySwitch\(elements\.outgoingCallSoundSwitch, 'outgoingCallSound'/);
+  assert.match(chat, /function playOutgoingRingPulse\(\) \{\s*if \(!app\.outgoingCallSound\) return;/);
+});
+
 test('las capas 145 y 146 quedan registradas', () => {
   assert.match(layers, /id:'145'.*Llamada Recuperable sin Conexión/);
   assert.match(layers, /id:'146'.*Selector de Cámara para Fotos/);

@@ -4331,6 +4331,14 @@
 
       <div class="settingRow">
         <div class="settingInfo">
+          <div class="settingName">Tono suave al llamar</div>
+          <div class="settingDescription">Escuchar un aviso suave mientras la llamada saliente está marcando. Está desactivado por defecto.</div>
+        </div>
+        <button id="outgoingCallSoundSwitch" class="vobixSwitch" type="button" aria-label="Tono suave de llamada saliente"></button>
+      </div>
+
+      <div class="settingRow">
+        <div class="settingInfo">
           <div class="settingName">Vibración</div>
           <div class="settingDescription">Vibrar con mensajes y llamadas cuando el dispositivo lo permita.</div>
         </div>
@@ -5117,6 +5125,9 @@
 
       notificationSwitch:
         $('notificationSwitch'),
+
+      outgoingCallSoundSwitch:
+        $('outgoingCallSoundSwitch'),
 
       callSoundSwitch:
         $('callSoundSwitch'),
@@ -8276,6 +8287,7 @@
     app.profileVisible = readBooleanPreference('vobix_profile_visible', true);
     app.incognito = readBooleanPreference('vobix_incognito', false);
     app.callSound = readBooleanPreference('vobix_call_sound', true);
+    app.outgoingCallSound = readBooleanPreference('vobix_outgoing_call_sound', false);
     app.vibration = readBooleanPreference('vobix_vibration', true);
     app.notificationPreview = readBooleanPreference('vobix_notification_preview', true);
     app.mobileOnlyNotifications = readBooleanPreference('vobix_mobile_only_notifications', true);
@@ -8319,6 +8331,7 @@
         [elements.profileVisibilitySwitch, app.profileVisible]
         , [elements.incognitoSwitch, app.incognito]
         , [elements.callSoundSwitch, app.callSound]
+        , [elements.outgoingCallSoundSwitch, app.outgoingCallSound]
         , [elements.vibrationSwitch, app.vibration]
         , [elements.notificationPreviewSwitch, app.notificationPreview]
         , [elements.mobileOnlyNotificationsSwitch, app.mobileOnlyNotifications]
@@ -8343,6 +8356,7 @@
     bindPrivacySwitch(elements.lastSeenSwitch, 'lastSeenVisible', 'vobix_last_seen_visible');
     bindPrivacySwitch(elements.profileVisibilitySwitch, 'profileVisible', 'vobix_profile_visible');
     bindPrivacySwitch(elements.callSoundSwitch, 'callSound', 'vobix_call_sound');
+    bindPrivacySwitch(elements.outgoingCallSoundSwitch, 'outgoingCallSound', 'vobix_outgoing_call_sound');
     bindPrivacySwitch(elements.vibrationSwitch, 'vibration', 'vobix_vibration');
     bindPrivacySwitch(elements.notificationPreviewSwitch, 'notificationPreview', 'vobix_notification_preview');
     bindPrivacySwitch(elements.mobileOnlyNotificationsSwitch, 'mobileOnlyNotifications', 'vobix_mobile_only_notifications');
@@ -8695,7 +8709,7 @@
 
 
     function playOutgoingRingPulse() {
-      if (!app.callSound) return;
+      if (!app.outgoingCallSound) return;
       const context = getAudioContext();
       if (!context) return;
 
