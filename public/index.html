@@ -338,6 +338,35 @@
       body.keyboardOpen .sub{ display:none; }
       body.keyboardOpen .e2e{ margin:6px 0 10px; }
 
+      /*
+        Respaldo puramente CSS para WebView/Samsung Internet. Algunos teclados
+        no notifican a visualViewport, pero :focus-within siempre se activa.
+      */
+      body:has(.card :is(input,select):focus){
+        display:block;
+        align-items:initial;
+        min-height:var(--vobix-login-height, 100dvh);
+        padding:8px 12px max(24px, env(safe-area-inset-bottom));
+      }
+
+      .card:focus-within{
+        margin:0 auto;
+        padding:12px 17px 24px;
+      }
+
+      .card:focus-within .logo{
+        width:42px;
+        height:42px;
+        margin-bottom:4px;
+        border-radius:12px;
+        font-size:25px;
+      }
+
+      .card:focus-within h1{ font-size:20px; }
+      .card:focus-within .todo{ margin:2px 0 0; font-size:11px; }
+      .card:focus-within .sub{ display:none; }
+      .card:focus-within .e2e{ margin:4px 0 8px; }
+
     }
 
   </style>
@@ -543,13 +572,25 @@ function updateLoginViewport(){
   }
 }
 
+function revealLoginField(field){
+  if(!field?.matches?.('input,select')) return;
+  document.body.classList.add('keyboardOpen');
+
+  /* El teclado Samsung termina su animación en varias fases. */
+  [0, 120, 280, 520].forEach(delay => window.setTimeout(() => {
+    const viewport = window.visualViewport;
+    const visibleHeight = Math.round(viewport?.height || window.innerHeight);
+    document.documentElement.style.setProperty('--vobix-login-height', `${visibleHeight}px`);
+    field.scrollIntoView({block:'center', inline:'nearest', behavior:'auto'});
+  }, delay));
+}
+
 window.visualViewport?.addEventListener('resize', updateLoginViewport);
 window.visualViewport?.addEventListener('scroll', updateLoginViewport);
 window.addEventListener('resize', updateLoginViewport);
 document.addEventListener('focusin', event => {
   if(!event.target.matches('input,select')) return;
-  document.body.classList.add('keyboardOpen');
-  window.setTimeout(() => event.target.scrollIntoView({block:'center', inline:'nearest'}), 180);
+  revealLoginField(event.target);
 });
 document.addEventListener('focusout', () => window.setTimeout(updateLoginViewport, 120));
 updateLoginViewport();

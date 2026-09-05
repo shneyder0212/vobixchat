@@ -16,6 +16,12 @@ test('el registro mantiene visible el teléfono cuando aparece el teclado', () =
   assert.match(html, /scrollIntoView\(\{block:'center'/);
   assert.match(html, /body\.keyboardOpen \.card/);
   assert.match(html, /body\.keyboardOpen \.logo/);
+  assert.match(html, /\.card:focus-within/);
+  assert.match(html, /body:has\(\.card :is\(input,select\):focus\)/);
+  assert.match(html, /function revealLoginField\(field\)/);
+  assert.match(html, /\[0, 120, 280, 520\]/);
+  assert.match(read('android/app/src/main/AndroidManifest.xml'), /android:windowSoftInputMode="adjustResize"/);
+  assert.match(read('core/vobix-layers.js'), /id:'158'.*Registro Visible Sobre el Teclado/);
 });
 
 test('buscar contacto conserva un botón visible y admite Buscar del teclado', () => {

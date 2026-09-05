@@ -135,6 +135,7 @@ const VOBIX_LAYERS = Object.freeze([
 ,{ id:'155', name:'Todos los Menús Movibles', status:'en_validacion', scope:'Los menús y paneles flotantes pueden moverse en horizontal y vertical con ratón o dedo, se mantienen dentro de la pantalla y recuerdan su posición por dispositivo.' }
 ,{ id:'156', name:'Centro de Permisos Reversible', status:'en_validacion', scope:'El menú permite comprobar y solicitar cámara, micrófono y notificaciones mediante controles oficiales del dispositivo, informa bloqueos y evita acceso permanente innecesario a fotos o documentos.' }
 ,{ id:'157', name:'Teclado Universal Adaptativo', status:'en_validacion', scope:'Registro, búsqueda y conversación combinan VisualViewport, VirtualKeyboard y foco para conservar campos y acciones visibles en Android, iOS, tablets y escritorio sin depender de una marca concreta.' }
+,{ id:'158', name:'Registro Visible Sobre el Teclado', status:'en_validacion', scope:'El formulario móvil se compacta y desplaza el campo activo sobre el teclado; Android solicita redimensionamiento de la ventana para impedir que el número quede tapado.' }
 ]);
 
 function getVobixLayers() {
