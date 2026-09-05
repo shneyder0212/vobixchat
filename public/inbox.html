@@ -8,8 +8,10 @@
 <style>
 :root{
   --bg:#1b2520;--bg2:#111814;--panel:#223029;--panel2:#293a31;
-  --text:#f5fff6;--muted:#aebbb2;--accent:#7cff35;--line:rgba(124,255,53,.18)
+  --text:#f5fff6;--muted:#aebbb2;--accent:#7cff35;--line:rgba(124,255,53,.18);
+  --vobix-safe-top:env(safe-area-inset-top);--vobix-safe-bottom:env(safe-area-inset-bottom)
 }
+html.vobixInstalled{--vobix-safe-top:max(env(safe-area-inset-top),28px);--vobix-safe-bottom:max(env(safe-area-inset-bottom),32px)}
 *{box-sizing:border-box}html,body{margin:0;min-height:100%;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg2);color:var(--text)}
 body{background:radial-gradient(circle at 68% 22%,color-mix(in srgb,var(--accent) 10%,transparent),transparent 30%),linear-gradient(135deg,var(--bg),var(--bg2))}
 button,input{font:inherit}button{cursor:pointer;color:inherit}
@@ -34,8 +36,9 @@ button,input{font:inherit}button{cursor:pointer;color:inherit}
 .notice{display:none;margin-top:14px;border:1px solid var(--line);border-radius:14px;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;background:rgba(255,255,255,.025)}
 .switch{width:46px;height:25px;border-radius:20px;background:var(--accent);position:relative}.switch:after{content:"";position:absolute;width:19px;height:19px;border-radius:50%;right:3px;top:3px;background:white}
 .history{margin-top:16px;border:1px solid var(--line);border-radius:14px;padding:12px;background:rgba(255,255,255,.02)}.history h3{margin:4px 5px 10px}.conversation{width:100%;border:0;background:transparent;display:flex;gap:10px;align-items:center;padding:9px;border-radius:10px;text-align:left}.conversation:hover{background:rgba(255,255,255,.05)}.conversation .avatar{width:38px;height:38px}.conversation span{color:var(--muted);font-size:12px;display:block}
-.settings{position:fixed;inset:0;z-index:20;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.65);padding:20px}.settings.open{display:flex}.settingsBox{width:min(430px,100%);background:#1e2c25;border:1px solid var(--line);border-radius:18px;padding:22px}.settingsExit{width:100%;margin-top:12px;padding:13px;border:1px solid var(--line);border-radius:11px;background:transparent;color:var(--text);font-weight:900}.row{display:flex;align-items:center;justify-content:space-between;margin:18px 0}.row input{width:62px;height:40px}.save{width:100%;padding:13px;border:0;border-radius:11px;background:var(--accent);color:#142415;font-weight:900}
+.settings{position:fixed;inset:0;z-index:20;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.65);padding:max(12px,var(--vobix-safe-top)) 20px max(12px,var(--vobix-safe-bottom))}.settings.open{display:flex}.settingsBox{width:min(430px,100%);max-height:100%;overflow-y:auto;overscroll-behavior:contain;background:#1e2c25;border:1px solid var(--line);border-radius:18px;padding:22px}.settingsExit{width:100%;margin-top:12px;padding:13px;border:1px solid var(--line);border-radius:11px;background:transparent;color:var(--text);font-weight:900}.row{display:flex;align-items:center;justify-content:space-between;margin:18px 0}.row input{width:62px;height:40px}.save{width:100%;padding:13px;border:0;border-radius:11px;background:var(--accent);color:#142415;font-weight:900}
 .settingsMenuButton{width:100%;margin:10px 0;padding:15px;border:1px solid var(--line);border-radius:12px;background:#142e20;color:var(--text);text-align:left;font-weight:900}.settingsMenuButton small{display:block;margin-top:4px;color:var(--muted);font-weight:500}.settingsView{display:none}.settingsView.open{display:block}.settingsSelect{width:100%;padding:12px;border:1px solid var(--line);border-radius:10px;background:#10251a;color:var(--text)}
+.settingsLogout{width:100%;min-height:50px;margin-top:14px;padding:13px;border:1px solid rgba(255,128,128,.38);border-radius:11px;background:rgba(116,30,30,.24);color:#ffb8b8;font-weight:900}.settingsLogout:disabled{opacity:.65}
 .error{display:none;padding:10px 0;color:#ffb5b5}
 .finderReturn{display:none;margin:0 0 10px}.finderReturn button{min-height:46px;border:1px solid var(--line);border-radius:12px;padding:0 14px;background:#243026;color:var(--text);font-weight:900}
 @media(max-width:760px){
@@ -105,14 +108,14 @@ body{background:radial-gradient(circle at 62% 12%,rgba(116,173,76,.14),transpare
 .chatHomeTop h1,.chatHomeInfo b{color:#f7f4ed}.chatHomeTop span,.chatHomeInfo span{color:#c5cec4}.chatHomeRow{color:#f7f4ed;border-bottom-color:rgba(226,236,220,.18)}.chatHomeRow time{color:#a7e583}.chatHomeEmpty{color:#d1d9cf}.chatHomeAvatar{overflow:hidden;border-color:rgba(150,210,121,.55)}.chatHomeAvatar img{display:block;width:100%;height:100%;object-fit:cover}.settingsView h2,.settingsView label{color:#173624}
 /* Tipografía clara y parecida al diseño aprobado. */
 body,button,input{font-family:Roboto,Arial,sans-serif}.head b{color:#6fbd42!important;font-size:22px!important;font-weight:800;letter-spacing:.025em}.chatHomeInfo b{font-weight:700;letter-spacing:0;font-size:17px}.chatHomeInfo span{font-size:14px}.mobileNav span{font-weight:600;color:#f7f4ed!important}
-/* Reserva fija para los paneles del teléfono: no se superponen a Vobix. */
-@media(max-width:760px){.topbar{height:102px!important;padding-top:30px}.shell{padding-bottom:140px!important}.mobileNav{bottom:42px!important}.newChatFloat{bottom:164px!important}}
+/* Reserva adaptable para que los paneles del sistema no se superpongan a Vobix. */
+@media(max-width:760px){.topbar{height:calc(72px + var(--vobix-safe-top))!important;padding-top:var(--vobix-safe-top)}.shell{padding-bottom:calc(98px + var(--vobix-safe-bottom))!important}.mobileNav{bottom:var(--vobix-safe-bottom)!important}.newChatFloat{bottom:calc(122px + var(--vobix-safe-bottom))!important}}
 /* Menú burbuja Vobix: compacto, accesible y con apertura suave hacia arriba. */
 .vobixBubbleShell{display:none}
 @media(max-width:760px){
  .mobileNav,.newChatFloat{display:none!important}
- .shell{padding-bottom:120px!important}
- .vobixBubbleShell{position:fixed;z-index:80;right:16px;bottom:max(42px,calc(env(safe-area-inset-bottom) + 12px));display:flex;flex-direction:column;align-items:flex-end;gap:10px}
+ .shell{padding-bottom:calc(88px + var(--vobix-safe-bottom))!important}
+ .vobixBubbleShell{position:fixed;z-index:80;right:max(16px,env(safe-area-inset-right));bottom:calc(var(--vobix-safe-bottom) + 12px);display:flex;flex-direction:column;align-items:flex-end;gap:10px}
  .vobixBubblePanel{display:grid;gap:9px;max-height:calc(100dvh - 142px);overflow-y:auto;padding:2px;opacity:0;pointer-events:none;transform:translateY(16px) scale(.94);transform-origin:bottom right;transition:opacity .22s ease,transform .24s cubic-bezier(.2,.9,.2,1)}
  .vobixBubbleShell.open .vobixBubblePanel{opacity:1;pointer-events:auto;transform:translateY(0) scale(1)}
  .vobixBubbleItem{min-height:46px;display:flex;align-items:center;gap:10px;padding:0 16px 0 12px;border:1px solid rgba(188,231,165,.38);border-radius:24px;background:rgba(47,52,47,.98);color:#fffdf7;font-weight:800;box-shadow:0 9px 22px rgba(0,0,0,.27);backdrop-filter:blur(14px)}
@@ -242,6 +245,7 @@ html[data-vobix-controls="large"] .vobixBubbleTrigger{width:72px;height:72px}htm
   <button class="vobixBubbleItem" id="bubbleCalls" type="button"><i>☎</i>Llamadas</button>
   <button class="vobixBubbleItem" id="bubbleContacts" type="button"><i>♙</i>Contactos</button>
   <button class="vobixBubbleItem" id="bubbleChats" type="button"><i>＋</i>Nuevo chat</button>
+  <button class="vobixBubbleItem" id="bubbleLogout" type="button"><i>⇥</i>Cerrar sesión</button>
  </div>
  <button class="vobixBubbleTrigger" id="vobixBubbleTrigger" type="button" aria-label="Abrir menú">☰</button>
 </div>
@@ -278,6 +282,7 @@ html[data-vobix-controls="large"] .vobixBubbleTrigger{width:72px;height:72px}htm
    <button class="settingsMenuButton" id="openUpdatesSettings">⬆️ Capa 4.4 · Actualizaciones<small>Versión, novedades y actualizaciones por Wi‑Fi</small></button>
    <button class="settingsMenuButton" id="openPremiumSettings">★ Capa 4.5 · Vobix Premium<small>Beneficios personales y para empresas</small></button>
    <button class="save" id="openVobixMenu" style="margin-top:10px;background:#183522;color:var(--accent)">Centro Vobix</button>
+   <button class="settingsLogout" id="logoutDeviceButton" type="button">⇥ Cerrar sesión en este dispositivo</button>
    <button class="settingsExit" type="button" data-close-settings>← Salir de configuración</button>
   </div>
   <div class="settingsView" id="soundSettingsView">
@@ -354,6 +359,8 @@ html[data-vobix-controls="large"] .vobixBubbleTrigger{width:72px;height:72px}htm
 <script>
 (()=>{
 'use strict';
+const installedMode=window.matchMedia?.('(display-mode: standalone)').matches||window.matchMedia?.('(display-mode: fullscreen)').matches||navigator.standalone===true;
+document.documentElement.classList.toggle('vobixInstalled',Boolean(installedMode));
 const $=id=>document.getElementById(id);
 
 const INBOX_VIEWPORT_BASELINE=Math.max(window.innerHeight,window.visualViewport?.height||0);
@@ -389,6 +396,26 @@ function authHeaders(){
  for(const k of keys){token=localStorage.getItem(k)||sessionStorage.getItem(k);if(token)break}
  if(token)h.Authorization='Bearer '+token;
  return h;
+}
+
+const SESSION_STORAGE_KEYS=['vobix_token','token','vobixToken','authToken','accessToken','vobix_user','user','vobixUser','currentUser','vobix_username','username'];
+function clearLocalSession(){
+ SESSION_STORAGE_KEYS.forEach(key=>{localStorage.removeItem(key);sessionStorage.removeItem(key)});
+}
+let logoutInProgress=false;
+async function logoutCurrentDevice(){
+ if(logoutInProgress)return;
+ if(!window.confirm('¿Cerrar sesión en este dispositivo?\n\nTu cuenta y tus conversaciones no se borrarán.'))return;
+ logoutInProgress=true;
+ const buttons=[$('logoutDeviceButton'),$('bubbleLogout')].filter(Boolean);
+ buttons.forEach(button=>{button.disabled=true;button.textContent='Cerrando sesión…'});
+ try{
+  await window.VobixPush?.unregister?.();
+  await fetch('/api/auth/logout',{method:'POST',credentials:'include',headers:authHeaders(),cache:'no-store',signal:AbortSignal.timeout?.(5000)}).catch(()=>{});
+ }finally{
+  clearLocalSession();
+  location.replace('/?logout=1');
+ }
 }
 
 // Obligatorio: sin sesión verificada no se permite usar el inbox.
@@ -601,6 +628,8 @@ $('scanQrInput').onchange=async event=>{const file=event.target.files?.[0];if(!f
 $('bubbleCalls')?.addEventListener('click',()=>{closeBubble();$('callsNav').click()});
 $('bubbleContacts')?.addEventListener('click',()=>{closeBubble();showAgenda()});
 $('bubbleChats')?.addEventListener('click',()=>{closeBubble();$('newBtn').click()});
+$('bubbleLogout')?.addEventListener('click',()=>{closeBubble();logoutCurrentDevice()});
+$('logoutDeviceButton')?.addEventListener('click',logoutCurrentDevice);
 const theme=JSON.parse(localStorage.getItem('vobixchat_theme')||'{}');
 function apply(t){if(t.bg)document.documentElement.style.setProperty('--bg',t.bg);if(t.text)document.documentElement.style.setProperty('--text',t.text);if(t.accent)document.documentElement.style.setProperty('--accent',t.accent)}
 apply(theme);if(theme.bg)$('bgColor').value=theme.bg;if(theme.text)$('textColor').value=theme.text;if(theme.accent)$('accentColor').value=theme.accent;

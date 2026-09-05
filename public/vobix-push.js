@@ -90,9 +90,34 @@
     }
   }
 
+  async function unregisterPush() {
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+
+    try {
+      const registration = await navigator.serviceWorker.getRegistration('/');
+      const subscription = await registration?.pushManager?.getSubscription();
+      if (!subscription) return;
+
+      await fetch('/api/push/unsubscribe', {
+        method: 'POST',
+        credentials: 'same-origin',
+        signal: AbortSignal.timeout?.(5000),
+        headers: authHeaders({ 'Content-Type': 'application/json' }),
+        body: JSON.stringify({ endpoint: subscription.endpoint })
+      }).catch(() => {});
+
+      await subscription.unsubscribe().catch(() => {});
+    } catch (error) {
+      console.warn('[VOBIX PUSH LOGOUT]', error?.message || error);
+    }
+  }
+
   window.addEventListener('load', () => {
     setTimeout(registerPush, 800);
   }, { once: true });
 
-  window.VobixPush = Object.freeze({ register: registerPush });
+  window.VobixPush = Object.freeze({
+    register: registerPush,
+    unregister: unregisterPush
+  });
 })();

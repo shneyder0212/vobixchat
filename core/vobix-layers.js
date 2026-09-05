@@ -129,6 +129,8 @@ const VOBIX_LAYERS = Object.freeze([
 ,{ id:'149', name:'Formularios Visibles con Teclado Móvil', status:'en_validacion', scope:'Registro y búsqueda calculan el área visible del teclado en Android y iPhone, mantienen el campo activo a la vista y reservan un botón Buscar pulsable sin modificar el teclado del chat.' }
 ,{ id:'150', name:'Regreso Visible a la Sala Principal', status:'en_validacion', scope:'La búsqueda, las conversaciones y las pantallas secundarias sin navegación previa ofrecen una salida directa, táctil y accesible hacia la lista principal de chats.' }
 ,{ id:'151', name:'Control Personal de Red y Datos', status:'en_validacion', scope:'Cada dispositivo permite elegir Wi‑Fi y datos móviles, solo Wi‑Fi o solo datos móviles para archivos, notas de voz y llamadas; el ahorro de datos permanece desactivado por defecto y puede activarse voluntariamente.' }
+,{ id:'152', name:'Sesión Cerrada por Dispositivo', status:'en_validacion', scope:'Cerrar sesión revoca la sesión del servidor, cancela las notificaciones push del dispositivo, borra únicamente la autenticación local y conserva la cuenta y las conversaciones.' }
+,{ id:'153', name:'Zonas Seguras Multidispositivo', status:'en_validacion', scope:'En modo instalado, la cabecera y los controles reservan las áreas del sistema en Android e iOS; navegador, tablet y escritorio mantienen una distribución adaptable sin márgenes fijos de una marca.' }
 ]);
 
 function getVobixLayers() {

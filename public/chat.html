@@ -53,6 +53,13 @@
 
       --topbar-height: 72px;
       --composer-height: 78px;
+      --vobix-safe-top: env(safe-area-inset-top);
+      --vobix-safe-bottom: env(safe-area-inset-bottom);
+    }
+
+    html.vobixInstalled {
+      --vobix-safe-top: max(env(safe-area-inset-top), 28px);
+      --vobix-safe-bottom: max(env(safe-area-inset-bottom), 32px);
     }
     /* =====================================================
        RESET
@@ -150,15 +157,15 @@
     .vobixApp {
       position: fixed;
 
-      top: calc(var(--vobix-viewport-top, 0px) + env(safe-area-inset-top));
+      top: calc(var(--vobix-viewport-top, 0px) + var(--vobix-safe-top));
       right: env(safe-area-inset-right);
       bottom: auto;
       left: env(safe-area-inset-left);
 
       height: calc(
         var(--vobix-viewport-height, 100dvh) -
-        env(safe-area-inset-top) -
-        env(safe-area-inset-bottom)
+        var(--vobix-safe-top) -
+        var(--vobix-safe-bottom)
       );
 
       display: flex;
@@ -5676,6 +5683,16 @@
       '[VOBIXCHAT] chat.html V2 iniciado'
     );
 
+    const installedMode =
+      window.matchMedia?.('(display-mode: standalone)').matches ||
+      window.matchMedia?.('(display-mode: fullscreen)').matches ||
+      navigator.standalone === true;
+
+    document.documentElement.classList.toggle(
+      'vobixInstalled',
+      Boolean(installedMode)
+    );
+
 
     /* =====================================================
        TOKEN
@@ -5719,6 +5736,30 @@
 
           sessionStorage.getItem(
             'token'
+          ) ||
+
+          localStorage.getItem(
+            'vobixToken'
+          ) ||
+
+          sessionStorage.getItem(
+            'vobixToken'
+          ) ||
+
+          localStorage.getItem(
+            'authToken'
+          ) ||
+
+          sessionStorage.getItem(
+            'authToken'
+          ) ||
+
+          localStorage.getItem(
+            'accessToken'
+          ) ||
+
+          sessionStorage.getItem(
+            'accessToken'
           ) ||
 
           ''
@@ -14250,31 +14291,48 @@
         .logoutButton
         .addEventListener(
           'click',
-          () => {
+          async () => {
 
             closeOptionsMenu();
 
+            if (!window.confirm(
+              '¿Cerrar sesión en este dispositivo?\n\n' +
+              'Tu cuenta y tus conversaciones no se borrarán.'
+            )) {
+              return;
+            }
+
+            elements.logoutButton.disabled = true;
+            elements.logoutButton.querySelector('.chatOptionText').textContent =
+              'Cerrando sesión…';
 
             try {
+              app.socket?.disconnect?.();
+              await window.VobixPush?.unregister?.();
 
-              localStorage.removeItem(
-                'vobix_token'
-              );
+              await fetch('/api/auth/logout', {
+                method: 'POST',
+                credentials: 'include',
+                cache: 'no-store',
+                signal: AbortSignal.timeout?.(5000),
+                headers: app.token
+                  ? { Authorization: 'Bearer ' + normalizeAuthToken(app.token) }
+                  : {}
+              }).catch(() => {});
+            } catch (error) {
+              console.warn('[VOBIXCHAT LOGOUT REMOTE]', error);
+            }
 
 
-              sessionStorage.removeItem(
-                'vobix_token'
-              );
-
-
-              localStorage.removeItem(
-                'token'
-              );
-
-
-              sessionStorage.removeItem(
-                'token'
-              );
+            try {
+              [
+                'vobix_token', 'token', 'vobixToken', 'authToken',
+                'accessToken', 'vobix_user', 'user', 'vobixUser',
+                'currentUser', 'vobix_username', 'username'
+              ].forEach(key => {
+                localStorage.removeItem(key);
+                sessionStorage.removeItem(key);
+              });
 
             } catch (error) {
 
@@ -14286,8 +14344,7 @@
             }
 
 
-            window.location.href =
-              '/';
+            window.location.replace('/?logout=1');
 
           }
         );
