@@ -22,14 +22,21 @@ test('el mensaje aparece antes de esperar la confirmación HTTP', () => {
   assert.match(send, /updateMessageStatus\(\{ clientMessageId: payload\.clientMessageId \}, 'sent'\)/);
 });
 
-test('el botón de cámara abre el selector de galería, foto y vídeo', () => {
+test('el botón de cámara abre la cámara integrada', () => {
   const start = chat.indexOf("elements.cameraButton?.addEventListener('click'");
   const end = chat.indexOf('function closeCameraChoice()', start);
   const handler = chat.slice(start, end);
-  assert.match(handler, /cameraChoicePanel\?\.classList\.add\('open'\)/);
-  assert.match(chat, /openGalleryButton/);
-  assert.match(chat, /openBackCameraButton/);
-  assert.match(chat, /openVideoCameraButton/);
+  assert.match(handler, /openIntegratedCamera\(\)/);
+  assert.match(chat, /id="integratedCameraPreview"/);
+  assert.match(chat, /id="integratedCameraShutter"/);
+  assert.match(chat, /id="integratedCameraGallery"/);
+});
+
+test('traducir solo aparece dentro de las opciones del mensaje', () => {
+  const render = chat.slice(chat.indexOf('function renderTextMessage'), chat.indexOf('function renderPhotoMessage'));
+  assert.doesNotMatch(render, /addMessageTranslationControl\(bubble/);
+  assert.match(render, /translateButton\.textContent = '🌐 Traducir'/);
+  assert.match(render, /actions\.append\(translateButton\)/);
 });
 
 test('vaciar un chat lo oculta del historial hasta que llegue otro mensaje', () => {
