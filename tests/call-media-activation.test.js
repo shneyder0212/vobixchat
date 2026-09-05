@@ -12,6 +12,13 @@ function callMediaBlock(html) {
   return html.slice(html.indexOf('function createPeerConnection'), html.indexOf('function applyAdaptiveCallEncoding'));
 }
 
+function peerConnectionBlock(html) {
+  return html.slice(
+    html.indexOf('function createPeerConnection'),
+    html.indexOf('function closeGroupPeerConnection')
+  );
+}
+
 function answerBlock(html) {
   return html.slice(html.indexOf('async function acceptPendingCall'), html.indexOf('function rejectPendingCall'));
 }
@@ -55,10 +62,14 @@ test('la reproducción bloqueada muestra estado y permite reintento explícito',
 
 test('la contestación no crea una segunda conexión ni captura duplicada', () => {
   const html = read('public/chat.html');
+  const media = peerConnectionBlock(html);
   assert.match(html, /if \(app\.acceptingCall\) return/);
   assert.match(html, /if \(\s*app\.peerConnection\s*\)/);
   assert.match(html, /return app\.peerConnection/);
   assert.match(html, /if \(app\.localStream && app\.localMediaType === app\.callType\)/);
+  assert.doesNotMatch(media, /return app\.localStream/);
+  assert.match(media, /pc\.addTrack\([\s\S]{0,120}track,[\s\S]{0,120}app\.localStream/);
+  assert.match(media, /return pc/);
 });
 
 test('la limpieza al colgar detiene pistas, cierra WebRTC y limpia elementos', () => {
