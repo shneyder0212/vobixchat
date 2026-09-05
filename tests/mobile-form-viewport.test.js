@@ -13,9 +13,12 @@ test('el registro mantiene visible el teléfono cuando aparece el teclado', () =
   assert.match(html, /interactive-widget=resizes-content/);
   assert.match(html, /function updateLoginViewport/);
   assert.match(html, /visualViewport\?\.addEventListener\('resize'/);
-  assert.match(html, /scrollIntoView\(\{block:'center'/);
+  assert.match(html, /function keepRegistrationFieldVisible/);
+  assert.match(html, /card\?\.scrollBy/);
+  assert.match(html, /registrationFocused/);
   assert.match(html, /body\.keyboardOpen \.card/);
   assert.match(html, /body\.keyboardOpen \.logo/);
+  assert.match(read('android/app/src/main/AndroidManifest.xml'), /android:windowSoftInputMode="adjustResize"/);
 });
 
 test('buscar contacto conserva un botón visible y admite Buscar del teclado', () => {
