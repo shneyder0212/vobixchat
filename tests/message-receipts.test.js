@@ -69,3 +69,13 @@ test('cliente reintenta silenciosamente si falta el acuse del servidor', () => {
   assert.match(html, /function scheduleReceiptRetry/);
   assert.match(html, /syncConversationReceipts\(conversationId\(app\.conversation\)\)/);
 });
+
+test('sincronización agrupa recibos y evita una ráfaga de consultas por mensaje', () => {
+  assert.match(server, /socket\.on\(['"]chat:receipts['"]/);
+  assert.match(server, /m\.id=ANY\(\$3::uuid\[\]\)/);
+  assert.match(server, /SELECT message_id,\$2,NOW\(\)/);
+  assert.match(html, /function emitReceiptBatch/);
+  assert.match(html, /\.slice\(0, 100\)/);
+  assert.match(html, /await emitReceiptBatch\(type, id, messageIds\)/);
+  assert.match(html, /receiptAcks: new Map\(\)/);
+});

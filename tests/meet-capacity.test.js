@@ -26,7 +26,7 @@ test('HTTP usa tiempos seguros y reutiliza conexiones', () => {
 });
 
 test('PostgreSQL usa un pool acotado y configurable para las ráfagas', () => {
-  assert.match(database, /DATABASE_POOL_MAX, 20, 5, 50/);
-  assert.match(database, /DATABASE_POOL_MIN, 2, 0, 10/);
+  assert.match(database, /DATABASE_POOL_MAX, 6, 2, 8/);
+  assert.match(database, /DATABASE_POOL_MIN, 0, 0, 2/);
   assert.match(database, /maxUses: 7500/);
 });

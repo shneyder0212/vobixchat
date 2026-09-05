@@ -13,9 +13,10 @@ if (!process.env.DATABASE_URL) {
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: { rejectUnauthorized: false },
-  // Un grupo moderado absorbe ráfagas sin abrir una conexión por asistente.
-  max: boundedInteger(process.env.DATABASE_POOL_MAX, 20, 5, 50),
-  min: boundedInteger(process.env.DATABASE_POOL_MIN, 2, 0, 10),
+  // El pool de producción usa un proxy en modo sesión con un máximo de 15.
+  // Dejamos margen para migraciones, tareas internas y despliegues solapados.
+  max: boundedInteger(process.env.DATABASE_POOL_MAX, 6, 2, 8),
+  min: boundedInteger(process.env.DATABASE_POOL_MIN, 0, 0, 2),
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 10000,
   maxUses: 7500

@@ -11,7 +11,8 @@ const read = file => fs.readFileSync(path.join(root, file), 'utf8');
 test('el compositor móvil reserva un campo horizontal legible', () => {
   const html = read('public/chat.html');
   assert.match(html, /@media\(max-width:720px\)[\s\S]*?#viewOnceToggle\s*\{[\s\S]*?display:\s*none/);
-  assert.match(html, /@media\(max-width:720px\)[\s\S]*?#messageInput\s*\{[\s\S]*?min-width:\s*96px/);
+  assert.match(html, /@media\(max-width:720px\)[\s\S]*?#messageInput\s*\{[\s\S]*?width:\s*100%[\s\S]*?min-width:\s*0/);
+  assert.match(html, /\.vobixMessageField\s*\{[\s\S]*?flex:\s*1[\s\S]*?min-width:\s*0/);
   assert.match(html, /@media\(max-width:720px\)[\s\S]*?\.vobixComposerTool\s*\{[\s\S]*?min-width:\s*36px/);
 });
 

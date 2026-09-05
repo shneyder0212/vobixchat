@@ -5,7 +5,7 @@
 
   <meta
     name="viewport"
-    content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content"
   >
 
   <meta
@@ -150,10 +150,16 @@
     .vobixApp {
       position: fixed;
 
-      top: env(safe-area-inset-top);
+      top: calc(var(--vobix-viewport-top, 0px) + env(safe-area-inset-top));
       right: env(safe-area-inset-right);
-      bottom: env(safe-area-inset-bottom);
+      bottom: auto;
       left: env(safe-area-inset-left);
+
+      height: calc(
+        var(--vobix-viewport-height, 100dvh) -
+        env(safe-area-inset-top) -
+        env(safe-area-inset-bottom)
+      );
 
       display: flex;
       flex-direction: column;
@@ -1020,6 +1026,29 @@
       -webkit-backdrop-filter: blur(16px);
     }
 
+    .vobixMessageField {
+      flex: 1;
+      min-width: 0;
+      min-height: 52px;
+      display: flex;
+      align-items: flex-end;
+      gap: 2px;
+      padding: 4px;
+      border: 1px solid rgba(104,255,114,.18);
+      border-radius: 27px;
+      background: rgba(255,255,255,.055);
+    }
+
+    .vobixMessageField:focus-within {
+      border-color: rgba(104,255,114,.42);
+      box-shadow: 0 0 0 3px rgba(104,255,114,.05);
+    }
+
+    .vobixMessageField .vobixComposerTool {
+      flex: 0 0 auto;
+      background: transparent;
+    }
+
 
 
     .vobixComposerTool {
@@ -1103,6 +1132,16 @@
       outline: none;
     }
 
+    .vobixMessageField #messageInput {
+      min-height: 42px;
+      margin: 0;
+      padding: 10px 8px;
+      border: 0;
+      border-radius: 0;
+      background: transparent;
+      box-shadow: none;
+    }
+
 
     #messageInput::placeholder {
       color:
@@ -1117,6 +1156,11 @@
       box-shadow:
         0 0 0 3px
         rgba(104,255,114,.05);
+    }
+
+    .vobixMessageField #messageInput:focus {
+      border: 0;
+      box-shadow: none;
     }
 
 
@@ -1197,6 +1241,17 @@
       display: none;
       align-items: center;
       gap: 8px;
+      position: absolute;
+      left: 12px;
+      right: 12px;
+      bottom: calc(100% + 8px);
+      z-index: 520;
+      min-height: 54px;
+      padding: 9px 12px;
+      border: 1px solid rgba(255,119,119,.35);
+      border-radius: 18px;
+      background: rgba(8,18,10,.98);
+      box-shadow: 0 12px 34px rgba(0,0,0,.38);
       color: #ff7777;
       font-size: 13px;
       font-weight: 900;
@@ -1207,12 +1262,24 @@
       display: flex;
     }
 
-    .cancelVoiceButton {
-      border: 0;
-      background: transparent;
+    .cancelVoiceButton,
+    .stopVoiceButton {
+      min-height: 38px;
+      padding: 0 12px;
+      border: 1px solid currentColor;
+      border-radius: 999px;
+      background: rgba(255,255,255,.04);
       color: #ff7777;
       font-weight: 900;
       cursor: pointer;
+      touch-action: manipulation;
+    }
+
+    .stopVoiceButton {
+      margin-left: auto;
+      border-color: var(--green);
+      background: var(--green);
+      color: #061008;
     }
 
 
@@ -3054,7 +3121,16 @@
 
         padding:
           7px
-          6px;
+          max(6px, env(safe-area-inset-right))
+          max(7px, env(safe-area-inset-bottom))
+          max(6px, env(safe-area-inset-left));
+
+        align-items: flex-end;
+      }
+
+      .voiceRecordingStatus {
+        left: max(6px, env(safe-area-inset-left));
+        right: max(6px, env(safe-area-inset-right));
       }
 
 
@@ -3072,9 +3148,28 @@
 
 
       #messageInput {
-        min-width: 96px;
-        padding: 11px 12px;
+        width: 100%;
+        min-width: 0;
+        min-height: 44px;
+        max-height: 132px;
+        padding: 11px 7px;
         font-size: 16px;
+        line-height: 1.35;
+      }
+
+
+      .vobixMessageField {
+        width: auto;
+        min-width: 0;
+        min-height: 52px;
+        padding: 4px 3px;
+      }
+
+
+      .vobixMessageField .vobixComposerTool {
+        width: 38px;
+        height: 44px;
+        min-width: 38px;
       }
 
 
@@ -3448,47 +3543,50 @@
 
       <button id="viewOnceToggle" class="vobixComposerTool viewOnceToggle" type="button" aria-label="Activar una sola vista" aria-pressed="false" title="Una sola vista">①</button>
 
-      <button
-        id="emojiButton"
-        class="vobixComposerTool"
-        type="button"
-        aria-label="Emojis"
-        title="Emojis"
-      >😊</button>
-
-      <button
-        id="documentButton"
-        class="vobixComposerTool"
-        type="button"
-        aria-label="Adjuntar documento"
-        title="Adjuntar documento"
-      >📎</button>
-
-      <button
-        id="cameraButton"
-        class="vobixComposerTool"
-        type="button"
-        aria-label="Cámara"
-        title="Cámara"
-      >📷</button>
-
       <div id="emojiTray" class="vobixEmojiTray" aria-label="Emojis"></div>
 
-      <textarea
-        id="messageInput"
-        rows="1"
-        maxlength="4000"
-        placeholder="Escribe un mensaje…"
-        aria-label="Mensaje"
-        autocomplete="off"
-      ></textarea>
+      <div class="vobixMessageField">
+        <button
+          id="emojiButton"
+          class="vobixComposerTool"
+          type="button"
+          aria-label="Emojis"
+          title="Emojis"
+        >😊</button>
 
-      <div id="messageCharacterCounter" class="messageCharacterCounter">0/4000</div>
+        <textarea
+          id="messageInput"
+          rows="1"
+          maxlength="4000"
+          placeholder="Mensaje"
+          aria-label="Mensaje"
+          autocomplete="off"
+        ></textarea>
+
+        <div id="messageCharacterCounter" class="messageCharacterCounter">0/4000</div>
+
+        <button
+          id="documentButton"
+          class="vobixComposerTool"
+          type="button"
+          aria-label="Adjuntar documento"
+          title="Adjuntar documento"
+        >📎</button>
+
+        <button
+          id="cameraButton"
+          class="vobixComposerTool"
+          type="button"
+          aria-label="Cámara"
+          title="Cámara"
+        >📷</button>
+      </div>
 
 
       <div id="voiceRecordingStatus" class="voiceRecordingStatus" aria-live="polite">
         <span>●</span>
         <span id="voiceRecordingTime">00:00</span>
+        <button id="stopVoiceButton" class="stopVoiceButton" type="button">Detener y enviar</button>
         <button id="cancelVoiceButton" class="cancelVoiceButton" type="button">Cancelar</button>
       </div>
 
@@ -3708,7 +3806,7 @@
         <button id="seniorMessagesButton" class="seniorAction" type="button"><span class="seniorActionIcon">💬</span><span>Mensajes</span></button>
         <button id="seniorHelpButton" class="seniorAction emergency" type="button"><span class="seniorActionIcon">🆘</span><span>Ayuda / Emergencia</span></button>
       </div>
-      <button id="seniorExitButton" class="seniorExit" type="button">Mantén pulsado 3 segundos para salir del Modo Fácil</button>
+      <button id="seniorExitButton" class="seniorExit" type="button">Desactivar Modo Senior</button>
     </div>
   </main>
 
@@ -4548,6 +4646,10 @@
 
       receiptRetryTimer: null,
 
+      receiptRetryAttempt: 0,
+
+      receiptAcks: new Map(),
+
       recentIncomingMessages: new Map(),
 
       messagesLoadSequence: 0,
@@ -4628,6 +4730,9 @@
 
       cancelVoiceButton:
         $('cancelVoiceButton'),
+
+      stopVoiceButton:
+        $('stopVoiceButton'),
 
       sendButton:
         $('sendButton'),
@@ -6220,11 +6325,41 @@
       input.style.height =
         Math.min(
           input.scrollHeight,
-          120
+          132
         ) +
         'px';
 
     }
+
+
+    /* =====================================================
+       CAPA 137 · TECLADO MÓVIL ADAPTATIVO
+
+       Mantiene el compositor visible y ancho cuando el
+       teclado cambia el área útil en Android o iPhone.
+       ===================================================== */
+
+    function syncMobileVisualViewport() {
+      const viewport = window.visualViewport;
+      const height = Math.round(viewport?.height || window.innerHeight || 0);
+      const offsetTop = Math.round(viewport?.offsetTop || 0);
+
+      if (height > 0) {
+        document.documentElement.style.setProperty('--vobix-viewport-height', `${height}px`);
+      }
+
+      document.documentElement.style.setProperty('--vobix-viewport-top', `${offsetTop}px`);
+
+      // El navegador ya desplaza el campo enfocado. Forzarlo además con
+      // scrollIntoView elevaba demasiado el compositor en algunos Xiaomi.
+    }
+
+    syncMobileVisualViewport();
+    window.visualViewport?.addEventListener('resize', syncMobileVisualViewport);
+    window.visualViewport?.addEventListener('scroll', syncMobileVisualViewport);
+    window.addEventListener('orientationchange', () => {
+      setTimeout(syncMobileVisualViewport, 120);
+    });
 
 
     /* =====================================================
@@ -8802,12 +8937,13 @@
       let session = null;
       let pausedNoticeShown = false;
 
-      while (!session) {
+      for (let attempt = 0; attempt < 3 && !session; attempt += 1) {
         await waitForUploadConnection(signal);
         try {
           session = await api('/api/chat/files/resumable/start', {
             method: 'POST',
             signal,
+            timeoutMs: 30000,
             body: JSON.stringify({
               ...metadata,
               clientUploadId,
@@ -8817,12 +8953,13 @@
             })
           });
         } catch (error) {
-          if (error?.name === 'AbortError' || (navigator.onLine !== false && error?.status)) throw error;
-          notifyUser('Subida pausada; continuará al recuperar señal');
-          pausedNoticeShown = true;
-          await waitForUploadConnection(signal);
+          if (error?.name === 'AbortError' || error?.status || attempt === 2) throw error;
+          notifyUser('Reintentando la subida…');
+          await new Promise(resolve => window.setTimeout(resolve, 700 * (attempt + 1)));
         }
       }
+
+      if (!session) throw new Error('No se pudo iniciar la subida');
 
       const chunkSize = Number(session.chunkSize) || 1024 * 1024;
       const received = new Set(Array.isArray(session.received) ? session.received.map(Number) : []);
@@ -8832,12 +8969,13 @@
         if (received.has(index)) continue;
         const chunk = file.slice(index * chunkSize, Math.min(file.size, (index + 1) * chunkSize));
         let delivered = false;
-        while (!delivered) {
+        for (let attempt = 0; attempt < 3 && !delivered; attempt += 1) {
           await waitForUploadConnection(signal);
           try {
             await api(`/api/chat/files/resumable/${encodeURIComponent(session.uploadId)}/${index}`, {
               method: 'PUT',
               signal,
+              timeoutMs: 30000,
               headers: { 'Content-Type': 'application/octet-stream' },
               body: chunk
             });
@@ -8847,17 +8985,19 @@
               elements.attachmentUploadText.textContent = `Enviando ${file.name || 'archivo'} · ${percentage}%`;
             }
           } catch (error) {
-            if (error?.name === 'AbortError' || (navigator.onLine !== false && error?.status)) throw error;
-            notifyUser('Subida pausada; continuará al recuperar señal');
+            if (error?.name === 'AbortError' || error?.status || attempt === 2) throw error;
             pausedNoticeShown = true;
-            await waitForUploadConnection(signal);
+            notifyUser('Reintentando el fragmento…');
+            await new Promise(resolve => window.setTimeout(resolve, 700 * (attempt + 1)));
           }
         }
+        if (!delivered) throw new Error('No se pudo completar un fragmento');
       }
 
       const completed = await api(`/api/chat/files/resumable/${encodeURIComponent(session.uploadId)}/complete`, {
         method: 'POST',
         signal,
+        timeoutMs: 30000,
         body: JSON.stringify({})
       });
       if (pausedNoticeShown) notifyUser('Conexión recuperada: subida completada');
@@ -8958,7 +9098,8 @@
           : await api('/api/chat/files', {
               method: 'POST',
               body: form,
-              signal: uploadController.signal
+              signal: uploadController.signal,
+              timeoutMs: 45000
             });
 
         if (data?.message) {
@@ -9625,7 +9766,6 @@
       SENIOR_TUTORIAL_DONE_KEY,
       SENIOR_UNKNOWN_CALLS_KEY
     ];
-    let seniorExitTimer = null;
     let seniorRecognition = null;
     let seniorDictationBase = '';
     let seniorTutorialStep = 0;
@@ -10293,30 +10433,20 @@
       if (!active) notifyUser('El audio se activará cuando conecte la llamada');
     });
 
-    function beginSeniorExitHold(event) {
+    function deactivateSeniorMode(event) {
       event?.preventDefault();
-      window.clearTimeout(seniorExitTimer);
-      if (elements.seniorExitButton) elements.seniorExitButton.textContent = 'Mantén pulsado…';
-      seniorExitTimer = window.setTimeout(() => {
-        applySeniorMode(false);
-        if (elements.seniorExitButton) elements.seniorExitButton.textContent = 'Mantén pulsado 3 segundos para salir del Modo Fácil';
-        notifyUser('Modo Fácil desactivado; tus configuraciones siguen guardadas');
-      }, 3000);
+      event?.stopPropagation();
+      applySeniorMode(false);
+      notifyUser('Modo Senior desactivado; tus chats y configuraciones siguen guardados');
     }
 
-    function cancelSeniorExitHold() {
-      window.clearTimeout(seniorExitTimer);
-      seniorExitTimer = null;
-      if (elements.seniorExitButton) elements.seniorExitButton.textContent = 'Mantén pulsado 3 segundos para salir del Modo Fácil';
-    }
-
-    ['pointerdown', 'keydown'].forEach(type => elements.seniorExitButton?.addEventListener(type, event => {
-      if (type === 'keydown' && (!['Enter', ' '].includes(event.key) || event.repeat)) return;
-      beginSeniorExitHold(event);
-    }));
-    ['pointerup', 'pointercancel', 'pointerleave', 'keyup', 'blur'].forEach(type =>
-      elements.seniorExitButton?.addEventListener(type, cancelSeniorExitHold)
-    );
+    elements.seniorExitButton?.addEventListener('pointerdown', event => {
+      if (event.pointerType === 'mouse' && event.button !== 0) return;
+      deactivateSeniorMode(event);
+    });
+    elements.seniorExitButton?.addEventListener('click', event => {
+      if (event.detail === 0) deactivateSeniorMode(event);
+    });
 
     let storedSeniorMode = false;
     try { storedSeniorMode = localStorage.getItem(SENIOR_MODE_STORAGE_KEY) === 'on'; } catch (_) {}
@@ -11874,16 +12004,48 @@
 
     function scheduleReceiptRetry() {
       if (app.receiptRetryTimer) return;
+      const delay = Math.min(30000, 5000 * (2 ** app.receiptRetryAttempt));
+      app.receiptRetryAttempt = Math.min(app.receiptRetryAttempt + 1, 3);
       app.receiptRetryTimer = setTimeout(() => {
         app.receiptRetryTimer = null;
         syncConversationReceipts(conversationId(app.conversation));
-      }, 5000);
+      }, delay);
     }
 
     function emitMessageReceipt(type, payload) {
       if (!app.socket?.connected || !['delivered', 'read'].includes(type)) return;
+      const receiptKey = `${type}:${payload?.messageId || ''}`;
+      if (app.receiptAcks.get(receiptKey)) return;
       app.socket.timeout(5000).emit(`chat:${type}`, payload, (error, response) => {
-        if (error || !response?.ok) scheduleReceiptRetry();
+        if (error || !response?.ok) {
+          scheduleReceiptRetry();
+          return;
+        }
+        app.receiptAcks.set(receiptKey, true);
+        app.receiptRetryAttempt = 0;
+      });
+    }
+
+    function emitReceiptBatch(type, conversationIdValue, messageIds) {
+      if (!app.socket?.connected || !messageIds.length) return Promise.resolve(false);
+      return new Promise(resolve => {
+        app.socket.timeout(8000).emit('chat:receipts', {
+          type,
+          conversationId: conversationIdValue,
+          messageIds
+        }, (error, response) => {
+          if (error || !response?.ok) {
+            scheduleReceiptRetry();
+            resolve(false);
+            return;
+          }
+          messageIds.forEach(messageId => {
+            app.receiptAcks.set(`${type}:${messageId}`, true);
+            if (type === 'read') app.receiptAcks.set(`delivered:${messageId}`, true);
+          });
+          app.receiptRetryAttempt = 0;
+          resolve(true);
+        });
       });
     }
 
@@ -11896,15 +12058,13 @@
         const data = await api(
           `/api/chat/conversations/${encodeURIComponent(id)}/messages?limit=100`
         );
-        extractMessages(data).forEach(message => {
-          if (messageIsMine(message)) return;
-          const messageId = message.id || message._id || message.messageId || message.message_id;
-          if (!messageId) return;
-          emitMessageReceipt('delivered', { conversationId: id, messageId });
-          if (app.readReceipts && !document.hidden) {
-            emitMessageReceipt('read', { conversationId: id, messageId });
-          }
-        });
+        const type = app.readReceipts && !document.hidden ? 'read' : 'delivered';
+        const messageIds = extractMessages(data)
+          .filter(message => !messageIsMine(message))
+          .map(message => message.id || message._id || message.messageId || message.message_id)
+          .filter(messageId => messageId && !app.receiptAcks.get(`${type}:${messageId}`))
+          .slice(0, 100);
+        await emitReceiptBatch(type, id, messageIds);
       } catch (error) {
         console.warn('[VOBIXCHAT RECEIPT SYNC]', error);
       } finally {
@@ -13050,11 +13210,23 @@
     }
 
 
-    elements.cancelVoiceButton?.addEventListener('click', event => {
-      event.preventDefault();
-      event.stopPropagation();
-      cancelVoiceRecording();
-    });
+    function bindVoiceControl(button, action) {
+      if (!button) return;
+      button.addEventListener('pointerdown', event => {
+        if (event.pointerType === 'mouse' && event.button !== 0) return;
+        event.preventDefault();
+        event.stopPropagation();
+        action();
+      });
+      button.addEventListener('click', event => {
+        event.preventDefault();
+        event.stopPropagation();
+        if (event.detail === 0) action();
+      });
+    }
+
+    bindVoiceControl(elements.cancelVoiceButton, cancelVoiceRecording);
+    bindVoiceControl(elements.stopVoiceButton, stopVoiceRecording);
 
 
     function toggleVoiceRecording() {
@@ -13077,24 +13249,7 @@
     }
 
 
-    if (
-      elements.voiceButton
-    ) {
-
-      elements
-        .voiceButton
-        .addEventListener(
-          'click',
-          event => {
-
-            event.preventDefault();
-
-            toggleVoiceRecording();
-
-          }
-        );
-
-    }
+    bindVoiceControl(elements.voiceButton, toggleVoiceRecording);
 
 
     /* =====================================================
@@ -13187,7 +13342,11 @@
         let lastError;
         for (let attempt = 0; attempt < 3; attempt += 1) {
           try {
-            uploaded = await api('/api/chat/files', { method: 'POST', body: form });
+            uploaded = await api('/api/chat/files', {
+              method: 'POST',
+              body: form,
+              timeoutMs: 45000
+            });
             break;
           } catch (error) {
             lastError = error;
@@ -14722,7 +14881,7 @@
        /api/chat/conversations/:id/messages
 
        Y COMO RESPALDO:
-       /api/chat/messages?conversationId=:id
+       /api/chat/messages/:id
        ===================================================== */
 
     async function loadMessages(
@@ -14768,12 +14927,22 @@
           firstError
         );
 
+        if (Number(firstError?.status) !== 404) {
+          if (elements.messages) {
+            elements.messages.innerHTML =
+              '<div class="vobixStatusMessage error">' +
+              escapeHtml('No se pudieron cargar los mensajes: ' + firstError.message) +
+              '</div>';
+          }
+          return;
+        }
+
 
         try {
 
           data =
             await api(
-              '/api/chat/messages?conversationId=' +
+              '/api/chat/messages/' +
               encodeURIComponent(
                 id
               )
@@ -15821,7 +15990,7 @@
        CONFIGURACIÓN WEBRTC
        ===================================================== */
 
-    const RTC_CONFIGURATION = {
+    let RTC_CONFIGURATION = {
 
       iceServers: [
 
@@ -15838,6 +16007,25 @@
       ]
 
     };
+
+    let rtcConfigurationPromise = null;
+
+    function loadRtcConfiguration() {
+      if (rtcConfigurationPromise) return rtcConfigurationPromise;
+      rtcConfigurationPromise = api('/api/rtc-config', { timeoutMs: 10000 })
+        .then(data => {
+          if (Array.isArray(data?.iceServers) && data.iceServers.length) {
+            RTC_CONFIGURATION = { iceServers: data.iceServers };
+          }
+          return RTC_CONFIGURATION;
+        })
+        .catch(error => {
+          console.warn('[VOBIXCHAT RTC CONFIG]', error);
+          rtcConfigurationPromise = null;
+          return RTC_CONFIGURATION;
+        });
+      return rtcConfigurationPromise;
+    }
 
 
     /* =====================================================
@@ -16877,6 +17065,8 @@
 
       try {
 
+        await loadRtcConfiguration();
+
         app.callType =
           type;
 
@@ -16918,7 +17108,7 @@
 
 
         const outgoingCallId = app.callId;
-        app.socket.emit(
+        app.socket.timeout(10000).emit(
           'call:offer',
           {
 
@@ -16936,9 +17126,10 @@
               pc.localDescription
 
           },
-          response => {
-            if (response?.ok || String(app.callId || '') !== String(outgoingCallId || '')) return;
-            notifyUser(response?.msg || 'No se pudo iniciar la llamada');
+          (error, response) => {
+            if (!error && response?.ok) return;
+            if (String(app.callId || '') !== String(outgoingCallId || '')) return;
+            notifyUser(error ? 'El servidor no respondió a la llamada' : (response?.msg || 'No se pudo iniciar la llamada'));
             endLocalCall(false);
           }
         );
@@ -17095,6 +17286,7 @@
       try {
         app.callId = payload.callId || createCallId();
         app.callType = payload.type || 'audio';
+        await loadRtcConfiguration();
         await prepareCallMedia(app.callType);
         showCallScreen(app.callType);
 
@@ -17501,6 +17693,7 @@
         if (!result?.ok) throw new Error(result?.msg || 'La llamada ya no está disponible');
         app.callId = pending.callId;
         app.callType = pending.type;
+        await loadRtcConfiguration();
         await prepareCallMedia(app.callType);
         showCallScreen(app.callType);
         const pc = createPeerConnection();

@@ -113,7 +113,10 @@ const VOBIX_LAYERS = Object.freeze([
   ,{ id:'133', name:'Reingreso Seguro a Llamadas Grupales', status:'en_validacion', scope:'Los miembros de una llamada grupal conservan su autorización mientras la sesión siga activa; pueden salir, reconectar o volver con una conexión multimedia nueva, sin duplicados y sin reingreso después de terminar o ser expulsados.' }
   ,{ id:'134', name:'Mensajería Móvil Utilizable y Envío Inmediato', status:'en_validacion', scope:'El compositor mantiene un campo horizontal legible en móviles estrechos y procesa mensajes y llamadas desde el primer contacto para resistir reajustes del teclado Android.' }
   ,{ id:'135', name:'Menú Burbuja Desplazable', status:'en_validacion', scope:'El menú de opciones se mueve verticalmente con dedo, ratón o teclado, queda limitado a la pantalla y recuerda su posición.' }
-  ,{ id:'136', name:'Conversación Activa Recuperable', status:'en_validacion', scope:'Al abrir o recargar, restaura el último destinatario válido —o el chat más reciente— antes de enviar mensajes, archivos, notas de voz o iniciar llamadas.' }
+,{ id:'136', name:'Conversación Activa Recuperable', status:'en_validacion', scope:'Al abrir o recargar, restaura el último destinatario válido —o el chat más reciente— antes de enviar mensajes, archivos, notas de voz o iniciar llamadas.' }
+,{ id:'137', name:'Compositor Móvil Adaptativo', status:'en_validacion', scope:'Barra de mensaje ancha tipo WhatsApp y ajuste al teclado visual en Android y iPhone, conservando emoji, documentos, cámara, voz y envío.' }
+,{ id:'138', name:'Comunicación Móvil sin Bloqueos', status:'en_validacion', scope:'Reduce la presión sobre la base de datos, agrupa recibos, acota subidas, carga TURN y muestra controles claros para detener, enviar o cancelar notas de voz.' }
+,{ id:'139', name:'Salida Directa de Modo Senior', status:'en_validacion', scope:'Permite desactivar Modo Senior con un botón visible de una sola pulsación, sin temporizador ni pulsación prolongada.' }
 ]);
 
 function getVobixLayers() {

@@ -3777,6 +3777,78 @@ io.on(
       return true;
     }
 
+    async function saveMessageReceiptBatch(payload = {}) {
+      const conversationId = String(payload.conversationId || payload.conversation_id || '').trim();
+      const receiptType = String(payload.type || '').trim().toLowerCase();
+      const messageIds = [...new Set(
+        (Array.isArray(payload.messageIds) ? payload.messageIds : [])
+          .map(value => String(value || '').trim())
+          .filter(value => receiptUuidPattern.test(value))
+      )].slice(0, 100);
+
+      const now = Date.now();
+      if (now - receiptRate.startedAt >= 60000) {
+        receiptRate.startedAt = now;
+        receiptRate.count = 0;
+      }
+      receiptRate.count += 1;
+
+      if (receiptRate.count > 240) return [];
+      if (!receiptUuidPattern.test(conversationId) || !messageIds.length) return [];
+      if (!['delivered', 'read'].includes(receiptType)) return [];
+
+      const isRead = receiptType === 'read';
+      const result = await database.query(
+        `WITH allowed_messages AS (
+           SELECT m.id AS message_id, m.sender_user_id
+           FROM messages m
+           WHERE m.conversation_id=$1
+             AND m.id=ANY($3::uuid[])
+             AND m.sender_user_id<>$2
+             AND EXISTS (
+               SELECT 1 FROM conversation_participants cp
+               WHERE cp.conversation_id=$1 AND cp.user_id=$2
+             )
+         ), saved AS (
+           INSERT INTO message_receipts(message_id,user_id,delivered_at,read_at,created_at)
+           SELECT message_id,$2,NOW(),CASE WHEN $4 THEN NOW() ELSE NULL END,NOW()
+           FROM allowed_messages
+           ON CONFLICT(message_id,user_id) DO UPDATE SET
+             delivered_at=COALESCE(message_receipts.delivered_at,NOW()),
+             read_at=CASE WHEN $4 THEN COALESCE(message_receipts.read_at,NOW()) ELSE message_receipts.read_at END
+           RETURNING message_id,delivered_at,read_at
+         )
+         SELECT saved.message_id,saved.delivered_at,saved.read_at,allowed_messages.sender_user_id
+         FROM saved
+         JOIN allowed_messages USING(message_id)`,
+        [conversationId, userId, messageIds, isRead]
+      );
+
+      for (const row of result.rows) {
+        const eventPayload = {
+          conversationId,
+          messageId: row.message_id,
+          userId,
+          deliveredAt: row.delivered_at || null,
+          readAt: row.read_at || null
+        };
+        io.to(userRoom(row.sender_user_id)).emit(`chat:${receiptType}`, eventPayload);
+        io.to(userRoom(row.sender_user_id)).emit(`message:${receiptType}`, eventPayload);
+      }
+
+      return result.rows;
+    }
+
+    socket.on('chat:receipts', async (payload, callback) => {
+      try {
+        const saved = await saveMessageReceiptBatch(payload);
+        if (typeof callback === 'function') callback({ ok:true, saved:saved.length });
+      } catch (error) {
+        console.error('VOBIXCHAT BATCH RECEIPT ERROR:', error.message);
+        if (typeof callback === 'function') callback({ ok:false });
+      }
+    });
+
     socket.on('chat:delivered', async (payload, callback) => {
       try {
         const saved = await saveMessageReceipt(payload, 'delivered');
