@@ -648,6 +648,9 @@ window.addEventListener('vobix:native-media-permission',event=>{
 $('requestNotificationPermission').onclick=async()=>{
  const button=$('requestNotificationPermission');button.disabled=true;$('permissionHelp').textContent='';
  try{
+  if(window.VobixNative?.requestNotificationPermission&&window.VobixNative?.hasNotificationPermission?.()!==true){
+   window.VobixNative.requestNotificationPermission();
+  }
   if(!('Notification' in window))throw new Error('Este dispositivo no admite notificaciones web.');
   const permission=Notification.permission==='default'?await Notification.requestPermission():Notification.permission;
   if(permission==='granted'){
@@ -659,6 +662,13 @@ $('requestNotificationPermission').onclick=async()=>{
  }catch(error){$('permissionHelp').textContent=error?.message||'No se pudieron activar las notificaciones.'}
  finally{button.disabled=false;refreshPermissionStatuses()}
 };
+window.addEventListener('vobix:native-notification-permission',event=>{
+ $('notificationPermissionStatus').textContent=event.detail?.granted?'Activado':'Bloqueado';
+ $('permissionHelp').textContent=event.detail?.granted
+  ?'Notificaciones Android activadas. Ya puedes recibir llamadas con la aplicación cerrada.'
+  :'Las notificaciones siguen bloqueadas. Pulsa Abrir ajustes de permisos.';
+ if(event.detail?.granted)window.VobixPush?.register?.();
+});
 
 const settings=$('settings');
 const showSettingsView=id=>{

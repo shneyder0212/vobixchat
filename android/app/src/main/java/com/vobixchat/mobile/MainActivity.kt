@@ -36,6 +36,7 @@ class MainActivity : ComponentActivity() {
     private var cameraOutputUri: Uri? = null
     private val mediaPermissionRequestCode = 91
     private val cameraFilePermissionRequestCode = 92
+    private val notificationPermissionRequestCode = 93
     private val fileChooserLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         val callback = filePathCallback ?: return@registerForActivityResult
         val selected = if (result.resultCode == RESULT_OK) {
@@ -128,6 +129,10 @@ class MainActivity : ComponentActivity() {
             }
             return
         }
+        if (requestCode == notificationPermissionRequestCode) {
+            dispatchNotificationPermissionResult(hasNotificationPermission())
+            return
+        }
         if (requestCode != mediaPermissionRequestCode) return
         val request = pendingWebPermissionRequest
         val granted = request != null && hasPermissionsForResources(request.resources)
@@ -163,6 +168,24 @@ class MainActivity : ComponentActivity() {
 
     private fun hasMediaPermissions(): Boolean =
         hasPermission(Manifest.permission.CAMERA) && hasPermission(Manifest.permission.RECORD_AUDIO)
+
+    private fun hasNotificationPermission(): Boolean =
+        Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
+            hasPermission(Manifest.permission.POST_NOTIFICATIONS)
+
+    private fun requestNativeNotificationPermission() {
+        if (hasNotificationPermission()) {
+            dispatchNotificationPermissionResult(true)
+            return
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            ActivityCompat.requestPermissions(
+                this,
+                arrayOf(Manifest.permission.POST_NOTIFICATIONS),
+                notificationPermissionRequestCode
+            )
+        }
+    }
 
     private fun hasPermission(permission: String): Boolean =
         ContextCompat.checkSelfPermission(this, permission) == PackageManager.PERMISSION_GRANTED
@@ -265,12 +288,23 @@ class MainActivity : ComponentActivity() {
         )
     }
 
+    private fun dispatchNotificationPermissionResult(granted: Boolean) {
+        if (!::webView.isInitialized) return
+        webView.evaluateJavascript(
+            "window.dispatchEvent(new CustomEvent('vobix:native-notification-permission',{detail:{granted:${if (granted) "true" else "false"}}}));",
+            null
+        )
+    }
+
     inner class NativeBridge {
         @JavascriptInterface
         fun getFcmToken(): String = getSharedPreferences("vobix", MODE_PRIVATE).getString("fcm_token", "") ?: ""
 
         @JavascriptInterface
         fun requestMediaPermissions() = runOnUiThread { requestNativeMediaPermissions() }
+
+        @JavascriptInterface
+        fun requestNotificationPermission() = runOnUiThread { requestNativeNotificationPermission() }
 
         @JavascriptInterface
         fun openAppPermissionSettings() = runOnUiThread {
@@ -281,5 +315,8 @@ class MainActivity : ComponentActivity() {
 
         @JavascriptInterface
         fun hasMediaPermissions(): Boolean = this@MainActivity.hasMediaPermissions()
+
+        @JavascriptInterface
+        fun hasNotificationPermission(): Boolean = this@MainActivity.hasNotificationPermission()
     }
 }

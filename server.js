@@ -2187,7 +2187,20 @@ app.get(
             true,
 
           receiptReconnectSync:
-            true
+            true,
+
+          turnRelayConfigured:
+            Boolean(
+              String(process.env.TURN_URL || '').trim() &&
+              process.env.TURN_USERNAME &&
+              process.env.TURN_CREDENTIAL
+            ),
+
+          androidCallPush:
+            firebasePushEnabled,
+
+          mediaStorageConfigured:
+            r2Storage.isConfigured()
         },
 
         uptimeSeconds:
@@ -2245,7 +2258,20 @@ app.get(
               true,
 
             receiptReconnectSync:
-              true
+              true,
+
+            turnRelayConfigured:
+              Boolean(
+                String(process.env.TURN_URL || '').trim() &&
+                process.env.TURN_USERNAME &&
+                process.env.TURN_CREDENTIAL
+              ),
+
+            androidCallPush:
+              firebasePushEnabled,
+
+            mediaStorageConfigured:
+              r2Storage.isConfigured()
           }
 
         });
