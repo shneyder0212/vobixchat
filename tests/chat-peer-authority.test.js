@@ -23,3 +23,10 @@ test('un nombre obsoleto de la URL no sustituye al participante real', () => {
   assert.match(launch, /String\(userId\(authoritativePeer\) \|\| ''\) === requestedUserId/);
   assert.match(launch, /selectConversation\(requestedConversation, authoritativePeer \|\| requestedPeer\)/);
 });
+
+test('una conversación ya abierta vuelve a tomar el nombre real del servidor', () => {
+  assert.match(chat, /const refreshedActiveConversation = activeId/);
+  assert.match(chat, /app\.peer = refreshedPeer/);
+  assert.match(chat, /topbarUserName\.textContent = userName\(refreshedPeer\)/);
+  assert.match(chat, /\[getConversationPeer\(conversation\), peer\]/);
+});
