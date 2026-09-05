@@ -1127,7 +1127,9 @@
 
       color: white;
 
-      line-height: 1.35;
+      font-family: inherit;
+      font-size: 16px;
+      line-height: 1.3;
 
       outline: none;
     }
@@ -1135,7 +1137,7 @@
     .vobixMessageField #messageInput {
       min-height: 42px;
       margin: 0;
-      padding: 10px 8px;
+      padding: 11px 8px 8px;
       border: 0;
       border-radius: 0;
       background: transparent;
@@ -1162,6 +1164,43 @@
       border: 0;
       box-shadow: none;
     }
+
+    .mediaPermissionPanel {
+      position: fixed;
+      inset: 0;
+      z-index: 9200;
+      display: none;
+      place-items: center;
+      padding: 20px;
+      background: rgba(0,0,0,.78);
+      backdrop-filter: blur(12px);
+    }
+    .mediaPermissionPanel.open { display: grid; }
+    .mediaPermissionCard {
+      width: min(100%, 390px);
+      padding: 26px 22px;
+      border: 1px solid rgba(104,255,114,.28);
+      border-radius: 25px;
+      background: #0b180e;
+      color: #fff;
+      text-align: center;
+      box-shadow: 0 24px 80px rgba(0,0,0,.62);
+    }
+    .mediaPermissionIcon { font-size: 48px; margin-bottom: 10px; }
+    .mediaPermissionCard h2 { margin: 0 0 9px; font-size: 23px; }
+    .mediaPermissionCard p { margin: 0 0 18px; color: rgba(255,255,255,.76); line-height: 1.45; }
+    .mediaPermissionStatus { min-height: 22px; color: #ffb1b1 !important; font-weight: 800; }
+    .mediaPermissionActions { display: grid; gap: 10px; }
+    .mediaPermissionPrimary,
+    .mediaPermissionLater {
+      min-height: 48px;
+      border-radius: 999px;
+      font: inherit;
+      font-weight: 900;
+      cursor: pointer;
+    }
+    .mediaPermissionPrimary { border: 0; background: var(--green); color: #061008; }
+    .mediaPermissionLater { border: 1px solid rgba(255,255,255,.18); background: transparent; color: #fff; }
 
 
     /* =====================================================
@@ -2519,7 +2558,8 @@
     }
 
     .chatDocumentLink {
-      min-width: 220px;
+      width: min(78vw, 330px);
+      min-width: 0;
       display: flex;
       align-items: center;
       gap: 12px;
@@ -2530,10 +2570,44 @@
       color: white;
       text-decoration: none;
       font-weight: 850;
-      overflow-wrap: anywhere;
+      overflow: hidden;
     }
 
     .chatDocumentInfo { display: grid; gap: 3px; min-width: 0; }
+    .chatDocumentName {
+      min-width: 0;
+      overflow: hidden;
+      display: -webkit-box;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 2;
+      line-clamp: 2;
+      overflow-wrap: break-word;
+      word-break: normal;
+      line-height: 1.25;
+    }
+    .chatDocumentDetails {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .chatDocumentTypeBadge {
+      display: inline-flex;
+      align-items: center;
+      width: max-content;
+      padding: 2px 7px;
+      border-radius: 5px;
+      background: #e53935;
+      color: #fff;
+      font-size: 10px;
+      font-weight: 1000;
+      letter-spacing: .04em;
+    }
+    .chatDocumentTypeBadge.word { background: #2b6cb0; }
+    .chatDocumentTypeBadge.excel { background: #18864b; }
+    .chatDocumentTypeBadge.powerpoint { background: #c34a2c; }
+    .chatDocumentTypeBadge.compressed { background: #805ad5; }
+    .chatDocumentTypeBadge.text { background: #586574; }
     .chatAttachmentMeta {
       display: block;
       margin-top: 5px;
@@ -3639,6 +3713,19 @@
        INPUT PARA FOTOS DEL CHAT
        =================================================== -->
 
+  <div id="mediaPermissionPanel" class="mediaPermissionPanel" role="dialog" aria-modal="true" aria-labelledby="mediaPermissionTitle" aria-hidden="true">
+    <div class="mediaPermissionCard">
+      <div class="mediaPermissionIcon" aria-hidden="true">📷 🎙️</div>
+      <h2 id="mediaPermissionTitle">Activa cámara y micrófono</h2>
+      <p>Permítelos una sola vez para hacer fotos, enviar notas de voz y realizar llamadas y videollamadas.</p>
+      <p id="mediaPermissionStatus" class="mediaPermissionStatus" role="status" aria-live="polite"></p>
+      <div class="mediaPermissionActions">
+        <button id="activateMediaPermissionsButton" class="mediaPermissionPrimary" type="button">Activar cámara y micrófono</button>
+        <button id="dismissMediaPermissionsButton" class="mediaPermissionLater" type="button">Ahora no</button>
+      </div>
+    </div>
+  </div>
+
   <input
     id="chatPhotoInput"
     type="file"
@@ -3650,7 +3737,7 @@
   <input
     id="chatCameraInput"
     type="file"
-    accept="image/*,video/*"
+    accept="image/*"
     capture="environment"
     hidden
   >
@@ -4748,6 +4835,18 @@
 
       cameraButton:
         $('cameraButton'),
+
+      mediaPermissionPanel:
+        $('mediaPermissionPanel'),
+
+      mediaPermissionStatus:
+        $('mediaPermissionStatus'),
+
+      activateMediaPermissionsButton:
+        $('activateMediaPermissionsButton'),
+
+      dismissMediaPermissionsButton:
+        $('dismissMediaPermissionsButton'),
 
       chatCameraInput:
         $('chatCameraInput'),
@@ -8885,15 +8984,6 @@
       return '';
     }
 
-    function confirmAttachmentSend(file, kind) {
-      if (!file) return false;
-      const label = kind === 'image' ? 'foto' : (kind === 'video' ? 'vídeo' : 'documento');
-      const onceNotice = app.viewOnceMode && kind !== 'document' ? '\nModo: una sola vista' : '';
-      return window.confirm(
-        `¿Enviar este ${label}?\n\nNombre: ${file.name || 'Sin nombre'}\nTamaño: ${readableFileSize(file.size)}\nTipo: ${file.type || 'desconocido'}${onceNotice}`
-      );
-    }
-
     function attachmentFingerprint(file) {
       const cid = conversationId(app.conversation) || 'sin-chat';
       return `${cid}|${file?.name || ''}|${Number(file?.size || 0)}|${Number(file?.lastModified || 0)}`;
@@ -9004,7 +9094,7 @@
       return completed;
     }
 
-    async function uploadChatAttachment(file, kind) {
+    async function uploadChatAttachment(file, kind, options = {}) {
       if (!file || !app.conversation) {
         notifyUser('Abre primero un chat 1×1');
         return;
@@ -9046,11 +9136,6 @@
         return;
       }
 
-      if (!confirmAttachmentSend(file, kind)) {
-        notifyUser('Envío cancelado');
-        return;
-      }
-
       if (!confirmRecentAttachment(file)) {
         notifyUser('Archivo duplicado cancelado');
         return;
@@ -9069,7 +9154,10 @@
       form.append('conversationId', cid);
       form.append('clientMessageId', clientMessageId);
       form.append('type', kind);
-      form.append('originSource', 'vobix-upload');
+      const originSource = options.originSource === 'vobix-camera'
+        ? 'vobix-camera'
+        : 'vobix-upload';
+      form.append('originSource', originSource);
       if (isImage) {
         form.append('dataMode', app.dataMode);
         form.append('originalSize', String(file.size));
@@ -9092,7 +9180,7 @@
               conversationId: cid,
               clientMessageId,
               type: kind,
-              originSource: 'vobix-upload',
+              originSource,
               viewOnce
             }, uploadController.signal)
           : await api('/api/chat/files', {
@@ -9131,10 +9219,91 @@
     elements.chatCameraInput?.addEventListener('change', async () => {
       const file = elements.chatCameraInput.files?.[0];
       try {
-        if (file) await uploadChatAttachment(file, String(file.type || '').startsWith('video/') ? 'video' : 'image');
+        if (file) await uploadChatAttachment(file, 'image', { originSource: 'vobix-camera' });
       } finally {
         elements.chatCameraInput.value = '';
       }
+    });
+
+    const MEDIA_PERMISSION_KEY_PREFIX = 'vobix_media_permissions_v1_';
+    let mediaPermissionDismissedForSession = false;
+
+    function mediaPermissionStorageKey() {
+      const accountId = userId(app.me) || 'device';
+      return `${MEDIA_PERMISSION_KEY_PREFIX}${String(accountId).slice(0, 160)}`;
+    }
+
+    function mediaPermissionsWereActivated() {
+      try {
+        return localStorage.getItem(mediaPermissionStorageKey()) === 'granted';
+      } catch (_) {
+        return false;
+      }
+    }
+
+    function closeMediaPermissionPanel() {
+      elements.mediaPermissionPanel?.classList.remove('open');
+      elements.mediaPermissionPanel?.setAttribute('aria-hidden', 'true');
+    }
+
+    function showMediaPermissionOnboarding() {
+      if (mediaPermissionDismissedForSession || mediaPermissionsWereActivated()) return;
+      if (!navigator.mediaDevices?.getUserMedia) return;
+      if (elements.mediaPermissionStatus) elements.mediaPermissionStatus.textContent = '';
+      elements.mediaPermissionPanel?.classList.add('open');
+      elements.mediaPermissionPanel?.setAttribute('aria-hidden', 'false');
+      window.setTimeout(() => elements.activateMediaPermissionsButton?.focus(), 80);
+    }
+
+    async function activateMediaPermissions() {
+      const button = elements.activateMediaPermissionsButton;
+      if (!navigator.mediaDevices?.getUserMedia) {
+        if (elements.mediaPermissionStatus) {
+          elements.mediaPermissionStatus.textContent = 'Este navegador no permite activar cámara y micrófono.';
+        }
+        return;
+      }
+
+      let permissionStream = null;
+      if (button) {
+        button.disabled = true;
+        button.textContent = 'Esperando permiso…';
+      }
+      if (elements.mediaPermissionStatus) elements.mediaPermissionStatus.textContent = '';
+
+      try {
+        permissionStream = await navigator.mediaDevices.getUserMedia({
+          audio: { echoCancellation: true, noiseSuppression: true },
+          video: { facingMode: { ideal: 'user' } }
+        });
+        const hasMicrophone = permissionStream.getAudioTracks().length > 0;
+        const hasCamera = permissionStream.getVideoTracks().length > 0;
+        if (!hasMicrophone || !hasCamera) throw new Error('Falta cámara o micrófono');
+
+        try { localStorage.setItem(mediaPermissionStorageKey(), 'granted'); } catch (_) {}
+        closeMediaPermissionPanel();
+        notifyUser('Cámara y micrófono activados');
+      } catch (error) {
+        console.warn('[VOBIXCHAT MEDIA PERMISSIONS]', error);
+        const blocked = ['NotAllowedError', 'SecurityError'].includes(error?.name);
+        if (elements.mediaPermissionStatus) {
+          elements.mediaPermissionStatus.textContent = blocked
+            ? 'Permiso bloqueado. Actívalo en Ajustes del navegador > Cámara y Micrófono.'
+            : 'No se detectaron correctamente la cámara y el micrófono. Revisa que otra aplicación no los esté usando.';
+        }
+      } finally {
+        permissionStream?.getTracks().forEach(track => track.stop());
+        if (button) {
+          button.disabled = false;
+          button.textContent = 'Activar cámara y micrófono';
+        }
+      }
+    }
+
+    elements.activateMediaPermissionsButton?.addEventListener('click', activateMediaPermissions);
+    elements.dismissMediaPermissionsButton?.addEventListener('click', () => {
+      mediaPermissionDismissedForSession = true;
+      closeMediaPermissionPanel();
     });
 
     elements.chatDocumentInput?.addEventListener('change', async () => {
@@ -9275,12 +9444,6 @@
 
             if (file.size > 10 * 1024 * 1024) {
               notifyUser('La imagen supera 10 MB');
-              elements.chatPhotoInput.value = '';
-              return;
-            }
-
-            if (!confirmAttachmentSend(file, 'image')) {
-              notifyUser('Envío cancelado');
               elements.chatPhotoInput.value = '';
               return;
             }
@@ -11826,20 +11989,52 @@
       return meta;
     }
 
-    function confirmDocumentDownload(fileName, file, message) {
+    function documentTypeDetails(fileName, file, message) {
       const mime = String(file?.mimeType || file?.mime_type || file?.type || message?.mimeType || message?.mime_type || '').trim();
+      const extension = String(fileName).includes('.')
+        ? String(fileName).split('.').pop().toLowerCase()
+        : '';
+      const types = {
+        pdf: { label: 'PDF', icon: '📕', className: 'pdf' },
+        doc: { label: 'WORD', icon: '📘', className: 'word' },
+        docx: { label: 'WORD', icon: '📘', className: 'word' },
+        xls: { label: 'EXCEL', icon: '📗', className: 'excel' },
+        xlsx: { label: 'EXCEL', icon: '📗', className: 'excel' },
+        csv: { label: 'CSV', icon: '📗', className: 'excel' },
+        ppt: { label: 'POWERPOINT', icon: '📙', className: 'powerpoint' },
+        pptx: { label: 'POWERPOINT', icon: '📙', className: 'powerpoint' },
+        zip: { label: 'ZIP', icon: '🗜️', className: 'compressed' },
+        rar: { label: 'RAR', icon: '🗜️', className: 'compressed' },
+        txt: { label: 'TEXTO', icon: '📄', className: 'text' }
+      };
+      if (types[extension]) return types[extension];
+      if (mime === 'application/pdf') return types.pdf;
+      if (mime.includes('word')) return types.docx;
+      if (mime.includes('sheet') || mime.includes('excel')) return types.xlsx;
+      if (mime.includes('presentation') || mime.includes('powerpoint')) return types.pptx;
+      const fallback = extension ? extension.toUpperCase().slice(0, 12) : 'ARCHIVO';
+      return { label: fallback, icon: '📄', className: 'text' };
+    }
+
+    function createDocumentDetails(fileName, file, message) {
+      const type = documentTypeDetails(fileName, file, message);
+      const details = document.createElement('span');
+      details.className = 'chatDocumentDetails';
+
+      const badge = document.createElement('span');
+      badge.className = `chatDocumentTypeBadge ${type.className}`;
+      badge.textContent = type.label;
+      details.appendChild(badge);
+
       const rawSize = file?.size ?? file?.fileSize ?? file?.file_size ?? message?.fileSize ?? message?.file_size;
       const size = Number(rawSize);
-      const details = [];
-      if (mime) details.push(`Formato: ${mime}`);
-      if (Number.isFinite(size) && size >= 0) details.push(`Tamaño: ${readableFileSize(size)}`);
-      const extension = String(fileName).split('.').pop().toLowerCase();
-      const compressed = ['zip', 'rar', '7z', 'tar', 'gz', 'bz2', 'xz'].includes(extension);
-      const warning = compressed
-        ? '\n\nEs un archivo comprimido. Revisa su contenido antes de abrirlo.'
-        : '';
-      const detailText = details.length ? `\n${details.join('\n')}` : '';
-      return window.confirm(`¿Abrir o descargar este archivo?\n\n${fileName}${detailText}${warning}`);
+      if (Number.isFinite(size) && size >= 0) {
+        const sizeLabel = document.createElement('span');
+        sizeLabel.className = 'chatAttachmentMeta';
+        sizeLabel.textContent = readableFileSize(size);
+        details.appendChild(sizeLabel);
+      }
+      return { details, icon: type.icon, label: type.label };
     }
 
 
@@ -11922,23 +12117,20 @@
         link.download = fileName;
         link.title = `Abrir o descargar ${fileName}`;
         link.setAttribute('aria-label', `Abrir o descargar ${fileName}`);
-        link.addEventListener('click', event => {
-          if (confirmDocumentDownload(fileName, file, message)) return;
-          event.preventDefault();
-          notifyUser('Descarga cancelada');
-        });
-
         const icon = document.createElement('span');
         icon.className = 'chatDocumentIcon';
-        icon.textContent = '📄';
+        const documentDetails = createDocumentDetails(fileName, file, message);
+        icon.textContent = documentDetails.icon;
 
         const info = document.createElement('span');
         info.className = 'chatDocumentInfo';
         const label = document.createElement('span');
+        label.className = 'chatDocumentName';
         label.textContent = fileName;
+        label.title = fileName;
         info.appendChild(label);
-        const meta = createAttachmentMeta(file, message);
-        if (meta) info.appendChild(meta);
+        info.appendChild(documentDetails.details);
+        link.setAttribute('aria-label', `Abrir o descargar ${documentDetails.label}: ${fileName}`);
         link.append(icon, info);
         bubble.appendChild(link);
       }
@@ -15897,6 +16089,10 @@
 
 
       await loadCurrentUser();
+
+      // Capa 142 — la solicitud nace de una pulsación explícita porque
+      // Android/iPhone bloquean permisos multimedia automáticos.
+      window.setTimeout(showMediaPermissionOnboarding, 180);
 
 
       startSocket();

@@ -118,6 +118,8 @@ const VOBIX_LAYERS = Object.freeze([
 ,{ id:'138', name:'Comunicación Móvil sin Bloqueos', status:'en_validacion', scope:'Reduce la presión sobre la base de datos, agrupa recibos, acota subidas, carga TURN y muestra controles claros para detener, enviar o cancelar notas de voz.' }
 ,{ id:'139', name:'Salida Directa de Modo Senior', status:'en_validacion', scope:'Permite desactivar Modo Senior con un botón visible de una sola pulsación, sin temporizador ni pulsación prolongada.' }
 ,{ id:'140', name:'Arranque Resistente de Base de Datos', status:'en_validacion', scope:'El servidor abre el puerto durante despliegues solapados y reintenta la conexión PostgreSQL con pausa progresiva, evitando que un límite temporal de sesiones bloquee la versión corregida.' }
+,{ id:'141', name:'Cámara Directa y Documentos Claros', status:'en_validacion', scope:'La cámara móvil captura fotografías nuevas con la cámara trasera; los archivos se envían sin avisos rutinarios y muestran formato, nombre compacto y tamaño legible.' }
+,{ id:'142', name:'Permisos Multimedia al Entrar', status:'en_validacion', scope:'Cada cuenta activa cámara y micrófono desde una pantalla inicial con pulsación explícita; se comprueban ambas pistas, se detienen inmediatamente y se recuerda el permiso en ese dispositivo.' }
 ]);
 
 function getVobixLayers() {
