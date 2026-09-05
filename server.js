@@ -6,6 +6,7 @@
 
 const express = require('express');
 const http = require('http');
+const path = require('path'); // Librería nativa para manejo de rutas de archivos
 const { Server } = require('socket.io');
 
 const app = express();
@@ -21,6 +22,14 @@ const io = new Server(server, {
 const insistenceRegistry = new Map(); // senderPhone_childId -> [timestamps]
 const MAX_ALERT_ATTEMPTS = 3;         // Intentos de insistencia permitidos
 const TIME_WINDOW_MS = 60000;         // Ventana de tiempo (1 minuto)
+
+// Servir de forma automática los archivos estáticos de la carpeta public (js, html, css)
+app.use(express.static(path.join(__dirname, 'public')));
+
+// Ruta principal: Carga la pantalla visual del chat y el entorno de llamadas
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
 
 // Monitoreo de salud requerido por Render / Cloud Run
 app.get('/healthz', (req, res) => {
