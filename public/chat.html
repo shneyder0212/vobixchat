@@ -4583,10 +4583,17 @@
     <div class="notificationCard">
       <div class="notificationTitle">Datos y almacenamiento</div>
       <div class="notificationDescription">Controla el consumo de datos en este dispositivo.</div>
+      <label class="profileLabel" for="dataNetworkMode">Usar multimedia y llamadas con</label>
+      <select id="dataNetworkMode" class="profileField">
+        <option value="wifi-and-data">Wi‑Fi y datos móviles</option>
+        <option value="wifi-only">Solo Wi‑Fi</option>
+        <option value="mobile-only">Solo datos móviles</option>
+      </select>
+      <div id="dataNetworkStatus" class="settingDescription" role="status" aria-live="polite"></div>
       <div class="settingRow">
         <div class="settingInfo">
           <div class="settingName">Ahorro de datos</div>
-          <div class="settingDescription">Reducir fotografías grandes antes de enviarlas.</div>
+          <div id="dataSaverStatus" class="settingDescription">Desactivado por defecto. Las fotografías se envían con calidad completa.</div>
         </div>
         <button id="dataSaverSwitch" class="vobixSwitch" type="button" aria-label="Ahorro de datos"></button>
       </div>
@@ -4913,6 +4920,8 @@
       },
 
       dataMode: 'full',
+
+      dataNetworkMode: 'wifi-and-data',
 
       cameraFacingMode: 'user',
 
@@ -5465,6 +5474,15 @@
       dataSaverSwitch:
         $('dataSaverSwitch'),
 
+      dataNetworkMode:
+        $('dataNetworkMode'),
+
+      dataNetworkStatus:
+        $('dataNetworkStatus'),
+
+      dataSaverStatus:
+        $('dataSaverStatus'),
+
       privacyPanel:
         $('privacyPanel'),
 
@@ -5804,7 +5822,75 @@
       return ['limited', 'offline'].includes(app.networkProfile?.level);
     }
 
+    function normalizeDataNetworkMode(value) {
+      return ['wifi-and-data', 'wifi-only', 'mobile-only'].includes(value)
+        ? value
+        : 'wifi-and-data';
+    }
+
+    function currentNetworkTransport() {
+      const connection =
+        navigator.connection ||
+        navigator.mozConnection ||
+        navigator.webkitConnection ||
+        null;
+      const type = String(connection?.type || '').toLowerCase();
+      if (type === 'cellular') return 'mobile';
+      if (type === 'wifi' || type === 'ethernet') return 'wifi';
+      return navigator.onLine === false ? 'offline' : 'unknown';
+    }
+
+    function selectedNetworkDecision() {
+      const mode = normalizeDataNetworkMode(app.dataNetworkMode);
+      const transport = currentNetworkTransport();
+      if (transport === 'offline') {
+        return { allowed: false, transport, reason: 'Sin conexión a Internet' };
+      }
+      if (mode === 'wifi-only' && transport === 'mobile') {
+        return { allowed: false, transport, reason: 'Está seleccionado Solo Wi‑Fi' };
+      }
+      if (mode === 'mobile-only' && transport === 'wifi') {
+        return { allowed: false, transport, reason: 'Está seleccionado Solo datos móviles' };
+      }
+      return { allowed: true, transport, reason: '' };
+    }
+
+    function requireSelectedNetwork(action) {
+      const decision = selectedNetworkDecision();
+      if (decision.allowed) return true;
+      notifyUser(`${decision.reason}. Cambia la opción en Datos y almacenamiento para ${action}.`);
+      return false;
+    }
+
+    function renderDataSettingsState() {
+      if (elements.dataNetworkMode) {
+        elements.dataNetworkMode.value = normalizeDataNetworkMode(app.dataNetworkMode);
+      }
+      if (elements.dataSaverStatus) {
+        elements.dataSaverStatus.textContent = app.dataSaver
+          ? 'Activado. Vobix reduce el tamaño y la calidad para consumir menos datos.'
+          : 'Desactivado. Las fotografías, vídeos y llamadas usan la calidad disponible.';
+      }
+      if (!elements.dataNetworkStatus) return;
+      const mode = normalizeDataNetworkMode(app.dataNetworkMode);
+      const transport = currentNetworkTransport();
+      const labels = {
+        'wifi-and-data': 'Wi‑Fi y datos móviles permitidos.',
+        'wifi-only': 'Solo Wi‑Fi seleccionado.',
+        'mobile-only': 'Solo datos móviles seleccionado.'
+      };
+      const detected = transport === 'wifi'
+        ? ' Red actual: Wi‑Fi.'
+        : (transport === 'mobile'
+            ? ' Red actual: datos móviles.'
+            : (transport === 'offline'
+                ? ' No hay conexión.'
+                : ' Este navegador no informa si la red es Wi‑Fi o móvil.'));
+      elements.dataNetworkStatus.textContent = labels[mode] + detected;
+    }
+
     function automaticDataMode() {
+      if (app.dataSaver || !selectedNetworkDecision().allowed) return 'saver';
       const level = app.networkProfile?.level;
       if (level === 'offline' || level === 'limited' || app.networkProfile?.saveData) {
         return 'saver';
@@ -5827,6 +5913,8 @@
         image.loading = 'lazy';
         image.fetchPriority = nextMode === 'full' ? 'auto' : 'low';
       });
+
+      renderDataSettingsState();
 
       return nextMode;
     }
@@ -8412,6 +8500,11 @@
     app.notificationPreview = readBooleanPreference('vobix_notification_preview', true);
     app.mobileOnlyNotifications = readBooleanPreference('vobix_mobile_only_notifications', true);
     app.dataSaver = readBooleanPreference('vobix_data_saver', false);
+    try {
+      app.dataNetworkMode = normalizeDataNetworkMode(localStorage.getItem('vobix_data_network_mode'));
+    } catch (_) {
+      app.dataNetworkMode = 'wifi-and-data';
+    }
 
 
     function renderPreferenceSwitches() {
@@ -8481,6 +8574,17 @@
     bindPrivacySwitch(elements.notificationPreviewSwitch, 'notificationPreview', 'vobix_notification_preview');
     bindPrivacySwitch(elements.mobileOnlyNotificationsSwitch, 'mobileOnlyNotifications', 'vobix_mobile_only_notifications');
     bindPrivacySwitch(elements.dataSaverSwitch, 'dataSaver', 'vobix_data_saver');
+    elements.dataSaverSwitch?.addEventListener('click', () => {
+      applyAutomaticDataMode();
+      notifyUser(app.dataSaver ? 'Ahorro de datos activado' : 'Ahorro de datos desactivado');
+    });
+    elements.dataNetworkMode?.addEventListener('change', event => {
+      app.dataNetworkMode = normalizeDataNetworkMode(event.target.value);
+      try { localStorage.setItem('vobix_data_network_mode', app.dataNetworkMode); } catch (_) {}
+      applyAutomaticDataMode();
+      notifyUser(`Preferencia de red guardada: ${event.target.options[event.target.selectedIndex]?.text || 'actualizada'}`);
+    });
+    applyAutomaticDataMode();
 
     function publishPresence() {
       if (!app.socket?.connected) return;
@@ -9397,6 +9501,8 @@
         return;
       }
 
+      if (!requireSelectedNetwork('enviar archivos')) return;
+
       if (navigator.onLine === false) {
         notifyUser('Sin conexión: vuelve a elegir el archivo cuando regrese internet');
         return;
@@ -10219,6 +10325,7 @@
 
     elements.openDataSettingsButton?.addEventListener('click', () => {
       closeOptionsMenu();
+      renderDataSettingsState();
       setPanel(elements.dataSettingsPanel, true);
     });
     elements.closeDataSettingsButton?.addEventListener('click', () => setPanel(elements.dataSettingsPanel, false));
@@ -13482,6 +13589,8 @@
         notifyUser('La nota de voz anterior todavía está en curso');
         return;
       }
+
+      if (!requireSelectedNetwork('enviar notas de voz')) return;
 
       if (navigator.onLine === false) {
         notifyUser('Sin conexión: espera antes de grabar la nota de voz');
@@ -17819,6 +17928,8 @@
       }
 
       if (!ensureActiveConversation()) return;
+
+      if (!requireSelectedNetwork('realizar llamadas')) return;
 
       try {
 

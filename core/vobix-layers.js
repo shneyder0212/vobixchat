@@ -128,6 +128,7 @@ const VOBIX_LAYERS = Object.freeze([
 ,{ id:'148', name:'Llamadas Ampliables de Seis Personas', status:'en_validacion', scope:'Una llamada de voz o vídeo 1×1 puede añadir contactos hasta seis plazas mediante conexiones WebRTC dirigidas; cualquier miembro, incluido quien inició, puede salir, reconectar y volver mientras quede activa, salvo expulsión.' }
 ,{ id:'149', name:'Formularios Visibles con Teclado Móvil', status:'en_validacion', scope:'Registro y búsqueda calculan el área visible del teclado en Android y iPhone, mantienen el campo activo a la vista y reservan un botón Buscar pulsable sin modificar el teclado del chat.' }
 ,{ id:'150', name:'Regreso Visible a la Sala Principal', status:'en_validacion', scope:'La búsqueda, las conversaciones y las pantallas secundarias sin navegación previa ofrecen una salida directa, táctil y accesible hacia la lista principal de chats.' }
+,{ id:'151', name:'Control Personal de Red y Datos', status:'en_validacion', scope:'Cada dispositivo permite elegir Wi‑Fi y datos móviles, solo Wi‑Fi o solo datos móviles para archivos, notas de voz y llamadas; el ahorro de datos permanece desactivado por defecto y puede activarse voluntariamente.' }
 ]);
 
 function getVobixLayers() {
