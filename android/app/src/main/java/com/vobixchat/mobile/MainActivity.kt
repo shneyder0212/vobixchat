@@ -193,14 +193,28 @@ class MainActivity : ComponentActivity() {
 
     private fun launchFileChooser(params: WebChromeClient.FileChooserParams) {
         val acceptsImages = params.acceptTypes.isEmpty() || params.acceptTypes.any { it.isBlank() || it.startsWith("image/") }
+        val acceptsVideo = params.acceptTypes.any { it.startsWith("video/") }
         val galleryIntent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
             addCategory(Intent.CATEGORY_OPENABLE)
-            type = if (acceptsImages) "image/*" else (params.acceptTypes.firstOrNull { it.isNotBlank() } ?: "*/*")
+            type = when {
+                acceptsImages && acceptsVideo -> "*/*"
+                acceptsImages -> "image/*"
+                acceptsVideo -> "video/*"
+                else -> params.acceptTypes.firstOrNull { it.isNotBlank() } ?: "*/*"
+            }
+            if (acceptsImages && acceptsVideo) putExtra(Intent.EXTRA_MIME_TYPES, arrayOf("image/*", "video/*"))
             putExtra(Intent.EXTRA_ALLOW_MULTIPLE, params.mode == WebChromeClient.FileChooserParams.MODE_OPEN_MULTIPLE)
         }
         val cameraIntent = if (acceptsImages) createCameraIntent() else null
-        val intent = if (params.isCaptureEnabled && cameraIntent != null) cameraIntent else Intent.createChooser(galleryIntent, "Elegir archivo").apply {
-            if (cameraIntent != null) putExtra(Intent.EXTRA_INITIAL_INTENTS, arrayOf(cameraIntent))
+        val videoIntent = if (acceptsVideo) Intent(MediaStore.ACTION_VIDEO_CAPTURE) else null
+        val captureIntent = when {
+            params.isCaptureEnabled && acceptsVideo && !acceptsImages -> videoIntent
+            params.isCaptureEnabled && cameraIntent != null -> cameraIntent
+            else -> null
+        }
+        val intent = captureIntent ?: Intent.createChooser(galleryIntent, "Elegir foto o vídeo").apply {
+            val captureOptions = listOfNotNull(cameraIntent, videoIntent).toTypedArray()
+            if (captureOptions.isNotEmpty()) putExtra(Intent.EXTRA_INITIAL_INTENTS, captureOptions)
         }
         try {
             fileChooserLauncher.launch(intent)
