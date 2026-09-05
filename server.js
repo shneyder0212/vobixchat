@@ -2197,7 +2197,10 @@ app.get(
             ),
 
           androidCallPush:
-            firebasePushEnabled
+            firebasePushEnabled,
+
+          mediaStorageConfigured:
+            r2Storage.isConfigured()
         },
 
         uptimeSeconds:
@@ -2265,7 +2268,10 @@ app.get(
               ),
 
             androidCallPush:
-              firebasePushEnabled
+              firebasePushEnabled,
+
+            mediaStorageConfigured:
+              r2Storage.isConfigured()
           }
 
         });

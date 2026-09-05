@@ -28,9 +28,11 @@ test('las notificaciones Android se piden solo desde el botón de permisos', () 
   assert.match(inbox, /vobix:native-notification-permission/);
 });
 
-test('salud informa si TURN y el aviso Android están configurados sin revelar secretos', () => {
+test('salud informa si TURN, avisos Android y R2 están configurados sin revelar secretos', () => {
   assert.match(server, /turnRelayConfigured/);
   assert.match(server, /androidCallPush/);
+  assert.match(server, /mediaStorageConfigured/);
+  assert.match(server, /mediaStorageConfigured:\s*r2Storage\.isConfigured\(\)/);
   const health = server.slice(server.indexOf("'/api/health'"), server.indexOf('// AUTENTICACIÓN DE SOCKET.IO'));
   assert.doesNotMatch(health, /TURN_CREDENTIAL\s*:/);
   assert.doesNotMatch(health, /FIREBASE_SERVICE_ACCOUNT_JSON\s*:/);
