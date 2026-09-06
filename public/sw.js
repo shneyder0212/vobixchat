@@ -40,7 +40,7 @@ self.addEventListener('activate', (event) => {
     self.clients.claim();
 });
 
-// 3. Intercepción de red: Estrategia Caché-First para carga en menos de 1 segundo
+// 3. Intercepción de red: Estrategia Cache-First para carga en menos de 1 segundo
 self.addEventListener('fetch', (event) => {
     // Solo cachear peticiones GET locales (evita romper llamadas de API POST)
     if (event.request.method !== 'GET' || !event.request.url.startsWith(self.location.origin)) {
