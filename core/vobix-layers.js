@@ -141,6 +141,7 @@ const VOBIX_LAYERS = Object.freeze([
 ,{ id:'161', name:'Enfoque de Producto', status:'activo', scope:'Prioridad exclusiva para comunicación básica fiable, Senior/Familiar/Infantil, Motor Anti-Estafas local y Vobix Business; Enseña, Meet, Live, Parejas, Política y demás módulos quedan aparcados sin borrar su código.' }
 ,{ id:'162', name:'Canales y Comunidades', status:'planificada', scope:'Siguiente capa del núcleo social y Business: canales administrados, comunidades, roles, moderación, bloqueo, expulsión y auditoría; no se presenta todavía como operativa.' }
 ,{ id:'163', name:'Almacenamiento Externo Obligatorio', status:'en_validacion', scope:'Mensajes y metadatos persisten en PostgreSQL; fotos, vídeos, notas de voz y documentos se confirman en Cloudflare R2. Render procesa únicamente temporales y los elimina tras confirmar ambos destinos.' }
+,{ id:'164', name:'Señalización de Llamada Primero', status:'en_validacion', scope:'El servidor registra y avisa la llamada antes de que Android termine de abrir cámara o micrófono; los candidatos ICE esperan la confirmación y las notificaciones Push visibles reproducen el aviso entrante sin duplicarlo.' }
 ]);
 
 function getVobixLayers() {

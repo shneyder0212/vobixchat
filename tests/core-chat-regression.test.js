@@ -44,6 +44,8 @@ test('Push recupera mensajes y llamadas cuando Android suspende Socket.IO', () =
   assert.match(html, /signal\.type !== 'VOBIX_PUSH_SIGNAL'/);
   assert.match(html, /scheduleIncomingHistoryRefresh\(id\)/);
   assert.match(html, /recoverPendingIncomingCall\(\)/);
+  assert.match(html, /signal\.pushType === 'message'[\s\S]{0,100}playIncomingMessageAlertOnce\(id\)/);
+  assert.match(html, /function playIncomingMessageAlertOnce/);
 });
 
 test('Socket.IO usa inicio estable y reconexión ilimitada en móviles', () => {

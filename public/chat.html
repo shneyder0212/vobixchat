@@ -5199,6 +5199,14 @@
 
       pendingIceCandidates: [],
 
+      pendingLocalIceCandidates: [],
+
+      callOfferAcknowledged: false,
+
+      callDirection: null,
+
+      recentIncomingAlertKeys: new Map(),
+
       pendingCallOffer: null,
 
       groupRejoin: null,
@@ -9413,6 +9421,26 @@
 
       });
 
+    }
+
+
+    function playIncomingMessageAlertOnce(conversationIdValue) {
+      const key = String(conversationIdValue || 'unknown');
+      const now = Date.now();
+      const lastPlayedAt = Number(app.recentIncomingAlertKeys.get(key) || 0);
+
+      if (now - lastPlayedAt < 1200) return;
+
+      app.recentIncomingAlertKeys.set(key, now);
+      if (app.recentIncomingAlertKeys.size > 40) {
+        for (const [storedKey, storedAt] of app.recentIncomingAlertKeys) {
+          if (now - Number(storedAt || 0) > 10000) {
+            app.recentIncomingAlertKeys.delete(storedKey);
+          }
+        }
+      }
+
+      playMessageSound();
     }
 
 
@@ -17047,7 +17075,7 @@
           if (!activeId && incomingId) {
 
             if (!messageIsMine(message)) {
-              playMessageSound();
+              playIncomingMessageAlertOnce(incomingId);
               showBrowserNotification(
                 'VOBIXCHAT',
                 message.text || message.message || 'Nuevo mensaje'
@@ -17080,7 +17108,7 @@
               console.warn('[VOBIXCHAT INCOMING CONVERSATION]', error)
             );
 
-            playMessageSound();
+            playIncomingMessageAlertOnce(incomingId);
 
 
             showBrowserNotification(
@@ -17139,7 +17167,7 @@
           }
 
 
-          playMessageSound();
+          playIncomingMessageAlertOnce(incomingId || activeId);
 
 
           showBrowserNotification(
@@ -17660,6 +17688,7 @@
 
         const id = String(signal.conversationId || '').trim();
         if (signal.pushType === 'message') {
+          playIncomingMessageAlertOnce(id);
           if (id && String(conversationId(app.conversation) || '') === id) {
             scheduleIncomingHistoryRefresh(id);
           } else {
@@ -17927,9 +17956,9 @@
           }
 
 
-          app.socket.emit(
-            app.callIsGroup && app.primaryPeerUserId ? 'call:peer-ice' : 'call:ice',
-            {
+          const iceEventName =
+            app.callIsGroup && app.primaryPeerUserId ? 'call:peer-ice' : 'call:ice';
+          const icePayload = {
 
               callId:
                 app.callId,
@@ -17945,8 +17974,18 @@
               candidate:
                 event.candidate
 
-            }
-          );
+            };
+
+          if (app.callDirection === 'outgoing' && !app.callOfferAcknowledged) {
+            app.pendingLocalIceCandidates.push({
+              eventName: iceEventName,
+              payload: icePayload
+            });
+            app.pendingLocalIceCandidates = app.pendingLocalIceCandidates.slice(-80);
+            return;
+          }
+
+          app.socket.emit(iceEventName, icePayload);
 
         };
 
@@ -18155,6 +18194,57 @@
 
       return pc;
 
+    }
+
+
+    function prepareOutgoingCallTransceivers(connection, type) {
+      if (!connection || typeof connection.addTransceiver !== 'function') return false;
+
+      connection.addTransceiver('audio', { direction: 'sendrecv' });
+      if (type === 'video') {
+        connection.addTransceiver('video', { direction: 'sendrecv' });
+      }
+      return true;
+    }
+
+
+    async function attachPreparedCallMedia(connection, stream) {
+      if (!connection || !stream) return;
+
+      const transceivers = typeof connection.getTransceivers === 'function'
+        ? connection.getTransceivers()
+        : [];
+      const usedTransceivers = new Set();
+
+      for (const track of stream.getTracks()) {
+        const transceiver = transceivers.find(item =>
+          !usedTransceivers.has(item) &&
+          item?.receiver?.track?.kind === track.kind &&
+          item?.sender &&
+          typeof item.sender.replaceTrack === 'function'
+        );
+
+        if (transceiver) {
+          usedTransceivers.add(transceiver);
+          await transceiver.sender.replaceTrack(track);
+        } else {
+          connection.addTrack(track, stream);
+        }
+      }
+
+      await applyAdaptiveCallEncoding(connection);
+    }
+
+
+    function flushPendingLocalIceCandidates() {
+      if (!app.callOfferAcknowledged || !app.socket?.connected) return;
+
+      const queued = app.pendingLocalIceCandidates.splice(0);
+      queued.forEach(item => {
+        if (item?.eventName && item?.payload) {
+          app.socket.emit(item.eventName, item.payload);
+        }
+      });
     }
 
 
@@ -19004,6 +19094,9 @@
         unlockAudio();
 
         app.callIsGroup = false;
+        app.callDirection = 'outgoing';
+        app.callOfferAcknowledged = false;
+        app.pendingLocalIceCandidates = [];
         app.callPeer = app.peer;
         app.primaryPeerUserId = String(userId(app.peer) || '');
         app.callParticipantIds = new Set([
@@ -19032,10 +19125,6 @@
 
         await loadRtcConfiguration();
 
-        await prepareCallMedia(
-          type
-        );
-
         const pc =
           createPeerConnection();
 
@@ -19046,6 +19135,16 @@
             'No se pudo iniciar WebRTC'
           );
 
+        }
+
+        // En navegadores modernos registramos primero la llamada en el
+        // servidor. Así el destinatario recibe el timbre aunque Android tarde
+        // en abrir el permiso del micrófono o de la cámara.
+        const canSignalBeforeMedia = prepareOutgoingCallTransceivers(pc, type);
+
+        if (!canSignalBeforeMedia) {
+          await prepareCallMedia(type);
+          await attachPreparedCallMedia(pc, app.localStream);
         }
 
 
@@ -19059,31 +19158,48 @@
 
 
         const outgoingCallId = app.callId;
-        app.socket.timeout(10000).emit(
-          'call:offer',
-          {
+        const response = await new Promise((resolve, reject) => {
+          app.socket.timeout(10000).emit(
+            'call:offer',
+            {
 
-            callId:
-              app.callId,
+              callId:
+                app.callId,
 
-            conversationId:
-              conversationId(
-                app.conversation
-              ),
+              conversationId:
+                conversationId(
+                  app.conversation
+                ),
 
-            type,
+              type,
 
-            offer:
-              pc.localDescription
+              offer:
+                pc.localDescription
 
-          },
-          (error, response) => {
-            if (!error && response?.ok) return acknowledgeOutgoingCall(response);
-            if (String(app.callId || '') !== String(outgoingCallId || '')) return;
-            notifyUser(error ? 'El servidor no respondió a la llamada' : (response?.msg || 'No se pudo iniciar la llamada'));
-            endLocalCall(false);
-          }
-        );
+            },
+            (error, result) => {
+              if (String(app.callId || '') !== String(outgoingCallId || '')) {
+                return reject(Object.assign(new Error('La llamada fue cancelada'), { name: 'AbortError' }));
+              }
+              if (error) {
+                return reject(Object.assign(new Error('El servidor no respondió a la llamada'), { name: 'CallSignalingError' }));
+              }
+              if (!result?.ok) {
+                return reject(Object.assign(new Error(result?.msg || 'No se pudo iniciar la llamada'), { name: 'CallSignalingError' }));
+              }
+              resolve(result);
+            }
+          );
+        });
+
+        acknowledgeOutgoingCall(response);
+        app.callOfferAcknowledged = true;
+        flushPendingLocalIceCandidates();
+
+        if (canSignalBeforeMedia) {
+          await prepareCallMedia(type);
+          await attachPreparedCallMedia(pc, app.localStream);
+        }
 
         notifyUser(
           type ===
@@ -19101,13 +19217,12 @@
         );
 
 
-        notifyUser(
-          callMediaErrorMessage(error, type)
-        );
+        const isSignalingError = ['CallSignalingError', 'AbortError'].includes(String(error?.name || ''));
+        notifyUser(isSignalingError ? (error?.message || 'No se pudo iniciar la llamada') : callMediaErrorMessage(error, type));
 
 
         endLocalCall(
-          false
+          app.callOfferAcknowledged
         );
 
         if (['NotAllowedError', 'PermissionDeniedError', 'SecurityError'].includes(String(error?.name || ''))) {
@@ -19237,6 +19352,9 @@
       try {
         app.callId = payload.callId || createCallId();
         app.callType = payload.type || 'audio';
+        app.callDirection = 'incoming';
+        app.callOfferAcknowledged = true;
+        app.pendingLocalIceCandidates = [];
         app.callIsGroup = Boolean(payload.group || payload.groupPeerOffer);
         app.primaryPeerUserId = String(payload.fromUserId || userId(payload.caller) || '');
         app.callParticipantIds = new Set([
@@ -20613,6 +20731,12 @@
         null;
 
       app.pendingIceCandidates = [];
+
+      app.pendingLocalIceCandidates = [];
+
+      app.callOfferAcknowledged = false;
+
+      app.callDirection = null;
 
       app.pendingCallOffer = null;
 
