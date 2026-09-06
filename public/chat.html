@@ -5304,6 +5304,8 @@
 
       emergencyRecognition: null,
 
+      callMediaAcquiring: false,
+
       emergencyTriggering: false,
 
       endingCall: false,
@@ -10528,8 +10530,10 @@
       else notifyUser('Abre Ajustes del teléfono > Aplicaciones > VobixChat > Permisos');
     });
     window.addEventListener('vobix:native-media-permission', event => {
-      if (event.detail?.granted) activateMediaPermissions();
-      else {
+      if (event.detail?.granted) {
+        try { localStorage.setItem(mediaPermissionStorageKey(), 'granted'); } catch (_) {}
+        closeMediaPermissionPanel();
+      } else {
         if (elements.mediaPermissionStatus) elements.mediaPermissionStatus.textContent = 'Cámara o micrófono siguen bloqueados. Ábrelos en los ajustes de VobixChat.';
         elements.openNativePermissionSettingsButton?.classList.add('open');
       }
@@ -18603,6 +18607,9 @@
     ) {
 
       app.callVideoAutoPaused = false;
+      app.callMediaAcquiring = true;
+      stopEmergencyRecognition();
+      resetNativeCallAudio();
 
       if (
         !navigator.mediaDevices ||
@@ -18671,15 +18678,30 @@
       };
 
       try {
-        app.localStream = await navigator.mediaDevices.getUserMedia(enhancedConstraints);
+        try {
+          app.localStream = await navigator.mediaDevices.getUserMedia(enhancedConstraints);
+        } catch (error) {
+          const retryable = ['OverconstrainedError', 'NotReadableError', 'AbortError']
+            .includes(String(error?.name || ''));
+          if (!retryable) throw error;
+
+          stopEmergencyRecognition();
+          stopMediaStream(app.localStream);
+          app.localStream = null;
+          resetNativeCallAudio();
+          reportClientDiagnostic('call_media_retry', {
+            type,
+            name: error?.name || 'Error'
+          });
+          await new Promise(resolve => window.setTimeout(resolve, 450));
+          app.localStream = await navigator.mediaDevices.getUserMedia({
+            audio: true,
+            video: type === 'video'
+          });
+        }
         app.localMediaType = type;
-      } catch (error) {
-        if (error?.name !== 'OverconstrainedError') throw error;
-        app.localStream = await navigator.mediaDevices.getUserMedia({
-          audio: true,
-          video: type === 'video'
-        });
-        app.localMediaType = type;
+      } finally {
+        app.callMediaAcquiring = false;
       }
 
       const microphoneTrack = app.localStream.getAudioTracks()[0];
@@ -19023,7 +19045,10 @@
     }
 
     function startEmergencyRecognition() {
-      if (app.emergencyRecognition || !app.callId || localStorage.getItem(EMERGENCY_ENABLED_KEY) !== 'true') return;
+      const microphoneInUse = app.callMediaAcquiring || Boolean(
+        app.localStream?.getAudioTracks?.().some(track => track.readyState === 'live')
+      );
+      if (app.emergencyRecognition || !app.callId || microphoneInUse || localStorage.getItem(EMERGENCY_ENABLED_KEY) !== 'true') return;
       const phrase = normalizeEmergencyPhrase(localStorage.getItem(EMERGENCY_PHRASE_KEY));
       const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       if (!Recognition || phrase.length < 8) return;
@@ -19048,8 +19073,9 @@
     }
 
     const emergencyRecognitionWatch = window.setInterval(() => {
-      if (app.callId) startEmergencyRecognition();
-      else stopEmergencyRecognition();
+      // SpeechRecognition abre una segunda captura y Android puede cerrar el
+      // micrófono WebRTC. La llamada siempre conserva el uso exclusivo.
+      if (app.callId || app.callMediaAcquiring) stopEmergencyRecognition();
     }, 2000);
     window.addEventListener('pagehide', () => {
       window.clearInterval(emergencyRecognitionWatch);
@@ -19088,7 +19114,6 @@
       }
 
       app.speakerEnabled = type === 'video';
-      setNativeSpeakerphone(app.speakerEnabled);
       renderSpeakerButton();
 
 
@@ -19427,6 +19452,8 @@
           videoTracks: app.localStream?.getVideoTracks?.().length || 0
         });
 
+        setNativeSpeakerphone(app.speakerEnabled);
+
         notifyUser(
           type ===
           'video'
@@ -19600,6 +19627,7 @@
         await loadRtcConfiguration();
         await prepareCallMedia(app.callType);
         showCallScreen(app.callType);
+        setNativeSpeakerphone(app.speakerEnabled);
 
         if (elements.callStatus) {
           elements.callStatus.textContent = 'Conectando…';
@@ -20190,6 +20218,7 @@
         await loadRtcConfiguration();
         await prepareCallMedia(app.callType);
         showCallScreen(app.callType);
+        setNativeSpeakerphone(app.speakerEnabled);
         const otherParticipants = (result.participants || [])
           .map(String)
           .filter(id => id && id !== String(userId(app.me) || ''));
@@ -20436,6 +20465,16 @@
         console.warn('[VOBIXCHAT NATIVE SPEAKER]', error);
       }
       return false;
+    }
+
+    function resetNativeCallAudio() {
+      try {
+        if (typeof window.VobixNative?.resetCallAudio === 'function') {
+          window.VobixNative.resetCallAudio();
+        }
+      } catch (error) {
+        console.warn('[VOBIXCHAT NATIVE AUDIO RESET]', error);
+      }
     }
 
     async function toggleCallSpeaker() {
@@ -21093,9 +21132,11 @@
 
       if (elements.toggleRemoteAudioButton) {
         app.speakerEnabled = false;
-        setNativeSpeakerphone(false);
+        resetNativeCallAudio();
         renderSpeakerButton();
       }
+
+      app.callMediaAcquiring = false;
 
 
       if (

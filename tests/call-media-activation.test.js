@@ -102,6 +102,17 @@ test('el altavoz usa el puente Android y salida compatible del navegador', () =>
   assert.match(android, /AudioManager\.MODE_IN_COMMUNICATION/);
   assert.match(android, /TYPE_BUILTIN_SPEAKER/);
   assert.match(android, /setCommunicationDevice\(speaker\)/);
+  assert.match(android, /fun resetCallAudio\(\)/);
+  assert.match(android, /AudioManager\.MODE_NORMAL/);
+});
+
+test('Android recupera el micrófono ocupado sin cortar de inmediato', () => {
+  const html = read('public/chat.html');
+  assert.match(html, /\['OverconstrainedError', 'NotReadableError', 'AbortError'\]/);
+  assert.match(html, /reportClientDiagnostic\('call_media_retry'/);
+  assert.match(html, /await new Promise\(resolve => window\.setTimeout\(resolve, 450\)\)/);
+  assert.match(html, /function resetNativeCallAudio\(\)/);
+  assert.match(read('core/vobix-layers.js'), /id:'170'.*Recuperación de Micrófono Android.*status:'en_validacion'/);
 });
 
 test('la capa 167 identifica los controles permanentes de llamada', () => {
