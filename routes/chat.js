@@ -4136,6 +4136,7 @@ router.post(
 
 const fs = require('fs');
 const path = require('path');
+const os = require('os');
 const crypto = require('crypto');
 const multer = require('multer');
 const r2Storage = require('../core/r2-storage');
@@ -4147,8 +4148,8 @@ const r2Storage = require('../core/r2-storage');
 
 const chatUploadDirectory =
   path.join(
-    process.cwd(),
-    'uploads',
+    os.tmpdir(),
+    'vobixchat',
     'chat'
   );
 
@@ -5084,6 +5085,9 @@ async function uploadChatFileHandler(
   res
 ) {
 
+  let permanentObjectKey = '';
+  let messagePersisted = false;
+
   const userId =
     currentUserId(req);
 
@@ -5268,16 +5272,34 @@ async function uploadChatFileHandler(
        no se publica un mensaje con un archivo roto.
     ================================================== */
 
-    const permanentObjectKey =
+    if (!r2Storage.isConfigured()) {
+      removeUploadedFile(req.file);
+      return res.status(503).json({
+        ok:false,
+        code:'external_media_storage_required',
+        msg:'El almacenamiento permanente no está disponible; el archivo no se guardó'
+      });
+    }
+
+    permanentObjectKey =
       'chat/' +
       req.file.filename;
 
-    await r2Storage.putChatFile({
+    const permanentStorage = await r2Storage.putChatFile({
       key: permanentObjectKey,
       filePath: req.file.path,
       contentType: req.file.mimetype,
       originalName: req.file.originalname
     });
+
+    if (!permanentStorage.stored) {
+      removeUploadedFile(req.file);
+      return res.status(503).json({
+        ok:false,
+        code:'external_media_storage_required',
+        msg:'El almacenamiento permanente no confirmó el archivo'
+      });
+    }
 
 
     const originalFileName =
@@ -5426,6 +5448,8 @@ async function uploadChatFileHandler(
         ]
       );
 
+    messagePersisted = Boolean(result.rows[0]);
+
     let persistedRow = result.rows[0];
     if (!matchesPersistedMessage(persistedRow, {
       conversationId,
@@ -5500,6 +5524,10 @@ async function uploadChatFileHandler(
     }
 
 
+    // Render solo recibe una copia temporal para validar y transferir. Una vez
+    // confirmados R2 y PostgreSQL, esa copia se elimina inmediatamente.
+    removeUploadedFile(req.file);
+
     return res
       .status(201)
       .json({
@@ -5557,9 +5585,9 @@ async function uploadChatFileHandler(
 
   } catch (error) {
 
-    if (req.file && req.file.filename) {
+    if (!messagePersisted && permanentObjectKey) {
       r2Storage
-        .deleteChatFile('chat/' + req.file.filename)
+        .deleteChatFile(permanentObjectKey)
         .catch(() => {});
     }
 

@@ -140,6 +140,7 @@ const VOBIX_LAYERS = Object.freeze([
 ,{ id:'160', name:'Videollamadas Empresariales 50K', status:'aparcada', scope:'Código conservado para una fase futura. Vobix Meet y Vobix Live no se presentan como activos; cualquier producción empresarial exigirá contrato, revisión y prueba de carga aprobada.' }
 ,{ id:'161', name:'Enfoque de Producto', status:'activo', scope:'Prioridad exclusiva para comunicación básica fiable, Senior/Familiar/Infantil, Motor Anti-Estafas local y Vobix Business; Enseña, Meet, Live, Parejas, Política y demás módulos quedan aparcados sin borrar su código.' }
 ,{ id:'162', name:'Canales y Comunidades', status:'planificada', scope:'Siguiente capa del núcleo social y Business: canales administrados, comunidades, roles, moderación, bloqueo, expulsión y auditoría; no se presenta todavía como operativa.' }
+,{ id:'163', name:'Almacenamiento Externo Obligatorio', status:'en_validacion', scope:'Mensajes y metadatos persisten en PostgreSQL; fotos, vídeos, notas de voz y documentos se confirman en Cloudflare R2. Render procesa únicamente temporales y los elimina tras confirmar ambos destinos.' }
 ]);
 
 function getVobixLayers() {
