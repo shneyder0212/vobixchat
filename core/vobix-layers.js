@@ -153,6 +153,7 @@ const VOBIX_LAYERS = Object.freeze([
 ,{ id:'173', name:'Compositor Pegado al Teclado', status:'en_validacion', scope:'En móvil la conversación queda arriba, la barra de escritura permanece pegada al borde superior del teclado y al enfocarla se muestra siempre el final del chat.' }
 ,{ id:'174', name:'Agregar Personas Siempre Visible', status:'en_validacion', scope:'Llamadas de voz y vídeo muestran el control de añadir junto a colgar; el selector aparece por encima de la llamada y el aviso de reingreso permanece oculto salvo cuando realmente existe una llamada grupal recuperable.' }
 ,{ id:'175', name:'Subtítulos Solo Entre Idiomas Diferentes', status:'en_validacion', scope:'El control CC permanece oculto cuando los teléfonos usan el mismo idioma y aparece solo al detectar idiomas distintos; el servidor aplica la misma regla y conserva el consentimiento voluntario de cada participante.' }
+,{ id:'176', name:'Controles de Llamada Móvil Completos', status:'en_validacion', scope:'Los siete controles de llamada y videollamada reducen su tamaño de forma adaptable para caber en una fila y se elevan sobre la navegación inferior del teléfono, incluso en Modo Senior.' }
 ]);
 
 function getVobixLayers() {
