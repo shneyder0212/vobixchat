@@ -1,83 +1,71 @@
-/**
- * VOBIXCHAT - RECOVERY FAMILIAR Y TOKENS DE RESTAURACIÓN (CAPA C2.5)
- * Permite al tutor emitir llaves de recuperación criptográficas para perfiles protegidos.
- * Restablece la cuenta del menor de forma inmediata sin depender de contraseñas olvidadas.
- */
+'use strict';
 
-class VobixFamilyRecovery {
-    constructor() {
-        this.activeRecoveryTokens = new Map(); // token -> { childId, tutorId, expires }
-        this.TOKEN_LIFETIME_MS = 15 * 60 * 1000; // El token dura 15 minutos por seguridad
-    }
+const crypto = require('crypto');
 
-    /**
-     * Genera un token criptográfico seguro desde el panel del tutor
-     * @param {string} tutorId - ID del padre que autoriza la recuperación
-     * @param {string} childId - ID de la cuenta del hijo que será restaurada
-     */
-    generateSecureRecoveryToken(tutorId, childId) {
-        // Genera un token numérico de 6 dígitos de alta entropía (estilo PIN bancario temporal)
-        const rawToken = Math.floor(100000 + Math.random() * 900000).toString();
-        const expirationTime = Date.now() + this.TOKEN_LIFETIME_MS;
+const MIN_GUARDIANS = 2;
+const MAX_GUARDIANS = 5;
+const WAIT_HOURS = 24;
+const REQUEST_HOURS = 72;
 
-        this.activeRecoveryTokens.set(rawToken, {
-            childId,
-            tutorId,
-            expires: expirationTime
-        });
-
-        console.log(`[Capa C2.5] Llave de recuperación familiar emitida para cuenta: ${childId}. Vence en 15 minutos.`);
-
-        return {
-            success: true,
-            recoveryPIN: rawToken,
-            expiresAt: expirationTime
-        };
-    }
-
-    /**
-     * Valida el token introducido en el dispositivo nuevo del menor
-     * @param {string} inputToken - PIN numérico introducido por el usuario
-     */
-    validateRecoveryAttempt(inputToken) {
-        if (!this.activeRecoveryTokens.has(inputToken)) {
-            return { valid: false, error: "TOKEN_INVALIDO: El código no existe." };
-        }
-
-        const session = this.activeRecoveryTokens.get(inputToken);
-        const now = Date.now();
-
-        // Verificar si el token ya expiró
-        if (now > session.expires) {
-            this.activeRecoveryTokens.delete(inputToken);
-            return { valid: false, error: "TOKEN_EXPIRADO: El código de 15 minutos ha caducado." };
-        }
-
-        // Token válido: se elimina para evitar doble uso (ataques de repetición)
-        this.activeRecoveryTokens.delete(inputToken);
-        console.log(`[Capa C2.5] ¡Autenticación exitosa! Cuenta ${session.childId} restaurada por el tutor ${session.tutorId}`);
-
-        return {
-            valid: true,
-            targetChildId: session.childId,
-            authorizedByTutor: session.tutorId,
-            status: "ACCESS_GRANTED"
-        };
-    }
-
-    /**
-     * Limpieza periódica automática de tokens caducados en memoria del servidor
-     */
-    flushExpiredTokens() {
-        const now = Date.now();
-        for (const [token, data] of this.activeRecoveryTokens.entries()) {
-            if (now > data.expires) {
-                this.activeRecoveryTokens.delete(token);
-            }
-        }
-    }
+function validUuid(value) {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(value || ''));
 }
 
-if (typeof module !== 'undefined') {
-    module.exports = VobixFamilyRecovery;
+function normalizeThreshold(value, guardianCount) {
+  const count = Number(guardianCount);
+  const threshold = Number(value);
+  if (!Number.isInteger(count) || count < MIN_GUARDIANS || count > MAX_GUARDIANS) return null;
+  if (!Number.isInteger(threshold) || threshold < MIN_GUARDIANS || threshold > count) return null;
+  return threshold;
 }
+
+function createRecoverySecret() {
+  return crypto.randomBytes(32).toString('base64url');
+}
+
+function hashRecoverySecret(value) {
+  return crypto.createHash('sha256').update(String(value || '')).digest('hex');
+}
+
+function safeDeviceLabel(value) {
+  return String(value || 'Nuevo dispositivo').replace(/<[^>]*>/g, ' ').replace(/[\r\n<>]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 80) || 'Nuevo dispositivo';
+}
+
+function consumeAttempt(store, key, limit, windowMs, now = Date.now()) {
+  if (!(store instanceof Map) || !key || !Number.isInteger(limit) || limit < 1 || !Number.isFinite(windowMs) || windowMs < 1000) {
+    return { allowed:false, retryAfterMs:windowMs || 1000 };
+  }
+  const recent = (store.get(key) || []).filter(timestamp => now - timestamp < windowMs);
+  if (recent.length >= limit) {
+    return { allowed:false, retryAfterMs:Math.max(1000, windowMs - (now - recent[0])) };
+  }
+  recent.push(now);
+  store.set(key, recent);
+  if (store.size > 5000) store.delete(store.keys().next().value);
+  return { allowed:true, retryAfterMs:0 };
+}
+
+function requestState(row, now = new Date()) {
+  if (!row) return 'missing';
+  if (['cancelled', 'completed', 'expired', 'rejected'].includes(row.status)) return row.status;
+  if (new Date(row.expires_at) <= now) return 'expired';
+  const approvals = Number(row.approval_count || 0);
+  const threshold = Number(row.threshold_required || 0);
+  if (approvals < threshold) return 'waiting_approvals';
+  if (!row.ready_at || new Date(row.ready_at) > now) return 'security_wait';
+  return 'ready';
+}
+
+module.exports = {
+  MIN_GUARDIANS,
+  MAX_GUARDIANS,
+  WAIT_HOURS,
+  REQUEST_HOURS,
+  validUuid,
+  normalizeThreshold,
+  createRecoverySecret,
+  hashRecoverySecret,
+  safeDeviceLabel,
+  consumeAttempt,
+  requestState
+};

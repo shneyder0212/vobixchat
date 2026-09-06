@@ -25,20 +25,21 @@ test('el autoservicio ofrece ayuda y advierte contra secretos', () => {
   assert.match(center, /No escribas contraseñas, PIN, códigos ni datos bancarios/);
 });
 
-test('todos los servicios mostrados para configurar existen en el catálogo', () => {
+test('el único servicio mostrado para configurar durante el enfoque es Business', () => {
   const configurable = new Set(CAPABILITIES.filter(item => item.id !== 'chat').map(item => item.id));
   const ids = [...center.matchAll(/\{id:'([^']+)'/g)].map(match => match[1]);
   const linkedIds = [...menu.matchAll(/centro-config\.html\?service=([^"&]+)/g)].map(match => match[1]);
-  assert.ok(ids.length >= 9);
+  assert.deepEqual(ids, ['business']);
   ids.forEach(id => assert.ok(configurable.has(id), `capacidad desconocida: ${id}`));
   linkedIds.forEach(id => assert.ok(ids.includes(id), `enlace sin configuración: ${id}`));
 });
 
-test('el menú usa la oferta comercial honesta de Vobix', () => {
-  assert.match(menu, /Vobix Plus/);
-  assert.match(menu, /Vobix Meet Pro/);
-  assert.match(menu, /Vobix Política/);
-  assert.match(menu, /DISEÑO REGULATORIO/);
-  assert.doesNotMatch(menu, /service=verify(?:["&])/);
-  assert.doesNotMatch(menu, /service=campaigns/);
+test('el menú público oculta servicios aparcados y mantiene las prioridades', () => {
+  assert.match(menu, /Senior, Familia y Niños/);
+  assert.match(menu, /Motor Anti-Estafas/);
+  assert.match(menu, /Vobix Business/);
+  assert.doesNotMatch(menu, /Vobix Meet Pro/);
+  assert.doesNotMatch(menu, /Vobix Política/);
+  assert.doesNotMatch(menu, /Social \/ Parejas/);
+  assert.doesNotMatch(menu, /href="\/learn\.html"/);
 });

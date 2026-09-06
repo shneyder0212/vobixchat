@@ -1,71 +1,46 @@
-/**
- * VOBIXCHAT - CONECTOR DE BASE DE DATOS DE PRODUCCIÓN (CAPA C3.3)
- * Administra el pool de conexiones relacionales optimizadas para Render / Cloud Run.
- * Cuenta con tolerancia a fallos y reintentos automáticos durante el arranque.
- */
-
+'use strict';
 const { Pool } = require('pg');
 
-// Configuración del pool de conexiones inyectando variables de entorno seguras de Render
-const dbConfig = {
-    connectionString: process.env.DATABASE_URL, // URL secreta provista por tu base de datos Render
-    ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
-    max: 20,                                    // Límite de conexiones simultáneas en el pool
-    idleTimeoutMillis: 30000,                   // Tiempo para cerrar conexiones inactivas
-    connectionTimeoutMillis: 4000               // Tiempo de espera máximo para conectar
-};
-
-let pool = null;
-let retryCount = 0;
-const MAX_CONNECT_RETRIES = 5;
-const RETRY_DELAY_MS = 5000;
-
-/**
- * Inicializa y conecta el pool con la base de datos relacional
- */
-function connectWithRetry() {
-    console.log("[Capa C3.3] Intentando conectar con la base de datos estructural...");
-    pool = new Pool(dbConfig);
-
-    pool.on('error', (err) => {
-        console.error('[Capa C3.3] Error inesperado en un cliente inactivo de la base de datos:', err);
-    });
+function boundedInteger(value, fallback, minimum, maximum) {
+  const parsed = Number.parseInt(value, 10);
+  return Number.isFinite(parsed) ? Math.max(minimum, Math.min(maximum, parsed)) : fallback;
 }
 
-// Ejecutar conexión inicial de infraestructura
-connectWithRetry();
+if (!process.env.DATABASE_URL) {
+  console.error('VOBIXCHAT DATABASE: DATABASE_URL no está configurada');
+}
 
-module.exports = {
-    /**
-     * Ejecuta una consulta SQL genérica de forma segura protegiendo el pool
-     * @param {string} text - Consulta SQL formateada con marcadores de posición
-     * @param {Array} params - Parámetros limpios para evitar inyección SQL
-     */
-    async query(text, params) {
-        const start = Date.now();
-        try {
-            const res = await pool.query(text, params);
-            const duration = Date.now() - start;
-            // Registro técnico de rendimiento para telemetría interna
-            if (duration > 1000) {
-                console.warn(`[Capa C3.3] Alerta de consulta lenta: ${text} tardó ${duration}ms`);
-            }
-            return res;
-        } catch (error) {
-            console.error('[Capa C3.3] Error crítico ejecutando consulta SQL:', error.message);
-            throw error;
-        }
-    },
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false },
+  // El pool de producción usa un proxy en modo sesión con un máximo de 15.
+  // Dejamos margen para migraciones, tareas internas y despliegues solapados.
+  max: boundedInteger(process.env.DATABASE_POOL_MAX, 6, 2, 8),
+  min: boundedInteger(process.env.DATABASE_POOL_MIN, 0, 0, 2),
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 10000,
+  maxUses: 7500
+});
 
-    /**
-     * Verifica la salud de la conexión de la base de datos en tiempo real (Para /healthz)
-     */
-    async checkDatabaseHealth() {
-        try {
-            await pool.query('SELECT 1');
-            return { status: "HEALTHY", error: null };
-        } catch (error) {
-            return { status: "CRITICAL", error: error.message };
-        }
-    }
-};
+pool.on('error', error => {
+  console.error('VOBIXCHAT DATABASE - Error inesperado:', error.message);
+});
+
+async function testConnection() {
+  let client;
+  try {
+    client = await pool.connect();
+    const result = await client.query('SELECT NOW() AS server_time');
+    console.log('VOBIXCHAT DATABASE CONECTADA:', result.rows[0].server_time);
+    return true;
+  } catch (error) {
+    console.error('VOBIXCHAT DATABASE - NO SE PUDO CONECTAR:', error.message);
+    return false;
+  } finally {
+    if (client) client.release();
+  }
+}
+
+async function query(text, params = []) { return pool.query(text, params); }
+async function closeDatabase() { await pool.end(); }
+module.exports = { boundedInteger, pool, query, testConnection, closeDatabase };

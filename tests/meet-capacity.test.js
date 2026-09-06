@@ -6,11 +6,12 @@ const test = require('node:test');
 const database = fs.readFileSync(path.join(__dirname, '..', 'database', 'db.js'), 'utf8');
 const server = fs.readFileSync(path.join(__dirname, '..', 'server.js'), 'utf8');
 
-test('el servidor declara diseño Meet para 1000 sin confundirlo con verificación real', () => {
-  assert.match(server, /designedParticipants:1000/);
-  assert.match(server, /LIVEKIT_MAX_CONNECTIONS/);
-  assert.match(server, /VOBIX_MEET_CAPACITY_VERIFIED/);
-  assert.match(server, /configuredConnections >= 1000 && capacityVerified/);
+test('el servidor separa el cupo de sala de la capacidad empresarial verificada', () => {
+  assert.match(server, /designedParticipants:INTERACTIVE_ROOM_MAX_PARTICIPANTS/);
+  assert.match(server, /designedConcurrentConnections:DESIGNED_CONCURRENT_CONNECTIONS/);
+  assert.match(server, /enterpriseContractConfirmed:capacity\.enterpriseContractConfirmed/);
+  assert.match(server, /capacityVerified:capacity\.capacityVerified/);
+  assert.match(server, /operational:capacity\.operational/);
 });
 
 test('Socket.IO evita compresión costosa y recupera desconexiones breves', () => {
