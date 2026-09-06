@@ -108,6 +108,18 @@ test('la capa 167 identifica los controles permanentes de llamada', () => {
   assert.match(read('core/vobix-layers.js'), /id:'167'.*Controles Permanentes de Llamada y Altavoz.*status:'en_validacion'/);
 });
 
+test('el vídeo pequeño se intercambia con el grande y ambos pueden arrastrarse', () => {
+  const html = read('public/chat.html');
+  assert.match(html, /function swapCallVideoPanels\(\)/);
+  assert.match(html, /classList\.toggle\('localVideoPrimary', showLocalLarge\)/);
+  assert.match(html, /handleFloatingVideoTap\(elements\.localVideo, event\)/);
+  assert.match(html, /handleFloatingVideoTap\(elements\.remoteVideo, event\)/);
+  assert.match(html, /makeCallVideoDraggable\(elements\.localVideo\)/);
+  assert.match(html, /makeCallVideoDraggable\(elements\.remoteVideo\)/);
+  assert.match(html, /Math\.hypot\(dx, dy\) < 7/);
+  assert.match(read('core/vobix-layers.js'), /id:'169'.*Intercambio Táctil de Videollamada.*status:'en_validacion'/);
+});
+
 test('offer, answer e ICE tardíos no sustituyen la llamada activa', () => {
   const html = read('public/chat.html');
   const media = callMediaBlock(html);
