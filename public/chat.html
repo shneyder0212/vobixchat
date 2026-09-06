@@ -10025,6 +10025,7 @@
     function buildEmojiTray() {
       if (!elements.emojiTray) return;
       elements.emojiTray.innerHTML = '';
+      elements.emojiTray.setAttribute('aria-hidden', 'true');
       VOBIX_EMOJIS.forEach(emoji => {
         const button = document.createElement('button');
         button.type = 'button';
@@ -10033,6 +10034,8 @@
         button.addEventListener('click', () => {
           insertTextAtCursor(elements.messageInput, emoji);
           elements.emojiTray.classList.remove('open');
+          elements.emojiTray.setAttribute('aria-hidden', 'true');
+          elements.emojiButton?.setAttribute('aria-expanded', 'false');
         });
         elements.emojiTray.appendChild(button);
       });
@@ -10040,10 +10043,44 @@
 
     buildEmojiTray();
 
+    let emojiPointerArmed = false;
+    let emojiPointerArmTimer = null;
+
+    elements.emojiButton?.setAttribute('aria-expanded', 'false');
+    elements.emojiButton?.addEventListener('pointerdown', () => {
+      emojiPointerArmed = true;
+      if (emojiPointerArmTimer) window.clearTimeout(emojiPointerArmTimer);
+      emojiPointerArmTimer = window.setTimeout(() => {
+        emojiPointerArmed = false;
+      }, 800);
+    });
+    elements.emojiButton?.addEventListener('pointercancel', () => {
+      emojiPointerArmed = false;
+    });
+
     elements.emojiButton?.addEventListener('click', event => {
       event.preventDefault();
-      elements.emojiTray?.classList.toggle('open');
+      // Un click táctil solo es válido si su pointerdown empezó realmente
+      // sobre el botón. Así otra capa no abre los emojis al desaparecer.
+      if (event.detail !== 0 && !emojiPointerArmed) {
+        elements.emojiTray?.classList.remove('open');
+        elements.emojiTray?.setAttribute('aria-hidden', 'true');
+        elements.emojiButton?.setAttribute('aria-expanded', 'false');
+        return;
+      }
+      emojiPointerArmed = false;
+      const open = elements.emojiTray?.classList.toggle('open') || false;
+      elements.emojiTray?.setAttribute('aria-hidden', String(!open));
+      elements.emojiButton?.setAttribute('aria-expanded', String(open));
     });
+
+    document.addEventListener('pointerdown', event => {
+      if (event.target.closest?.('#emojiButton, #emojiTray')) return;
+      emojiPointerArmed = false;
+      elements.emojiTray?.classList.remove('open');
+      elements.emojiTray?.setAttribute('aria-hidden', 'true');
+      elements.emojiButton?.setAttribute('aria-expanded', 'false');
+    }, true);
 
     elements.documentButton?.addEventListener('click', event => {
       event.preventDefault();
@@ -13120,6 +13157,22 @@
         }
       }, 350);
     }
+
+    async function refreshActiveMessageRoom(conversationIdValue = conversationId(app.conversation)) {
+      const id = String(conversationIdValue || '').trim();
+      if (!id || String(conversationId(app.conversation) || '') !== id) return false;
+      await loadMessages(id);
+      openConversationAtLatest(app.conversation);
+      return true;
+    }
+
+    function recoverMessagesWhenAppReturns() {
+      loadConversations().catch(error => console.warn('[VOBIXCHAT MESSAGE LIST RECOVERY]', error));
+      refreshActiveMessageRoom().catch(error => console.warn('[VOBIXCHAT MESSAGE ROOM RECOVERY]', error));
+    }
+
+    window.addEventListener('focus', recoverMessagesWhenAppReturns);
+    window.addEventListener('pageshow', recoverMessagesWhenAppReturns);
 
     async function recoverIncomingConversation(message, incomingId) {
       const senderId = String(
@@ -18054,11 +18107,17 @@
         const signal = event.data || {};
         if (signal.type !== 'VOBIX_PUSH_SIGNAL') return;
 
-        const id = String(signal.conversationId || '').trim();
+        const id = String(
+          signal.conversationId || signal.conversation_id ||
+          signal.payload?.conversationId || signal.payload?.conversation_id || ''
+        ).trim();
         if (signal.pushType === 'message') {
           playIncomingMessageAlertOnce(id);
           if (id && String(conversationId(app.conversation) || '') === id) {
             scheduleIncomingHistoryRefresh(id);
+            refreshActiveMessageRoom(id).catch(error =>
+              console.warn('[VOBIXCHAT PUSH ACTIVE ROOM]', error)
+            );
           } else {
             loadConversations().then(() => {
               const conversation = app.conversations.find(item =>
@@ -18066,7 +18125,7 @@
               );
               const fromUserId = String(signal.fromUserId || '');
               const currentPeerId = String(userId(app.peer) || '');
-              if (conversation && fromUserId && currentPeerId === fromUserId) {
+              if (conversation && (!app.conversation || (fromUserId && currentPeerId === fromUserId))) {
                 return selectConversation(conversation, getConversationPeer(conversation));
               }
               return null;
