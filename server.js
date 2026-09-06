@@ -5852,6 +5852,9 @@ io.on(
         }
 
         activeCalls.set(callId, call);
+        console.log(
+          `VOBIXCHAT | CALL OFFER | ${type} | caller=${user.username} | targets=${targets.length} | online=${targets.filter(target => isUserOnline(target.user_id)).length}`
+        );
         if (typeof callback === 'function') callback({
           ok:true,
           callId,
@@ -5925,6 +5928,9 @@ io.on(
             fromUserId: userId
           });
         }
+        console.log(
+          `VOBIXCHAT | CALL ANSWER | ${call.type || 'audio'} | user=${user.username}`
+        );
         if (typeof callback === 'function') callback({ ok:true });
       } catch (error) {
         console.error('VOBIXCHAT LEGACY CALL ANSWER ERROR:', error);
@@ -6849,6 +6855,13 @@ io.on(
         // ================================================
         // LIMPIAR PARTICIPACIÓN EN LLAMADAS
         // ================================================
+
+        // Un cambio normal entre Wi-Fi, datos, polling y WebSocket provoca
+        // "transport close" durante unos segundos en muchos móviles. No se
+        // debe interpretar como colgar: esperamos la reconexión antes de
+        // terminar la llamada o retirar una invitación entrante.
+        await new Promise(resolve => setTimeout(resolve, 15000));
+        if (isUserOnline(userId)) return;
 
         for (
           const [
