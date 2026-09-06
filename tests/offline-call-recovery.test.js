@@ -62,14 +62,27 @@ test('una llamada entrante suena aunque el usuario esté mirando otro chat', () 
   assert.match(chat, /app\.callPeer = payload\?\.caller \|\| payload\?\.sender \|\| app\.peer/);
 });
 
-test('el tono de llamada saliente está activo y el sonido de mensajes salientes es opcional', () => {
+test('los tonos básicos quedan activos y siguen siendo configurables', () => {
   assert.match(chat, /function playOutgoingRingPulse\(\) \{\s*if \(!app\.callSound\) return;/);
-  assert.match(chat, /id="outgoingMessageSoundSwitch" class="vobixSwitch"/);
-  assert.match(chat, /readBooleanPreference\('vobix_outgoing_message_sound', false\)/);
+  assert.match(chat, /id="outgoingMessageSoundSwitch" class="vobixSwitch on"/);
+  assert.match(chat, /vobix_sound_defaults_v2/);
+  assert.match(chat, /readBooleanPreference\('vobix_outgoing_message_sound', true\)/);
+  assert.match(chat, /async function useReadyAudio/);
   assert.match(chat, /bindPrivacySwitch\(elements\.outgoingMessageSoundSwitch, 'outgoingMessageSound'/);
   assert.match(chat, /function playOutgoingMessageSound\(\) \{\s*if \(!app\.outgoingMessageSound\) return;/);
   assert.match(chat, /Foto enviada'[\s\S]{0,100}playOutgoingMessageSound\(\)/);
   assert.match(chat, /Nota de voz enviada'[\s\S]{0,100}playOutgoingMessageSound\(\)/);
+});
+
+test('una desconexión móvil breve no destruye la llamada', () => {
+  const disconnect = server.slice(
+    server.indexOf("socket.on(\n      'disconnect'"),
+    server.indexOf("// AHORA SÍ CERRAMOS io.on('connection')")
+  );
+  assert.match(disconnect, /new Promise\(resolve => setTimeout\(resolve, 15000\)\)/);
+  assert.match(disconnect, /if \(isUserOnline\(userId\)\) return;/);
+  assert.match(server, /VOBIXCHAT \| CALL OFFER/);
+  assert.match(server, /VOBIXCHAT \| CALL ANSWER/);
 });
 
 test('las capas 145 y 146 quedan registradas', () => {

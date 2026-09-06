@@ -4347,6 +4347,31 @@
       <span id="seniorModeOptionText" class="chatOptionText">Activar Modo Senior</span>
     </button>
 
+    <button id="toggleAntiFraudButton" class="chatOptionButton" type="button" aria-pressed="true">
+      <span class="chatOptionIcon">🛡️</span>
+      <span id="antiFraudOptionText" class="chatOptionText">Desactivar Motor Anti-Estafas</span>
+    </button>
+
+    <button id="openFamilyModeButton" class="chatOptionButton" type="button">
+      <span class="chatOptionIcon">👨‍👩‍👧</span>
+      <span class="chatOptionText">Modo Familiar y consentimientos</span>
+    </button>
+
+    <button id="openChildModeButton" class="chatOptionButton" type="button">
+      <span class="chatOptionIcon">🧒</span>
+      <span class="chatOptionText">Modo Menores y control parental</span>
+    </button>
+
+    <button id="openSafeRouteButton" class="chatOptionButton" type="button">
+      <span class="chatOptionIcon">📍</span>
+      <span class="chatOptionText">Ruta Segura</span>
+    </button>
+
+    <button id="openBusinessButton" class="chatOptionButton" type="button">
+      <span class="chatOptionIcon">💼</span>
+      <span class="chatOptionText">Vobix Negocios · Asistente IA</span>
+    </button>
+
 
     <button
       id="logoutButton"
@@ -4723,9 +4748,9 @@
       <div class="settingRow">
         <div class="settingInfo">
           <div class="settingName">Sonido al enviar mensajes</div>
-          <div class="settingDescription">Reproducir un aviso suave al enviar mensajes, fotos, documentos o notas de voz. Está desactivado por defecto.</div>
+          <div class="settingDescription">Reproducir un aviso suave al enviar mensajes, fotos, documentos o notas de voz.</div>
         </div>
-        <button id="outgoingMessageSoundSwitch" class="vobixSwitch" type="button" aria-label="Sonido al enviar mensajes"></button>
+        <button id="outgoingMessageSoundSwitch" class="vobixSwitch on" type="button" aria-label="Sonido al enviar mensajes"></button>
       </div>
 
       <div class="settingRow">
@@ -5648,6 +5673,24 @@
 
       seniorModeOptionText:
         $('seniorModeOptionText'),
+
+      toggleAntiFraudButton:
+        $('toggleAntiFraudButton'),
+
+      antiFraudOptionText:
+        $('antiFraudOptionText'),
+
+      openFamilyModeButton:
+        $('openFamilyModeButton'),
+
+      openChildModeButton:
+        $('openChildModeButton'),
+
+      openSafeRouteButton:
+        $('openSafeRouteButton'),
+
+      openBusinessButton:
+        $('openBusinessButton'),
 
       seniorHome:
         $('seniorHome'),
@@ -8974,8 +9017,19 @@
     app.lastSeenVisible = readBooleanPreference('vobix_last_seen_visible', true);
     app.profileVisible = readBooleanPreference('vobix_profile_visible', true);
     app.incognito = readBooleanPreference('vobix_incognito', false);
+    // Corrige una sola vez los dispositivos que heredaron el antiguo tono de
+    // salida apagado. Después se respeta cualquier cambio hecho por el usuario.
+    try {
+      if (localStorage.getItem('vobix_sound_defaults_v2') !== 'done') {
+        localStorage.setItem('vobix_message_sound', 'true');
+        localStorage.setItem('vobix_outgoing_message_sound', 'true');
+        localStorage.setItem('vobix_call_sound', 'true');
+        localStorage.setItem('vobix_sound_defaults_v2', 'done');
+      }
+    } catch (_) {}
+    app.messageSound = readBooleanPreference('vobix_message_sound', true);
     app.callSound = readBooleanPreference('vobix_call_sound', true);
-    app.outgoingMessageSound = readBooleanPreference('vobix_outgoing_message_sound', false);
+    app.outgoingMessageSound = readBooleanPreference('vobix_outgoing_message_sound', true);
     app.vibration = readBooleanPreference('vobix_vibration', true);
     app.notificationPreview = readBooleanPreference('vobix_notification_preview', true);
     app.mobileOnlyNotifications = readBooleanPreference('vobix_mobile_only_notifications', true);
@@ -9255,6 +9309,20 @@
     }
 
 
+    async function useReadyAudio(drawSound) {
+      const context = getAudioContext();
+      if (!context || typeof drawSound !== 'function') return;
+
+      try {
+        if (context.state === 'suspended') await context.resume();
+        if (context.state !== 'running') return;
+        drawSound(context);
+      } catch (error) {
+        console.warn('[VOBIXCHAT AUDIO READY]', error);
+      }
+    }
+
+
     function playMessageSound() {
 
       if (!incomingAlertsAllowed()) {
@@ -9272,16 +9340,7 @@
       }
 
 
-      const context =
-        getAudioContext();
-
-
-      if (!context) {
-        return;
-      }
-
-
-      try {
+      useReadyAudio(context => {
 
         const oscillator =
           context.createOscillator();
@@ -9352,24 +9411,14 @@
         );
 
 
-      } catch (error) {
-
-        console.warn(
-          '[VOBIXCHAT MESSAGE SOUND]',
-          error
-        );
-
-      }
+      });
 
     }
 
 
     function playOutgoingMessageSound() {
       if (!app.outgoingMessageSound) return;
-      const context = getAudioContext();
-      if (!context) return;
-
-      try {
+      useReadyAudio(context => {
         const oscillator = context.createOscillator();
         const gain = context.createGain();
         oscillator.type = 'sine';
@@ -9382,9 +9431,7 @@
         gain.connect(context.destination);
         oscillator.start();
         oscillator.stop(context.currentTime + .16);
-      } catch (error) {
-        console.warn('[VOBIXCHAT OUTGOING MESSAGE SOUND]', error);
-      }
+      });
     }
 
 
@@ -9409,12 +9456,7 @@
         return;
       }
 
-      const context = getAudioContext();
-      if (!context) {
-        return;
-      }
-
-      try {
+      useReadyAudio(context => {
         // Timbre telefónico doble: mezcla dos frecuencias para que se perciba
         // como una llamada real incluso en el pequeño altavoz de un móvil.
         [0, .42].forEach(delay => {
@@ -9433,9 +9475,7 @@
             oscillator.stop(context.currentTime + delay + .40);
           });
         });
-      } catch (error) {
-        console.warn('[VOBIXCHAT CALL SOUND]', error);
-      }
+      });
 
       vibrateDevice(app.incomingVibrationPattern || [300, 180, 300]);
     }
@@ -9443,10 +9483,7 @@
 
     function playOutgoingRingPulse() {
       if (!app.callSound) return;
-      const context = getAudioContext();
-      if (!context) return;
-
-      try {
+      useReadyAudio(context => {
         // Tono de espera del llamante: dos pulsos, como una llamada telefónica.
         [0, .38].forEach(delay => {
           [425, 450].forEach(frequency => {
@@ -9464,9 +9501,7 @@
             oscillator.stop(context.currentTime + delay + .36);
           });
         });
-      } catch (error) {
-        console.warn('[VOBIXCHAT OUTGOING RING]', error);
-      }
+      });
     }
 
 
@@ -10682,6 +10717,21 @@
       return { suspicious: score >= 3, score, reasons: [...new Set(reasons)].slice(0, 3) };
     }
 
+    function antiFraudEnabled() {
+      try { return localStorage.getItem('vobix_antifraud_enabled') !== 'off'; }
+      catch (_) { return true; }
+    }
+
+    function renderAntiFraudMenuState() {
+      const enabled = antiFraudEnabled();
+      elements.toggleAntiFraudButton?.setAttribute('aria-pressed', String(enabled));
+      if (elements.antiFraudOptionText) {
+        elements.antiFraudOptionText.textContent = enabled
+          ? 'Desactivar Motor Anti-Estafas'
+          : 'Activar Motor Anti-Estafas';
+      }
+    }
+
     function assessSeniorFraudSignals(value) {
       const base = assessFraudSignals(value);
       if (!document.body.classList.contains('vobixSeniorMode')) return base;
@@ -10735,7 +10785,7 @@
           link.rel = 'noopener noreferrer nofollow';
           link.textContent = clean;
           const assessment = assessSuspiciousUrl(parsed.href);
-          if (assessment.suspicious) {
+          if (antiFraudEnabled() && assessment.suspicious) {
             link.classList.add('suspiciousLink');
             link.title = 'Vobix AntiFraude: revisa este enlace antes de abrirlo';
             link.addEventListener('click', event => {
@@ -11557,6 +11607,31 @@
       notifyUser(active ? 'Modo Senior desactivado' : 'Vobix Senior activado');
     });
 
+    elements.toggleAntiFraudButton?.addEventListener('click', () => {
+      const enabled = !antiFraudEnabled();
+      try { localStorage.setItem('vobix_antifraud_enabled', enabled ? 'on' : 'off'); } catch (_) {}
+      renderAntiFraudMenuState();
+      notifyUser(enabled ? 'Motor Anti-Estafas activado' : 'Motor Anti-Estafas desactivado');
+    });
+
+    elements.openFamilyModeButton?.addEventListener('click', () => {
+      window.location.href = '/family-recovery.html';
+    });
+
+    elements.openChildModeButton?.addEventListener('click', () => {
+      window.location.href = '/child-protection.html';
+    });
+
+    elements.openSafeRouteButton?.addEventListener('click', () => {
+      window.location.href = '/protected-route.html';
+    });
+
+    elements.openBusinessButton?.addEventListener('click', () => {
+      window.location.href = '/centro-config.html?service=business';
+    });
+
+    renderAntiFraudMenuState();
+
     elements.seniorVoiceGuideButton?.addEventListener('click', () => {
       const enabled = !seniorVoiceGuideEnabled();
       try { localStorage.setItem(SENIOR_VOICE_GUIDE_KEY, enabled ? 'on' : 'off'); } catch (_) {}
@@ -12252,7 +12327,9 @@
           unknownWarning.textContent = '⚠ Mensaje de una persona no reconocida. No compartas dinero, contraseñas ni códigos.';
           bubble.appendChild(unknownWarning);
         }
-        const fraudAssessment = assessSeniorFraudSignals(message.text || message.message || message.body || '');
+        const fraudAssessment = antiFraudEnabled()
+          ? assessSeniorFraudSignals(message.text || message.message || message.body || '')
+          : { suspicious:false, score:0, reasons:[] };
         if (fraudAssessment.suspicious) {
           const warning = document.createElement('div');
           warning.className = 'fraudWarning';
@@ -16328,7 +16405,15 @@
         id
       );
 
-      restoreConversationReadPosition(conversation);
+      // Al entrar en una conversación siempre mostramos el mensaje más
+      // reciente. No restauramos una posición antigua a mitad del historial.
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        if (String(conversationId(app.conversation) || '') !== String(id)) return;
+        elements.messages.scrollTop = elements.messages.scrollHeight;
+        app.unreadBelowCount = 0;
+        removeNewMessagesDivider();
+        syncLatestMessagesButton();
+      }));
 
 
       if (
