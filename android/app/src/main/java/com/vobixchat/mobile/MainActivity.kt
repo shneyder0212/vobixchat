@@ -3,8 +3,11 @@ package com.vobixchat.mobile
 import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Intent
+import android.content.Context
 import android.content.pm.PackageManager
 import android.graphics.Color
+import android.media.AudioDeviceInfo
+import android.media.AudioManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -67,7 +70,7 @@ class MainActivity : ComponentActivity() {
             domStorageEnabled = true
             mediaPlaybackRequiresUserGesture = false
             cacheMode = WebSettings.LOAD_NO_CACHE
-            userAgentString = "$userAgentString VobixChatAndroid/1.2.3"
+            userAgentString = "$userAgentString VobixChatAndroid/1.2.4"
         }
         webView.addJavascriptInterface(NativeBridge(), "VobixNative")
         webView.webViewClient = WebViewClient()
@@ -318,5 +321,26 @@ class MainActivity : ComponentActivity() {
 
         @JavascriptInterface
         fun hasNotificationPermission(): Boolean = this@MainActivity.hasNotificationPermission()
+
+        @Suppress("DEPRECATION")
+        @JavascriptInterface
+        fun setSpeakerphoneOn(enabled: Boolean): Boolean {
+            val audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
+            audioManager.mode = AudioManager.MODE_IN_COMMUNICATION
+            return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                if (enabled) {
+                    val speaker = audioManager.availableCommunicationDevices.firstOrNull {
+                        it.type == AudioDeviceInfo.TYPE_BUILTIN_SPEAKER
+                    } ?: return false
+                    audioManager.setCommunicationDevice(speaker)
+                } else {
+                    audioManager.clearCommunicationDevice()
+                    true
+                }
+            } else {
+                audioManager.isSpeakerphoneOn = enabled
+                true
+            }
+        }
     }
 }
