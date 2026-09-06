@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="robots" content="noindex,nofollow,noarchive">
+  <title>Control privado · VobixChat</title>
+  <link rel="stylesheet" href="/owner-console.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand"><span class="mark">V</span><div><b>VOBIX<span>CHAT</span></b><small>CONTROL PRIVADO</small></div></div>
+    <div class="live"><i></i><span id="connectionLabel">Conectando</span></div>
+  </header>
+
+  <main>
+    <section class="welcome">
+      <div><p class="eyebrow">PANEL DEL PROPIETARIO</p><h1>Estado real de VobixChat</h1><p id="updatedAt">Esperando datos protegidos…</p></div>
+      <button id="refreshButton" type="button">Actualizar ahora</button>
+    </section>
+
+    <section id="accessMessage" class="access-message" hidden>
+      <strong id="accessTitle">Acceso protegido</strong>
+      <p id="accessText">Inicie sesión con la cuenta autorizada del propietario.</p>
+      <a href="/">Abrir VobixChat</a>
+    </section>
+
+    <div id="dashboard" hidden>
+      <section class="hero-grid" aria-label="Totales de usuarios">
+        <article class="metric primary"><span>Registrados totales</span><strong id="totalUsers">0</strong><small>Control general de cuentas</small></article>
+        <article class="metric"><span>Usando ahora</span><strong id="onlineNow">0</strong><small>Actividad en tiempo real</small></article>
+        <article class="metric"><span>Activos últimas 24 h</span><strong id="active24h">0</strong><small>Usuarios diferentes</small></article>
+        <article class="metric"><span>Crecimiento semanal</span><strong id="weeklyGrowth">0%</strong><small id="weeklyRegistrations">0 registros en 7 días</small></article>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head"><div><p class="eyebrow">AUGE DE LA APP</p><h2>Registros y actividad</h2></div><span>Últimos 14 días</span></div>
+        <div id="trendChart" class="chart" role="img" aria-label="Evolución diaria de registros y mensajes"></div>
+        <div class="legend"><span><i class="reg"></i>Registros</span><span><i class="msg"></i>Mensajes</span></div>
+      </section>
+
+      <section class="detail-grid">
+        <article class="panel compact">
+          <div class="panel-head"><h2>Control de registros</h2></div>
+          <dl>
+            <div><dt>Registrados hoy</dt><dd id="registeredToday">0</dd></div>
+            <div><dt>Últimos 7 días</dt><dd id="registered7d">0</dd></div>
+            <div><dt>Últimos 30 días</dt><dd id="registered30d">0</dd></div>
+            <div><dt>Activos últimos 5 min</dt><dd id="active5m">0</dd></div>
+          </dl>
+        </article>
+        <article class="panel compact">
+          <div class="panel-head"><h2>Uso de comunicación</h2></div>
+          <dl>
+            <div><dt>Llamadas activas</dt><dd id="activeCalls">0</dd></div>
+            <div><dt>Personas en llamadas</dt><dd id="callParticipants">0</dd></div>
+            <div><dt>Mensajes hoy</dt><dd id="messagesToday">0</dd></div>
+            <div><dt>Mensajes últimos 7 días</dt><dd id="messages7d">0</dd></div>
+          </dl>
+        </article>
+        <article class="panel compact">
+          <div class="panel-head"><h2>Capacidad técnica</h2></div>
+          <dl>
+            <div><dt>Almacenamiento externo</dt><dd id="storageState" class="state">—</dd></div>
+            <div><dt>Servidor TURN</dt><dd id="turnState" class="state">—</dd></div>
+            <div><dt>Servidor SFU</dt><dd id="sfuState" class="state">—</dd></div>
+            <div><dt>Tamaño de base de datos</dt><dd id="databaseSize">—</dd></div>
+          </dl>
+        </article>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head"><div><p class="eyebrow">NUEVAS CUENTAS</p><h2>Registros recientes</h2></div><span>Sin teléfonos ni datos privados</span></div>
+        <div class="table-wrap"><table><thead><tr><th>Usuario</th><th>Vobix ID</th><th>Fecha</th><th>Estado</th></tr></thead><tbody id="recentUsers"></tbody></table></div>
+      </section>
+
+      <p class="privacy">Panel de solo lectura. No muestra mensajes, teléfonos, PIN, contraseñas ni secretos.</p>
+    </div>
+  </main>
+  <script src="/owner-console.js" defer></script>
+</body>
+</html>

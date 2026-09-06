@@ -13,6 +13,11 @@ module.exports = Object.freeze({
   REGISTRATION_SENDS_PER_PHONE: Number(process.env.REGISTRATION_SENDS_PER_PHONE || 4),
   REGISTRATION_SENDS_PER_IP: Number(process.env.REGISTRATION_SENDS_PER_IP || 12),
   REGISTRATION_GUARD_WINDOW_MS: Number(process.env.REGISTRATION_GUARD_WINDOW_MS || 15 * 60 * 1000),
+  // Panel privado del propietario. Debe configurarse en Render, nunca en GitHub.
+  // Se admite el UUID interno o el teléfono normalizado de UNA sola cuenta.
+  ADMIN_OWNER_USER_ID: process.env.ADMIN_OWNER_USER_ID || '',
+  ADMIN_OWNER_PHONE: process.env.ADMIN_OWNER_PHONE || '',
+  ADMIN_REAUTH_MAX_AGE_MS: Number(process.env.ADMIN_REAUTH_MAX_AGE_MS || 12 * 60 * 60 * 1000),
   PORT: process.env.PORT || 3000,
   VAPID_PUBLIC_KEY: process.env.VAPID_PUBLIC_KEY || '',
   VAPID_PRIVATE_KEY: process.env.VAPID_PRIVATE_KEY || '',

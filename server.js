@@ -679,6 +679,97 @@ async function requireAuth(
 
 
 // ======================================================
+// ADMINISTRACIÓN PRIVADA DEL PROPIETARIO
+// ======================================================
+
+function constantTimeEqual(left, right) {
+  const leftHash = crypto.createHash('sha256').update(String(left || '')).digest();
+  const rightHash = crypto.createHash('sha256').update(String(right || '')).digest();
+  return crypto.timingSafeEqual(leftHash, rightHash);
+}
+
+function ownerAdminConfigured() {
+  return Boolean(
+    String(config.ADMIN_OWNER_USER_ID || '').trim() ||
+    normalizePhone(config.ADMIN_OWNER_PHONE || '')
+  );
+}
+
+function isOwnerAdmin(user) {
+  if (!user || !ownerAdminConfigured()) return false;
+
+  const configuredId = String(config.ADMIN_OWNER_USER_ID || '').trim().toLowerCase();
+  if (configuredId && constantTimeEqual(String(user.id || '').toLowerCase(), configuredId)) {
+    return true;
+  }
+
+  const configuredPhone = normalizePhone(config.ADMIN_OWNER_PHONE || '');
+  return Boolean(
+    configuredPhone &&
+    constantTimeEqual(normalizePhone(user.phone || ''), configuredPhone)
+  );
+}
+
+function requireOwnerAdmin(req, res, next) {
+  return requireAuth(req, res, () => {
+    res.setHeader('Cache-Control', 'no-store, max-age=0');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('X-Frame-Options', 'DENY');
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+
+    if (!ownerAdminConfigured()) {
+      return res.status(503).json({
+        ok: false,
+        code: 'owner_admin_not_configured',
+        msg: 'El acceso privado del propietario todavía no está configurado'
+      });
+    }
+
+    if (!isOwnerAdmin(req.vobixUser)) {
+      return res.status(403).json({
+        ok: false,
+        code: 'owner_only',
+        msg: 'Acceso reservado al propietario de VobixChat'
+      });
+    }
+
+    const reverifiedAt = req.vobixUser.security_reverified_at
+      ? new Date(req.vobixUser.security_reverified_at).getTime()
+      : 0;
+    const maxAge = Math.max(5 * 60 * 1000, Number(config.ADMIN_REAUTH_MAX_AGE_MS) || 0);
+
+    if (!reverifiedAt || Date.now() - reverifiedAt > maxAge) {
+      return res.status(428).json({
+        ok: false,
+        code: 'admin_reauthentication_required',
+        msg: 'Vuelva a verificar su cuenta para abrir el panel privado'
+      });
+    }
+
+    return next();
+  });
+}
+
+const ownerAdminRate = new Map();
+const ownerAdminAudit = new Map();
+
+function ownerAdminRateAllows(req) {
+  const key = crypto.createHash('sha256')
+    .update(`${req.vobixUser?.id || 'unknown'}|${getClientIp(req)}`)
+    .digest('hex');
+  const now = Date.now();
+  const recent = (ownerAdminRate.get(key) || []).filter(time => now - time < 60 * 1000);
+  if (recent.length >= 60) {
+    ownerAdminRate.set(key, recent);
+    return false;
+  }
+  recent.push(now);
+  ownerAdminRate.set(key, recent);
+  return true;
+}
+
+
+// ======================================================
 // GENERAR PIN
 // ======================================================
 
@@ -7060,6 +7151,177 @@ setInterval(
   () => { cleanExpiredSessions(); },
   60 * 60 * 1000
 );
+
+
+// ======================================================
+// PANEL PRIVADO DEL PROPIETARIO — SOLO LECTURA
+// ======================================================
+
+app.get('/propietario-vobix', (req, res) => {
+  res.setHeader('Cache-Control', 'no-store, max-age=0');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('Referrer-Policy', 'no-referrer');
+  res.setHeader('X-Robots-Tag', 'noindex, nofollow, noarchive');
+  res.setHeader(
+    'Content-Security-Policy',
+    "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'"
+  );
+  return res.sendFile(path.join(__dirname, 'private', 'owner-console.html'));
+});
+
+app.get('/api/admin/overview', requireOwnerAdmin, async (req, res) => {
+  if (!ownerAdminRateAllows(req)) {
+    res.setHeader('Retry-After', '60');
+    return res.status(429).json({
+      ok: false,
+      code: 'admin_rate_limited',
+      msg: 'Demasiadas actualizaciones del panel. Espere un momento.'
+    });
+  }
+
+  try {
+    const [summaryResult, trendResult, recentResult] = await Promise.all([
+      database.query(`
+        SELECT
+          (SELECT COUNT(*)::int FROM users) AS total_users,
+          (SELECT COUNT(*)::int FROM users WHERE created_at >= CURRENT_DATE) AS registrations_today,
+          (SELECT COUNT(*)::int FROM users WHERE created_at >= NOW() - INTERVAL '7 days') AS registrations_7d,
+          (SELECT COUNT(*)::int FROM users WHERE created_at >= NOW() - INTERVAL '14 days' AND created_at < NOW() - INTERVAL '7 days') AS registrations_previous_7d,
+          (SELECT COUNT(*)::int FROM users WHERE created_at >= NOW() - INTERVAL '30 days') AS registrations_30d,
+          (SELECT COUNT(*)::int FROM users WHERE online = TRUE AND last_seen >= NOW() - INTERVAL '2 minutes') AS online_recent,
+          (SELECT COUNT(DISTINCT user_id)::int FROM sessions WHERE revoked = FALSE AND last_used_at >= NOW() - INTERVAL '5 minutes') AS active_5m,
+          (SELECT COUNT(DISTINCT user_id)::int FROM sessions WHERE revoked = FALSE AND last_used_at >= NOW() - INTERVAL '24 hours') AS active_24h,
+          (SELECT COUNT(*)::int FROM conversations) AS total_conversations,
+          (SELECT COUNT(*)::int FROM messages WHERE deleted = FALSE) AS total_messages,
+          (SELECT COUNT(*)::int FROM messages WHERE deleted = FALSE AND created_at >= CURRENT_DATE) AS messages_today,
+          (SELECT COUNT(*)::int FROM messages WHERE deleted = FALSE AND created_at >= NOW() - INTERVAL '7 days') AS messages_7d,
+          (SELECT COUNT(*)::int FROM messages WHERE deleted = FALSE AND file_url IS NOT NULL) AS total_attachments,
+          pg_database_size(current_database())::bigint AS database_bytes
+      `),
+      database.query(`
+        WITH days AS (
+          SELECT generate_series(
+            CURRENT_DATE - INTERVAL '13 days',
+            CURRENT_DATE,
+            INTERVAL '1 day'
+          )::date AS day
+        ), registrations_by_day AS (
+          SELECT created_at::date AS day, COUNT(*)::int AS registrations
+          FROM users
+          WHERE created_at >= CURRENT_DATE - INTERVAL '13 days'
+          GROUP BY created_at::date
+        ), messages_by_day AS (
+          SELECT created_at::date AS day, COUNT(*)::int AS messages
+          FROM messages
+          WHERE deleted = FALSE
+            AND created_at >= CURRENT_DATE - INTERVAL '13 days'
+          GROUP BY created_at::date
+        )
+        SELECT
+          days.day,
+          COALESCE(registrations_by_day.registrations, 0)::int AS registrations,
+          COALESCE(messages_by_day.messages, 0)::int AS messages
+        FROM days
+        LEFT JOIN registrations_by_day USING(day)
+        LEFT JOIN messages_by_day USING(day)
+        ORDER BY days.day ASC
+      `),
+      database.query(`
+        SELECT username, vobix_id, created_at,
+          (online = TRUE AND last_seen >= NOW() - INTERVAL '2 minutes') AS online
+        FROM users
+        ORDER BY created_at DESC
+        LIMIT 12
+      `)
+    ]);
+
+    const summary = summaryResult.rows[0] || {};
+    const currentWeek = Number(summary.registrations_7d || 0);
+    const previousWeek = Number(summary.registrations_previous_7d || 0);
+    const growthPercent = previousWeek === 0
+      ? (currentWeek > 0 ? 100 : 0)
+      : Math.round(((currentWeek - previousWeek) / previousWeek) * 1000) / 10;
+    let liveCallParticipants = 0;
+    for (const call of activeCalls.values()) {
+      liveCallParticipants += call?.participants instanceof Set ? call.participants.size : 0;
+    }
+
+    const auditKey = String(req.vobixSession.id || req.vobixUser.id);
+    const lastAudit = ownerAdminAudit.get(auditKey) || 0;
+    if (Date.now() - lastAudit > 10 * 60 * 1000) {
+      ownerAdminAudit.set(auditKey, Date.now());
+      database.query(
+        `INSERT INTO audit_events(user_id,event_type,entity_type,metadata,created_at)
+         VALUES($1,'owner_dashboard_view','admin_dashboard',$2::jsonb,NOW())`,
+        [req.vobixUser.id, JSON.stringify({
+          ipHash: crypto.createHash('sha256').update(getClientIp(req)).digest('hex')
+        })]
+      ).catch(error => console.error('VOBIXCHAT ADMIN AUDIT ERROR:', error.message));
+    }
+
+    return res.json({
+      ok: true,
+      generatedAt: new Date().toISOString(),
+      owner: {
+        username: req.vobixUser.username,
+        vobixId: req.vobixUser.vobix_id || null
+      },
+      users: {
+        total: Number(summary.total_users || 0),
+        onlineNow: Math.max(Number(summary.online_recent || 0), onlineUsers.size),
+        activeLast5Minutes: Number(summary.active_5m || 0),
+        activeLast24Hours: Number(summary.active_24h || 0),
+        registeredToday: Number(summary.registrations_today || 0),
+        registered7Days: currentWeek,
+        registered30Days: Number(summary.registrations_30d || 0),
+        weeklyGrowthPercent: growthPercent
+      },
+      activity: {
+        conversations: Number(summary.total_conversations || 0),
+        messagesTotal: Number(summary.total_messages || 0),
+        messagesToday: Number(summary.messages_today || 0),
+        messages7Days: Number(summary.messages_7d || 0),
+        attachments: Number(summary.total_attachments || 0),
+        activeCalls: activeCalls.size,
+        activeCallParticipants: liveCallParticipants,
+        connectedSocketsThisInstance: Number(io.engine?.clientsCount || 0)
+      },
+      capacity: {
+        databaseBytes: Number(summary.database_bytes || 0),
+        serverUptimeSeconds: Math.floor(process.uptime()),
+        externalMediaStorage: r2Storage.isConfigured(),
+        turnRelay: Boolean(String(process.env.TURN_URL || '').trim() && process.env.TURN_USERNAME && process.env.TURN_CREDENTIAL),
+        sfuConfigured: Boolean(String(process.env.LIVEKIT_URL || '').trim() && process.env.LIVEKIT_API_KEY && process.env.LIVEKIT_API_SECRET),
+        androidPush: firebasePushEnabled
+      },
+      trend: trendResult.rows.map(row => ({
+        day: String(row.day).slice(0, 10),
+        registrations: Number(row.registrations || 0),
+        messages: Number(row.messages || 0)
+      })),
+      recentRegistrations: recentResult.rows.map(row => ({
+        username: row.username,
+        vobixId: row.vobix_id || null,
+        createdAt: row.created_at,
+        online: Boolean(row.online)
+      })),
+      privacy: {
+        readOnly: true,
+        conversationsExcluded: true,
+        phoneNumbersExcluded: true,
+        secretsExcluded: true
+      }
+    });
+  } catch (error) {
+    console.error('VOBIXCHAT OWNER DASHBOARD ERROR:', error.message);
+    return res.status(500).json({
+      ok: false,
+      code: 'owner_dashboard_unavailable',
+      msg: 'No se pudieron cargar las estadísticas privadas'
+    });
+  }
+});
 
 
 // ======================================================
