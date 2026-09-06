@@ -343,9 +343,21 @@ app.use(
   '/uploads',
   express.static(
     path.join(__dirname, 'uploads'),
-    { fallthrough: false, maxAge: '1h' }
+    { fallthrough: true, maxAge: '1h' }
   )
 );
+
+// Una referencia antigua que ya no exista debe terminar en 404 limpio. No se
+// envía la aplicación HTML como si fuera una foto y no se registra como fallo 500.
+app.use('/uploads', (req, res) => {
+  res.setHeader('Cache-Control', 'no-store, max-age=0');
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  return res.status(404).json({
+    ok: false,
+    code: 'media_not_found',
+    msg: 'El archivo solicitado no está disponible'
+  });
+});
 
 
 // ======================================================
