@@ -149,6 +149,8 @@ const VOBIX_LAYERS = Object.freeze([
 ,{ id:'169', name:'Intercambio Táctil de Videollamada', status:'en_validacion', scope:'Al tocar el vídeo pequeño intercambia la cámara local y remota entre tamaño grande y flotante; el cuadro pequeño puede moverse con dedo o ratón sin activar el intercambio durante el arrastre.' }
 ,{ id:'170', name:'Recuperación de Micrófono Android', status:'en_validacion', scope:'Evita capturas simultáneas del micrófono, solicita solo los permisos que exige cada llamada, reintenta una captura ocupada y restaura la ruta de audio nativa al colgar.' }
 ,{ id:'171', name:'Permiso Antes del Timbre', status:'en_validacion', scope:'Android confirma cámara y micrófono, libera cualquier captura anterior y abre la pista WebRTC antes de avisar al destinatario, evitando timbres que terminan por una autorización pendiente.' }
+,{ id:'172', name:'Control Nativo de Audio Android', status:'en_validacion', scope:'La APK declara el permiso técnico de control de audio sin ventanas adicionales, deja a WebRTC iniciar el micrófono y separa la captura de voz y cámara en dispositivos incompatibles.' }
+,{ id:'173', name:'Compositor Pegado al Teclado', status:'en_validacion', scope:'En móvil la conversación queda arriba, la barra de escritura permanece pegada al borde superior del teclado y al enfocarla se muestra siempre el final del chat.' }
 ]);
 
 function getVobixLayers() {

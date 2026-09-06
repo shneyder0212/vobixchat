@@ -110,9 +110,17 @@ test('Android recupera el micrófono ocupado sin cortar de inmediato', () => {
   const html = read('public/chat.html');
   assert.match(html, /\['OverconstrainedError', 'NotReadableError', 'AbortError'\]/);
   assert.match(html, /reportClientDiagnostic\('call_media_retry'/);
-  assert.match(html, /await new Promise\(resolve => window\.setTimeout\(resolve, 450\)\)/);
+  assert.match(html, /await new Promise\(resolve => window\.setTimeout\(resolve, 1200\)\)/);
+  assert.match(html, /const audioStream = await navigator\.mediaDevices\.getUserMedia/);
+  assert.match(html, /const videoStream = await navigator\.mediaDevices\.getUserMedia/);
   assert.match(html, /function resetNativeCallAudio\(\)/);
   assert.match(read('core/vobix-layers.js'), /id:'170'.*Recuperación de Micrófono Android.*status:'en_validacion'/);
+});
+
+test('la APK declara control técnico de audio sin permiso emergente', () => {
+  const manifest = read('android/app/src/main/AndroidManifest.xml');
+  assert.match(manifest, /android\.permission\.MODIFY_AUDIO_SETTINGS/);
+  assert.match(read('core/vobix-layers.js'), /id:'172'.*Control Nativo de Audio Android.*status:'en_validacion'/);
 });
 
 test('Android confirma permisos y abre el micrófono antes de timbrar al destinatario', () => {

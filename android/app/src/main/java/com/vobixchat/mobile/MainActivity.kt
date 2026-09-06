@@ -70,7 +70,7 @@ class MainActivity : ComponentActivity() {
             domStorageEnabled = true
             mediaPlaybackRequiresUserGesture = false
             cacheMode = WebSettings.LOAD_NO_CACHE
-            userAgentString = "$userAgentString VobixChatAndroid/1.2.5"
+            userAgentString = "$userAgentString VobixChatAndroid/1.2.6"
         }
         webView.addJavascriptInterface(NativeBridge(), "VobixNative")
         webView.webViewClient = WebViewClient()
