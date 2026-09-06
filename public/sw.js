@@ -620,6 +620,24 @@ self.addEventListener(
           client.focused === true
         );
 
+        // Push también funciona como señal de recuperación. Socket.IO sigue
+        // siendo el canal principal, pero Android puede suspenderlo durante
+        // un cambio de red o al dejar la WebView en segundo plano.
+        for (const client of windows) {
+          try {
+            client.postMessage({
+              type: 'VOBIX_PUSH_SIGNAL',
+              pushType: type,
+              conversationId,
+              callId,
+              fromUserId: data.fromUserId || data.from_user_id || data.callerId || null,
+              callType: data.callType || data.call_type || (type === 'video-call' ? 'video' : 'audio')
+            });
+          } catch (error) {
+            console.error('VOBIXCHAT SW | RECOVERY SIGNAL ERROR', error);
+          }
+        }
+
         // Con VOBIXCHAT visible, Socket.IO ya muestra mensajes y llamadas.
         // Evitamos la segunda alerta del navegador en el mismo dispositivo.
         if (appVisible) {
