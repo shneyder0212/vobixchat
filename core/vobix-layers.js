@@ -158,6 +158,7 @@ const VOBIX_LAYERS = Object.freeze([
 ,{ id:'178', name:'Compositor Siempre Sobre el Teclado', status:'en_validacion', scope:'Android e iPhone calculan la menor altura visual válida, fijan la barra de escritura al área visible desde el foco y evitan que el compositor se encoja o quede oculto bajo el teclado nativo.' }
 ,{ id:'179', name:'Cambio de Cámara Real y Recuperable', status:'en_validacion', scope:'El botón de cambio selecciona otra cámara física, libera primero el hardware en Android, sustituye la pista en conexiones individuales y grupales y recupera la cámara anterior si ocurre un error.' }
 ,{ id:'180', name:'Teclado Android Medido por la APK', status:'en_validacion', scope:'La APK mide directamente el área ocupada por el teclado Android, la convierte a píxeles CSS y comunica la altura visible al chat para mantener el compositor inmediatamente encima del teclado incluso con pantalla de borde a borde.' }
+,{ id:'181', name:'Sala 1x1 Abierta en el Último Mensaje', status:'en_validacion', scope:'Al tocar una conversación privada, VobixChat enfoca el compositor y ancla el historial al último mensaje mediante desplazamiento directo, reintentos de diseño y observación temporal de multimedia.' }
 ]);
 
 function getVobixLayers() {

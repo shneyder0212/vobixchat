@@ -11618,7 +11618,7 @@
         button.addEventListener('click', () => {
           openSeniorTask();
           closePeople();
-          selectConversation(conversation, peer);
+          selectConversation(conversation, peer, { focusComposer: true });
         });
         elements.seniorFavorites.appendChild(button);
       });
@@ -12913,6 +12913,7 @@
     }
 
     let latestMessagesScrollGeneration = 0;
+    let latestMessagesResizeObserver = null;
 
     function openConversationAtLatest(conversation = app.conversation) {
       if (!elements.messages) return;
@@ -12923,6 +12924,8 @@
           generation !== latestMessagesScrollGeneration ||
           String(conversationId(app.conversation) || '') !== expectedId
         ) return;
+        const lastMessage = elements.messages.lastElementChild;
+        lastMessage?.scrollIntoView?.({ block: 'end', inline: 'nearest', behavior: 'auto' });
         elements.messages.scrollTop = elements.messages.scrollHeight;
         app.unreadBelowCount = 0;
         removeNewMessagesDivider();
@@ -12937,6 +12940,17 @@
       [80, 250, 700, 1500, 3000].forEach(delay => {
         window.setTimeout(moveToLatest, delay);
       });
+
+      latestMessagesResizeObserver?.disconnect?.();
+      if (typeof ResizeObserver === 'function') {
+        latestMessagesResizeObserver = new ResizeObserver(moveToLatest);
+        latestMessagesResizeObserver.observe(elements.messages);
+        window.setTimeout(() => {
+          if (generation !== latestMessagesScrollGeneration) return;
+          latestMessagesResizeObserver?.disconnect?.();
+          latestMessagesResizeObserver = null;
+        }, 5000);
+      }
     }
 
     window.addEventListener('vobixviewportchange', event => {
@@ -16006,7 +16020,8 @@
 
               selectConversation(
                 conversation,
-                peer
+                peer,
+                { focusComposer: true }
               );
 
             }
@@ -16609,7 +16624,8 @@
 
       await selectConversation(
         created,
-        user
+        user,
+        { focusComposer: true }
       );
 
 
@@ -16627,7 +16643,8 @@
 
     async function selectConversation(
       conversation,
-      peer = null
+      peer = null,
+      options = {}
     ) {
 
       const id =
@@ -16713,6 +16730,15 @@
 
 
       clearMessages();
+
+      if (options.focusComposer && elements.messageInput) {
+        try {
+          elements.messageInput.focus({ preventScroll: true });
+        } catch (_) {
+          elements.messageInput.focus();
+        }
+        resizeMessageInput();
+      }
 
 
       joinConversationRoom(
