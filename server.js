@@ -8878,10 +8878,12 @@ app.get('/api/rtc-config', requireAuth, (req, res) => {
     { urls: ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302'] }
   ];
 
+  // Accept only actual TURN URLs. This also protects calls if a value copied
+  // from a dashboard accidentally includes labels such as `KEY:`/`VALUE:`.
   const turnUrls = String(process.env.TURN_URL || '')
-    .split(',')
-    .map(value => value.trim())
-    .filter(Boolean);
+    .split(/[\s,;]+/)
+    .map(value => value.trim().replace(/^['"]|['"]$/g, ''))
+    .filter(value => /^turns?:[^\s]+$/i.test(value));
 
   if (
     turnUrls.length &&

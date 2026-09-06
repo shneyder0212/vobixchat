@@ -12709,6 +12709,33 @@
       return remaining < 90;
     }
 
+    let latestMessagesScrollGeneration = 0;
+
+    function openConversationAtLatest(conversation = app.conversation) {
+      if (!elements.messages) return;
+      const expectedId = String(conversationId(conversation) || '');
+      const generation = ++latestMessagesScrollGeneration;
+      const moveToLatest = () => {
+        if (
+          generation !== latestMessagesScrollGeneration ||
+          String(conversationId(app.conversation) || '') !== expectedId
+        ) return;
+        elements.messages.scrollTop = elements.messages.scrollHeight;
+        app.unreadBelowCount = 0;
+        removeNewMessagesDivider();
+        syncLatestMessagesButton();
+      };
+
+      // Images, video metadata and custom voice controls can change the
+      // history height after the API response has rendered. Re-anchor during
+      // that short opening window so every device lands on the latest message.
+      moveToLatest();
+      requestAnimationFrame(() => requestAnimationFrame(moveToLatest));
+      [80, 250, 700, 1500, 3000].forEach(delay => {
+        window.setTimeout(moveToLatest, delay);
+      });
+    }
+
     function readPositionStorageKey(conversation = app.conversation) {
       const id = conversationId(conversation);
       return id ? `vobixchat_read_position_${String(id)}` : '';
@@ -13762,7 +13789,6 @@
     window.addEventListener('pagehide', saveCurrentDraft);
 
     window.addEventListener('offline', () => {
-      saveConversationReadPosition();
       saveCurrentDraft();
       setViewOnceMode(false);
       sendTypingState(false);
@@ -16409,7 +16435,6 @@
       }
 
 
-      saveConversationReadPosition();
       saveCurrentDraft();
 
       closeChatSearch();
@@ -16487,15 +16512,9 @@
         id
       );
 
-      // Al entrar en una conversación siempre mostramos el mensaje más
-      // reciente. No restauramos una posición antigua a mitad del historial.
-      requestAnimationFrame(() => requestAnimationFrame(() => {
-        if (String(conversationId(app.conversation) || '') !== String(id)) return;
-        elements.messages.scrollTop = elements.messages.scrollHeight;
-        app.unreadBelowCount = 0;
-        removeNewMessagesDivider();
-        syncLatestMessagesButton();
-      }));
+      // Al entrar siempre mostramos el final, incluso si fotos o audios
+      // terminan de calcular su tamaño unos instantes después.
+      openConversationAtLatest(conversation);
 
 
       if (
