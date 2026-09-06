@@ -152,6 +152,7 @@ const VOBIX_LAYERS = Object.freeze([
 ,{ id:'172', name:'Control Nativo de Audio Android', status:'en_validacion', scope:'La APK declara el permiso técnico de control de audio sin ventanas adicionales, deja a WebRTC iniciar el micrófono y separa la captura de voz y cámara en dispositivos incompatibles.' }
 ,{ id:'173', name:'Compositor Pegado al Teclado', status:'en_validacion', scope:'En móvil la conversación queda arriba, la barra de escritura permanece pegada al borde superior del teclado y al enfocarla se muestra siempre el final del chat.' }
 ,{ id:'174', name:'Agregar Personas Siempre Visible', status:'en_validacion', scope:'Llamadas de voz y vídeo muestran el control de añadir junto a colgar; el selector aparece por encima de la llamada y el aviso de reingreso permanece oculto salvo cuando realmente existe una llamada grupal recuperable.' }
+,{ id:'175', name:'Subtítulos Solo Entre Idiomas Diferentes', status:'en_validacion', scope:'El control CC permanece oculto cuando los teléfonos usan el mismo idioma y aparece solo al detectar idiomas distintos; el servidor aplica la misma regla y conserva el consentimiento voluntario de cada participante.' }
 ]);
 
 function getVobixLayers() {

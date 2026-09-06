@@ -3275,6 +3275,10 @@
       cursor: pointer;
     }
 
+    .captionsToggle[hidden] {
+      display: none !important;
+    }
+
     .captionsToggle.active {
       border-color: var(--green);
       background: rgba(16,70,28,.86);
@@ -5112,7 +5116,7 @@
 
     <div id="groupRemoteMediaGrid" class="groupRemoteMediaGrid" aria-label="Participantes de la videollamada"></div>
 
-    <button id="captionsToggleButton" class="captionsToggle" type="button" aria-pressed="false">
+    <button id="captionsToggleButton" class="captionsToggle" type="button" aria-pressed="false" hidden>
       CC Subtítulos
     </button>
 
@@ -5336,6 +5340,10 @@
       captionsConsentGiven: false,
 
       captionsRemoteConsent: false,
+
+      captionsAvailable: false,
+
+      remoteCallLanguages: new Set(),
 
       emergencyRecognition: null,
 
@@ -18589,7 +18597,8 @@
       app.socket?.emit('call:peer-offer', {
         callId:app.callId,
         targetUserId:key,
-        offer:pc.localDescription
+        offer:pc.localDescription,
+        language:callLanguage()
       });
     }
 
@@ -18597,6 +18606,8 @@
       const callId = String(payload.callId || '');
       const fromUserId = String(payload.fromUserId || '');
       if (!payload.offer || !callId || !fromUserId) return;
+
+      setCaptionsAvailability(payload.language, payload.captionsAvailable);
 
       if (!app.callId) {
         showIncomingCallPanel({...payload, group:true, groupPeerOffer:true});
@@ -18615,12 +18626,14 @@
       app.socket?.emit('call:peer-answer', {
         callId,
         targetUserId:fromUserId,
-        answer:pc.localDescription
+        answer:pc.localDescription,
+        language:callLanguage()
       });
     }
 
     async function handleGroupPeerAnswer(payload = {}) {
       if (String(payload.callId || '') !== String(app.callId || '')) return;
+      setCaptionsAvailability(payload.language, payload.captionsAvailable);
       const fromUserId = String(payload.fromUserId || '');
       const pc = app.groupPeerConnections.get(fromUserId);
       if (!pc || !payload.answer) return;
@@ -18974,7 +18987,28 @@
     function closeCaptionsConsent() {
       elements.captionsConsentPanel?.classList.remove('open');
       elements.captionsConsentPanel?.setAttribute('aria-hidden', 'true');
-      elements.captionsToggleButton?.focus();
+      if (!elements.captionsToggleButton?.hidden) elements.captionsToggleButton?.focus();
+    }
+
+    function callLanguage(value = navigator.languages?.[0] || navigator.language || 'es') {
+      const match = String(value || '').trim().toLowerCase().match(/^([a-z]{2,3})(?:[-_][a-z]{2,4})?$/);
+      return match ? match[1] : 'es';
+    }
+
+    function setCaptionsAvailability(remoteLanguage = '', serverAvailable = null) {
+      const remote = remoteLanguage ? callLanguage(remoteLanguage) : '';
+      if (remote) app.remoteCallLanguages.add(remote);
+      const local = callLanguage();
+      const detectedDifference = Array.from(app.remoteCallLanguages).some(language => language !== local);
+      app.captionsAvailable = serverAvailable === true || (serverAvailable !== false && detectedDifference);
+      if (elements.captionsToggleButton) elements.captionsToggleButton.hidden = !app.captionsAvailable;
+      if (!app.captionsAvailable) {
+        app.captionsConsentGiven = false;
+        app.captionsRemoteConsent = false;
+        setCaptionsInterface(false);
+        elements.captionsConsentPanel?.classList.remove('open');
+        elements.captionsConsentPanel?.setAttribute('aria-hidden', 'true');
+      }
     }
 
     function setCaptionsInterface(enabled) {
@@ -18999,6 +19033,11 @@
     function emitCaptionsConsent(accepted) {
       if (!app.socket || !app.callId) {
         notifyUser('La llamada todavía no está conectada');
+        return;
+      }
+
+      if (!app.captionsAvailable) {
+        notifyUser('Los subtítulos aparecen únicamente entre idiomas diferentes');
         return;
       }
 
@@ -19038,6 +19077,7 @@
     }
 
     elements.captionsToggleButton?.addEventListener('click', () => {
+      if (!app.captionsAvailable) return;
       if (app.captionsEnabled) {
         app.captionsConsentGiven = false;
         emitCaptionsConsent(false);
@@ -19510,7 +19550,10 @@
               type,
 
               offer:
-                pc.localDescription
+                pc.localDescription,
+
+              language:
+                callLanguage()
 
             },
             (error, result) => {
@@ -19714,6 +19757,7 @@
           String(userId(app.me) || ''),
           app.primaryPeerUserId
         ].filter(Boolean));
+        setCaptionsAvailability(payload.language, payload.captionsAvailable);
         await loadRtcConfiguration();
         await prepareCallMedia(app.callType);
         showCallScreen(app.callType);
@@ -19742,7 +19786,8 @@
           callId: app.callId,
           targetUserId: payload.groupPeerOffer ? app.primaryPeerUserId : undefined,
           conversationId: payload.conversationId || payload.conversation_id || conversationId(app.conversation),
-          answer: pc.localDescription
+          answer: pc.localDescription,
+          language: callLanguage()
         };
         const handleAnswerResponse = response => {
           if (response?.ok || String(app.callId || '') !== String(acceptedCallId || '')) return;
@@ -20018,6 +20063,8 @@
               payload.answer
             )
           );
+
+        setCaptionsAvailability(payload.language, payload.captionsAvailable);
 
         await flushPendingIceCandidates();
 
@@ -20295,13 +20342,15 @@
         const result = await new Promise(resolve => {
           app.socket?.timeout(8000).emit('call:rejoin', {
             callId: pending.callId,
-            conversationId: pending.conversationId
+            conversationId: pending.conversationId,
+            language:callLanguage()
           }, (error, response) => resolve(error ? { ok:false, code:'call_rejoin_timeout' } : response));
         });
         if (!result?.ok) throw new Error(result?.msg || 'La llamada ya no está disponible');
         app.callId = pending.callId;
         app.callType = pending.type;
         app.callIsGroup = true;
+        setCaptionsAvailability('', result.captionsAvailable === true);
         app.primaryPeerUserId = null;
         app.callParticipantIds = new Set((result.participants || []).map(String));
         app.callParticipantIds.add(String(userId(app.me) || ''));
@@ -20396,6 +20445,11 @@
         'call:captions-consent',
         handleRemoteCaptionsConsent
       );
+
+      app.socket.on('call:captions-availability', payload => {
+        if (String(payload?.callId || '') !== String(app.callId || '')) return;
+        setCaptionsAvailability('', payload.available === true);
+      });
 
 
       app.socket.on(
@@ -21166,7 +21220,13 @@
       app.captionsRemoteConsent =
         false;
 
+      app.captionsAvailable = false;
+
+      app.remoteCallLanguages.clear();
+
       setCaptionsInterface(false);
+
+      if (elements.captionsToggleButton) elements.captionsToggleButton.hidden = true;
 
       closeCaptionsConsent();
 

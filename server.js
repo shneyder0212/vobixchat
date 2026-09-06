@@ -2634,6 +2634,27 @@ const activeCalls =
 const endedCalls =
   new Map();
 
+function normalizeCallLanguage(value) {
+  const match = String(value || '').trim().toLowerCase().match(/^([a-z]{2,3})(?:[-_][a-z]{2,4})?$/);
+  return match ? match[1] : null;
+}
+
+function callHasDifferentLanguages(call) {
+  const activeLanguages = Array.from(call?.participants || [])
+    .map(id => call?.languages?.get(String(id)))
+    .filter(Boolean);
+  return new Set(activeLanguages).size > 1;
+}
+
+function emitCallCaptionsAvailability(call) {
+  const available = callHasDifferentLanguages(call);
+  io.to(callRoom(call.callId || call.id)).emit('call:captions-availability', {
+    callId:call.callId || call.id,
+    available
+  });
+  return available;
+}
+
 function endActiveCall(callId, endedBy, reason) {
   return terminateCall({
     activeCalls,
@@ -5420,6 +5441,9 @@ io.on(
           return;
         }
         call.rejoining.add(currentUserKey);
+        call.languages = call.languages || new Map();
+        const language = normalizeCallLanguage(payload.language);
+        if (language) call.languages.set(currentUserKey, language);
         call.participants.add(currentUserKey);
         call.invited.delete(currentUserKey);
         await socket.join(callRoom(callId));
@@ -5431,12 +5455,14 @@ io.on(
           type: call.type,
           participants
         });
+        emitCallCaptionsAvailability(call);
         if (typeof callback === 'function') callback({
           ok:true,
           callId,
           conversationId:call.conversationId,
           type:call.type,
-          participants
+          participants,
+          captionsAvailable:callHasDifferentLanguages(call)
         });
         call.rejoining.delete(currentUserKey);
       } catch (error) {
@@ -5685,6 +5711,9 @@ io.on(
         if (typeof callback === 'function') callback({ok:false, code:'call_peer_forbidden'});
         return;
       }
+      call.languages = call.languages || new Map();
+      const language = normalizeCallLanguage(payload.language);
+      if (language) call.languages.set(currentUserKey, language);
       io.to(userRoom(targetUserId)).emit('call:peer-offer', {
         callId,
         conversationId:call.conversationId,
@@ -5692,7 +5721,8 @@ io.on(
         offer:payload.offer,
         fromUserId:userId,
         group:true,
-        caller:call.caller
+        caller:call.caller,
+        language
       });
       if (typeof callback === 'function') callback({ok:true});
     });
@@ -5717,18 +5747,24 @@ io.on(
         return;
       }
       call.participants.add(currentUserKey);
+      call.languages = call.languages || new Map();
+      const language = normalizeCallLanguage(payload.language);
+      if (language) call.languages.set(currentUserKey, language);
       call.invited.delete(currentUserKey);
       await socket.join(callRoom(callId));
       io.to(userRoom(targetUserId)).emit('call:peer-answer', {
         callId,
         answer:payload.answer,
-        fromUserId:userId
+        fromUserId:userId,
+        language,
+        captionsAvailable:callHasDifferentLanguages(call)
       });
       io.to(callRoom(callId)).emit('call:participant-joined', {
         callId,
         userId,
         participants:Array.from(call.participants)
       });
+      emitCallCaptionsAvailability(call);
       if (typeof callback === 'function') callback({ok:true});
     });
 
@@ -5781,6 +5817,7 @@ io.on(
         const callId = normalizeCallId(payload.callId || crypto.randomBytes(18).toString('hex'));
         const type = String(payload.type || 'audio').toLowerCase() === 'video' ? 'video' : 'audio';
         const offer = payload.offer || null;
+        const language = normalizeCallLanguage(payload.language);
 
         if (!conversationId || !callId || !offer) {
           if (typeof callback === 'function') callback({ ok:false, msg:'Oferta de llamada incompleta' });
@@ -5814,6 +5851,10 @@ io.on(
         }
 
         const existingCall = activeCalls.get(callId);
+        if (existingCall) {
+          existingCall.languages = existingCall.languages || new Map();
+          if (language) existingCall.languages.set(String(userId), language);
+        }
         if (existingCall && !matchesCallIntent(existingCall, { callerId:userId, conversationId, type })) {
           if (existingCall.group && existingCall.members?.has(String(userId)) && !existingCall.expelled?.has(String(userId))) {
             existingCall.offer = offer;
@@ -5849,6 +5890,9 @@ io.on(
           createdAt: Date.now()
         };
 
+        call.languages = call.languages || new Map();
+        if (language) call.languages.set(String(userId), language);
+
         // Guardamos la oferta mientras suena la llamada. Así el móvil puede
         // abrir VOBIXCHAT desde una notificación Push y recuperar la llamada.
         call.offer = offer;
@@ -5871,7 +5915,8 @@ io.on(
             type,
             offer,
             fromUserId: userId,
-            caller: { id:userId, username:user.username, avatarUrl:user.avatarUrl }
+            caller: { id:userId, username:user.username, avatarUrl:user.avatarUrl },
+            language
           });
 
           await sendPushToUser(target.user_id, {
@@ -5941,6 +5986,9 @@ io.on(
         }
 
         call.participants.add(currentUserKey);
+        call.languages = call.languages || new Map();
+        const language = normalizeCallLanguage(payload.language);
+        if (language) call.languages.set(currentUserKey, language);
         call.invited.delete(currentUserKey);
         await socket.join(callRoom(callId));
 
@@ -5961,9 +6009,12 @@ io.on(
             callId,
             conversationId: call.conversationId,
             answer,
-            fromUserId: userId
+            fromUserId: userId,
+            language,
+            captionsAvailable:callHasDifferentLanguages(call)
           });
         }
+        emitCallCaptionsAvailability(call);
         console.log(
           `VOBIXCHAT | CALL ANSWER | ${call.type || 'audio'} | user=${user.username}`
         );
@@ -6069,7 +6120,8 @@ io.on(
             conversationId:call.conversationId,
             type:call.type,
             offer:call.offer,
-            caller:call.caller
+            caller:call.caller,
+            language:call.languages?.get(String(call.callerId)) || null
             ,
             candidates:(call.pendingIce || [])
               .filter(item => String(item.fromUserId) !== String(userId))
@@ -6133,6 +6185,7 @@ io.on(
             type:pending.type,
             offer:pending.offer,
             caller:pending.caller,
+            language:pending.languages?.get(String(pending.callerId)) || null,
             candidates:(pending.pendingIce || [])
               .filter(item => String(item.fromUserId) !== currentUserKey)
               .map(item => item.candidate)
@@ -6154,6 +6207,15 @@ io.on(
           if (typeof callback === 'function') {
             callback({ ok:false, msg:'No participas en esta llamada' });
           }
+          return;
+        }
+
+        if (!callHasDifferentLanguages(call)) {
+          if (typeof callback === 'function') callback({
+            ok:false,
+            code:'captions_same_language',
+            msg:'Los subtítulos solo están disponibles entre idiomas diferentes'
+          });
           return;
         }
 
