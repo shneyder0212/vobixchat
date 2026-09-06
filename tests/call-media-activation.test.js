@@ -83,6 +83,31 @@ test('la limpieza al colgar detiene pistas, cierra WebRTC y limpia elementos', (
   assert.match(html, /localVideo\.onloadedmetadata = null/);
 });
 
+test('el llamante siempre conserva el control rojo para colgar', () => {
+  const html = read('public/chat.html');
+  assert.match(html, /#endCallButton[\s\S]{0,320}order: -1/);
+  assert.match(html, /#endCallButton[\s\S]{0,420}visibility: visible !important/);
+  assert.match(html, /elements\.endCallButton\.hidden = false/);
+  assert.match(html, /addEventListener\('pointerup', endCallFromControl\)/);
+  assert.match(html, /reportClientDiagnostic\('call_end_tapped'/);
+});
+
+test('el altavoz usa el puente Android y salida compatible del navegador', () => {
+  const html = read('public/chat.html');
+  const android = read('android/app/src/main/java/com/vobixchat/mobile/MainActivity.kt');
+  assert.match(html, /VobixNative\?\.setSpeakerphoneOn/);
+  assert.match(html, /navigator\.mediaDevices\?\.selectAudioOutput/);
+  assert.match(html, /mediaElement\.setSinkId/);
+  assert.match(android, /fun setSpeakerphoneOn\(enabled: Boolean\): Boolean/);
+  assert.match(android, /AudioManager\.MODE_IN_COMMUNICATION/);
+  assert.match(android, /TYPE_BUILTIN_SPEAKER/);
+  assert.match(android, /setCommunicationDevice\(speaker\)/);
+});
+
+test('la capa 167 identifica los controles permanentes de llamada', () => {
+  assert.match(read('core/vobix-layers.js'), /id:'167'.*Controles Permanentes de Llamada y Altavoz.*status:'en_validacion'/);
+});
+
 test('offer, answer e ICE tardíos no sustituyen la llamada activa', () => {
   const html = read('public/chat.html');
   const media = callMediaBlock(html);

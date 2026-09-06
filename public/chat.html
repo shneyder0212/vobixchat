@@ -3158,6 +3158,20 @@
         #e94141;
     }
 
+    #endCallButton {
+      order: -1;
+      position: sticky;
+      left: 0;
+      z-index: 90;
+      display: grid !important;
+      flex: 0 0 64px;
+      width: 64px;
+      height: 64px;
+      visibility: visible !important;
+      opacity: 1 !important;
+      box-shadow: 0 8px 28px rgba(233,65,65,.48);
+    }
+
     .captionsToggle {
       position: absolute;
       left: 50%;
@@ -5033,8 +5047,8 @@
         🎙️
       </button>
 
-      <button id="toggleRemoteAudioButton" class="callControl" type="button" aria-label="Silenciar audio recibido" title="Silenciar audio recibido">
-        🔊
+      <button id="toggleRemoteAudioButton" class="callControl" type="button" aria-label="Activar altavoz" title="Altavoz" aria-pressed="false">
+        🔈
       </button>
 
 
@@ -5248,6 +5262,8 @@
       answeredCallId: null,
 
       remotePlaybackPending: false,
+
+      speakerEnabled: false,
 
       remoteStream: null,
 
@@ -19014,6 +19030,16 @@
           'open'
         );
 
+      if (elements.endCallButton) {
+        elements.endCallButton.hidden = false;
+        elements.endCallButton.disabled = false;
+        elements.endCallButton.style.removeProperty('display');
+      }
+
+      app.speakerEnabled = type === 'video';
+      setNativeSpeakerphone(app.speakerEnabled);
+      renderSpeakerButton();
+
 
       /*
         PARA LLAMADA DE AUDIO
@@ -20338,33 +20364,64 @@
        MICRO DE LLAMADA ON / OFF
        ===================================================== */
 
-    if (elements.toggleRemoteAudioButton) {
-      elements.toggleRemoteAudioButton.addEventListener('click', async () => {
-        const mediaElement = app.callType === 'audio' ? elements.remoteAudio : elements.remoteVideo;
-        if (!mediaElement) return;
-
-        if (app.remotePlaybackPending) {
-          await ensureRemoteAudioPlayback(true);
-          return;
-        }
-
-        const shouldMute = !mediaElement.muted;
-        mediaElement.muted = shouldMute;
-        elements.toggleRemoteAudioButton.textContent = shouldMute ? '🔇' : '🔊';
-        elements.toggleRemoteAudioButton.setAttribute(
-          'aria-label',
-          shouldMute ? 'Activar audio recibido' : 'Silenciar audio recibido'
-        );
-
-        if (!shouldMute) {
-          mediaElement.volume = 1;
-          await ensureRemoteAudioPlayback(true);
-        } else {
-          app.remotePlaybackPending = false;
-          notifyUser('Audio recibido silenciado');
-        }
-      });
+    function renderSpeakerButton() {
+      if (!elements.toggleRemoteAudioButton) return;
+      elements.toggleRemoteAudioButton.textContent = app.speakerEnabled ? '🔊' : '🔈';
+      elements.toggleRemoteAudioButton.setAttribute('aria-pressed', String(app.speakerEnabled));
+      elements.toggleRemoteAudioButton.setAttribute(
+        'aria-label',
+        app.speakerEnabled ? 'Desactivar altavoz' : 'Activar altavoz'
+      );
+      elements.toggleRemoteAudioButton.title = app.speakerEnabled ? 'Altavoz activado' : 'Activar altavoz';
     }
+
+    function setNativeSpeakerphone(enabled) {
+      try {
+        if (typeof window.VobixNative?.setSpeakerphoneOn === 'function') {
+          return window.VobixNative.setSpeakerphoneOn(Boolean(enabled)) !== false;
+        }
+      } catch (error) {
+        console.warn('[VOBIXCHAT NATIVE SPEAKER]', error);
+      }
+      return false;
+    }
+
+    async function toggleCallSpeaker() {
+      const mediaElement = app.callType === 'audio' ? elements.remoteAudio : elements.remoteVideo;
+      if (!mediaElement || !app.callId) return;
+
+      const enabled = !app.speakerEnabled;
+      let outputControlled = setNativeSpeakerphone(enabled);
+
+      try {
+        if (!outputControlled && typeof mediaElement.setSinkId === 'function') {
+          if (enabled && typeof navigator.mediaDevices?.selectAudioOutput === 'function') {
+            const output = await navigator.mediaDevices.selectAudioOutput();
+            if (output?.deviceId) await mediaElement.setSinkId(output.deviceId);
+          } else {
+            await mediaElement.setSinkId('default');
+          }
+          outputControlled = true;
+        }
+
+        mediaElement.muted = false;
+        mediaElement.volume = 1;
+        await ensureRemoteAudioPlayback();
+        app.speakerEnabled = enabled;
+        renderSpeakerButton();
+        reportClientDiagnostic('call_speaker_toggled', { enabled, outputControlled });
+        notifyUser(
+          outputControlled
+            ? (enabled ? 'Altavoz activado' : 'Altavoz desactivado')
+            : 'Audio activado; este navegador usa la salida elegida por el teléfono'
+        );
+      } catch (error) {
+        console.warn('[VOBIXCHAT SPEAKER]', error);
+        notifyUser('No se pudo cambiar la salida de audio');
+      }
+    }
+
+    elements.toggleRemoteAudioButton?.addEventListener('click', toggleCallSpeaker);
 
     async function ensureRemoteAudioPlayback(showSuccess = false) {
       const mediaElement = app.callType === 'audio' ? elements.remoteAudio : elements.remoteVideo;
@@ -20948,8 +21005,9 @@
       app.remoteStream = null;
 
       if (elements.toggleRemoteAudioButton) {
-        elements.toggleRemoteAudioButton.textContent = '🔊';
-        elements.toggleRemoteAudioButton.setAttribute('aria-label', 'Silenciar audio recibido');
+        app.speakerEnabled = false;
+        setNativeSpeakerphone(false);
+        renderSpeakerButton();
       }
 
 
@@ -20992,23 +21050,18 @@
        BOTÓN COLGAR
        ===================================================== */
 
-    if (
-      elements.endCallButton
-    ) {
-
-      elements
-        .endCallButton
-        .addEventListener(
-          'click',
-          () => {
-
-            endLocalCall(
-              true
-            );
-
-          }
-        );
-
+    if (elements.endCallButton) {
+      let lastEndPointerAt = 0;
+      const endCallFromControl = event => {
+        event.preventDefault();
+        event.stopPropagation();
+        if (event.type === 'click' && Date.now() - lastEndPointerAt < 700) return;
+        if (event.type === 'pointerup') lastEndPointerAt = Date.now();
+        reportClientDiagnostic('call_end_tapped', { direction: app.callDirection || 'unknown' });
+        endLocalCall(true);
+      };
+      elements.endCallButton.addEventListener('pointerup', endCallFromControl);
+      elements.endCallButton.addEventListener('click', endCallFromControl);
     }
 
 

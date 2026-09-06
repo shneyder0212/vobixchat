@@ -144,6 +144,7 @@ const VOBIX_LAYERS = Object.freeze([
 ,{ id:'164', name:'Señalización de Llamada Primero', status:'en_validacion', scope:'El servidor registra y avisa la llamada antes de que Android termine de abrir cámara o micrófono; los candidatos ICE esperan la confirmación y las notificaciones Push visibles reproducen el aviso entrante sin duplicarlo.' }
 ,{ id:'165', name:'Diagnóstico Físico de Tiempo Real', status:'en_validacion', scope:'Socket.IO arranca en paralelo al perfil, cada llamada registra etapas técnicas mínimas y Chrome conserva sonido mediante interacción y aviso del sistema; nunca transmite contenido de conversaciones.' }
 ,{ id:'166', name:'Búsqueda Directa y Llamada Real', status:'en_validacion', scope:'Permite localizar por nombre, Vobix ID o número telefónico completo exacto; el resultado abre al usuario correcto y los botones de llamada ejecutan realmente audio o vídeo al entrar en su chat.' }
+,{ id:'167', name:'Controles Permanentes de Llamada y Altavoz', status:'en_validacion', scope:'Mantiene el botón rojo de colgar siempre visible y táctil para quien llama y quien recibe; controla el altavoz mediante Android nativo y usa la selección de salida disponible en navegadores compatibles.' }
 ]);
 
 function getVobixLayers() {
