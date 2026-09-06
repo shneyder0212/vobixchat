@@ -22,3 +22,11 @@ test('GitHub compila y conserva la APK de pruebas', () => {
   assert.match(workflow, /android\/app\/build\/outputs\/apk\/debug\/app-debug\.apk/);
   assert.match(workflow, /VobixChat-1\.2\.4-debug/);
 });
+
+test('la APK recibe automáticamente las actualizaciones web publicadas', () => {
+  assert.match(activity, /cacheMode = WebSettings\.LOAD_NO_CACHE/);
+  assert.match(activity, /https:\/\/vobixchat\.onrender\.com\/inbox\.html/);
+  assert.match(activity, /webView\.loadUrl\(safeUrl\)/);
+  const layers = fs.readFileSync(path.join(root, 'core', 'vobix-layers.js'), 'utf8');
+  assert.match(layers, /id:'168'.*Actualización Web Automática de la APK.*status:'activo'/);
+});
