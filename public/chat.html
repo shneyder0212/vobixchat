@@ -1104,6 +1104,8 @@
       position: relative;
       z-index: 110;
 
+      flex: 0 0 auto;
+
       min-height:
         var(--composer-height);
 
@@ -1307,11 +1309,28 @@
 
     html.vobixKeyboardOpen .vobixApp {
       top: var(--vobix-visual-top, 0px);
-      height: var(--vobix-visual-height, 100dvh);
+      height: var(--vobix-visual-height, var(--vobix-viewport-height, 100dvh));
+      --vobix-safe-bottom: 0px;
+    }
+
+    html.vobixKeyboardFocus .vobixApp {
+      top: var(--vobix-visual-top, 0px);
+      height: var(--vobix-visual-height, var(--vobix-viewport-height, 100dvh));
       --vobix-safe-bottom: 0px;
     }
 
     html.vobixKeyboardOpen .vobixComposer {
+      position: sticky;
+      right: 0;
+      bottom: 0;
+      left: 0;
+      flex: 0 0 auto;
+      width: 100%;
+      padding-bottom: 7px;
+      transform: translateZ(0);
+    }
+
+    html.vobixKeyboardFocus .vobixComposer {
       position: sticky;
       right: 0;
       bottom: 0;
@@ -5439,6 +5458,8 @@
 
       cameraFacingMode: 'user',
 
+      cameraSwitching: false,
+
       remoteVideoWaitTimer: null,
 
       attachmentUploading: false,
@@ -7514,7 +7535,10 @@
 
     function syncMobileVisualViewport() {
       const viewport = window.visualViewport;
-      const height = Math.round(viewport?.height || window.innerHeight || 0);
+      const heightCandidates = [viewport?.height, window.innerHeight]
+        .map(Number)
+        .filter(value => Number.isFinite(value) && value > 0);
+      const height = Math.round(heightCandidates.length ? Math.min(...heightCandidates) : 0);
       const offsetTop = Math.round(viewport?.offsetTop || 0);
 
       if (height > 0) {
@@ -21005,9 +21029,87 @@
       track.addEventListener('unmute', () => syncLocalCameraState(track));
       track.addEventListener('ended', () => {
         syncLocalCameraState(track);
-        if (app.callId && !app.endingCall) notifyUser('La cámara del dispositivo se detuvo');
+        if (app.callId && !app.endingCall && !app.cameraSwitching) {
+          notifyUser('La cámara del dispositivo se detuvo');
+        }
       });
       syncLocalCameraState(track);
+    }
+
+    function activeCallConnections() {
+      const connections = [
+        app.peerConnection,
+        ...Array.from(app.groupPeerConnections?.values?.() || [])
+      ].filter(Boolean);
+      return Array.from(new Set(connections));
+    }
+
+    async function replaceCameraTrackForEveryParticipant(track) {
+      const senders = activeCallConnections()
+        .flatMap(connection => connection.getSenders?.() || [])
+        .filter(sender => sender.track?.kind === 'video' && typeof sender.replaceTrack === 'function');
+
+      await Promise.all(senders.map(sender => sender.replaceTrack(track)));
+      await Promise.all(activeCallConnections().map(connection => applyAdaptiveCallEncoding(connection)));
+      return senders.length;
+    }
+
+    function cameraLabelMatchesFacing(label, facingMode) {
+      const normalized = String(label || '').toLowerCase();
+      return facingMode === 'environment'
+        ? /(back|rear|environment|world|trasera|posterior)/.test(normalized)
+        : /(front|user|face|frontal|delantera)/.test(normalized);
+    }
+
+    async function acquireOppositeCamera(currentTrack, nextFacingMode) {
+      const currentDeviceId = String(currentTrack?.getSettings?.().deviceId || '');
+      let cameras = [];
+      try {
+        const devices = await navigator.mediaDevices.enumerateDevices?.();
+        cameras = Array.from(devices || []).filter(device => device.kind === 'videoinput');
+      } catch (_) {}
+
+      const alternatives = cameras.filter(device => !currentDeviceId || device.deviceId !== currentDeviceId);
+      const target = alternatives.find(device => cameraLabelMatchesFacing(device.label, nextFacingMode))
+        || alternatives[0]
+        || null;
+      const attempts = [];
+
+      if (target?.deviceId) {
+        attempts.push({ deviceId: { exact: target.deviceId } });
+      }
+      attempts.push({ facingMode: { exact: nextFacingMode } });
+      attempts.push({ facingMode: { ideal: nextFacingMode } });
+
+      let lastError = null;
+      for (const video of attempts) {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ video, audio: false });
+          const track = stream.getVideoTracks()[0];
+          if (track) return track;
+          stopMediaStream(stream);
+        } catch (error) {
+          lastError = error;
+        }
+      }
+
+      throw lastError || new Error('No se encontró otra cámara disponible');
+    }
+
+    async function restorePreviousCamera(previousDeviceId, previousFacingMode) {
+      const attempts = previousDeviceId
+        ? [{ deviceId: { exact: previousDeviceId } }, { facingMode: { ideal: previousFacingMode } }]
+        : [{ facingMode: { ideal: previousFacingMode } }];
+
+      for (const video of attempts) {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ video, audio: false });
+          const track = stream.getVideoTracks()[0];
+          if (track) return track;
+          stopMediaStream(stream);
+        } catch (_) {}
+      }
+      return null;
     }
 
     if (
@@ -21083,47 +21185,61 @@
 
     if (elements.switchCameraButton) {
       elements.switchCameraButton.addEventListener('click', async () => {
-        if (app.callType !== 'video' || !app.localStream) {
+        if (app.callType !== 'video' || !app.localStream || app.cameraSwitching) {
+          return;
+        }
+
+        const oldVideoTrack = app.localStream.getVideoTracks()[0];
+        if (!oldVideoTrack) {
+          notifyUser('No hay una cámara activa para cambiar');
           return;
         }
 
         const nextFacingMode = app.cameraFacingMode === 'user' ? 'environment' : 'user';
+        const previousFacingMode = app.cameraFacingMode;
+        const previousDeviceId = String(oldVideoTrack.getSettings?.().deviceId || '');
+        const wasEnabled = oldVideoTrack.enabled;
+        const audioTracks = app.localStream.getAudioTracks();
+        app.cameraSwitching = true;
         elements.switchCameraButton.disabled = true;
+        elements.switchCameraButton.setAttribute('aria-busy', 'true');
+        if (elements.callStatus) elements.callStatus.textContent = 'Cambiando cámara…';
 
         try {
-          const cameraStream = await navigator.mediaDevices.getUserMedia({
-            video: { facingMode: { ideal: nextFacingMode } },
-            audio: false
-          });
+          // Android WebView suele impedir abrir la segunda cámara mientras
+          // la primera conserva el hardware; se libera antes y se recupera
+          // automáticamente si el cambio falla.
+          oldVideoTrack.stop();
+          const newVideoTrack = await acquireOppositeCamera(oldVideoTrack, nextFacingMode);
+          newVideoTrack.enabled = wasEnabled;
+          try { newVideoTrack.contentHint = 'motion'; } catch (_) {}
+          await replaceCameraTrackForEveryParticipant(newVideoTrack);
 
-          const newVideoTrack = cameraStream.getVideoTracks()[0];
-          if (!newVideoTrack) {
-            throw new Error('No se encontró la cámara solicitada');
-          }
-
-          const sender = app.peerConnection
-            ?.getSenders()
-            .find(item => item.track?.kind === 'video');
-
-          if (sender) {
-            await sender.replaceTrack(newVideoTrack);
-          }
-
-          const oldVideoTracks = app.localStream.getVideoTracks();
-          oldVideoTracks.forEach(track => track.stop());
-
-          const audioTracks = app.localStream.getAudioTracks();
           app.localStream = new MediaStream([...audioTracks, newVideoTrack]);
           elements.localVideo.srcObject = app.localStream;
           app.cameraFacingMode = nextFacingMode;
           bindLocalCameraTrack(newVideoTrack);
           ensureLocalVideoPlayback();
+          if (elements.callStatus) elements.callStatus.textContent = 'Videollamada conectada';
           notifyUser(nextFacingMode === 'environment' ? 'Cámara trasera activa' : 'Cámara frontal activa');
         } catch (error) {
           console.error('[VOBIXCHAT SWITCH CAMERA]', error);
-          notifyUser(callMediaErrorMessage(error, 'video'));
+          const restoredTrack = await restorePreviousCamera(previousDeviceId, previousFacingMode);
+          if (restoredTrack) {
+            restoredTrack.enabled = wasEnabled;
+            try { restoredTrack.contentHint = 'motion'; } catch (_) {}
+            await replaceCameraTrackForEveryParticipant(restoredTrack).catch(() => {});
+            app.localStream = new MediaStream([...audioTracks, restoredTrack]);
+            elements.localVideo.srcObject = app.localStream;
+            bindLocalCameraTrack(restoredTrack);
+            ensureLocalVideoPlayback();
+          }
+          if (elements.callStatus) elements.callStatus.textContent = 'No se pudo cambiar la cámara';
+          notifyUser('No se pudo cambiar de cámara. La cámara anterior fue restaurada.');
         } finally {
+          app.cameraSwitching = false;
           elements.switchCameraButton.disabled = false;
+          elements.switchCameraButton.removeAttribute('aria-busy');
         }
       });
     }

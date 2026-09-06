@@ -155,6 +155,8 @@ const VOBIX_LAYERS = Object.freeze([
 ,{ id:'175', name:'Subtítulos Solo Entre Idiomas Diferentes', status:'en_validacion', scope:'El control CC permanece oculto cuando los teléfonos usan el mismo idioma y aparece solo al detectar idiomas distintos; el servidor aplica la misma regla y conserva el consentimiento voluntario de cada participante.' }
 ,{ id:'176', name:'Controles de Llamada Móvil Completos', status:'en_validacion', scope:'Los siete controles de llamada y videollamada reducen su tamaño de forma adaptable para caber en una fila y se elevan sobre la navegación inferior del teléfono, incluso en Modo Senior.' }
 ,{ id:'177', name:'Llamadas Activas en Segundo Plano', status:'en_validacion', scope:'La APK mantiene un servicio visible durante llamadas, conserva cámara y micrófono al cambiar de aplicación y usa ventana flotante para videollamadas compatibles; el cierre forzado de Android finaliza el proceso.' }
+,{ id:'178', name:'Compositor Siempre Sobre el Teclado', status:'en_validacion', scope:'Android e iPhone calculan la menor altura visual válida, fijan la barra de escritura al área visible desde el foco y evitan que el compositor se encoja o quede oculto bajo el teclado nativo.' }
+,{ id:'179', name:'Cambio de Cámara Real y Recuperable', status:'en_validacion', scope:'El botón de cambio selecciona otra cámara física, libera primero el hardware en Android, sustituye la pista en conexiones individuales y grupales y recupera la cámara anterior si ocurre un error.' }
 ]);
 
 function getVobixLayers() {

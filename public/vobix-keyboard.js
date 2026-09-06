@@ -22,7 +22,16 @@
   function updateViewport() {
     updateFrame = 0;
     const viewport = window.visualViewport;
-    const visibleHeight = Math.max(1, Math.round(viewport?.height || window.innerHeight || baselineHeight));
+    // Algunos WebView Android conservan visualViewport.height sin reducir
+    // aunque innerHeight ya refleje el teclado. Elegir la menor altura válida
+    // mantiene el compositor dentro del área que realmente se ve.
+    const heightCandidates = [viewport?.height, window.innerHeight]
+      .map(Number)
+      .filter(height => Number.isFinite(height) && height > 0);
+    const visibleHeight = Math.max(
+      1,
+      Math.round(heightCandidates.length ? Math.min(...heightCandidates) : baselineHeight)
+    );
     const visibleWidth = Math.max(1, Math.round(viewport?.width || window.innerWidth || 1));
     const offsetTop = Math.max(0, Math.round(viewport?.offsetTop || 0));
     const offsetLeft = Math.max(0, Math.round(viewport?.offsetLeft || 0));
@@ -44,6 +53,7 @@
     root.style.setProperty('--vobix-inbox-height', `${visibleHeight}px`);
     root.style.setProperty('--vobix-login-height', `${visibleHeight}px`);
     root.classList.toggle('vobixKeyboardOpen', keyboardOpen);
+    root.classList.toggle('vobixKeyboardFocus', Boolean(focused));
     document.body?.classList.toggle('keyboardOpen', keyboardOpen);
 
     if (keyboardOpen && focused) {
@@ -77,9 +87,11 @@
   navigator.virtualKeyboard?.addEventListener?.('geometrychange', scheduleUpdate);
   document.addEventListener('focusin', event => {
     if (!event.target.matches?.(editableSelector)) return;
+    root.classList.add('vobixKeyboardFocus');
     scheduleUpdate();
     setTimeout(scheduleUpdate, 80);
     setTimeout(scheduleUpdate, 260);
+    setTimeout(scheduleUpdate, 520);
   });
   document.addEventListener('focusout', () => {
     setTimeout(scheduleUpdate, 120);
