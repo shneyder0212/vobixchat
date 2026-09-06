@@ -2228,6 +2228,42 @@ app.post('/api/learn/v2/rooms/:roomId/respond', requireAuth, async (req, res) =>
 // HEALTH CHECK
 // ======================================================
 
+const clientDiagnosticRates = new Map();
+
+app.post('/api/client-diagnostic', requireAuth, (req, res) => {
+  const userKey = String(req.vobixUser?.id || 'unknown');
+  const now = Date.now();
+  const current = clientDiagnosticRates.get(userKey);
+  const rate = !current || now - current.startedAt >= 60000
+    ? { startedAt:now, count:0 }
+    : current;
+  rate.count += 1;
+  clientDiagnosticRates.set(userKey, rate);
+
+  if (rate.count > 60) {
+    res.setHeader('Retry-After', '60');
+    return res.status(429).json({ ok:false, code:'diagnostic_rate_limited' });
+  }
+
+  const event = String(req.body?.event || '').trim().slice(0, 64);
+  if (!/^[a-z0-9_-]{3,64}$/.test(event)) {
+    return res.status(400).json({ ok:false, code:'invalid_diagnostic_event' });
+  }
+
+  const source = req.body?.details && typeof req.body.details === 'object'
+    ? req.body.details
+    : {};
+  const details = {};
+  for (const [key, value] of Object.entries(source).slice(0, 12)) {
+    details[String(key).slice(0, 40)] = String(value ?? '').slice(0, 180);
+  }
+
+  console.log(
+    `VOBIXCHAT | CLIENT DIAGNOSTIC | user=${String(req.vobixUser?.username || userKey).slice(0, 80)} | event=${event} | details=${JSON.stringify(details)}`
+  );
+  return res.status(202).json({ ok:true });
+});
+
 // Capa 108 — sonda mínima para navegadores que no ofrecen Network
 // Information API (especialmente Safari/iOS). No consulta la base de
 // datos, no crea sesión y no devuelve información del usuario.

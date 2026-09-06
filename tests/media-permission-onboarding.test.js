@@ -11,7 +11,8 @@ const activity = fs.readFileSync(path.join(__dirname, '..', 'android', 'app', 's
 
 test('al entrar aparece una activación explícita de cámara y micrófono', () => {
   assert.match(chat, /id="mediaPermissionPanel"[\s\S]*Activar cámara y micrófono/);
-  assert.match(chat, /await loadCurrentUser\(\);[\s\S]{0,260}setTimeout\(showMediaPermissionOnboarding, 180\)/);
+  assert.match(chat, /const socketReady = startSocket\(\);[\s\S]{0,120}const currentUserReady = loadCurrentUser\(\);/);
+  assert.match(chat, /await currentUserReady;[\s\S]{0,260}setTimeout\(showMediaPermissionOnboarding, 180\)/);
   assert.match(chat, /activateMediaPermissionsButton\?\.addEventListener\('click', activateMediaPermissions\)/);
 });
 
