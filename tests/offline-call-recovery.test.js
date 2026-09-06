@@ -42,6 +42,26 @@ test('el llamante ve y oye la llamada antes de esperar red o permisos', () => {
   assert.match(chat, /function waitForCallSocket/);
 });
 
+test('la oferta llega al servidor antes de pedir permisos multimedia', () => {
+  const start = chat.slice(chat.indexOf('async function startCall'), chat.indexOf('function bindImmediateCallButton'));
+  const offerIndex = start.indexOf("'call:offer'");
+  const mediaIndex = start.lastIndexOf('await prepareCallMedia(type)');
+  assert.ok(offerIndex > 0, 'debe emitir call:offer');
+  assert.ok(mediaIndex > offerIndex, 'en navegadores modernos debe avisar al destinatario antes de abrir la media');
+  assert.match(start, /prepareOutgoingCallTransceivers\(pc, type\)/);
+  assert.match(start, /app\.callOfferAcknowledged = true;[\s\S]{0,100}flushPendingLocalIceCandidates\(\)/);
+});
+
+test('los candidatos ICE esperan la confirmación de la llamada', () => {
+  const connection = chat.slice(
+    chat.indexOf('function createPeerConnection()'),
+    chat.indexOf('CONEXIONES ADICIONALES PARA LLAMADAS')
+  );
+  assert.match(connection, /app\.callDirection === 'outgoing' && !app\.callOfferAcknowledged/);
+  assert.match(connection, /app\.pendingLocalIceCandidates\.push/);
+  assert.match(connection, /function flushPendingLocalIceCandidates\(\)/);
+});
+
 test('la conexión usa el tipo de llamada guardado y no una variable inexistente', () => {
   const connection = chat.slice(
     chat.indexOf('function createPeerConnection()'),
@@ -85,7 +105,8 @@ test('una desconexión móvil breve no destruye la llamada', () => {
   assert.match(server, /VOBIXCHAT \| CALL ANSWER/);
 });
 
-test('las capas 145 y 146 quedan registradas', () => {
+test('las capas 145, 146 y 164 quedan registradas', () => {
   assert.match(layers, /id:'145'.*Llamada Recuperable sin Conexión/);
   assert.match(layers, /id:'146'.*Selector de Cámara para Fotos/);
+  assert.match(layers, /id:'164'.*Señalización de Llamada Primero/);
 });

@@ -34,6 +34,9 @@ test('el cliente escucha el evento real de finalización emitido por servidor', 
 });
 
 test('oferta y respuesta procesan rechazo del servidor sin timbrar hasta expirar', () => {
-  assert.match(html, /timeout\(10000\)\.emit\([\s\S]{0,100}'call:offer',[\s\S]{0,1000}\(error, response\) =>[\s\S]{0,420}endLocalCall\(false\)/);
+  const start = html.slice(html.indexOf('async function startCall'), html.indexOf('function bindImmediateCallButton'));
+  assert.match(start, /timeout\(10000\)\.emit\([\s\S]{0,100}'call:offer'/);
+  assert.match(start, /CallSignalingError/);
+  assert.match(start, /endLocalCall\([\s\S]{0,80}app\.callOfferAcknowledged/);
   assert.match(html, /'call:answer',[\s\S]{0,500}response =>[\s\S]{0,220}endLocalCall\(false\)/);
 });
