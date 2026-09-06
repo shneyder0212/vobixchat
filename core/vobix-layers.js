@@ -160,6 +160,7 @@ const VOBIX_LAYERS = Object.freeze([
 ,{ id:'180', name:'Teclado Android Medido por la APK', status:'en_validacion', scope:'La APK mide directamente el área ocupada por el teclado Android, la convierte a píxeles CSS y comunica la altura visible al chat para mantener el compositor inmediatamente encima del teclado incluso con pantalla de borde a borde.' }
 ,{ id:'181', name:'Sala 1x1 Abierta en el Último Mensaje', status:'en_validacion', scope:'Al tocar una conversación privada, VobixChat enfoca el compositor y ancla el historial al último mensaje mediante desplazamiento directo, reintentos de diseño y observación temporal de multimedia.' }
 ,{ id:'182', name:'Mensajes en Sala y Emojis Bajo Toque Real', status:'en_validacion', scope:'Al volver a la aplicación o recibir una señal Push se reconcilia el historial de la sala activa; la bandeja de emojis solo se abre con un toque iniciado en su propio botón y se cierra al tocar fuera, sin modificar la lógica de llamadas.' }
+,{ id:'183', name:'Entrega Integral de Mensajes', status:'en_validacion', scope:'Texto, fotos y notas de voz conservan una única ruta de envío confirmada; la sala recupera el historial por HTTP si Android pierde el socket y la APK muestra notificaciones de mensajes en primer plano, sin modificar llamadas ni videollamadas.' }
 ]);
 
 function getVobixLayers() {

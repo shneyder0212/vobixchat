@@ -10528,6 +10528,11 @@
         [elements.cameraButton, elements.documentButton, elements.sendPhotoButton]
           .forEach(button => { if (button) button.disabled = true; });
         notifyUser(isImage ? 'Enviando foto…' : 'Enviando documento…');
+        reportClientDiagnostic('attachment_send_started', {
+          conversationId: cid,
+          kind,
+          bytes: uploadFile.size
+        });
 
         const useResumableUpload = uploadFile.size >= 2 * 1024 * 1024 ||
           (app.dataMode !== 'full' && uploadFile.size >= 512 * 1024);
@@ -10558,11 +10563,21 @@
             ? 'Documento enviado'
             : (isVideo ? 'Vídeo enviado' : 'Foto enviada')
         );
+        reportClientDiagnostic('attachment_send_confirmed', {
+          conversationId: cid,
+          kind
+        });
         playOutgoingMessageSound();
         rememberSentAttachment(file);
         if (viewOnce) setViewOnceMode(false);
       } catch (error) {
         console.error('[VOBIXCHAT ATTACHMENT]', error);
+        reportClientDiagnostic('attachment_send_failed', {
+          conversationId: cid,
+          kind,
+          status: error?.status || 0,
+          code: error?.code || error?.name || 'unknown'
+        });
         if (error?.name === 'AbortError') notifyUser('Envío cancelado');
         else notifyUser(kind === 'document' ? 'No se pudo enviar el documento' : (isVideo ? 'No se pudo enviar el vídeo' : 'No se pudo enviar la foto'));
       } finally {
@@ -13161,18 +13176,16 @@
     async function refreshActiveMessageRoom(conversationIdValue = conversationId(app.conversation)) {
       const id = String(conversationIdValue || '').trim();
       if (!id || String(conversationId(app.conversation) || '') !== id) return false;
+      if (app.messageSending || app.attachmentUploading || app.voiceUploadInFlight) return false;
+      const keepAtBottom = messagesAreNearBottom();
       await loadMessages(id);
-      openConversationAtLatest(app.conversation);
+      if (keepAtBottom) openConversationAtLatest(app.conversation);
       return true;
     }
 
-    function recoverMessagesWhenAppReturns() {
-      loadConversations().catch(error => console.warn('[VOBIXCHAT MESSAGE LIST RECOVERY]', error));
-      refreshActiveMessageRoom().catch(error => console.warn('[VOBIXCHAT MESSAGE ROOM RECOVERY]', error));
-    }
-
-    window.addEventListener('focus', recoverMessagesWhenAppReturns);
-    window.addEventListener('pageshow', recoverMessagesWhenAppReturns);
+    // El selector de fotos, el teclado y los permisos también generan focus.
+    // No recargamos el historial desde ese evento porque puede competir con
+    // un mensaje o archivo que todavía se está enviando.
 
     async function recoverIncomingConversation(message, incomingId) {
       const senderId = String(
@@ -14099,9 +14112,12 @@
       flushQueuedMessages();
 
       const activeId = conversationId(app.conversation);
-      if (activeId && app.socket?.connected) {
-        joinConversationRoom(activeId);
-        syncConversationReceipts(activeId);
+      if (activeId) {
+        if (app.socket?.connected) {
+          joinConversationRoom(activeId);
+          syncConversationReceipts(activeId);
+        }
+        scheduleIncomingHistoryRefresh(activeId);
       }
     }
 
@@ -14115,6 +14131,24 @@
       if (document.visibilityState !== 'visible' || navigator.onLine === false) return;
       recoverChatConnection();
     });
+
+    // Si Android pierde Socket.IO, la sala visible consulta el historial por
+    // HTTP hasta que vuelva el tiempo real. Nunca interrumpe un envío activo.
+    window.setInterval(() => {
+      if (
+        document.visibilityState !== 'visible' ||
+        navigator.onLine === false ||
+        app.socket?.connected ||
+        app.messageSending ||
+        app.attachmentUploading ||
+        app.voiceUploadInFlight
+      ) return;
+      const activeId = conversationId(app.conversation);
+      if (!activeId) return;
+      refreshActiveMessageRoom(activeId).catch(error =>
+        console.warn('[VOBIXCHAT MESSAGE HTTP RECOVERY]', error)
+      );
+    }, 5000);
 
 
     function handleRemoteTyping(payload) {
@@ -14565,6 +14599,11 @@
 
       };
 
+      reportClientDiagnostic('message_send_started', {
+        conversationId,
+        transport: app.socket?.connected ? 'socket_connected' : 'http_only'
+      });
+
       if (navigator.onLine === false) {
         if (!queueOutgoingMessage(payload)) {
           saveCurrentDraft();
@@ -14657,12 +14696,23 @@
           sent =
             true;
 
+          reportClientDiagnostic('message_send_confirmed', {
+            conversationId,
+            messageId: confirmedMessage?.id || confirmedMessage?._id || 'confirmed'
+          });
+
         } catch (error) {
 
           console.error(
             '[VOBIXCHAT MESSAGE SEND]',
             error
           );
+
+          reportClientDiagnostic('message_send_failed', {
+            conversationId,
+            status: error?.status || 0,
+            code: error?.code || error?.name || 'unknown'
+          });
 
 
           const queued = isRetryableChatError(error) && queueOutgoingMessage(payload);
@@ -14753,10 +14803,7 @@
           event => {
 
             event.preventDefault();
-
-            if (event.detail === 0) {
-              sendCurrentMessage();
-            }
+            sendCurrentMessage();
 
           }
         );
@@ -15294,6 +15341,11 @@
 
       try {
 
+        reportClientDiagnostic('voice_send_started', {
+          conversationId,
+          bytes: blob.size
+        });
+
         let uploaded;
         let lastError;
         for (let attempt = 0; attempt < 3; attempt += 1) {
@@ -15324,6 +15376,7 @@
         notifyUser(
           'Nota de voz enviada'
         );
+        reportClientDiagnostic('voice_send_confirmed', { conversationId });
         playOutgoingMessageSound();
 
         if (viewOnce) setViewOnceMode(false);
@@ -15336,6 +15389,12 @@
           '[VOBIXCHAT VOICE SEND]',
           error
         );
+
+        reportClientDiagnostic('voice_send_failed', {
+          conversationId,
+          status: error?.status || 0,
+          code: error?.code || error?.name || 'unknown'
+        });
 
 
         notifyUser(error?.status === 413
@@ -18115,9 +18174,6 @@
           playIncomingMessageAlertOnce(id);
           if (id && String(conversationId(app.conversation) || '') === id) {
             scheduleIncomingHistoryRefresh(id);
-            refreshActiveMessageRoom(id).catch(error =>
-              console.warn('[VOBIXCHAT PUSH ACTIVE ROOM]', error)
-            );
           } else {
             loadConversations().then(() => {
               const conversation = app.conversations.find(item =>

@@ -56,6 +56,42 @@ object CallNotifications {
         NotificationManagerCompat.from(context).notify(CALL_ID, notification)
     }
 
+    fun showMessage(
+        context: Context,
+        data: Map<String, String>,
+        notificationTitle: String? = null,
+        notificationBody: String? = null
+    ) {
+        createChannels(context)
+        val title = notificationTitle ?: data["title"] ?: data["senderUsername"] ?: "VobixChat"
+        val body = notificationBody ?: data["body"] ?: "Tienes un mensaje nuevo"
+        val url = data["url"] ?: data["conversationId"]?.let {
+            "/chat.html?conversationId=$it"
+        } ?: "/chat.html"
+        val messageId = (data["messageId"] ?: data["conversationId"] ?: System.currentTimeMillis().toString()).hashCode()
+        val contentIntent = Intent(context, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+            putExtra("vobix_url", url)
+        }
+        val pendingIntent = PendingIntent.getActivity(
+            context,
+            messageId,
+            contentIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        val notification = NotificationCompat.Builder(context, MESSAGE_CHANNEL)
+            .setSmallIcon(R.drawable.ic_notification_vobix)
+            .setContentTitle(title)
+            .setContentText(body)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(body))
+            .setCategory(NotificationCompat.CATEGORY_MESSAGE)
+            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .setAutoCancel(true)
+            .setContentIntent(pendingIntent)
+            .build()
+        NotificationManagerCompat.from(context).notify(messageId, notification)
+    }
+
     fun closeIncomingCall(context: Context) {
         NotificationManagerCompat.from(context).cancel(CALL_ID)
     }

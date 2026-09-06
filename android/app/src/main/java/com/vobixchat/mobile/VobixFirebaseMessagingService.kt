@@ -14,6 +14,13 @@ class VobixFirebaseMessagingService : FirebaseMessagingService() {
         val data = message.data
         if (data["type"] == "call" || data["type"] == "video-call") {
             CallNotifications.showIncomingCall(this, data)
+            return
         }
+        CallNotifications.showMessage(
+            this,
+            data,
+            message.notification?.title,
+            message.notification?.body
+        )
     }
 }

@@ -30,6 +30,6 @@ test('la web combina la medida nativa con VisualViewport sin restar dos veces', 
 
 test('la Capa 180 y la APK 1.2.8 registran la corrección nativa', () => {
   assert.match(read('core/vobix-layers.js'), /id:'180'.*Teclado Android Medido por la APK/);
-  assert.match(read('android/app/build.gradle.kts'), /versionCode = 11/);
-  assert.match(read('android/app/build.gradle.kts'), /versionName = "1\.2\.8"/);
+  assert.match(read('android/app/build.gradle.kts'), /versionCode = 12/);
+  assert.match(read('android/app/build.gradle.kts'), /versionName = "1\.2\.9"/);
 });

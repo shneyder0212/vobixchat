@@ -8,12 +8,20 @@ const path = require('node:path');
 const root = path.join(__dirname, '..');
 const html = fs.readFileSync(path.join(root, 'public', 'chat.html'), 'utf8');
 
-test('la sala activa recupera mensajes desde Push y al volver a VobixChat', () => {
+test('la sala activa recupera mensajes sin competir con el teclado o archivos', () => {
   assert.match(html, /async function refreshActiveMessageRoom/);
   assert.match(html, /await loadMessages\(id\)/);
-  assert.match(html, /window\.addEventListener\('focus', recoverMessagesWhenAppReturns\)/);
+  assert.doesNotMatch(html, /window\.addEventListener\('focus', recoverMessagesWhenAppReturns\)/);
+  assert.match(html, /app\.messageSending \|\| app\.attachmentUploading \|\| app\.voiceUploadInFlight/);
   assert.match(html, /signal\.conversationId \|\| signal\.conversation_id/);
-  assert.match(html, /refreshActiveMessageRoom\(id\)/);
+  assert.match(html, /scheduleIncomingHistoryRefresh\(id\)/);
+  assert.match(html, /VOBIXCHAT MESSAGE HTTP RECOVERY/);
+});
+
+test('la Capa 183 aísla la entrega integral de la lógica de llamadas', () => {
+  const layers = fs.readFileSync(path.join(root, 'core', 'vobix-layers.js'), 'utf8');
+  assert.match(layers, /id:'183'.*Entrega Integral de Mensajes/);
+  assert.match(layers, /sin modificar llamadas ni videollamadas/);
 });
 
 test('los emojis requieren un toque iniciado en su botón y se cierran fuera', () => {
