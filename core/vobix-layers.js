@@ -148,6 +148,7 @@ const VOBIX_LAYERS = Object.freeze([
 ,{ id:'168', name:'Actualización Web Automática de la APK', status:'activo', scope:'La APK carga siempre la versión publicada de VobixChat con caché desactivada, por lo que chat, llamadas, menús y seguridad se actualizan al volver a abrirla. Solo un cambio nativo de Android o de firma exige una nueva instalación.' }
 ,{ id:'169', name:'Intercambio Táctil de Videollamada', status:'en_validacion', scope:'Al tocar el vídeo pequeño intercambia la cámara local y remota entre tamaño grande y flotante; el cuadro pequeño puede moverse con dedo o ratón sin activar el intercambio durante el arrastre.' }
 ,{ id:'170', name:'Recuperación de Micrófono Android', status:'en_validacion', scope:'Evita capturas simultáneas del micrófono, solicita solo los permisos que exige cada llamada, reintenta una captura ocupada y restaura la ruta de audio nativa al colgar.' }
+,{ id:'171', name:'Permiso Antes del Timbre', status:'en_validacion', scope:'Android confirma cámara y micrófono, libera cualquier captura anterior y abre la pista WebRTC antes de avisar al destinatario, evitando timbres que terminan por una autorización pendiente.' }
 ]);
 
 function getVobixLayers() {
