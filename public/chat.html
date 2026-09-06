@@ -13126,11 +13126,42 @@
       elements.messages.scrollTop = elements.messages.scrollHeight;
     }
 
+    let photoPanX = 0;
+    let photoPanY = 0;
+    let photoGestureDistance = 0;
+    let photoGestureCenter = null;
+    let lastPhotoTapAt = 0;
+    const photoPointers = new Map();
+
+    function clampPhotoViewerPan() {
+      const stage = elements.photoViewerStage;
+      const image = elements.photoViewerImage;
+      if (!stage || !image || app.photoZoom <= 1) {
+        photoPanX = 0;
+        photoPanY = 0;
+        return;
+      }
+      const maxX = Math.max(0, (image.clientWidth * app.photoZoom - stage.clientWidth) / 2);
+      const maxY = Math.max(0, (image.clientHeight * app.photoZoom - stage.clientHeight) / 2);
+      photoPanX = Math.max(-maxX, Math.min(maxX, photoPanX));
+      photoPanY = Math.max(-maxY, Math.min(maxY, photoPanY));
+    }
+
+    function applyPhotoViewerTransform() {
+      clampPhotoViewerPan();
+      if (elements.photoViewerImage) {
+        elements.photoViewerImage.style.transform =
+          `translate3d(${photoPanX}px, ${photoPanY}px, 0) scale(${app.photoZoom})`;
+      }
+    }
+
     function setPhotoViewerZoom(value) {
       app.photoZoom = Math.max(1, Math.min(3, Number(value) || 1));
-      if (elements.photoViewerImage) {
-        elements.photoViewerImage.style.transform = `scale(${app.photoZoom})`;
+      if (app.photoZoom <= 1) {
+        photoPanX = 0;
+        photoPanY = 0;
       }
+      applyPhotoViewerTransform();
       if (elements.photoZoomOutButton) elements.photoZoomOutButton.disabled = app.photoZoom <= 1;
       if (elements.photoZoomInButton) elements.photoZoomInButton.disabled = app.photoZoom >= 3;
     }
@@ -13167,6 +13198,66 @@
       if (event.target === elements.photoViewerStage) closePhotoViewer();
     });
     elements.photoViewerImage?.addEventListener('dblclick', () => setPhotoViewerZoom(app.photoZoom > 1 ? 1 : 2));
+    elements.photoViewerImage?.addEventListener('pointerdown', event => {
+      event.preventDefault();
+      elements.photoViewerImage.setPointerCapture?.(event.pointerId);
+      photoPointers.set(event.pointerId, {
+        x:event.clientX,
+        y:event.clientY,
+        startX:event.clientX,
+        startY:event.clientY
+      });
+      photoGestureDistance = 0;
+      photoGestureCenter = { x:event.clientX, y:event.clientY };
+    });
+    elements.photoViewerImage?.addEventListener('pointermove', event => {
+      if (!photoPointers.has(event.pointerId)) return;
+      event.preventDefault();
+      const previous = photoPointers.get(event.pointerId);
+      photoPointers.set(event.pointerId, {
+        x:event.clientX,
+        y:event.clientY,
+        startX:previous.startX,
+        startY:previous.startY
+      });
+      const points = [...photoPointers.values()];
+
+      if (points.length >= 2) {
+        const distance = Math.hypot(points[0].x - points[1].x, points[0].y - points[1].y);
+        if (photoGestureDistance > 0) {
+          setPhotoViewerZoom(app.photoZoom * (distance / photoGestureDistance));
+        }
+        photoGestureDistance = distance;
+        photoGestureCenter = {
+          x:(points[0].x + points[1].x) / 2,
+          y:(points[0].y + points[1].y) / 2
+        };
+        return;
+      }
+
+      if (app.photoZoom > 1 && previous) {
+        photoPanX += event.clientX - previous.x;
+        photoPanY += event.clientY - previous.y;
+        applyPhotoViewerTransform();
+      }
+    });
+    const finishPhotoPointer = event => {
+      const point = photoPointers.get(event.pointerId);
+      photoPointers.delete(event.pointerId);
+      photoGestureDistance = 0;
+      photoGestureCenter = null;
+      if (!point) return;
+      const moved = Math.hypot(event.clientX - point.startX, event.clientY - point.startY);
+      const now = Date.now();
+      if (moved < 10 && now - lastPhotoTapAt < 320) {
+        setPhotoViewerZoom(app.photoZoom > 1 ? 1 : 2);
+        lastPhotoTapAt = 0;
+      } else if (moved < 10) {
+        lastPhotoTapAt = now;
+      }
+    };
+    elements.photoViewerImage?.addEventListener('pointerup', finishPhotoPointer);
+    elements.photoViewerImage?.addEventListener('pointercancel', finishPhotoPointer);
     document.addEventListener('keydown', event => {
       if (event.key === 'Escape' && elements.photoViewer?.classList.contains('open')) closePhotoViewer();
     });
@@ -16649,9 +16740,17 @@
           window.io(
             {
               transports: [
-                'websocket',
-                'polling'
+                'polling',
+                'websocket'
               ],
+
+              upgrade: true,
+              tryAllTransports: true,
+              reconnection: true,
+              reconnectionAttempts: Infinity,
+              reconnectionDelay: 800,
+              reconnectionDelayMax: 5000,
+              timeout: 20000,
 
               auth: {
                 token:
@@ -17467,6 +17566,43 @@
         '[VOBIXCHAT] Interfaz activa'
       );
 
+    }
+
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.addEventListener('message', event => {
+        const signal = event.data || {};
+        if (signal.type !== 'VOBIX_PUSH_SIGNAL') return;
+
+        const id = String(signal.conversationId || '').trim();
+        if (signal.pushType === 'message') {
+          if (id && String(conversationId(app.conversation) || '') === id) {
+            scheduleIncomingHistoryRefresh(id);
+          } else {
+            loadConversations().then(() => {
+              const conversation = app.conversations.find(item =>
+                String(conversationId(item) || '') === id
+              );
+              const fromUserId = String(signal.fromUserId || '');
+              const currentPeerId = String(userId(app.peer) || '');
+              if (conversation && fromUserId && currentPeerId === fromUserId) {
+                return selectConversation(conversation, getConversationPeer(conversation));
+              }
+              return null;
+            }).catch(error => console.warn('[VOBIXCHAT PUSH MESSAGE RECOVERY]', error));
+          }
+          return;
+        }
+
+        if (signal.pushType === 'call' || signal.pushType === 'video-call') {
+          if (!app.socket) connectSocket();
+          if (app.socket?.connected) recoverPendingIncomingCall();
+          else app.socket?.once?.('connect', recoverPendingIncomingCall);
+        }
+      });
+
+      navigator.serviceWorker.ready
+        .then(registration => registration.update())
+        .catch(() => {});
     }
 
 
