@@ -474,10 +474,16 @@
     .photoViewer {
       position: fixed;
       inset: 0;
+      width: 100vw;
+      height: 100vh;
+      height: 100dvh;
       z-index: 12000;
       display: none;
       flex-direction: column;
       background: rgba(0,0,0,.96);
+      overflow: hidden;
+      overscroll-behavior: contain;
+      contain: layout paint size;
     }
 
     .photoViewer.open { display: flex; }
@@ -503,15 +509,20 @@
     }
     .photoViewerStage {
       flex: 1;
+      width: 100%;
       min-height: 0;
       display: grid;
       place-items: center;
-      overflow: auto;
-      touch-action: pan-x pan-y;
+      overflow: hidden;
+      touch-action: none;
     }
     .photoViewerImage {
-      max-width: 100%;
-      max-height: 100%;
+      display: block;
+      width: auto;
+      height: auto;
+      max-width: calc(100vw - 16px);
+      max-height: calc(100dvh - 82px - env(safe-area-inset-top));
+      object-fit: contain;
       transform: scale(1);
       transform-origin: center;
       transition: transform .16s ease;
@@ -790,6 +801,21 @@
     .messageOriginSeal.isModified { border-color: #ff7777; color: #ff9a9a; background: rgba(255,90,90,.1); }
     .messageOriginSeal:disabled { opacity: .65; cursor: wait; }
     .messageOriginDetails { margin-top:6px; font-size:10px; line-height:1.55; color:rgba(255,255,255,.76); white-space:pre-line; }
+
+    .voiceMessage > .messageOriginSeal,
+    .voiceMessage > .messageOriginDetails,
+    .voiceMessage > .viewOnceSenderBadge {
+      grid-column: 1 / -1;
+      justify-self: start;
+      max-width: 100%;
+    }
+
+    .messageOriginDetails {
+      width: 100%;
+      min-width: 0;
+      box-sizing: border-box;
+      overflow-wrap: anywhere;
+    }
 
     .messageTranslationAction {
       display: inline-flex;
@@ -2515,7 +2541,8 @@
 
       min-width: 210px;
 
-      display: flex;
+      display: grid;
+      grid-template-columns: 42px minmax(72px, 1fr) auto auto;
       align-items: center;
 
       gap: 10px;
@@ -2704,6 +2731,17 @@
       border-radius: 14px;
       object-fit: cover;
       background: #050805;
+      cursor: pointer;
+    }
+
+    .chatMediaButton {
+      display: block;
+      max-width: 100%;
+      padding: 0;
+      border: 0;
+      border-radius: 14px;
+      background: transparent;
+      overflow: hidden;
       cursor: pointer;
     }
 
@@ -3954,7 +3992,7 @@
 
     </main>
 
-    <div id="photoViewer" class="photoViewer" role="dialog" aria-modal="true" aria-label="Vista ampliada de fotografía">
+    <div id="photoViewer" class="photoViewer" role="dialog" aria-modal="true" aria-hidden="true" aria-label="Vista ampliada de fotografía">
       <div class="photoViewerToolbar">
         <button id="photoZoomOutButton" type="button" aria-label="Alejar">−</button>
         <button id="photoZoomInButton" type="button" aria-label="Acercar">+</button>
@@ -12657,6 +12695,42 @@
       return normalized;
     }
 
+    let incomingHistoryRefreshTimer = null;
+
+    function scheduleIncomingHistoryRefresh(conversationIdValue) {
+      const id = String(conversationIdValue || '').trim();
+      if (!id) return;
+      if (incomingHistoryRefreshTimer) window.clearTimeout(incomingHistoryRefreshTimer);
+      incomingHistoryRefreshTimer = window.setTimeout(() => {
+        incomingHistoryRefreshTimer = null;
+        if (String(conversationId(app.conversation) || '') === id) {
+          loadMessages(id).catch(error => console.warn('[VOBIXCHAT MESSAGE REFRESH]', error));
+        }
+      }, 350);
+    }
+
+    async function recoverIncomingConversation(message, incomingId) {
+      const senderId = String(
+        message?.senderUserId || message?.sender_user_id || message?.senderId ||
+        message?.sender_id || userId(message?.sender) || ''
+      );
+      const currentPeerId = String(userId(app.peer) || '');
+      if (!incomingId || !senderId || !currentPeerId || senderId !== currentPeerId) return false;
+
+      await loadConversations();
+      const conversation = app.conversations.find(item =>
+        String(conversationId(item) || '') === String(incomingId)
+      );
+      if (!conversation) return false;
+
+      if (String(conversationId(app.conversation) || '') !== String(incomingId)) {
+        await selectConversation(conversation, getConversationPeer(conversation));
+      } else {
+        scheduleIncomingHistoryRefresh(incomingId);
+      }
+      return true;
+    }
+
     function incomingMessageEventKey(message) {
       const messageId =
         message?.id ||
@@ -12806,7 +12880,7 @@
     function renderViewOnceGate(message, mine, kind) {
       if (!['image', 'video', 'voice'].includes(kind) || !messageIsViewOnce(message) || mine || !elements.messages) return false;
       const row = document.createElement('div');
-      row.className = 'messageRow';
+      row.className = 'messageRow theirs';
       const gateMessageId = message?.id || message?._id || message?.messageId || message?.message_id;
       if (gateMessageId) row.dataset.messageId = String(gateMessageId);
       const bubble = document.createElement('div');
@@ -12927,7 +13001,7 @@
       elements.messages.querySelector('#vobixWelcome')?.remove();
 
       const row = document.createElement('div');
-      row.className = mine ? 'messageRow mine' : 'messageRow';
+      row.className = mine ? 'messageRow mine' : 'messageRow theirs';
       const voiceMessageId = message?.id || message?._id || message?.messageId || message?.message_id;
       if (voiceMessageId) row.dataset.messageId = String(voiceMessageId);
 
@@ -13072,6 +13146,7 @@
       }
       setPhotoViewerZoom(1);
       elements.photoViewer.classList.add('open');
+      elements.photoViewer.setAttribute('aria-hidden', 'false');
       document.body.style.overflow = 'hidden';
       elements.closePhotoViewerButton?.focus();
     }
@@ -13079,6 +13154,7 @@
     function closePhotoViewer() {
       app.activeViewOnceClose = null;
       elements.photoViewer?.classList.remove('open');
+      elements.photoViewer?.setAttribute('aria-hidden', 'true');
       if (elements.photoViewerImage) elements.photoViewerImage.removeAttribute('src');
       document.body.style.overflow = '';
       setPhotoViewerZoom(1);
@@ -13170,7 +13246,7 @@
       const fileName = String(file.name || file.fileName || file.file_name || message?.fileName || fallbackName);
 
       const row = document.createElement('div');
-      row.className = mine ? 'messageRow mine' : 'messageRow';
+      row.className = mine ? 'messageRow mine' : 'messageRow theirs';
       const attachmentMessageId = message?.id || message?._id || message?.messageId || message?.message_id;
       if (attachmentMessageId) row.dataset.messageId = String(attachmentMessageId);
 
@@ -13189,10 +13265,9 @@
       if (!url) {
         bubble.textContent = kind === 'image' ? 'Imagen no disponible' : 'Documento no disponible';
       } else if (kind === 'image') {
-        const link = document.createElement('a');
-        link.href = url;
-        link.target = '_blank';
-        link.rel = 'noopener noreferrer';
+        const link = document.createElement('button');
+        link.type = 'button';
+        link.className = 'chatMediaButton';
         link.setAttribute('aria-label', 'Abrir fotografía a pantalla completa');
         link.addEventListener('click', event => {
           event.preventDefault();
@@ -16595,6 +16670,11 @@
             }
           );
 
+        // Se registran antes de que termine el handshake. En móviles rápidos
+        // una oferta podía llegar entre la conexión y el registro tardío de
+        // los listeners, dejando únicamente la notificación del sistema.
+        attachCallSocketEvents();
+
 
       } catch (error) {
 
@@ -16789,7 +16869,11 @@
                 message.text || message.message || 'Nuevo mensaje'
               );
             }
-            loadConversations();
+            loadConversations().then(() => {
+              if (String(conversationId(app.conversation) || '') === String(incomingId)) {
+                scheduleIncomingHistoryRefresh(incomingId);
+              }
+            }).catch(() => {});
             return;
 
           }
@@ -16807,6 +16891,10 @@
             String(activeId) !==
             String(incomingId)
           ) {
+
+            recoverIncomingConversation(message, incomingId).catch(error =>
+              console.warn('[VOBIXCHAT INCOMING CONVERSATION]', error)
+            );
 
             playMessageSound();
 
@@ -16845,6 +16933,11 @@
           renderIncomingMessage(
             message
           );
+
+          // El evento pinta al instante y esta lectura breve confirma el
+          // historial persistido. Protege móviles que cambiaron de red, sala
+          // o proceso mientras llegaba la notificación Push.
+          scheduleIncomingHistoryRefresh(incomingId || activeId);
 
 
           const receivedMessageId = message.id || message._id || message.messageId || message.message_id;
@@ -18795,6 +18888,10 @@
         endLocalCall(
           false
         );
+
+        if (['NotAllowedError', 'PermissionDeniedError', 'SecurityError'].includes(String(error?.name || ''))) {
+          window.setTimeout(() => showMediaPermissionOnboarding(true), 80);
+        }
 
       }
 
