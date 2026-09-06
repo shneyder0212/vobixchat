@@ -5,6 +5,8 @@
   const editableSelector = 'input:not([type="checkbox"]):not([type="radio"]):not([type="button"]), textarea, select, [contenteditable="true"]';
   let baselineHeight = Math.max(window.innerHeight || 0, window.visualViewport?.height || 0);
   let updateFrame = 0;
+  let nativeKeyboardVisible = false;
+  let nativeViewportHeight = 0;
 
   try {
     if (navigator.virtualKeyboard) navigator.virtualKeyboard.overlaysContent = false;
@@ -25,7 +27,9 @@
     // Algunos WebView Android conservan visualViewport.height sin reducir
     // aunque innerHeight ya refleje el teclado. Elegir la menor altura válida
     // mantiene el compositor dentro del área que realmente se ve.
-    const heightCandidates = [viewport?.height, window.innerHeight]
+    let heightCandidates = [viewport?.height, window.innerHeight];
+    if (nativeKeyboardVisible) heightCandidates.push(nativeViewportHeight);
+    heightCandidates = heightCandidates
       .map(Number)
       .filter(height => Number.isFinite(height) && height > 0);
     const visibleHeight = Math.max(
@@ -54,6 +58,7 @@
     root.style.setProperty('--vobix-login-height', `${visibleHeight}px`);
     root.classList.toggle('vobixKeyboardOpen', keyboardOpen);
     root.classList.toggle('vobixKeyboardFocus', Boolean(focused));
+    root.classList.toggle('vobixNativeKeyboardOpen', nativeKeyboardVisible && Boolean(focused));
     document.body?.classList.toggle('keyboardOpen', keyboardOpen);
 
     if (keyboardOpen && focused) {
@@ -85,6 +90,13 @@
     setTimeout(scheduleUpdate, 420);
   }, { passive: true });
   navigator.virtualKeyboard?.addEventListener?.('geometrychange', scheduleUpdate);
+  window.addEventListener('vobix:native-keyboard', event => {
+    const detail = event.detail || {};
+    nativeKeyboardVisible = Boolean(detail.visible);
+    nativeViewportHeight = Math.max(0, Math.round(Number(detail.viewportHeight) || 0));
+    scheduleUpdate();
+    setTimeout(scheduleUpdate, 80);
+  });
   document.addEventListener('focusin', event => {
     if (!event.target.matches?.(editableSelector)) return;
     root.classList.add('vobixKeyboardFocus');

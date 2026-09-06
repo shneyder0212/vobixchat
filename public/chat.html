@@ -1319,6 +1319,12 @@
       --vobix-safe-bottom: 0px;
     }
 
+    html.vobixNativeKeyboardOpen .vobixApp {
+      top: var(--vobix-visual-top, 0px);
+      height: var(--vobix-visual-height, var(--vobix-viewport-height, 100dvh));
+      --vobix-safe-bottom: 0px;
+    }
+
     html.vobixKeyboardOpen .vobixComposer {
       position: sticky;
       right: 0;
@@ -1331,6 +1337,17 @@
     }
 
     html.vobixKeyboardFocus .vobixComposer {
+      position: sticky;
+      right: 0;
+      bottom: 0;
+      left: 0;
+      flex: 0 0 auto;
+      width: 100%;
+      padding-bottom: 7px;
+      transform: translateZ(0);
+    }
+
+    html.vobixNativeKeyboardOpen .vobixComposer {
       position: sticky;
       right: 0;
       bottom: 0;

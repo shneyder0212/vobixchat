@@ -157,6 +157,7 @@ const VOBIX_LAYERS = Object.freeze([
 ,{ id:'177', name:'Llamadas Activas en Segundo Plano', status:'en_validacion', scope:'La APK mantiene un servicio visible durante llamadas, conserva cámara y micrófono al cambiar de aplicación y usa ventana flotante para videollamadas compatibles; el cierre forzado de Android finaliza el proceso.' }
 ,{ id:'178', name:'Compositor Siempre Sobre el Teclado', status:'en_validacion', scope:'Android e iPhone calculan la menor altura visual válida, fijan la barra de escritura al área visible desde el foco y evitan que el compositor se encoja o quede oculto bajo el teclado nativo.' }
 ,{ id:'179', name:'Cambio de Cámara Real y Recuperable', status:'en_validacion', scope:'El botón de cambio selecciona otra cámara física, libera primero el hardware en Android, sustituye la pista en conexiones individuales y grupales y recupera la cámara anterior si ocurre un error.' }
+,{ id:'180', name:'Teclado Android Medido por la APK', status:'en_validacion', scope:'La APK mide directamente el área ocupada por el teclado Android, la convierte a píxeles CSS y comunica la altura visible al chat para mantener el compositor inmediatamente encima del teclado incluso con pantalla de borde a borde.' }
 ]);
 
 function getVobixLayers() {

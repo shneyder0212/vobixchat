@@ -30,6 +30,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import kotlin.math.roundToInt
 import com.google.firebase.messaging.FirebaseMessaging
 import java.io.File
 
@@ -41,6 +42,9 @@ class MainActivity : ComponentActivity() {
     private var cameraOutputUri: Uri? = null
     private var activeCall = false
     private var activeVideoCall = false
+    private var nativeKeyboardVisible = false
+    private var nativeKeyboardHeightCss = 0
+    private var nativeKeyboardViewportHeightCss = 0
     private val mediaPermissionRequestCode = 91
     private val cameraFilePermissionRequestCode = 92
     private val notificationPermissionRequestCode = 93
@@ -65,7 +69,18 @@ class MainActivity : ComponentActivity() {
         setContentView(webView)
         ViewCompat.setOnApplyWindowInsetsListener(webView) { view, insets ->
             val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            val ime = insets.getInsets(WindowInsetsCompat.Type.ime())
+            val imeVisible = insets.isVisible(WindowInsetsCompat.Type.ime())
             view.setPadding(bars.left, bars.top, bars.right, bars.bottom)
+            val density = resources.displayMetrics.density.coerceAtLeast(1f)
+            nativeKeyboardVisible = imeVisible && ime.bottom > bars.bottom
+            nativeKeyboardHeightCss = if (nativeKeyboardVisible) {
+                ((ime.bottom - bars.bottom) / density).roundToInt().coerceAtLeast(0)
+            } else 0
+            nativeKeyboardViewportHeightCss = if (nativeKeyboardVisible) {
+                ((window.decorView.height - ime.bottom) / density).roundToInt().coerceAtLeast(1)
+            } else 0
+            dispatchNativeKeyboardInsets()
             insets
         }
         ViewCompat.requestApplyInsets(webView)
@@ -74,10 +89,15 @@ class MainActivity : ComponentActivity() {
             domStorageEnabled = true
             mediaPlaybackRequiresUserGesture = false
             cacheMode = WebSettings.LOAD_NO_CACHE
-            userAgentString = "$userAgentString VobixChatAndroid/1.2.7"
+            userAgentString = "$userAgentString VobixChatAndroid/1.2.8"
         }
         webView.addJavascriptInterface(NativeBridge(), "VobixNative")
-        webView.webViewClient = WebViewClient()
+        webView.webViewClient = object : WebViewClient() {
+            override fun onPageFinished(view: WebView?, url: String?) {
+                super.onPageFinished(view, url)
+                dispatchNativeKeyboardInsets()
+            }
+        }
         webView.webChromeClient = object : WebChromeClient() {
             override fun onShowFileChooser(
                 webView: WebView?,
@@ -189,6 +209,19 @@ class MainActivity : ComponentActivity() {
             "window.dispatchEvent(new CustomEvent('vobix:fcm-token',{detail:{token:'$safe'}}));",
             null
         )
+    }
+
+    private fun dispatchNativeKeyboardInsets() {
+        if (!::webView.isInitialized) return
+        webView.post {
+            webView.evaluateJavascript(
+                "window.dispatchEvent(new CustomEvent('vobix:native-keyboard'," +
+                    "{detail:{visible:$nativeKeyboardVisible," +
+                    "height:$nativeKeyboardHeightCss," +
+                    "viewportHeight:$nativeKeyboardViewportHeightCss}}));",
+                null
+            )
+        }
     }
 
     private fun hasMediaPermissions(): Boolean =
