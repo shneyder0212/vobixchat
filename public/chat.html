@@ -17440,6 +17440,26 @@
 
       }
 
+      maybeStartRequestedCall();
+
+    }
+
+
+    let requestedCallStarted = false;
+
+    function maybeStartRequestedCall() {
+      if (requestedCallStarted || app.callId || app.pendingCallOffer) return;
+
+      const params = new URLSearchParams(window.location.search);
+      const requestedType = params.get('startCall');
+      if (requestedType !== 'audio' && requestedType !== 'video') return;
+
+      requestedCallStarted = true;
+      params.delete('startCall');
+      const query = params.toString();
+      history.replaceState(null, '', `${location.pathname}${query ? `?${query}` : ''}${location.hash}`);
+
+      window.setTimeout(() => startCall(requestedType), 80);
     }
 
 
