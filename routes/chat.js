@@ -510,6 +510,9 @@ async function searchUsersHandler(
       req.query.q
     );
 
+  const phoneDigits =
+    search.replace(/\D/g, '').slice(0, 20);
+
 
   if (
     search.length < 2
@@ -559,6 +562,14 @@ async function searchUsersHandler(
               LOWER(vobix_id)
                 LIKE LOWER($2)
             )
+
+            OR
+
+            (
+              LENGTH($4::text) >= 7
+              AND
+              REGEXP_REPLACE(COALESCE(phone, ''), '[^0-9]', '', 'g') = $4::text
+            )
           )
 
         ORDER BY
@@ -577,7 +588,8 @@ async function searchUsersHandler(
         [
           userId,
           `%${search}%`,
-          search
+          search,
+          phoneDigits
         ]
       );
 

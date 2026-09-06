@@ -540,7 +540,7 @@ async function search(){
  const q=$('searchInput').value.trim();if(q.length<2)return;
  try{
   let d;
-  const endpoints=['/api/chat/users/search?q=','/api/chat/search?q=','/api/users/search?q='];
+  const endpoints=['/api/chat/users/search?q=','/api/chat/search?q='];
   let last;
   for(const ep of endpoints){try{d=await api(ep+encodeURIComponent(q));break}catch(e){last=e}}
   if(!d)throw last||new Error('No se pudo buscar');

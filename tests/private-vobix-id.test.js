@@ -21,10 +21,13 @@ test('amistades públicas no devuelven el teléfono', () => {
   assert.match(friendsRoute, /u\.vobix_id/);
 });
 
-test('la búsqueda pública usa nombre o Vobix ID y nunca teléfono', () => {
+test('la búsqueda usa nombre, Vobix ID o teléfono completo exacto', () => {
   const searchRoute = routes.slice(routes.indexOf('async function searchUsersHandler'), routes.indexOf("router.get(\n  '/users/search'"));
   assert.match(searchRoute, /discover_by_vobix_id = TRUE/);
-  assert.doesNotMatch(searchRoute, /discover_by_phone|REGEXP_REPLACE|\bphone\b/);
+  assert.match(searchRoute, /phoneDigits/);
+  assert.match(searchRoute, /LENGTH\(\$4::text\) >= 7/);
+  assert.match(searchRoute, /REGEXP_REPLACE\(COALESCE\(phone, ''\)/);
+  assert.doesNotMatch(searchRoute, /phone[\s\S]{0,100}LIKE/);
 });
 
 test('la interfaz identifica contactos por Vobix ID y no pinta su teléfono', () => {
