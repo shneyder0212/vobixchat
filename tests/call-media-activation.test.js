@@ -85,7 +85,7 @@ test('la limpieza al colgar detiene pistas, cierra WebRTC y limpia elementos', (
 
 test('el llamante siempre conserva el control rojo para colgar', () => {
   const html = read('public/chat.html');
-  assert.match(html, /#endCallButton[\s\S]{0,320}order: -1/);
+  assert.match(html, /#endCallButton[\s\S]{0,320}order: -2/);
   assert.match(html, /#endCallButton[\s\S]{0,420}visibility: visible !important/);
   assert.match(html, /elements\.endCallButton\.hidden = false/);
   assert.match(html, /addEventListener\('pointerup', endCallFromControl\)/);
