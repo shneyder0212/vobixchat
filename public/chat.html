@@ -18161,6 +18161,14 @@
       );
     }
 
+    function setNativeCallActive(active, type = app.callType || 'audio') {
+      try {
+        window.VobixNative?.setCallActive?.(Boolean(active), String(type || 'audio'));
+      } catch (error) {
+        console.warn('[VOBIXCHAT NATIVE CALL SERVICE]', error);
+      }
+    }
+
 
     function attachLocalCallStream(stream, type) {
       if (!elements.localVideo || !stream || type !== 'video') return;
@@ -18923,6 +18931,10 @@
 
       }
 
+
+      // Android exige iniciar el servicio mientras la aplicación todavía
+      // está visible y la cámara y el micrófono ya fueron autorizados.
+      setNativeCallActive(true, type);
 
       return app.localStream;
 
@@ -21127,6 +21139,8 @@
 
       if (app.endingCall) return;
       app.endingCall = true;
+
+      setNativeCallActive(false);
 
       stopAllCallSignals();
 

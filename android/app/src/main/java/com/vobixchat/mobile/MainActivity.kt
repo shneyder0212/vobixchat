@@ -2,6 +2,7 @@ package com.vobixchat.mobile
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.app.PictureInPictureParams
 import android.content.Intent
 import android.content.Context
 import android.content.pm.PackageManager
@@ -13,6 +14,7 @@ import android.os.Build
 import android.os.Bundle
 import android.provider.MediaStore
 import android.provider.Settings
+import android.util.Rational
 import android.view.WindowManager
 import android.webkit.ValueCallback
 import android.webkit.JavascriptInterface
@@ -37,6 +39,8 @@ class MainActivity : ComponentActivity() {
     private var filePathCallback: ValueCallback<Array<Uri>>? = null
     private var pendingFileChooser: WebChromeClient.FileChooserParams? = null
     private var cameraOutputUri: Uri? = null
+    private var activeCall = false
+    private var activeVideoCall = false
     private val mediaPermissionRequestCode = 91
     private val cameraFilePermissionRequestCode = 92
     private val notificationPermissionRequestCode = 93
@@ -70,7 +74,7 @@ class MainActivity : ComponentActivity() {
             domStorageEnabled = true
             mediaPlaybackRequiresUserGesture = false
             cacheMode = WebSettings.LOAD_NO_CACHE
-            userAgentString = "$userAgentString VobixChatAndroid/1.2.6"
+            userAgentString = "$userAgentString VobixChatAndroid/1.2.7"
         }
         webView.addJavascriptInterface(NativeBridge(), "VobixNative")
         webView.webViewClient = WebViewClient()
@@ -117,7 +121,25 @@ class MainActivity : ComponentActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
+        if (intent.getBooleanExtra("vobix_resume_call", false)) {
+            webView.onResume()
+            return
+        }
         loadRequestedUrl(intent)
+    }
+
+    override fun onUserLeaveHint() {
+        super.onUserLeaveHint()
+        if (!activeCall || !activeVideoCall || Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
+        try {
+            enterPictureInPictureMode(
+                PictureInPictureParams.Builder()
+                    .setAspectRatio(Rational(9, 16))
+                    .build()
+            )
+        } catch (_: Exception) {
+            // La llamada continúa mediante el servicio aunque PiP no esté disponible.
+        }
     }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
@@ -321,6 +343,17 @@ class MainActivity : ComponentActivity() {
 
         @JavascriptInterface
         fun hasNotificationPermission(): Boolean = this@MainActivity.hasNotificationPermission()
+
+        @JavascriptInterface
+        fun setCallActive(active: Boolean, type: String) = runOnUiThread {
+            activeCall = active
+            activeVideoCall = active && type == "video"
+            if (active) {
+                CallKeepAliveService.start(this@MainActivity, activeVideoCall)
+            } else {
+                CallKeepAliveService.stop(this@MainActivity)
+            }
+        }
 
         @Suppress("DEPRECATION")
         @JavascriptInterface
