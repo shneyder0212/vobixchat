@@ -70,7 +70,7 @@ class MainActivity : ComponentActivity() {
             domStorageEnabled = true
             mediaPlaybackRequiresUserGesture = false
             cacheMode = WebSettings.LOAD_NO_CACHE
-            userAgentString = "$userAgentString VobixChatAndroid/1.2.4"
+            userAgentString = "$userAgentString VobixChatAndroid/1.2.5"
         }
         webView.addJavascriptInterface(NativeBridge(), "VobixNative")
         webView.webViewClient = WebViewClient()
@@ -341,6 +341,18 @@ class MainActivity : ComponentActivity() {
                 audioManager.isSpeakerphoneOn = enabled
                 true
             }
+        }
+
+        @Suppress("DEPRECATION")
+        @JavascriptInterface
+        fun resetCallAudio() {
+            val audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                audioManager.clearCommunicationDevice()
+            } else {
+                audioManager.isSpeakerphoneOn = false
+            }
+            audioManager.mode = AudioManager.MODE_NORMAL
         }
     }
 }

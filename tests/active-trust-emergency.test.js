@@ -49,8 +49,9 @@ test('la frase nunca se almacena en texto y la ubicación caduca', () => {
   assert.match(server, /created_at>NOW\(\)-INTERVAL '2 minutes'/);
 });
 
-test('la detección solo se arma durante una llamada y con permiso local', () => {
-  assert.match(chat, /if \(app\.callId\) startEmergencyRecognition\(\)/);
+test('la detección no compite con el micrófono de una llamada y conserva permiso local', () => {
+  assert.match(chat, /if \(app\.callId \|\| app\.callMediaAcquiring\) stopEmergencyRecognition\(\)/);
+  assert.match(chat, /microphoneInUse/);
   assert.match(chat, /EMERGENCY_ENABLED_KEY\) !== 'true'/);
   assert.match(chat, /navigator\.geolocation\.getCurrentPosition/);
   assert.match(chat, /\/api\/emergency\/trigger/);
