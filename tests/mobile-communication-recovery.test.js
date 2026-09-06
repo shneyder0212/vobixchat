@@ -8,6 +8,7 @@ const path = require('node:path');
 const root = path.join(__dirname, '..');
 const html = fs.readFileSync(path.join(root, 'public', 'chat.html'), 'utf8');
 const layers = fs.readFileSync(path.join(root, 'core', 'vobix-layers.js'), 'utf8');
+const server = fs.readFileSync(path.join(root, 'server.js'), 'utf8');
 
 test('el historial usa un respaldo existente y no oculta errores del servidor', () => {
   assert.match(html, /Number\(firstError\?\.status\) !== 404/);
@@ -33,6 +34,14 @@ test('las llamadas cargan STUN y TURN del servidor y fallan sin quedar en limbo'
   assert.match(html, /await loadRtcConfiguration\(\)/);
   assert.match(html, /socket\.timeout\(10000\)\.emit/);
   assert.match(html, /El servidor no respondió a la llamada/);
+  assert.match(server, /filter\(value => \/\^turns\?:\[\^\\s\]\+\$\/i\.test\(value\)\)/);
+});
+
+test('cada conversación abre en el mensaje más reciente aunque cargue contenido multimedia', () => {
+  assert.match(html, /function openConversationAtLatest/);
+  assert.match(html, /\[80, 250, 700, 1500, 3000\]/);
+  assert.match(html, /openConversationAtLatest\(conversation\)/);
+  assert.doesNotMatch(html, /saveConversationReadPosition\(\);\s*saveCurrentDraft\(\)/);
 });
 
 test('la Capa 138 documenta la recuperación integral en validación', () => {

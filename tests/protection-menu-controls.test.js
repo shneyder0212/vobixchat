@@ -27,8 +27,9 @@ test('cada chat abierto termina en el mensaje más reciente', () => {
     chat.indexOf('LIMPIAR MENSAJES')
   );
   assert.doesNotMatch(selection, /restoreConversationReadPosition/);
-  assert.match(selection, /elements\.messages\.scrollTop = elements\.messages\.scrollHeight/);
-  assert.match(selection, /requestAnimationFrame\(\(\) => requestAnimationFrame/);
+  assert.match(selection, /openConversationAtLatest\(conversation\)/);
+  assert.match(chat, /elements\.messages\.scrollTop = elements\.messages\.scrollHeight/);
+  assert.match(chat, /requestAnimationFrame\(\(\) => requestAnimationFrame\(moveToLatest\)\)/);
 });
 
 test('Anti-Estafas apagado deja de intervenir en enlaces y mensajes', () => {
