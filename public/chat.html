@@ -3077,6 +3077,14 @@
 
     .callControls::-webkit-scrollbar { display: none; }
 
+    #rejoinGroupCallButton[hidden] {
+      display: none !important;
+    }
+
+    #callParticipantPanel {
+      z-index: 8200;
+    }
+
     .callParticipantList {
       display: grid;
       gap: 10px;
@@ -3217,7 +3225,7 @@
     }
 
     #endCallButton {
-      order: -1;
+      order: -2;
       position: sticky;
       left: 0;
       z-index: 90;
@@ -3228,6 +3236,26 @@
       visibility: visible !important;
       opacity: 1 !important;
       box-shadow: 0 8px 28px rgba(233,65,65,.48);
+    }
+
+    #addCallParticipantButton {
+      order: -1;
+      flex: 0 0 70px;
+      width: 70px;
+      border: 2px solid rgba(104,255,114,.78);
+      border-radius: 22px;
+      background: rgba(12,74,30,.92);
+      color: #fff;
+      font-size: 20px;
+      font-weight: 1000;
+      box-shadow: 0 8px 25px rgba(22,190,70,.30);
+    }
+
+    #addCallParticipantButton::after {
+      content: '+';
+      margin-left: -5px;
+      color: var(--green);
+      font-size: 20px;
     }
 
     .captionsToggle {
@@ -5128,7 +5156,7 @@
       </button>
 
       <button id="addCallParticipantButton" class="callControl" type="button" aria-label="Añadir personas" title="Añadir personas (máximo 6)">
-        👥+
+        👥
       </button>
 
 

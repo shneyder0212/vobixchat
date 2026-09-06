@@ -100,6 +100,10 @@ test('el cliente permite añadir personas y crea una conexión por participante'
   const html = read('public/chat.html');
   assert.match(html, /id="addCallParticipantButton"/);
   assert.match(html, /id="callParticipantPanel"/);
+  assert.match(html, /#addCallParticipantButton \{[\s\S]{0,160}order: -1/);
+  assert.match(html, /#callParticipantPanel \{[\s\S]{0,80}z-index: 8200/);
+  assert.match(html, /#rejoinGroupCallButton\[hidden\][\s\S]{0,80}display: none !important/);
+  assert.match(read('core/vobix-layers.js'), /id:'174'.*Agregar Personas Siempre Visible.*status:'en_validacion'/);
   assert.match(html, /function addParticipantToCurrentCall/);
   assert.match(html, /function createGroupPeerConnection/);
   assert.match(html, /call:add-user/);
