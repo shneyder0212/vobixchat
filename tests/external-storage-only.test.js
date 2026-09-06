@@ -34,3 +34,10 @@ test('la capa 163 documenta los destinos persistentes sin declarar disco de Rend
   const layers = read('core/vobix-layers.js');
   assert.match(layers, /id:'163'.*PostgreSQL.*Cloudflare R2.*Render procesa únicamente temporales/);
 });
+
+test('un archivo antiguo ausente devuelve 404 limpio sin llegar al error general', () => {
+  const server = read('server.js');
+  assert.match(server, /app\.use\('\/uploads',[\s\S]{0,420}code: 'media_not_found'/);
+  assert.match(server, /fallthrough: true/);
+  assert.doesNotMatch(server, /path\.join\(__dirname, 'uploads'\),\s*\{ fallthrough: false/);
+});
