@@ -61,7 +61,7 @@ class CallKeepAliveService : Service() {
 
         val video = intent?.getBooleanExtra(EXTRA_VIDEO, false) == true
         val resumeIntent = Intent(this, MainActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+            this.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
             putExtra("vobix_resume_call", true)
         }
         val pendingIntent = PendingIntent.getActivity(
