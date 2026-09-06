@@ -18602,6 +18602,33 @@
        PEDIR MICRO / CÁMARA PARA LLAMADA
        ===================================================== */
 
+    async function ensureNativeMediaPermissionsForCall() {
+      if (
+        typeof window.VobixNative?.hasMediaPermissions !== 'function' ||
+        typeof window.VobixNative?.requestMediaPermissions !== 'function' ||
+        window.VobixNative.hasMediaPermissions() === true
+      ) {
+        return;
+      }
+
+      reportClientDiagnostic('call_permission_requested');
+      window.VobixNative.requestMediaPermissions();
+
+      // Esperamos la confirmación real de Android antes de abrir WebRTC.
+      // No iniciamos otra captura desde el evento de permiso.
+      for (let attempt = 0; attempt < 120; attempt += 1) {
+        await new Promise(resolve => window.setTimeout(resolve, 250));
+        if (window.VobixNative?.hasMediaPermissions?.() === true) {
+          reportClientDiagnostic('call_permission_granted');
+          return;
+        }
+      }
+
+      const permissionError = new Error('Android no confirmó cámara y micrófono');
+      permissionError.name = 'NotAllowedError';
+      throw permissionError;
+    }
+
     async function prepareCallMedia(
       type
     ) {
@@ -18609,6 +18636,10 @@
       app.callVideoAutoPaused = false;
       app.callMediaAcquiring = true;
       stopEmergencyRecognition();
+      stopSeniorDictation();
+      cancelVoiceRecording();
+      stopRecordingTracks();
+      await stopIntegratedCamera();
       resetNativeCallAudio();
 
       if (
@@ -18621,6 +18652,13 @@
           'El navegador no permite acceso a cámara/micrófono'
         );
 
+      }
+
+      try {
+        await ensureNativeMediaPermissionsForCall();
+      } catch (error) {
+        app.callMediaAcquiring = false;
+        throw error;
       }
 
 
@@ -19348,6 +19386,11 @@
         app.callId =
           createCallId();
 
+        // Capa 171: Android confirma permisos y abre el micrófono antes de
+        // avisar al destinatario. Así nunca recibe un timbre que se cae por
+        // una autorización pendiente en el teléfono llamante.
+        await prepareCallMedia(type);
+
         showCallScreen(type);
         if (elements.callStatus) {
           elements.callStatus.textContent = `${type === 'video' ? 'Videollamando' : 'Llamando'} a ${userName(app.peer)}…`;
@@ -19376,15 +19419,7 @@
 
         }
 
-        // En navegadores modernos registramos primero la llamada en el
-        // servidor. Así el destinatario recibe el timbre aunque Android tarde
-        // en abrir el permiso del micrófono o de la cámara.
-        const canSignalBeforeMedia = prepareOutgoingCallTransceivers(pc, type);
-
-        if (!canSignalBeforeMedia) {
-          await prepareCallMedia(type);
-          await attachPreparedCallMedia(pc, app.localStream);
-        }
+        await attachPreparedCallMedia(pc, app.localStream);
 
 
         const offer =
@@ -19440,11 +19475,6 @@
           type,
           recipientOnline: response?.recipientOnline
         });
-
-        if (canSignalBeforeMedia) {
-          await prepareCallMedia(type);
-          await attachPreparedCallMedia(pc, app.localStream);
-        }
 
         reportClientDiagnostic('call_media_ready', {
           type,

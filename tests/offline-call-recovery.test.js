@@ -33,22 +33,23 @@ test('los tonos imitan un teléfono y se detienen al conectar', () => {
   assert.match(chat, /function stopAllCallSignals\(\)[\s\S]{0,420}navigator\.vibrate\(0\)/);
 });
 
-test('el llamante ve y oye la llamada antes de esperar red o permisos', () => {
+test('el llamante abre la pantalla y el tono después de confirmar permisos', () => {
   const start = chat.slice(chat.indexOf('async function startCall'), chat.indexOf('function bindImmediateCallButton'));
   assert.match(start, /unlockAudio\(\)/);
+  assert.ok(start.indexOf('await prepareCallMedia(type)') < start.indexOf('showCallScreen(type)'));
   assert.match(start, /showCallScreen\(type\)[\s\S]{0,300}startOutgoingRing\(\)[\s\S]{0,180}waitForCallSocket/);
   assert.match(chat, /Llamando.*userName\(app\.peer\)/);
   assert.match(chat, /no está disponible en estos momentos/);
   assert.match(chat, /function waitForCallSocket/);
 });
 
-test('la oferta llega al servidor antes de pedir permisos multimedia', () => {
+test('la oferta llega al servidor únicamente después de abrir la media', () => {
   const start = chat.slice(chat.indexOf('async function startCall'), chat.indexOf('function bindImmediateCallButton'));
   const offerIndex = start.indexOf("'call:offer'");
-  const mediaIndex = start.lastIndexOf('await prepareCallMedia(type)');
+  const mediaIndex = start.indexOf('await prepareCallMedia(type)');
   assert.ok(offerIndex > 0, 'debe emitir call:offer');
-  assert.ok(mediaIndex > offerIndex, 'en navegadores modernos debe avisar al destinatario antes de abrir la media');
-  assert.match(start, /prepareOutgoingCallTransceivers\(pc, type\)/);
+  assert.ok(mediaIndex > 0 && mediaIndex < offerIndex, 'debe confirmar el micrófono antes de avisar al destinatario');
+  assert.match(start, /await attachPreparedCallMedia\(pc, app\.localStream\)/);
   assert.match(start, /app\.callOfferAcknowledged = true;[\s\S]{0,100}flushPendingLocalIceCandidates\(\)/);
 });
 

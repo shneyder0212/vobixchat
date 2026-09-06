@@ -115,6 +115,17 @@ test('Android recupera el micrófono ocupado sin cortar de inmediato', () => {
   assert.match(read('core/vobix-layers.js'), /id:'170'.*Recuperación de Micrófono Android.*status:'en_validacion'/);
 });
 
+test('Android confirma permisos y abre el micrófono antes de timbrar al destinatario', () => {
+  const html = read('public/chat.html');
+  const start = html.slice(html.indexOf('async function startCall'), html.indexOf('function bindImmediateCallButton'));
+  assert.match(html, /async function ensureNativeMediaPermissionsForCall\(\)/);
+  assert.match(html, /reportClientDiagnostic\('call_permission_granted'\)/);
+  assert.ok(start.indexOf('await prepareCallMedia(type)') < start.indexOf('showCallScreen(type)'));
+  assert.ok(start.indexOf('await prepareCallMedia(type)') < start.indexOf("app.socket.timeout(10000).emit("));
+  assert.match(html, /stopSeniorDictation\(\)[\s\S]{0,160}cancelVoiceRecording\(\)[\s\S]{0,160}stopRecordingTracks\(\)/);
+  assert.match(read('core/vobix-layers.js'), /id:'171'.*Permiso Antes del Timbre.*status:'en_validacion'/);
+});
+
 test('la capa 167 identifica los controles permanentes de llamada', () => {
   assert.match(read('core/vobix-layers.js'), /id:'167'.*Controles Permanentes de Llamada y Altavoz.*status:'en_validacion'/);
 });
