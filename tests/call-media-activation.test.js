@@ -47,7 +47,7 @@ test('los permisos rechazados liberan la captura y finalizan la contestación', 
   const answer = answerBlock(html);
   assert.match(html, /navigator\.mediaDevices\.getUserMedia/);
   assert.match(html, /stopMediaStream\(app\.localStream\)/);
-  assert.match(answer, /catch \(error\)[\s\S]{0,260}callMediaErrorMessage[\s\S]{0,260}endLocalCall\(true\)/);
+  assert.match(answer, /catch \(error\)[\s\S]{0,600}callMediaErrorMessage[\s\S]{0,260}endLocalCall\(true\)/);
 });
 
 test('la reproducción bloqueada muestra estado y permite reintento explícito', () => {

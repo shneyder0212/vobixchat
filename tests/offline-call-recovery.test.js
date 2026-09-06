@@ -62,6 +62,20 @@ test('los candidatos ICE esperan la confirmación de la llamada', () => {
   assert.match(connection, /function flushPendingLocalIceCandidates\(\)/);
 });
 
+test('el diagnóstico físico registra cada etapa sin contenido de conversaciones', () => {
+  assert.match(chat, /function reportClientDiagnostic/);
+  assert.match(chat, /'call_tapped'/);
+  assert.match(chat, /'call_socket_ready'/);
+  assert.match(chat, /'call_offer_created'/);
+  assert.match(chat, /'call_offer_accepted'/);
+  assert.match(chat, /'call_media_ready'/);
+  assert.match(chat, /'call_start_error'/);
+  assert.match(server, /app\.post\('\/api\/client-diagnostic', requireAuth/);
+  const route = server.slice(server.indexOf("app.post('/api/client-diagnostic'"), server.indexOf("app.get('/api/network-probe'"));
+  assert.doesNotMatch(route, /message\.content|conversation\.content|req\.body\.token/);
+  assert.match(route, /rate\.count > 60/);
+});
+
 test('la conexión usa el tipo de llamada guardado y no una variable inexistente', () => {
   const connection = chat.slice(
     chat.indexOf('function createPeerConnection()'),

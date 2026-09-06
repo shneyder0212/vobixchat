@@ -638,12 +638,10 @@ self.addEventListener(
           }
         }
 
-        // Con VOBIXCHAT visible, Socket.IO ya muestra mensajes y llamadas.
-        // Evitamos la segunda alerta del navegador en el mismo dispositivo.
-        if (appVisible) {
-          return;
-        }
-
+        // Chrome móvil puede impedir Web Audio aunque la pestaña esté visible
+        // si el destinatario todavía no tocó la pantalla. Conservamos el aviso
+        // del sistema también en primer plano: su canal de Android aporta el
+        // sonido fiable y `tag` evita acumular duplicados de una misma señal.
         await self.registration.showNotification(title, options);
       })().catch(error => {
         console.error('VOBIXCHAT SW | NOTIFICATION ERROR', error);

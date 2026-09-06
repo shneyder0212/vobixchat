@@ -5219,6 +5219,8 @@
 
       pendingCallRecoveryInFlight: false,
 
+      socketStartPromise: null,
+
       callTimeout: null,
 
       callConnectedAt: 0,
@@ -6177,6 +6179,51 @@
 
     app.token =
       getAuthToken();
+
+
+    function reportClientDiagnostic(eventName, details = {}) {
+      const event = String(eventName || '').trim().slice(0, 64);
+      const token = getAuthToken();
+      if (!event || !token) return;
+
+      const safeDetails = {};
+      for (const [key, value] of Object.entries(details || {}).slice(0, 12)) {
+        safeDetails[String(key).slice(0, 40)] = String(value ?? '').slice(0, 180);
+      }
+
+      fetch('/api/client-diagnostic', {
+        method: 'POST',
+        credentials: 'include',
+        keepalive: true,
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: 'Bearer ' + token
+        },
+        body: JSON.stringify({
+          event,
+          details: safeDetails,
+          page: location.pathname,
+          online: navigator.onLine !== false
+        })
+      }).catch(() => {});
+    }
+
+
+    window.addEventListener('error', event => {
+      reportClientDiagnostic('javascript_error', {
+        name: event.error?.name || 'Error',
+        message: event.message || event.error?.message || 'unknown',
+        line: event.lineno || 0
+      });
+    });
+
+
+    window.addEventListener('unhandledrejection', event => {
+      reportClientDiagnostic('promise_rejection', {
+        name: event.reason?.name || 'Error',
+        message: event.reason?.message || String(event.reason || 'unknown')
+      });
+    });
 
 
     function readNetworkProfile() {
@@ -9329,6 +9376,13 @@
         console.warn('[VOBIXCHAT AUDIO READY]', error);
       }
     }
+
+
+    // Chrome móvil bloquea cualquier sonido creado antes de la primera
+    // interacción. Una sola pulsación en cualquier zona deja preparados los
+    // avisos entrantes para toda la sesión, no únicamente el botón de llamada.
+    document.addEventListener('pointerdown', unlockAudio, { passive: true });
+    document.addEventListener('touchstart', unlockAudio, { passive: true });
 
 
     function playMessageSound() {
@@ -16909,6 +16963,10 @@
         'connect',
         () => {
 
+          reportClientDiagnostic('socket_connected', {
+            transport: app.socket?.io?.engine?.transport?.name || 'unknown'
+          });
+
           console.log(
             '[VOBIXCHAT SOCKET] conectado',
             app.socket.id
@@ -16974,6 +17032,11 @@
       app.socket.on(
         'connect_error',
         error => {
+
+          reportClientDiagnostic('socket_connect_error', {
+            name: error?.name || 'Error',
+            message: error?.message || 'unknown'
+          });
 
           console.error(
             '[VOBIXCHAT SOCKET ERROR]',
@@ -17513,6 +17576,17 @@
 
     async function startSocket() {
 
+      if (app.socket?.connected) return app.socket;
+
+      if (app.socket) {
+        try { app.socket.connect?.(); } catch (_) {}
+        return app.socket;
+      }
+
+      if (app.socketStartPromise) return app.socketStartPromise;
+
+      app.socketStartPromise = (async () => {
+
       const loaded =
         await loadSocketClient();
 
@@ -17531,12 +17605,21 @@
         }
 
 
-        return;
+        reportClientDiagnostic('socket_client_missing');
+        return null;
 
       }
 
 
-      connectSocket();
+      return connectSocket();
+
+      })();
+
+      try {
+        return await app.socketStartPromise;
+      } finally {
+        app.socketStartPromise = null;
+      }
 
     }
 
@@ -17648,14 +17731,22 @@
       }
 
 
-      await loadCurrentUser();
+      // El tiempo real no puede depender de que una consulta de perfil lenta
+      // termine primero. Arrancamos Socket.IO inmediatamente y continuamos la
+      // interfaz en paralelo.
+      const socketReady = startSocket();
+      const currentUserReady = loadCurrentUser();
+
+      await currentUserReady;
 
       // Capa 142 — la solicitud nace de una pulsación explícita porque
       // Android/iPhone bloquean permisos multimedia automáticos.
       window.setTimeout(showMediaPermissionOnboarding, 180);
 
 
-      startSocket();
+      socketReady.catch(error => {
+        console.warn('[VOBIXCHAT SOCKET START]', error);
+      });
 
 
       loadConversations();
@@ -19049,9 +19140,11 @@
         : `Llamando a ${peerName}…`;
     }
 
-    function waitForCallSocket(timeoutMs = 10000) {
+    async function waitForCallSocket(timeoutMs = 10000) {
       if (app.socket?.connected) return Promise.resolve(true);
-      if (!app.socket) return Promise.resolve(false);
+      if (!app.socket) await startSocket();
+      if (app.socket?.connected) return true;
+      if (!app.socket) return false;
 
       return new Promise(resolve => {
         let settled = false;
@@ -19077,6 +19170,7 @@
     ) {
 
       pauseAllChatMedia();
+      reportClientDiagnostic('call_tapped', { type });
 
       if (app.callId || app.pendingCallOffer) {
         notifyUser('Ya hay una llamada en curso');
@@ -19120,8 +19214,11 @@
         scheduleCallTimeout('outgoing');
 
         if (!await waitForCallSocket()) {
+          reportClientDiagnostic('call_socket_unavailable', { type });
           throw new Error('No hay conexión para iniciar la llamada');
         }
+
+        reportClientDiagnostic('call_socket_ready', { type });
 
         await loadRtcConfiguration();
 
@@ -19155,6 +19252,8 @@
         await pc.setLocalDescription(
           offer
         );
+
+        reportClientDiagnostic('call_offer_created', { type });
 
 
         const outgoingCallId = app.callId;
@@ -19195,11 +19294,21 @@
         acknowledgeOutgoingCall(response);
         app.callOfferAcknowledged = true;
         flushPendingLocalIceCandidates();
+        reportClientDiagnostic('call_offer_accepted', {
+          type,
+          recipientOnline: response?.recipientOnline
+        });
 
         if (canSignalBeforeMedia) {
           await prepareCallMedia(type);
           await attachPreparedCallMedia(pc, app.localStream);
         }
+
+        reportClientDiagnostic('call_media_ready', {
+          type,
+          audioTracks: app.localStream?.getAudioTracks?.().length || 0,
+          videoTracks: app.localStream?.getVideoTracks?.().length || 0
+        });
 
         notifyUser(
           type ===
@@ -19215,6 +19324,13 @@
           '[VOBIXCHAT START CALL]',
           error
         );
+
+        reportClientDiagnostic('call_start_error', {
+          type,
+          name: error?.name || 'Error',
+          message: error?.message || 'unknown',
+          socketConnected: app.socket?.connected === true
+        });
 
 
         const isSignalingError = ['CallSignalingError', 'AbortError'].includes(String(error?.name || ''));
@@ -19336,6 +19452,9 @@
 
       if (app.acceptingCall) return;
       app.acceptingCall = true;
+      reportClientDiagnostic('call_accept_tapped', {
+        type: app.pendingCallOffer?.type || 'audio'
+      });
 
       pauseAllChatMedia();
       const payload = app.pendingCallOffer;
@@ -19407,9 +19526,19 @@
 
         enterCallConnectingState(app.callId);
 
+        reportClientDiagnostic('call_answer_sent', {
+          type: app.callType,
+          group: app.callIsGroup
+        });
+
         notifyUser('Llamada conectando…');
       } catch (error) {
         console.error('[VOBIXCHAT ACCEPT CALL]', error);
+        reportClientDiagnostic('call_accept_error', {
+          type: app.callType || payload.type,
+          name: error?.name || 'Error',
+          message: error?.message || 'unknown'
+        });
         notifyUser(callMediaErrorMessage(error, app.callType || payload.type));
         endLocalCall(true);
       }
@@ -19453,6 +19582,12 @@
     function handleIncomingCallOffer(
       payload
     ) {
+
+      reportClientDiagnostic('call_offer_received', {
+        type: payload?.type || 'audio',
+        hasOffer: Boolean(payload?.offer),
+        hasCallId: Boolean(payload?.callId || payload?.call_id)
+      });
 
       if (
         !payload ||

@@ -53,4 +53,13 @@ test('Socket.IO usa inicio estable y reconexión ilimitada en móviles', () => {
   assert.match(html, /tryAllTransports:\s*true/);
   assert.match(html, /reconnectionAttempts:\s*Infinity/);
   assert.match(html, /reconnectionDelayMax:\s*5000/);
+  assert.match(html, /if \(!app\.socket\) await startSocket\(\)/);
+  assert.match(html, /socketStartPromise/);
+});
+
+test('Chrome prepara sonido con cualquier interacción y conserva aviso del sistema visible', () => {
+  assert.match(html, /document\.addEventListener\('pointerdown', unlockAudio/);
+  assert.match(html, /document\.addEventListener\('touchstart', unlockAudio/);
+  assert.doesNotMatch(serviceWorker, /if \(appVisible\) \{\s*return;\s*\}/);
+  assert.match(serviceWorker, /await self\.registration\.showNotification\(title, options\)/);
 });
