@@ -1308,11 +1308,18 @@
     html.vobixKeyboardOpen .vobixApp {
       top: var(--vobix-visual-top, 0px);
       height: var(--vobix-visual-height, 100dvh);
+      --vobix-safe-bottom: 0px;
     }
 
     html.vobixKeyboardOpen .vobixComposer {
+      position: sticky;
+      right: 0;
+      bottom: 0;
+      left: 0;
       flex: 0 0 auto;
-      padding-bottom: max(7px, env(safe-area-inset-bottom));
+      width: 100%;
+      padding-bottom: 7px;
+      transform: translateZ(0);
     }
 
     .cameraChoiceActions {
@@ -12807,6 +12814,15 @@
       });
     }
 
+    window.addEventListener('vobixviewportchange', event => {
+      if (
+        event.detail?.keyboardOpen &&
+        document.activeElement === elements.messageInput
+      ) {
+        openConversationAtLatest();
+      }
+    });
+
     function readPositionStorageKey(conversation = app.conversation) {
       const id = conversationId(conversation);
       return id ? `vobixchat_read_position_${String(id)}` : '';
@@ -18640,7 +18656,6 @@
       cancelVoiceRecording();
       stopRecordingTracks();
       await stopIntegratedCamera();
-      resetNativeCallAudio();
 
       if (
         !navigator.mediaDevices ||
@@ -18726,16 +18741,33 @@
           stopEmergencyRecognition();
           stopMediaStream(app.localStream);
           app.localStream = null;
-          resetNativeCallAudio();
           reportClientDiagnostic('call_media_retry', {
             type,
             name: error?.name || 'Error'
           });
-          await new Promise(resolve => window.setTimeout(resolve, 450));
-          app.localStream = await navigator.mediaDevices.getUserMedia({
+          await new Promise(resolve => window.setTimeout(resolve, 1200));
+
+          const audioStream = await navigator.mediaDevices.getUserMedia({
             audio: true,
-            video: type === 'video'
+            video: false
           });
+          if (type === 'video') {
+            try {
+              const videoStream = await navigator.mediaDevices.getUserMedia({
+                audio: false,
+                video: { facingMode: { ideal: app.cameraFacingMode } }
+              });
+              app.localStream = new MediaStream([
+                ...audioStream.getAudioTracks(),
+                ...videoStream.getVideoTracks()
+              ]);
+            } catch (videoError) {
+              stopMediaStream(audioStream);
+              throw videoError;
+            }
+          } else {
+            app.localStream = audioStream;
+          }
         }
         app.localMediaType = type;
       } finally {

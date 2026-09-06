@@ -41,3 +41,11 @@ test('la Capa 137 queda registrada después de la recuperación del chat', () =>
   assert.match(layers, /id:'136'/);
   assert.match(layers, /id:'137'.*Compositor Móvil Adaptativo/);
 });
+
+test('la barra de escritura permanece pegada encima del teclado y al final del chat', () => {
+  const html = read('public/chat.html');
+  const layers = read('core/vobix-layers.js');
+  assert.match(html, /html\.vobixKeyboardOpen \.vobixComposer \{[\s\S]{0,220}position:\s*sticky;[\s\S]{0,220}bottom:\s*0;/);
+  assert.match(html, /event\.detail\?\.keyboardOpen[\s\S]{0,180}document\.activeElement === elements\.messageInput[\s\S]{0,180}openConversationAtLatest\(\)/);
+  assert.match(layers, /id:'173'.*Compositor Pegado al Teclado.*status:'en_validacion'/);
+});
