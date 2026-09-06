@@ -1,107 +1,106 @@
-/**
- * VOBIXCHAT - MOTOR DE LICENCIAS Y CONTROLES PREMIUM (CAPA C1.8)
- * Administra el acceso modular a características corporativas y de monetización.
- * Controla cuotas de catálogo, automatizaciones CRM y límites de mensajería masiva.
- */
+'use strict';
 
-class VobixPremiumManager {
-    constructor() {
-        // Estructura fija de capacidades y límites por tipo de nivel corporativo
-        this.tierCapabilities = {
-            FREE: {
-                maxCatalogItems: 5,
-                enableAutomatedReplies: false,
-                enableMassMessaging: false,
-                crmIntegration: false
-            },
-            BUSINESS_PLUS: {
-                maxCatalogItems: 50,
-                enableAutomatedReplies: true,
-                enableMassMessaging: false,
-                crmIntegration: true
-            },
-            ENTERPRISE_PRO: {
-                maxCatalogItems: 1000,
-                enableAutomatedReplies: true,
-                enableMassMessaging: true,
-                crmIntegration: true
-            }
-        };
-        this.userSubscriptions = new Map(); // userId -> { tier: "FREE", expires: timestamp }
-    }
+const PLAN_ORDER = Object.freeze({ free: 0, premium: 1, business: 2 });
 
-    /**
-     * Otorga o actualiza de forma segura un plan premium tras la confirmación de pago
-     */
-    upgradeUserSubscription(userId, selectedTier, durationDays = 30) {
-        if (!this.tierCapabilities[selectedTier.toUpperCase()]) {
-            console.error(`[Capa C1.8] Nivel de suscripción inválido intentado: ${selectedTier}`);
-            return false;
-        }
+const PLANS = Object.freeze([
+  Object.freeze({
+    id: 'free',
+    name: 'Vobix Gratis',
+    rank: PLAN_ORDER.free,
+    billingEnabled: false
+  }),
+  Object.freeze({
+    id: 'premium',
+    name: 'Vobix Plus',
+    rank: PLAN_ORDER.premium,
+    billingEnabled: false,
+    promise: 'Más almacenamiento, traducción avanzada y herramientas de IA.'
+  }),
+  Object.freeze({
+    id: 'business',
+    name: 'Vobix Business',
+    rank: PLAN_ORDER.business,
+    billingEnabled: false
+  })
+]);
 
-        const subscriptionState = {
-            tier: selectedTier.toUpperCase(),
-            expires: Date.now() + (durationDays * 24 * 60 * 60 * 1000)
-        };
+const CAPABILITIES = Object.freeze([
+  Object.freeze({ id: 'chat', name: 'VobixChat personal', minimumPlan: 'free', status: 'active', advertisingInPrivateChats:false }),
+  Object.freeze({ id: 'plus-storage', name: 'Almacenamiento ampliado', minimumPlan: 'premium', status: 'preparation' }),
+  Object.freeze({ id: 'plus-translation', name: 'Traducción avanzada', minimumPlan: 'premium', status: 'preparation' }),
+  Object.freeze({ id: 'plus-ai', name: 'Herramientas de IA', minimumPlan: 'premium', status: 'preparation' }),
+  Object.freeze({ id: 'meet', name: 'Vobix Meet Pro', minimumPlan: 'premium', status: 'preparation' }),
+  Object.freeze({ id: 'remote', name: 'Vobix Remote', minimumPlan: 'premium', status: 'preparation' }),
+  Object.freeze({ id: 'verify-sign', name: 'Vobix Verify Sign', minimumPlan: 'premium', status: 'legal-design' }),
+  Object.freeze({ id: 'politics', name: 'Vobix Política', minimumPlan: 'premium', status: 'preparation' }),
+  Object.freeze({ id: 'trade', name: 'Vobix Trade', minimumPlan: 'premium', status: 'regulated-design', isolated:true, riskControlsRequired:true }),
+  Object.freeze({ id: 'business', name: 'Vobix Business', minimumPlan: 'business', status: 'preparation', features:['catalog','bookings','invoices','multi-agent','analytics'] })
+]);
 
-        this.userSubscriptions.set(userId, subscriptionState);
-        console.log(`[Capa C1.8] Licencia comercial activa. Cuenta: ${userId} asignada a nivel ${selectedTier}`);
+const COMMERCIAL_PRINCIPLES = Object.freeze({
+  privateChatPrice:'free',
+  advertisingInPrivateChats:false,
+  sellPrivateConversationData:false,
+  billingEnabled:false,
+  premiumActivation:'explicit-user-consent',
+  tradeIsolation:'separate-service-and-data-boundary'
+});
 
-        return {
-            success: true,
-            currentSubscription: subscriptionState
-        };
-    }
-
-    /**
-     * Valida de forma estricta si una cuenta corporativa tiene acceso a una característica específica
-     * @param {string} userId - ID de la cuenta comercial a auditar
-     * @param {string} featureKey - Característica técnica ("enableMassMessaging", "crmIntegration", etc.)
-     */
-    verifyFeatureAccess(userId, featureKey) {
-        const activeSub = this.userSubscriptions.get(userId);
-        let activeTier = "FREE";
-
-        // Comprobar validez temporal si tiene una suscripción premium registrada
-        if (activeSub) {
-            if (Date.now() < activeSub.expires) {
-                activeTier = activeSub.tier;
-            } else {
-                // Degradación automática no invasiva tras vencer el plazo de la licencia
-                this.userSubscriptions.delete(userId);
-                console.warn(`[Capa C1.8] La suscripción premium de la cuenta ${userId} ha caducado.`);
-            }
-        }
-
-        const tierLimits = this.tierCapabilities[activeTier];
-        const isFeatureAllowed = tierLimits[featureKey] === true;
-
-        return {
-            allowed: isFeatureAllowed,
-            currentTier: activeTier,
-            limits: tierLimits
-        };
-    }
-
-    /**
-     * Control de cuota fija para el catálogo comercial avanzado de Vobix Negocios
-     */
-    canAddItemToCatalog(userId, currentTotalItems) {
-        const accessCheck = this.verifyFeatureAccess(userId, "maxCatalogItems");
-        const maxAllowed = this.tierCapabilities[accessCheck.currentTier].maxCatalogItems;
-
-        if (currentTotalItems >= maxAllowed) {
-            return {
-                allowed: false,
-                reason: "LIMIT_REACHED",
-                message: `Has alcanzado el límite de tu plan (${maxAllowed} artículos). Mejora tu plan comercial en VobixChat para expandir tu catálogo.`
-            };
-        }
-
-        return { allowed: true, currentLimit: maxAllowed };
-    }
+function normalizePlan(plan) {
+  const value = String(plan || '').trim().toLowerCase();
+  return Object.hasOwn(PLAN_ORDER, value) ? value : 'free';
 }
 
-if (typeof module !== 'undefined') {
-    module.exports = VobixPremiumManager;
+function planAllows(plan, minimumPlan) {
+  return PLAN_ORDER[normalizePlan(plan)] >= PLAN_ORDER[normalizePlan(minimumPlan)];
 }
+
+function capabilityAccess(capability, plan = 'free') {
+  const entitled = planAllows(plan, capability.minimumPlan);
+  const operational = capability.status === 'active';
+  return {
+    ...capability,
+    entitled,
+    operational,
+    available: entitled && operational,
+    reason: !entitled
+      ? 'plan_required'
+      : operational
+        ? null
+        : 'service_not_operational'
+  };
+}
+
+function getCapabilityAccess(capabilityId, plan = 'free') {
+  const id = String(capabilityId || '').trim().toLowerCase();
+  const capability = CAPABILITIES.find(item => item.id === id);
+  return capability ? capabilityAccess(capability, plan) : null;
+}
+
+function isConfigurableCapability(capabilityId) {
+  const access = getCapabilityAccess(capabilityId, 'business');
+  return !!access && access.id !== 'chat';
+}
+
+function getPremiumCatalog(plan = 'free') {
+  const normalizedPlan = normalizePlan(plan);
+  return {
+    billingEnabled: false,
+    principles: { ...COMMERCIAL_PRINCIPLES },
+    currentPlan: normalizedPlan,
+    plans: PLANS.map(item => ({ ...item })),
+    capabilities: CAPABILITIES.map(item => capabilityAccess(item, normalizedPlan))
+  };
+}
+
+module.exports = {
+  CAPABILITIES,
+  COMMERCIAL_PRINCIPLES,
+  PLANS,
+  capabilityAccess,
+  getCapabilityAccess,
+  getPremiumCatalog,
+  isConfigurableCapability,
+  normalizePlan,
+  planAllows
+};
