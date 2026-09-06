@@ -2993,6 +2993,57 @@
       z-index: 45;
     }
 
+    .callVideoArea.localVideoPrimary .localVideo {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      max-height: none;
+      aspect-ratio: auto;
+      z-index: 1;
+      border: 0;
+      border-radius: 0;
+      object-fit: cover;
+      transform: none;
+      cursor: default;
+    }
+
+    .callVideoArea.localVideoPrimary .remoteVideo {
+      position: absolute;
+      width: min(28vw, 220px);
+      height: auto;
+      aspect-ratio: 3 / 4;
+      right: 18px;
+      top: 18px;
+      left: auto;
+      bottom: auto;
+      z-index: 30;
+      border: 2px solid rgba(104,255,114,.45);
+      border-radius: 18px;
+      object-fit: cover;
+      background: #111;
+      box-shadow: 0 10px 35px rgba(0,0,0,.45);
+      cursor: grab;
+      touch-action: none;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    .callVideoArea.localVideoPrimary .remoteVideo.dragging {
+      cursor: grabbing;
+      transform: scale(1.03);
+    }
+
+    .callVideoArea.localVideoPrimary .remoteVideoWaiting.open {
+      inset: 18px 18px auto auto;
+      width: min(28vw, 220px);
+      aspect-ratio: 3 / 4;
+      z-index: 31;
+      padding: 8px;
+      border: 2px solid rgba(104,255,114,.45);
+      border-radius: 18px;
+    }
+
 
     .callControls {
       position: absolute;
@@ -19151,6 +19202,7 @@
       }
 
       elements.audioCallIdentity?.classList.remove('open');
+      elements.callVideoArea?.classList.remove('localVideoPrimary');
       elements.remoteVideoWaiting?.classList.remove('open');
       if (app.remoteVideoWaitTimer) {
         clearTimeout(app.remoteVideoWaitTimer);
@@ -20502,8 +20554,56 @@
     elements.remoteVideo?.addEventListener('playing', markRemoteVideoPlaying);
     elements.remoteVideo?.addEventListener('resize', markRemoteVideoPlaying);
 
-    elements.localVideo?.addEventListener('click', () => {
-      if (app.localPlaybackPending) ensureLocalVideoPlayback(true);
+    function resetFloatingVideoPosition(video) {
+      if (!video) return;
+      video.style.left = '';
+      video.style.top = '';
+      video.style.right = '18px';
+      video.style.bottom = '';
+    }
+
+    function localVideoIsPrimary() {
+      return elements.callVideoArea?.classList.contains('localVideoPrimary') === true;
+    }
+
+    function videoIsFloating(video) {
+      if (app.callType !== 'video') return false;
+      return video === elements.localVideo ? !localVideoIsPrimary() : localVideoIsPrimary();
+    }
+
+    function swapCallVideoPanels() {
+      if (app.callType !== 'video' || !elements.callVideoArea) return;
+      const showLocalLarge = !localVideoIsPrimary();
+      elements.callVideoArea.classList.toggle('localVideoPrimary', showLocalLarge);
+      elements.localVideo?.classList.remove('expanded');
+      resetFloatingVideoPosition(elements.localVideo);
+      resetFloatingVideoPosition(elements.remoteVideo);
+      if (elements.expandLocalVideoButton) {
+        elements.expandLocalVideoButton.textContent = '⇄';
+        elements.expandLocalVideoButton.setAttribute('aria-label', 'Intercambiar vídeo grande y pequeño');
+      }
+      reportClientDiagnostic('call_video_swapped', { localPrimary: showLocalLarge });
+    }
+
+    function handleFloatingVideoTap(video, event) {
+      if (video?.dataset?.vobixDragged === '1') {
+        delete video.dataset.vobixDragged;
+        event?.preventDefault();
+        return;
+      }
+      if (videoIsFloating(video)) swapCallVideoPanels();
+    }
+
+    elements.localVideo?.addEventListener('click', event => {
+      if (app.localPlaybackPending) {
+        ensureLocalVideoPlayback(true);
+        return;
+      }
+      handleFloatingVideoTap(elements.localVideo, event);
+    });
+
+    elements.remoteVideo?.addEventListener('click', event => {
+      handleFloatingVideoTap(elements.remoteVideo, event);
     });
 
     elements.callVideoArea?.addEventListener('pointerdown', event => {
@@ -20733,20 +20833,7 @@
         if (!elements.localVideo || app.callType !== 'video') {
           return;
         }
-
-        const expanded = elements.localVideo.classList.toggle('expanded');
-        elements.expandLocalVideoButton.textContent = expanded ? '⤡' : '⛶';
-        elements.expandLocalVideoButton.setAttribute(
-          'aria-label',
-          expanded ? 'Reducir mi cámara' : 'Ampliar mi cámara'
-        );
-
-        if (!expanded) {
-          elements.localVideo.style.left = '';
-          elements.localVideo.style.top = '';
-          elements.localVideo.style.right = '18px';
-          elements.localVideo.style.bottom = '';
-        }
+        swapCallVideoPanels();
       });
     }
 
@@ -21034,6 +21121,9 @@
         elements.localVideo.style.bottom = '';
       }
 
+      elements.callVideoArea?.classList.remove('localVideoPrimary');
+      resetFloatingVideoPosition(elements.remoteVideo);
+
       if (elements.expandLocalVideoButton) {
         elements.expandLocalVideoButton.textContent = '⛶';
         elements.expandLocalVideoButton.setAttribute('aria-label', 'Ampliar mi cámara');
@@ -21069,10 +21159,7 @@
        HACER VIDEO LOCAL ARRASTRABLE
        ===================================================== */
 
-    function makeLocalVideoDraggable() {
-
-      const video =
-        elements.localVideo;
+    function makeCallVideoDraggable(video) {
 
 
       if (!video) {
@@ -21106,7 +21193,7 @@
         'pointerdown',
         event => {
 
-          if (video.classList.contains('expanded')) {
+          if (!videoIsFloating(video)) {
             return;
           }
 
@@ -21133,6 +21220,8 @@
 
           originTop =
             rect.top;
+
+          video.dataset.vobixDragged = '0';
 
 
           video
@@ -21178,6 +21267,9 @@
           const dy =
             event.clientY -
             startY;
+
+          if (Math.hypot(dx, dy) < 7 && video.dataset.vobixDragged !== '1') return;
+          video.dataset.vobixDragged = '1';
 
 
           const maxLeft =
@@ -21284,7 +21376,8 @@
     }
 
 
-    makeLocalVideoDraggable();
+    makeCallVideoDraggable(elements.localVideo);
+    makeCallVideoDraggable(elements.remoteVideo);
 
 
     /* =====================================================

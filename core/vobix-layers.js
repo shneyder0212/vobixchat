@@ -146,6 +146,7 @@ const VOBIX_LAYERS = Object.freeze([
 ,{ id:'166', name:'Búsqueda Directa y Llamada Real', status:'en_validacion', scope:'Permite localizar por nombre, Vobix ID o número telefónico completo exacto; el resultado abre al usuario correcto y los botones de llamada ejecutan realmente audio o vídeo al entrar en su chat.' }
 ,{ id:'167', name:'Controles Permanentes de Llamada y Altavoz', status:'en_validacion', scope:'Mantiene el botón rojo de colgar siempre visible y táctil para quien llama y quien recibe; controla el altavoz mediante Android nativo y usa la selección de salida disponible en navegadores compatibles.' }
 ,{ id:'168', name:'Actualización Web Automática de la APK', status:'activo', scope:'La APK carga siempre la versión publicada de VobixChat con caché desactivada, por lo que chat, llamadas, menús y seguridad se actualizan al volver a abrirla. Solo un cambio nativo de Android o de firma exige una nueva instalación.' }
+,{ id:'169', name:'Intercambio Táctil de Videollamada', status:'en_validacion', scope:'Al tocar el vídeo pequeño intercambia la cámara local y remota entre tamaño grande y flotante; el cuadro pequeño puede moverse con dedo o ratón sin activar el intercambio durante el arrastre.' }
 ]);
 
 function getVobixLayers() {
